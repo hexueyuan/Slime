@@ -43,6 +43,10 @@
 ## 目录职责
 
 - `src/main/`: Electron 主进程，Node.js 环境
+  - `ipc/`: IPC handler 注册（handlers/ 按功能域拆分）
+  - `utils/`: 工具模块（logger, paths, errors）
+  - `window.ts`: 窗口创建与管理
+  - `index.ts`: 入口，bootstrap 流程
 - `src/preload/`: 安全桥接层，最小化暴露 API
 - `src/renderer/`: Vue 3 SPA，用户界面
 - `src/shared/`: 进程间共享的 TypeScript 类型
