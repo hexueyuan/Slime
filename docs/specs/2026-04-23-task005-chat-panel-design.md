@@ -6,21 +6,21 @@
 
 拆分为 4 个子任务递进实施：
 
-| 子任务 | 范围 |
-|--------|------|
+| 子任务   | 范围                                                                        |
+| -------- | --------------------------------------------------------------------------- |
 | **005a** | 数据层 + 基础对话（类型定义、Store、AgentPresenter、JSON 持久化、流式 IPC） |
-| **005b** | 聊天 UI 核心（消息列表、用户/助手气泡、Markdown 渲染、流式打字机、输入框） |
-| **005c** | 高级内容块（reasoning、tool_call、error、image block、消息工具栏） |
-| **005d** | 会话管理 + 高级功能（会话 CRUD、文件附件、artifact 预览、TipTap 升级） |
+| **005b** | 聊天 UI 核心（消息列表、用户/助手气泡、Markdown 渲染、流式打字机、输入框）  |
+| **005c** | 高级内容块（reasoning、tool_call、error、image block、消息工具栏）          |
+| **005d** | 会话管理 + 高级功能（会话 CRUD、文件附件、artifact 预览、TipTap 升级）      |
 
 ## 技术选型
 
-| 模块 | 方案 |
-|------|------|
-| AI SDK | Vercel AI SDK（与 deepchat 一致） |
-| Markdown 渲染 | markstream-vue（增量流式渲染） |
-| 输入框 | 先 textarea，005d 升级为 TipTap |
-| 数据持久化 | JSON 文件（最简实现，后续升级 SQLite） |
+| 模块          | 方案                                   |
+| ------------- | -------------------------------------- |
+| AI SDK        | Vercel AI SDK（与 deepchat 一致）      |
+| Markdown 渲染 | markstream-vue（增量流式渲染）         |
+| 输入框        | 先 textarea，005d 升级为 TipTap        |
+| 数据持久化    | JSON 文件（最简实现，后续升级 SQLite） |
 
 ## 视觉设计
 
@@ -28,17 +28,17 @@
 
 ### 颜色变量（暗色主题）
 
-| 变量 | 值 |
-|------|-----|
-| background | `hsl(0 0% 5%)` ≈ #0d0d0d |
-| foreground | `hsl(0 0% 93.4%)` |
-| muted | `hsla(0, 0%, 100%, 0.03)` |
-| muted-foreground | `rgba(255,255,255,0.5)` |
-| border | `hsla(0, 0%, 100%, 0.05)` |
-| card | `hsl(0 0% 20%)` |
-| primary | `hsl(210 100% 43%)` ≈ #006DD8 |
-| code-bg | `hsl(0 0% 12%)` |
-| code-border | `hsl(0 0% 20%)` |
+| 变量             | 值                            |
+| ---------------- | ----------------------------- |
+| background       | `hsl(0 0% 5%)` ≈ #0d0d0d      |
+| foreground       | `hsl(0 0% 93.4%)`             |
+| muted            | `hsla(0, 0%, 100%, 0.03)`     |
+| muted-foreground | `rgba(255,255,255,0.5)`       |
+| border           | `hsla(0, 0%, 100%, 0.05)`     |
+| card             | `hsl(0 0% 20%)`               |
+| primary          | `hsl(210 100% 43%)` ≈ #006DD8 |
+| code-bg          | `hsl(0 0% 12%)`               |
+| code-border      | `hsl(0 0% 20%)`               |
 
 ### 用户消息
 
@@ -81,51 +81,51 @@
 
 ```typescript
 // 助手消息内容块
-type BlockType = 'content' | 'reasoning_content' | 'tool_call' | 'error' | 'image'
-type BlockStatus = 'success' | 'loading' | 'error' | 'cancel'
+type BlockType = "content" | "reasoning_content" | "tool_call" | "error" | "image";
+type BlockStatus = "success" | "loading" | "error" | "cancel";
 
 interface AssistantMessageBlock {
-  type: BlockType
-  id?: string
-  content?: string
-  status: BlockStatus
-  timestamp: number
-  tool_call?: { name: string; params: string; response?: string }
-  image_data?: { data: string; mimeType: string }
-  reasoning_time?: { start: number; end: number }
+  type: BlockType;
+  id?: string;
+  content?: string;
+  status: BlockStatus;
+  timestamp: number;
+  tool_call?: { name: string; params: string; response?: string };
+  image_data?: { data: string; mimeType: string };
+  reasoning_time?: { start: number; end: number };
 }
 
 // 用户消息内容
 interface UserMessageContent {
-  text: string
-  files: MessageFile[]
+  text: string;
+  files: MessageFile[];
 }
 
 interface MessageFile {
-  id: string
-  name: string
-  path: string
-  mimeType: string
-  size: number
+  id: string;
+  name: string;
+  path: string;
+  mimeType: string;
+  size: number;
 }
 
 // 消息记录
 interface ChatMessageRecord {
-  id: string
-  sessionId: string
-  role: 'user' | 'assistant'
-  content: string  // JSON 序列化
-  status: 'sent' | 'pending' | 'error'
-  createdAt: number
-  updatedAt: number
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant";
+  content: string; // JSON 序列化
+  status: "sent" | "pending" | "error";
+  createdAt: number;
+  updatedAt: number;
 }
 
 // 会话
 interface ChatSession {
-  id: string
-  title: string
-  createdAt: number
-  updatedAt: number
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -135,24 +135,26 @@ interface ChatSession {
 
 ```typescript
 export const STREAM_EVENTS = {
-  RESPONSE: 'stream:response',
-  END: 'stream:end',
-  ERROR: 'stream:error',
-} as const
+  RESPONSE: "stream:response",
+  END: "stream:end",
+  ERROR: "stream:error",
+} as const;
 
 export const SESSION_EVENTS = {
-  LIST_UPDATED: 'session:list-updated',
-  ACTIVATED: 'session:activated',
-} as const
+  LIST_UPDATED: "session:list-updated",
+  ACTIVATED: "session:activated",
+} as const;
 ```
 
 ### Store 改造
 
 **改造 `src/renderer/src/stores/chat.ts`** 为 MessageStore：
+
 - state: `messageIds: string[]`, `messageCache: Map<id, ChatMessageRecord>`, `isStreaming`, `streamingBlocks: AssistantMessageBlock[]`, `currentStreamMessageId`
 - actions: `loadMessages(sessionId)`, `sendMessage(text, files?)`, `addOptimisticUserMessage()`, `setStreamingBlocks(blocks)`, `clearStreamingState()`, `applyStreamingBlocksToMessage()`
 
 **新建 `src/renderer/src/stores/session.ts`**：
+
 - state: `sessions: ChatSession[]`, `activeSessionId`
 - actions: `fetchSessions()`, `createSession()`, `selectSession(id)`, `deleteSession(id)`
 
@@ -183,8 +185,8 @@ export const SESSION_EVENTS = {
 
 ```typescript
 export interface IAgentPresenter {
-  chat(sessionId: string, content: UserMessageContent): Promise<void>
-  stopGeneration(sessionId: string): Promise<void>
+  chat(sessionId: string, content: UserMessageContent): Promise<void>;
+  stopGeneration(sessionId: string): Promise<void>;
 }
 ```
 
@@ -192,10 +194,10 @@ export interface IAgentPresenter {
 
 ```typescript
 export interface ISessionPresenter {
-  getSessions(): Promise<ChatSession[]>
-  createSession(title?: string): Promise<ChatSession>
-  deleteSession(id: string): Promise<boolean>
-  getMessages(sessionId: string): Promise<ChatMessageRecord[]>
+  getSessions(): Promise<ChatSession[]>;
+  createSession(title?: string): Promise<ChatSession>;
+  deleteSession(id: string): Promise<boolean>;
+  getMessages(sessionId: string): Promise<ChatMessageRecord[]>;
 }
 ```
 
@@ -216,6 +218,7 @@ ChatPanel.vue (改造)
 ### ChatPanel.vue
 
 改造现有占位组件为聊天容器：
+
 - flex column 布局，height 100%
 - 上方 MessageList（flex:1, overflow-y:auto）
 - 下方 ChatInput（sticky bottom）
@@ -227,6 +230,7 @@ ChatPanel.vue (改造)
 - 最后一条流式消息实时渲染 streamingBlocks
 
 滚动行为：
+
 - 新消息到达：用户在底部（距底 < 50px）时自动滚底
 - 用户向上浏览：不抢滚动
 - 发送消息：强制滚底
@@ -308,6 +312,7 @@ MessageItemAssistant.vue
 ### 会话管理 UI
 
 ChatPanel 顶部新增会话栏：
+
 - 当前会话标题 + chevron-down，点击展开会话下拉列表
 - 新建会话按钮（+ 号）
 - 下拉列表：历史会话（标题 + 相对时间），当前会话高亮
@@ -326,12 +331,14 @@ ChatPanel 顶部新增会话栏：
 ### Artifact 预览
 
 当 AI 响应包含 artifact block 时：
+
 - 左侧对话区显示 artifact 引用卡片（标题 + 类型 + "点击预览"）
 - artifact 从助手消息的 content block 中解析（不新增 BlockType，与 deepchat 一致）
 - 右侧 FunctionPanel 渲染 artifact 内容
 - 支持的 artifact 类型：代码（语法高亮）、HTML（iframe 沙箱渲染）、Markdown（prose 渲染）
 
 FunctionPanel 改造：
+
 - 默认显示占位（或进化功能入口）
 - 有 artifact 时切换为 artifact 预览模式
 - 顶部 tab 切换多个 artifact
@@ -339,6 +346,7 @@ FunctionPanel 改造：
 ### TipTap 编辑器升级
 
 替换 textarea 为 TipTap：
+
 - 扩展：Document, Paragraph, Text, History, HardBreak, Placeholder
 - Enter 发送，Shift+Enter 换行
 - 支持粘贴图片（自动添加到附件）
@@ -348,48 +356,48 @@ FunctionPanel 改造：
 
 ### 005a 新建/改造
 
-| 操作 | 文件 |
-|------|------|
-| 新建 | `src/shared/types/chat.d.ts` — 消息/会话/Block 类型 |
-| 新建 | `src/shared/types/presenters/session.presenter.d.ts` |
-| 改造 | `src/shared/events.ts` — 添加 STREAM_EVENTS, SESSION_EVENTS |
+| 操作 | 文件                                                             |
+| ---- | ---------------------------------------------------------------- |
+| 新建 | `src/shared/types/chat.d.ts` — 消息/会话/Block 类型              |
+| 新建 | `src/shared/types/presenters/session.presenter.d.ts`             |
+| 改造 | `src/shared/events.ts` — 添加 STREAM_EVENTS, SESSION_EVENTS      |
 | 改造 | `src/shared/types/presenters/index.d.ts` — 添加 sessionPresenter |
-| 改造 | `src/shared/types/presenters/agent.presenter.d.ts` — 新接口 |
-| 改造 | `src/renderer/src/stores/chat.ts` → MessageStore |
-| 新建 | `src/renderer/src/stores/session.ts` — SessionStore |
-| 改造 | `src/main/presenter/agentPresenter.ts` — 对接 Vercel AI SDK |
-| 新建 | `src/main/presenter/sessionPresenter.ts` — 会话管理 |
-| 改造 | `src/main/presenter/index.ts` — 注册 sessionPresenter |
+| 改造 | `src/shared/types/presenters/agent.presenter.d.ts` — 新接口      |
+| 改造 | `src/renderer/src/stores/chat.ts` → MessageStore                 |
+| 新建 | `src/renderer/src/stores/session.ts` — SessionStore              |
+| 改造 | `src/main/presenter/agentPresenter.ts` — 对接 Vercel AI SDK      |
+| 新建 | `src/main/presenter/sessionPresenter.ts` — 会话管理              |
+| 改造 | `src/main/presenter/index.ts` — 注册 sessionPresenter            |
 
 ### 005b 新建/改造
 
-| 操作 | 文件 |
-|------|------|
-| 改造 | `src/renderer/src/components/chat/ChatPanel.vue` |
-| 新建 | `src/renderer/src/components/chat/MessageList.vue` |
-| 新建 | `src/renderer/src/components/message/MessageItemUser.vue` |
+| 操作 | 文件                                                           |
+| ---- | -------------------------------------------------------------- |
+| 改造 | `src/renderer/src/components/chat/ChatPanel.vue`               |
+| 新建 | `src/renderer/src/components/chat/MessageList.vue`             |
+| 新建 | `src/renderer/src/components/message/MessageItemUser.vue`      |
 | 新建 | `src/renderer/src/components/message/MessageItemAssistant.vue` |
-| 新建 | `src/renderer/src/components/message/MessageBlockContent.vue` |
-| 新建 | `src/renderer/src/components/chat/ChatInput.vue` |
+| 新建 | `src/renderer/src/components/message/MessageBlockContent.vue`  |
+| 新建 | `src/renderer/src/components/chat/ChatInput.vue`               |
 
 ### 005c 新建
 
-| 操作 | 文件 |
-|------|------|
+| 操作 | 文件                                                            |
+| ---- | --------------------------------------------------------------- |
 | 新建 | `src/renderer/src/components/message/MessageBlockReasoning.vue` |
-| 新建 | `src/renderer/src/components/message/MessageBlockToolCall.vue` |
-| 新建 | `src/renderer/src/components/message/MessageBlockError.vue` |
-| 新建 | `src/renderer/src/components/message/MessageBlockImage.vue` |
-| 新建 | `src/renderer/src/components/message/MessageToolbar.vue` |
+| 新建 | `src/renderer/src/components/message/MessageBlockToolCall.vue`  |
+| 新建 | `src/renderer/src/components/message/MessageBlockError.vue`     |
+| 新建 | `src/renderer/src/components/message/MessageBlockImage.vue`     |
+| 新建 | `src/renderer/src/components/message/MessageToolbar.vue`        |
 
 ### 005d 新建/改造
 
-| 操作 | 文件 |
-|------|------|
-| 新建 | `src/renderer/src/components/chat/SessionBar.vue` |
-| 新建 | `src/renderer/src/components/chat/ChatAttachmentItem.vue` |
-| 新建 | `src/renderer/src/components/artifact/ArtifactPreview.vue` |
-| 改造 | `src/renderer/src/components/function/FunctionPanel.vue` |
+| 操作 | 文件                                                           |
+| ---- | -------------------------------------------------------------- |
+| 新建 | `src/renderer/src/components/chat/SessionBar.vue`              |
+| 新建 | `src/renderer/src/components/chat/ChatAttachmentItem.vue`      |
+| 新建 | `src/renderer/src/components/artifact/ArtifactPreview.vue`     |
+| 改造 | `src/renderer/src/components/function/FunctionPanel.vue`       |
 | 改造 | `src/renderer/src/components/chat/ChatInput.vue` — TipTap 升级 |
 
 ### 依赖新增
