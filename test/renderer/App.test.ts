@@ -3,10 +3,13 @@ import { mount } from "@vue/test-utils";
 import { defineComponent, h } from "vue";
 
 describe("Renderer", () => {
-  it("should render app placeholder", () => {
+  it("should render evolution center placeholder", () => {
     const Wrapper = defineComponent({
       setup() {
-        return () => h("div", { class: "flex h-screen" }, "Slime v0.1");
+        return () =>
+          h("div", { class: "h-screen w-screen" }, [
+            h("div", { class: "text-center" }, "Slime v0.1"),
+          ]);
       },
     });
     const wrapper = mount(Wrapper);
