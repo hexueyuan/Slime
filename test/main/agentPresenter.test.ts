@@ -61,9 +61,9 @@ describe("AgentPresenter", () => {
 
   it("should call streamText and emit stream events", async () => {
     const chunks = [
-      { type: "text-delta", textDelta: "Hello" },
-      { type: "text-delta", textDelta: " world" },
-      { type: "finish", finishReason: "stop", usage: { promptTokens: 10, completionTokens: 5 } },
+      { type: "text-delta", id: "1", text: "Hello" },
+      { type: "text-delta", id: "1", text: " world" },
+      { type: "finish", finishReason: "stop" },
     ];
     mockStreamText.mockReturnValue({
       fullStream: (async function* () {
@@ -98,7 +98,7 @@ describe("AgentPresenter", () => {
   it("should stop generation", async () => {
     mockStreamText.mockReturnValue({
       fullStream: (async function* () {
-        yield { type: "text-delta", textDelta: "Hello" };
+        yield { type: "text-delta", id: "1", text: "Hello" };
         await new Promise((_, reject) => {
           setTimeout(() => {
             reject(new Error("aborted"));

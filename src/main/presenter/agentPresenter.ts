@@ -111,11 +111,11 @@ export class AgentPresenter implements IAgentPresenter {
             };
             blocks.push(currentContentBlock);
           }
-          currentContentBlock.content += event.textDelta;
+          currentContentBlock.content += event.text;
           eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
             ...blocks,
           ]);
-        } else if (event.type === "reasoning") {
+        } else if (event.type === "reasoning-delta") {
           if (!currentReasoningBlock) {
             currentReasoningBlock = {
               type: "reasoning_content",
@@ -126,7 +126,7 @@ export class AgentPresenter implements IAgentPresenter {
             };
             blocks.unshift(currentReasoningBlock);
           }
-          currentReasoningBlock.content += event.textDelta;
+          currentReasoningBlock.content += event.text;
           eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
             ...blocks,
           ]);
