@@ -1,8 +1,6 @@
-export interface Message {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
+import type { UserMessageContent } from "../chat";
 
 export interface IAgentPresenter {
-  chat(params: { messages: Message[]; stream?: boolean }): Promise<{ content: string }>;
+  chat(sessionId: string, content: UserMessageContent): Promise<void>;
+  stopGeneration(sessionId: string): Promise<void>;
 }
