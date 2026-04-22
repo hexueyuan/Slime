@@ -11,3 +11,14 @@ export const CHAT_EVENTS = {
   MESSAGE: "chat:message",
   STREAM_CHUNK: "chat:stream-chunk",
 } as const;
+
+export const STREAM_EVENTS = {
+  RESPONSE: "stream:response",
+  END: "stream:end",
+  ERROR: "stream:error",
+} as const;
+
+export const SESSION_EVENTS = {
+  LIST_UPDATED: "session:list-updated",
+  ACTIVATED: "session:activated",
+} as const;
