@@ -18,6 +18,10 @@ export const paths = {
     return join(this.slimeDir, "config");
   },
 
+  get dataDir() {
+    return join(this.slimeDir, "data");
+  },
+
   get logsDir() {
     return join(this.userData, "logs");
   },
