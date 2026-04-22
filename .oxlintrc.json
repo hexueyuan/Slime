@@ -1,0 +1,15 @@
+{
+  "ignorePatterns": [
+    "**/node_modules",
+    "**/dist",
+    "**/out",
+    ".gitignore",
+    ".github",
+    "build/**",
+    "resources/**",
+    "docs/**",
+    "test/**",
+    "src/shared/**",
+    "src/shadcn/**"
+  ]
+}

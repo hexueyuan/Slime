@@ -1,0 +1,17 @@
+appId: com.slime.app
+productName: Slime
+directories:
+  buildResources: build
+  output: dist
+files:
+  - "!**/.claude/*"
+  - "!**/.github/*"
+  - "!src/*"
+  - "!test/*"
+  - "!docs/*"
+  - "!**/{.DS_Store,Thumbs.db}"
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+    - zip
