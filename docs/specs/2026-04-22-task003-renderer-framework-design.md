@@ -5,6 +5,7 @@
 搭建 Vue 3 渲染进程基础架构，采用 deepchat 的 Presenter 模式实现主进程与渲染进程通信，包含 EventBus、Presenter 单例、类型安全的 Proxy 调用、@pinia/colada 查询缓存层、3 个 Pinia store。
 
 **技术决策摘要**：
+
 - 样式：保留已有 TailwindCSS + shadcn/vue（不用 TASK-003 原始设计的 UnoCSS）
 - 主题：保留已有 oklch 主题系统（不重建 CSS 变量）
 - IPC：完整 Presenter 模式（参考 deepchat），为后续扩展打基础
@@ -36,6 +37,7 @@
 ```
 
 **核心变化**：
+
 1. 废弃现有 `ipc/handlers/` 结构，迁移到 `presenter/` 模式
 2. 统一 IPC 通道：单一 `presenter:call` + 动态反射，不再为每个功能注册单独 channel
 3. Preload 简化：暴露 `window.electron.ipcRenderer`，不再逐个封装 channel
@@ -50,28 +52,30 @@
 ```typescript
 // src/main/eventbus.ts
 class EventBus extends EventEmitter {
-  private win?: BrowserWindow
+  private win?: BrowserWindow;
 
-  setWindow(win: BrowserWindow) { this.win = win }
+  setWindow(win: BrowserWindow) {
+    this.win = win;
+  }
 
   // 主进程内部事件
   sendToMain(event: string, ...args: unknown[]) {
-    this.emit(event, ...args)
+    this.emit(event, ...args);
   }
 
   // 推送到渲染进程
   sendToRenderer(event: string, ...args: unknown[]) {
-    this.win?.webContents.send(event, ...args)
+    this.win?.webContents.send(event, ...args);
   }
 
   // 同时发送
   send(event: string, ...args: unknown[]) {
-    this.sendToMain(event, ...args)
-    this.sendToRenderer(event, ...args)
+    this.sendToMain(event, ...args);
+    this.sendToRenderer(event, ...args);
   }
 }
 
-export const eventBus = new EventBus()
+export const eventBus = new EventBus();
 ```
 
 注：Slime v0.1 是单窗口应用，不需要 deepchat 的多窗口 SendTarget 机制。直接持有 BrowserWindow 引用即可。后续多窗口时再扩展。
@@ -81,18 +85,18 @@ export const eventBus = new EventBus()
 ```typescript
 // src/main/events.ts（同时被 shared/ 引用）
 export const CONFIG_EVENTS = {
-  CHANGED: 'config:changed',
-} as const
+  CHANGED: "config:changed",
+} as const;
 
 export const EVOLUTION_EVENTS = {
-  STAGE_CHANGED: 'evolution:stage-changed',
-  PROGRESS: 'evolution:progress',
-} as const
+  STAGE_CHANGED: "evolution:stage-changed",
+  PROGRESS: "evolution:progress",
+} as const;
 
 export const CHAT_EVENTS = {
-  MESSAGE: 'chat:message',
-  STREAM_CHUNK: 'chat:stream-chunk',
-} as const
+  MESSAGE: "chat:message",
+  STREAM_CHUNK: "chat:stream-chunk",
+} as const;
 ```
 
 ### 2.3 Presenter 单例
@@ -100,51 +104,55 @@ export const CHAT_EVENTS = {
 ```typescript
 // src/main/presenter/index.ts
 class Presenter implements IPresenter {
-  appPresenter: AppPresenter
-  configPresenter: ConfigPresenter
-  agentPresenter: AgentPresenter
-  filePresenter: FilePresenter
-  gitPresenter: GitPresenter
+  appPresenter: AppPresenter;
+  configPresenter: ConfigPresenter;
+  agentPresenter: AgentPresenter;
+  filePresenter: FilePresenter;
+  gitPresenter: GitPresenter;
 
-  private static instance: Presenter | null = null
+  private static instance: Presenter | null = null;
 
   private constructor() {
-    this.appPresenter = new AppPresenter()
-    this.configPresenter = new ConfigPresenter()
-    this.agentPresenter = new AgentPresenter()
-    this.filePresenter = new FilePresenter()
-    this.gitPresenter = new GitPresenter()
+    this.appPresenter = new AppPresenter();
+    this.configPresenter = new ConfigPresenter();
+    this.agentPresenter = new AgentPresenter();
+    this.filePresenter = new FilePresenter();
+    this.gitPresenter = new GitPresenter();
   }
 
   static getInstance(): Presenter {
-    if (!Presenter.instance) Presenter.instance = new Presenter()
-    return Presenter.instance
+    if (!Presenter.instance) Presenter.instance = new Presenter();
+    return Presenter.instance;
   }
 
   static readonly DISPATCHABLE = new Set<keyof IPresenter>([
-    'appPresenter',
-    'configPresenter',
-    'agentPresenter',
-    'filePresenter',
-    'gitPresenter',
-  ])
+    "appPresenter",
+    "configPresenter",
+    "agentPresenter",
+    "filePresenter",
+    "gitPresenter",
+  ]);
 
-  init() { /* 生命周期初始化 */ }
-  async destroy() { /* 清理 */ }
+  init() {
+    /* 生命周期初始化 */
+  }
+  async destroy() {
+    /* 清理 */
+  }
 }
 
 // 文件底部：注册统一 IPC handler
-ipcMain.handle('presenter:call', (event, name: string, method: string, ...args: unknown[]) => {
+ipcMain.handle("presenter:call", (event, name: string, method: string, ...args: unknown[]) => {
   if (!Presenter.DISPATCHABLE.has(name as keyof IPresenter)) {
-    throw new Error(`Presenter '${name}' is not dispatchable`)
+    throw new Error(`Presenter '${name}' is not dispatchable`);
   }
-  const presenter = Presenter.getInstance()
-  const target = presenter[name]
-  if (typeof target[method] !== 'function') {
-    throw new Error(`Method '${method}' not found on '${name}'`)
+  const presenter = Presenter.getInstance();
+  const target = presenter[name];
+  if (typeof target[method] !== "function") {
+    throw new Error(`Method '${method}' not found on '${name}'`);
   }
-  return target[method](...args)
-})
+  return target[method](...args);
+});
 ```
 
 ### 2.4 子 Presenter
@@ -180,16 +188,16 @@ contextBridge.exposeInMainWorld('slime', {
 
 ```typescript
 // src/preload/index.ts
-contextBridge.exposeInMainWorld('electron', {
+contextBridge.exposeInMainWorld("electron", {
   ipcRenderer: {
     invoke: (channel: string, ...args: unknown[]) => ipcRenderer.invoke(channel, ...args),
     on: (channel: string, listener: (...args: unknown[]) => void) => {
-      ipcRenderer.on(channel, (_event, ...args) => listener(...args))
-      return () => ipcRenderer.removeListener(channel, listener)
+      ipcRenderer.on(channel, (_event, ...args) => listener(...args));
+      return () => ipcRenderer.removeListener(channel, listener);
     },
     removeAllListeners: (channel: string) => ipcRenderer.removeAllListeners(channel),
   },
-})
+});
 ```
 
 ### Window 全局类型
@@ -199,11 +207,11 @@ contextBridge.exposeInMainWorld('electron', {
 interface Window {
   electron: {
     ipcRenderer: {
-      invoke(channel: string, ...args: unknown[]): Promise<unknown>
-      on(channel: string, listener: (...args: unknown[]) => void): () => void
-      removeAllListeners(channel: string): void
-    }
-  }
+      invoke(channel: string, ...args: unknown[]): Promise<unknown>;
+      on(channel: string, listener: (...args: unknown[]) => void): () => void;
+      removeAllListeners(channel: string): void;
+    };
+  };
 }
 ```
 
@@ -231,13 +239,13 @@ src/shared/
 ```typescript
 // shared/types/presenters/index.d.ts
 export interface IPresenter {
-  appPresenter: IAppPresenter
-  configPresenter: IConfigPresenter
-  agentPresenter: IAgentPresenter
-  filePresenter: IFilePresenter
-  gitPresenter: IGitPresenter
-  init(): void
-  destroy(): Promise<void>
+  appPresenter: IAppPresenter;
+  configPresenter: IConfigPresenter;
+  agentPresenter: IAgentPresenter;
+  filePresenter: IFilePresenter;
+  gitPresenter: IGitPresenter;
+  init(): void;
+  destroy(): Promise<void>;
 }
 ```
 
@@ -246,34 +254,34 @@ export interface IPresenter {
 ```typescript
 // shared/types/presenters/agent.presenter.d.ts
 export interface Message {
-  role: 'user' | 'assistant' | 'system'
-  content: string
+  role: "user" | "assistant" | "system";
+  content: string;
 }
 
 export interface IAgentPresenter {
-  chat(params: { messages: Message[]; stream?: boolean }): Promise<{ content: string }>
+  chat(params: { messages: Message[]; stream?: boolean }): Promise<{ content: string }>;
 }
 
 // shared/types/presenters/app.presenter.d.ts
 export interface IAppPresenter {
-  getVersion(): string
+  getVersion(): string;
 }
 
 // shared/types/presenters/config.presenter.d.ts
 export interface IConfigPresenter {
-  get(key: string): Promise<unknown>
-  set(key: string, value: unknown): Promise<boolean>
+  get(key: string): Promise<unknown>;
+  set(key: string, value: unknown): Promise<boolean>;
 }
 
 // shared/types/presenters/file.presenter.d.ts
 export interface IFilePresenter {
-  read(path: string): Promise<string>
-  write(path: string, content: string): Promise<boolean>
+  read(path: string): Promise<string>;
+  write(path: string, content: string): Promise<boolean>;
 }
 
 // shared/types/presenters/git.presenter.d.ts
 export interface IGitPresenter {
-  tag(name: string, message: string): Promise<boolean>
+  tag(name: string, message: string): Promise<boolean>;
 }
 ```
 
@@ -307,18 +315,18 @@ src/renderer/src/
 
 ```typescript
 // composables/usePresenter.ts
-import type { IPresenter } from '@shared/types/presenters'
-import { safeSerialize } from '../utils/serialize'
+import type { IPresenter } from "@shared/types/presenters";
+import { safeSerialize } from "../utils/serialize";
 
 export function usePresenter<T extends keyof IPresenter>(name: T): IPresenter[T] {
   return new Proxy({} as IPresenter[T], {
     get(_target, method: string) {
       return async (...args: unknown[]) => {
-        const rawArgs = args.map(safeSerialize)
-        return window.electron.ipcRenderer.invoke('presenter:call', name, method, ...rawArgs)
-      }
+        const rawArgs = args.map(safeSerialize);
+        return window.electron.ipcRenderer.invoke("presenter:call", name, method, ...rawArgs);
+      };
     },
-  })
+  });
 }
 ```
 
@@ -328,23 +336,23 @@ export function usePresenter<T extends keyof IPresenter>(name: T): IPresenter[T]
 
 ```typescript
 // composables/useIpcQuery.ts
-import { useQuery } from '@pinia/colada'
-import { usePresenter } from './usePresenter'
-import type { IPresenter } from '@shared/types/presenters'
+import { useQuery } from "@pinia/colada";
+import { usePresenter } from "./usePresenter";
+import type { IPresenter } from "@shared/types/presenters";
 
 export function useIpcQuery<T extends keyof IPresenter>(options: {
-  key: () => string[]
-  presenter: T
-  method: string
-  args?: () => unknown[]
-  staleTime?: number
+  key: () => string[];
+  presenter: T;
+  method: string;
+  args?: () => unknown[];
+  staleTime?: number;
 }) {
-  const p = usePresenter(options.presenter)
+  const p = usePresenter(options.presenter);
   return useQuery({
     key: options.key,
     query: () => (p[options.method] as Function)(...(options.args?.() ?? [])),
     staleTime: options.staleTime ?? 30_000,
-  })
+  });
 }
 ```
 
@@ -361,24 +369,24 @@ useIpcMutation 类似，基于 `useMutation`，支持 `invalidateQueries` 在 mu
 ### 5.5 main.ts 改造
 
 ```typescript
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import { PiniaColada } from '@pinia/colada'
-import App from './App.vue'
-import './assets/main.css'
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import { PiniaColada } from "@pinia/colada";
+import App from "./App.vue";
+import "./assets/main.css";
 
-const app = createApp(App)
-const pinia = createPinia()
-app.use(pinia)
-app.use(PiniaColada)
-app.mount('#app')
+const app = createApp(App);
+const pinia = createPinia();
+app.use(pinia);
+app.use(PiniaColada);
+app.mount("#app");
 ```
 
 ### 5.6 App.vue
 
 ```vue
 <script setup lang="ts">
-import EvolutionCenter from './views/EvolutionCenter.vue'
+import EvolutionCenter from "./views/EvolutionCenter.vue";
 </script>
 
 <template>
@@ -400,15 +408,15 @@ pnpm add @pinia/colada
 
 ## 7. 删除/迁移的文件
 
-| 操作 | 文件 | 原因 |
-|------|------|------|
-| 删除 | `src/main/ipc/` 整个目录 | 迁移到 presenter/ |
-| 删除 | `src/shared/types.ts` | 拆分到 shared/types/presenters/ |
-| 改造 | `src/main/index.ts` | 替换 registerAllHandlers 为 Presenter 初始化 |
-| 改造 | `src/preload/index.ts` | 从 window.slime 改为 window.electron |
-| 改造 | `src/renderer/src/main.ts` | 添加 PiniaColada |
-| 改造 | `src/renderer/src/App.vue` | 引入 EvolutionCenter |
-| 更新 | `test/` | 适配新的 Presenter 结构 |
+| 操作 | 文件                       | 原因                                         |
+| ---- | -------------------------- | -------------------------------------------- |
+| 删除 | `src/main/ipc/` 整个目录   | 迁移到 presenter/                            |
+| 删除 | `src/shared/types.ts`      | 拆分到 shared/types/presenters/              |
+| 改造 | `src/main/index.ts`        | 替换 registerAllHandlers 为 Presenter 初始化 |
+| 改造 | `src/preload/index.ts`     | 从 window.slime 改为 window.electron         |
+| 改造 | `src/renderer/src/main.ts` | 添加 PiniaColada                             |
+| 改造 | `src/renderer/src/App.vue` | 引入 EvolutionCenter                         |
+| 更新 | `test/`                    | 适配新的 Presenter 结构                      |
 
 ## 8. 验收标准
 
