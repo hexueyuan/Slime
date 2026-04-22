@@ -14,7 +14,14 @@
       :streaming-blocks="messageStore.streamingBlocks"
       :current-stream-message-id="messageStore.currentStreamMessageId"
     />
-    <ChatInput :is-streaming="messageStore.isStreaming" @submit="onSubmit" @stop="onStop" />
+    <ChatInput
+      :is-streaming="messageStore.isStreaming"
+      :files="attachedFiles"
+      @submit="onSubmit"
+      @stop="onStop"
+      @add-files="onAddFiles"
+      @remove-file="onRemoveFile"
+    />
   </div>
 </template>
 
@@ -26,11 +33,12 @@ import { setupMessageIpc } from "@/stores/messageIpc";
 import MessageList from "./MessageList.vue";
 import ChatInput from "./ChatInput.vue";
 import SessionBar from "./SessionBar.vue";
-import type { ChatMessageRecord } from "@shared/types/chat";
+import type { ChatMessageRecord, MessageFile } from "@shared/types/chat";
 
 const sessionStore = useSessionStore();
 const messageStore = useMessageStore();
 const messageListRef = ref<InstanceType<typeof MessageList> | null>(null);
+const attachedFiles = ref<MessageFile[]>([]);
 
 // 设置 IPC 监听
 const cleanupIpc = setupMessageIpc(messageStore);
@@ -73,9 +81,29 @@ watch(
   },
 );
 
+function onAddFiles(files: File[]) {
+  for (const file of files) {
+    attachedFiles.value.push({
+      id: crypto.randomUUID(),
+      name: file.name,
+      path: "",
+      mimeType: file.type || "application/octet-stream",
+      size: file.size,
+    });
+  }
+}
+
+function onRemoveFile(id: string) {
+  attachedFiles.value = attachedFiles.value.filter((f) => f.id !== id);
+}
+
 async function onSubmit(text: string) {
   if (!sessionStore.activeSessionId) return;
-  await messageStore.sendMessage(sessionStore.activeSessionId, { text, files: [] });
+  await messageStore.sendMessage(sessionStore.activeSessionId, {
+    text,
+    files: attachedFiles.value,
+  });
+  attachedFiles.value = [];
   messageListRef.value?.scrollToBottom(true);
 }
 
