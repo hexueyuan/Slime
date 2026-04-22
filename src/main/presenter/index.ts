@@ -3,6 +3,7 @@ import type { IPresenter } from "@shared/types/presenters";
 import { AppPresenter } from "./appPresenter";
 import { ConfigPresenter } from "./configPresenter";
 import { AgentPresenter } from "./agentPresenter";
+import { SessionPresenter } from "./sessionPresenter";
 import { FilePresenter } from "./filePresenter";
 import { GitPresenter } from "./gitPresenter";
 import { logger } from "@/utils";
@@ -13,6 +14,7 @@ export class Presenter implements IPresenter {
   appPresenter: AppPresenter;
   configPresenter: ConfigPresenter;
   agentPresenter: AgentPresenter;
+  sessionPresenter: SessionPresenter;
   filePresenter: FilePresenter;
   gitPresenter: GitPresenter;
 
@@ -21,7 +23,8 @@ export class Presenter implements IPresenter {
   private constructor() {
     this.appPresenter = new AppPresenter();
     this.configPresenter = new ConfigPresenter();
-    this.agentPresenter = new AgentPresenter();
+    this.sessionPresenter = new SessionPresenter();
+    this.agentPresenter = new AgentPresenter(this.sessionPresenter);
     this.filePresenter = new FilePresenter();
     this.gitPresenter = new GitPresenter();
   }
@@ -42,6 +45,7 @@ export class Presenter implements IPresenter {
     "appPresenter",
     "configPresenter",
     "agentPresenter",
+    "sessionPresenter",
     "filePresenter",
     "gitPresenter",
   ]);
