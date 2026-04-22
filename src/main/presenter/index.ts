@@ -62,7 +62,7 @@ ipcMain.handle(
       throw new Error(`Presenter '${name}' is not dispatchable`);
     }
     const presenter = Presenter.getInstance();
-    const target = presenter[name as DispatchableKey] as Record<string, unknown>;
+    const target = presenter[name as DispatchableKey] as unknown as Record<string, unknown>;
     if (typeof target[method] !== "function") {
       throw new Error(`Method '${method}' not found on '${name}'`);
     }
