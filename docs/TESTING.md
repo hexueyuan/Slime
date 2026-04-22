@@ -10,13 +10,21 @@
 
 ```
 test/
-├── setup.ts           # 全局测试配置和 mock
+├── setup.ts                          # 全局测试配置和 mock
 ├── mocks/
-│   └── electron.ts    # Electron API mock
-├── main/              # 主进程测试
-│   └── main.test.ts
-└── renderer/          # 渲染进程测试
-    └── App.test.ts
+│   └── electron.ts                   # Electron API mock
+├── main/                             # 主进程测试
+│   ├── main.test.ts
+│   ├── eventbus.test.ts
+│   └── presenter.test.ts
+└── renderer/                         # 渲染进程测试
+    ├── App.test.ts
+    ├── composables/
+    │   └── usePresenter.test.ts
+    └── stores/
+        ├── chat.test.ts
+        ├── evolution.test.ts
+        └── config.test.ts
 ```
 
 ## 运行测试

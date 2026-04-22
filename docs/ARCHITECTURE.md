@@ -18,23 +18,24 @@
 ```
 ┌─────────────────────────────────────────────┐
 │ Main Process (Node.js)                      │
-│  - 应用生命周期管理                           │
-│  - BrowserWindow 创建                        │
-│  - IPC 通道注册                              │
-│  - 文件系统操作                               │
-│  - AI Agent 执行环境                          │
+│  - Presenter 单例（动态反射分发）              │
+│  - EventBus（主进程内部 + 渲染进程推送）       │
+│  - 5 个子 Presenter (app/config/agent/       │
+│    file/git)                                 │
+│  - 单一 IPC 通道: presenter:call             │
 └──────────────┬──────────────────────────────┘
                │ IPC (contextIsolation: true)
 ┌──────────────┴──────────────────────────────┐
 │ Preload Script                              │
-│  - contextBridge 安全 API 暴露               │
-│  - @electron-toolkit/preload                │
+│  - contextBridge 暴露 window.electron       │
+│  - ipcRenderer.invoke / on / removeAll      │
 └──────────────┬──────────────────────────────┘
-               │ Window API
+               │ window.electron.ipcRenderer
 ┌──────────────┴──────────────────────────────┐
 │ Renderer Process (Chromium)                  │
 │  - Vue 3 应用                                │
-│  - Pinia 状态管理                            │
+│  - Pinia 状态管理 + @pinia/colada           │
+│  - usePresenter (ES6 Proxy → IPC)           │
 │  - shadcn/vue UI 组件                        │
 │  - TailwindCSS 样式                          │
 └─────────────────────────────────────────────┘
@@ -43,13 +44,20 @@
 ## 目录职责
 
 - `src/main/`: Electron 主进程，Node.js 环境
-  - `ipc/`: IPC handler 注册（handlers/ 按功能域拆分）
+  - `presenter/`: Presenter 单例 + 子 Presenter（app/config/agent/file/git）
+  - `eventbus.ts`: EventBus 单例（主进程事件 + 渲染进程推送）
   - `utils/`: 工具模块（logger, paths, errors）
   - `window.ts`: 窗口创建与管理
   - `index.ts`: 入口，bootstrap 流程
-- `src/preload/`: 安全桥接层，最小化暴露 API
+- `src/preload/`: 安全桥接层，暴露 `window.electron.ipcRenderer`
 - `src/renderer/`: Vue 3 SPA，用户界面
+  - `composables/`: usePresenter, useIpcQuery, useIpcMutation
+  - `stores/`: Pinia stores (chat, evolution, config)
+  - `views/`: 页面组件
+  - `utils/`: 工具函数（safeSerialize 等）
 - `src/shared/`: 进程间共享的 TypeScript 类型
+  - `types/presenters/`: Presenter 接口定义
+  - `events.ts`: 事件常量
 - `src/shadcn/`: UI 组件库（基于 reka-ui）
 - `test/`: 单元测试和集成测试
 - `docs/`: 项目文档
