@@ -48,4 +48,48 @@ describe("ChatInput", () => {
     expect(wrapper.find('[data-testid="send-btn"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="stop-btn"]').exists()).toBe(false);
   });
+
+  it("should render file input element", () => {
+    const wrapper = mount(ChatInput, {
+      props: { isStreaming: false, files: [] },
+    });
+    expect(wrapper.find('input[type="file"]').exists()).toBe(true);
+  });
+
+  it("should render attachment items when files provided", () => {
+    const wrapper = mount(ChatInput, {
+      props: {
+        isStreaming: false,
+        files: [
+          {
+            id: "f1",
+            name: "test.txt",
+            path: "/tmp/test.txt",
+            mimeType: "text/plain",
+            size: 100,
+          },
+        ],
+      },
+    });
+    expect(wrapper.text()).toContain("test.txt");
+  });
+
+  it("should emit remove-file on attachment remove", async () => {
+    const wrapper = mount(ChatInput, {
+      props: {
+        isStreaming: false,
+        files: [
+          {
+            id: "f1",
+            name: "test.txt",
+            path: "/tmp/test.txt",
+            mimeType: "text/plain",
+            size: 100,
+          },
+        ],
+      },
+    });
+    await wrapper.find('[data-testid="remove-file"]').trigger("click");
+    expect(wrapper.emitted("remove-file")).toBeTruthy();
+  });
 });

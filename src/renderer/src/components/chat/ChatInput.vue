@@ -8,6 +8,15 @@
     <div
       class="overflow-hidden rounded-xl border border-border bg-card/30 shadow-sm backdrop-blur-lg"
     >
+      <!-- 附件列表 -->
+      <div v-if="files?.length" class="flex flex-wrap gap-1.5 px-4 pt-3">
+        <ChatAttachmentItem
+          v-for="file in files"
+          :key="file.id"
+          :file="file"
+          @remove="$emit('remove-file', $event)"
+        />
+      </div>
       <!-- 编辑区域 -->
       <div class="px-4 pt-4 pb-2">
         <textarea
@@ -22,11 +31,11 @@
       </div>
       <!-- 工具栏 -->
       <div class="flex items-center justify-between px-3 pb-2">
-        <!-- 左侧：附件按钮占位 -->
+        <!-- 左侧：附件按钮 -->
         <button
           class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
           title="附件"
-          disabled
+          @click="fileInputRef?.click()"
         >
           <svg
             width="16"
@@ -75,23 +84,39 @@
         </button>
       </div>
     </div>
+    <!-- 隐藏的文件选择器 -->
+    <input ref="fileInputRef" type="file" multiple class="hidden" @change="onFileSelect" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, nextTick } from "vue";
+import ChatAttachmentItem from "./ChatAttachmentItem.vue";
+import type { MessageFile } from "@shared/types/chat";
 
 defineProps<{
   isStreaming: boolean;
+  files?: MessageFile[];
 }>();
 
 const emit = defineEmits<{
   submit: [text: string];
   stop: [];
+  "add-files": [files: File[]];
+  "remove-file": [id: string];
 }>();
 
 const inputText = ref("");
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+
+function onFileSelect(e: Event) {
+  const input = e.target as HTMLInputElement;
+  if (input.files?.length) {
+    emit("add-files", Array.from(input.files));
+    input.value = "";
+  }
+}
 const isComposing = ref(false);
 
 function onKeydown(e: KeyboardEvent) {
