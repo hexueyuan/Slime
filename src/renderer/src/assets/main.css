@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+@source '../../../node_modules/markstream-vue/dist/tailwind.ts';
+@import 'markstream-vue/index.tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -13,6 +16,10 @@
   --color-primary-foreground: oklch(0.985 0 0);
   --color-accent: oklch(0.97 0 0);
   --color-accent-foreground: oklch(0.205 0 0);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.145 0 0);
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-destructive-foreground: oklch(0.985 0 0);
 }
 
 .dark {
@@ -25,4 +32,45 @@
   --color-primary-foreground: oklch(0.205 0 0);
   --color-accent: oklch(0.269 0 0);
   --color-accent-foreground: oklch(0.985 0 0);
+  --color-card: oklch(0.269 0 0);
+  --color-card-foreground: oklch(0.985 0 0);
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-destructive-foreground: oklch(0.985 0 0);
+}
+
+.prose {
+  pre {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  p {
+    @apply my-2;
+  }
+  li p {
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  h1 {
+    @apply text-2xl font-bold my-3 py-0;
+  }
+  h2 {
+    @apply text-xl font-medium my-3 py-0;
+  }
+  h3 {
+    @apply text-base font-medium my-2 py-0;
+  }
+  h4,
+  h5,
+  h6 {
+    @apply text-sm font-medium my-1.5 py-0;
+  }
+  ul,
+  ol {
+    @apply my-1.5;
+  }
+  hr {
+    @apply my-8;
+  }
 }
