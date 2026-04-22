@@ -38,6 +38,8 @@ export const useEvolutionStore = defineStore("evolution", () => {
     context.value = null;
   }
 
+  // TODO: listen to evolution:stage-changed and evolution:progress events from main process
+
   return {
     stage,
     progress,

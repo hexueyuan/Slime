@@ -26,6 +26,8 @@ export const useChatStore = defineStore("chat", () => {
     messages.value = [];
   }
 
+  // TODO: listen to chat:stream-chunk events from main process via window.electron.ipcRenderer.on()
+
   return {
     messages,
     isLoading,

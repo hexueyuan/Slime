@@ -43,11 +43,3 @@ export function createMainWindow(): BrowserWindow {
 
   return mainWindow;
 }
-
-export function getMainWindow(): BrowserWindow | null {
-  return mainWindow;
-}
-
-export function sendToRenderer(channel: string, ...args: unknown[]): void {
-  mainWindow?.webContents.send(channel, ...args);
-}

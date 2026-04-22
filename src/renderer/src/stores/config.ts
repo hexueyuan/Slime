@@ -20,6 +20,8 @@ export const useConfigStore = defineStore("config", () => {
     return result;
   }
 
+  // TODO: listen to config:changed events from main process to refresh cache
+
   return {
     cache,
     get,
