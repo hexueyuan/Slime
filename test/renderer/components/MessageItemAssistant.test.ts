@@ -55,4 +55,40 @@ describe("MessageItemAssistant", () => {
     });
     expect(wrapper.find(".flex.flex-col").exists()).toBe(true);
   });
+
+  it("should render reasoning block", () => {
+    const blocks: AssistantMessageBlock[] = [
+      {
+        type: "reasoning_content",
+        content: "thinking...",
+        status: "success",
+        timestamp: Date.now(),
+        reasoning_time: { start: 1000, end: 3000 },
+      },
+    ];
+    const wrapper = mount(MessageItemAssistant, {
+      props: { message: makeMessage(blocks) },
+    });
+    expect(wrapper.find('[data-testid="reasoning-toggle"]').exists()).toBe(true);
+  });
+
+  it("should render error block", () => {
+    const blocks: AssistantMessageBlock[] = [
+      { type: "error", content: "Something went wrong", status: "error", timestamp: Date.now() },
+    ];
+    const wrapper = mount(MessageItemAssistant, {
+      props: { message: makeMessage(blocks) },
+    });
+    expect(wrapper.text()).toContain("Something went wrong");
+  });
+
+  it("should render toolbar on hover", () => {
+    const blocks: AssistantMessageBlock[] = [
+      { type: "content", content: "hello", status: "success", timestamp: Date.now() },
+    ];
+    const wrapper = mount(MessageItemAssistant, {
+      props: { message: makeMessage(blocks) },
+    });
+    expect(wrapper.find('[data-testid="toolbar-copy"]').exists()).toBe(true);
+  });
 });
