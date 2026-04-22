@@ -2,7 +2,8 @@ import { app, BrowserWindow } from "electron";
 import { electronApp } from "@electron-toolkit/utils";
 import { existsSync, mkdirSync } from "fs";
 import { createMainWindow } from "./window";
-import { registerAllHandlers } from "./ipc";
+import { Presenter } from "./presenter";
+import { eventBus } from "./eventbus";
 import { logger, paths } from "./utils";
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
@@ -25,8 +26,12 @@ async function bootstrap(): Promise<void> {
   electronApp.setAppUserModelId("com.slime.app");
 
   ensureDirectories();
-  registerAllHandlers();
-  createMainWindow();
+
+  const presenter = Presenter.getInstance();
+  presenter.init();
+
+  const mainWindow = createMainWindow();
+  eventBus.setWindow(mainWindow);
 
   logger.info("Slime ready");
 }
