@@ -1,5 +1,13 @@
 <template>
   <div class="flex flex-col h-full bg-background relative">
+    <SessionBar
+      :title="currentSessionTitle"
+      :sessions="sessionStore.sessions"
+      :active-session-id="sessionStore.activeSessionId"
+      @new-session="onNewSession"
+      @select-session="onSelectSession"
+      @delete-session="onDeleteSession"
+    />
     <MessageList
       ref="messageListRef"
       :messages="messages"
@@ -17,6 +25,7 @@ import { useMessageStore } from "@/stores/chat";
 import { setupMessageIpc } from "@/stores/messageIpc";
 import MessageList from "./MessageList.vue";
 import ChatInput from "./ChatInput.vue";
+import SessionBar from "./SessionBar.vue";
 import type { ChatMessageRecord } from "@shared/types/chat";
 
 const sessionStore = useSessionStore();
@@ -27,7 +36,11 @@ const messageListRef = ref<InstanceType<typeof MessageList> | null>(null);
 const cleanupIpc = setupMessageIpc(messageStore);
 onUnmounted(() => cleanupIpc());
 
-// 消息列表
+const currentSessionTitle = computed(() => {
+  const session = sessionStore.sessions.find((s) => s.id === sessionStore.activeSessionId);
+  return session?.title || "新对话";
+});
+
 const messages = computed<ChatMessageRecord[]>(() => {
   return messageStore.messageIds
     .map((id) => messageStore.getMessage(id))
@@ -69,5 +82,24 @@ async function onSubmit(text: string) {
 async function onStop() {
   if (!sessionStore.activeSessionId) return;
   await messageStore.stopGeneration(sessionStore.activeSessionId);
+}
+
+async function onNewSession() {
+  await sessionStore.createSession();
+  if (sessionStore.activeSessionId) {
+    await messageStore.loadMessages(sessionStore.activeSessionId);
+    messageListRef.value?.scrollToBottom(true);
+  }
+}
+
+function onSelectSession(id: string) {
+  sessionStore.selectSession(id);
+}
+
+async function onDeleteSession(id: string) {
+  await sessionStore.deleteSession(id);
+  if (sessionStore.activeSessionId) {
+    await messageStore.loadMessages(sessionStore.activeSessionId);
+  }
 }
 </script>
