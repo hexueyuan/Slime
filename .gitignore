@@ -14,3 +14,4 @@ yarn.lock
 .env.*.local
 .npmrc
 .claude/settings.local.json
+.superpowers/
