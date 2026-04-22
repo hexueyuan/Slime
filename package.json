@@ -63,7 +63,8 @@
     "vue-tsc": "^2.2.8"
   },
   "simple-git-hooks": {
-    "pre-commit": "npx lint-staged"
+    "pre-commit": "npx lint-staged",
+    "commit-msg": "node scripts/verify-commit.js \"$1\""
   },
   "lint-staged": {
     "*.{js,ts,vue}": [

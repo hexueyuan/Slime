@@ -8,6 +8,7 @@ yarn.lock
 .vscode
 .idea
 .eslintcache
+*.tsbuildinfo
 .env
 .env.local
 .env.*.local
