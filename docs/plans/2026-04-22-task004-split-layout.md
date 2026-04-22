@@ -12,20 +12,21 @@
 
 ## 文件结构
 
-| 操作 | 文件 | 职责 |
-|------|------|------|
-| 新建 | `src/renderer/src/composables/useSplitPane.ts` | 可拖拽分割线逻辑 composable |
-| 新建 | `src/renderer/src/components/chat/ChatPanel.vue` | 左侧对话区占位 |
-| 新建 | `src/renderer/src/components/function/FunctionPanel.vue` | 右侧功能区占位 |
-| 改造 | `src/renderer/src/views/EvolutionCenter.vue` | 布局容器（标题栏+分栏+分割线） |
-| 新建 | `test/renderer/composables/useSplitPane.test.ts` | useSplitPane 单测 |
-| 改造 | `test/renderer/App.test.ts` | 更新为分栏布局断言 |
+| 操作 | 文件                                                     | 职责                           |
+| ---- | -------------------------------------------------------- | ------------------------------ |
+| 新建 | `src/renderer/src/composables/useSplitPane.ts`           | 可拖拽分割线逻辑 composable    |
+| 新建 | `src/renderer/src/components/chat/ChatPanel.vue`         | 左侧对话区占位                 |
+| 新建 | `src/renderer/src/components/function/FunctionPanel.vue` | 右侧功能区占位                 |
+| 改造 | `src/renderer/src/views/EvolutionCenter.vue`             | 布局容器（标题栏+分栏+分割线） |
+| 新建 | `test/renderer/composables/useSplitPane.test.ts`         | useSplitPane 单测              |
+| 改造 | `test/renderer/App.test.ts`                              | 更新为分栏布局断言             |
 
 ---
 
 ### Task 1: useSplitPane composable
 
 **Files:**
+
 - Create: `src/renderer/src/composables/useSplitPane.ts`
 - Create: `test/renderer/composables/useSplitPane.test.ts`
 
@@ -33,124 +34,124 @@
 
 ```ts
 // test/renderer/composables/useSplitPane.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref, nextTick } from 'vue'
-import { useSplitPane } from '@/composables/useSplitPane'
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ref, nextTick } from "vue";
+import { useSplitPane } from "@/composables/useSplitPane";
 
 function createMockContainer(width: number) {
   return ref({
     clientWidth: width,
-  } as unknown as HTMLElement)
+  } as unknown as HTMLElement);
 }
 
-describe('useSplitPane', () => {
-  it('should initialize leftWidth based on defaultRatio', () => {
-    const container = createMockContainer(1000)
-    const { leftWidth } = useSplitPane({ containerRef: container, defaultRatio: 0.35 })
-    expect(leftWidth.value).toBe(350)
-  })
+describe("useSplitPane", () => {
+  it("should initialize leftWidth based on defaultRatio", () => {
+    const container = createMockContainer(1000);
+    const { leftWidth } = useSplitPane({ containerRef: container, defaultRatio: 0.35 });
+    expect(leftWidth.value).toBe(350);
+  });
 
-  it('should return 0 when container is null', () => {
-    const container = ref(null)
-    const { leftWidth } = useSplitPane({ containerRef: container, defaultRatio: 0.35 })
-    expect(leftWidth.value).toBe(0)
-  })
+  it("should return 0 when container is null", () => {
+    const container = ref(null);
+    const { leftWidth } = useSplitPane({ containerRef: container, defaultRatio: 0.35 });
+    expect(leftWidth.value).toBe(0);
+  });
 
-  it('should clamp to minLeftPx', () => {
-    const container = createMockContainer(500)
+  it("should clamp to minLeftPx", () => {
+    const container = createMockContainer(500);
     const { leftWidth } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.1,
       minLeftPx: 280,
-    })
-    expect(leftWidth.value).toBe(280)
-  })
+    });
+    expect(leftWidth.value).toBe(280);
+  });
 
-  it('should clamp to respect minRightPx', () => {
-    const container = createMockContainer(500)
+  it("should clamp to respect minRightPx", () => {
+    const container = createMockContainer(500);
     const { leftWidth } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.9,
       minRightPx: 320,
-    })
+    });
     // 500 - 320 = 180
-    expect(leftWidth.value).toBe(180)
-  })
+    expect(leftWidth.value).toBe(180);
+  });
 
-  it('should not be dragging initially', () => {
-    const container = createMockContainer(1000)
-    const { isDragging } = useSplitPane({ containerRef: container })
-    expect(isDragging.value).toBe(false)
-  })
+  it("should not be dragging initially", () => {
+    const container = createMockContainer(1000);
+    const { isDragging } = useSplitPane({ containerRef: container });
+    expect(isDragging.value).toBe(false);
+  });
 
-  it('should update leftWidth on mouse drag', async () => {
-    const container = createMockContainer(1000)
+  it("should update leftWidth on mouse drag", async () => {
+    const container = createMockContainer(1000);
     const { leftWidth, isDragging, onMouseDown } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.35,
       minLeftPx: 280,
       minRightPx: 320,
-    })
-    expect(leftWidth.value).toBe(350)
+    });
+    expect(leftWidth.value).toBe(350);
 
     // Start drag
-    onMouseDown(new MouseEvent('mousedown', { clientX: 350 }))
-    expect(isDragging.value).toBe(true)
+    onMouseDown(new MouseEvent("mousedown", { clientX: 350 }));
+    expect(isDragging.value).toBe(true);
 
     // Move mouse to x=400 (delta +50)
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 400 }))
-    await nextTick()
-    expect(leftWidth.value).toBe(400)
+    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 400 }));
+    await nextTick();
+    expect(leftWidth.value).toBe(400);
 
     // Release
-    document.dispatchEvent(new MouseEvent('mouseup'))
-    expect(isDragging.value).toBe(false)
-  })
+    document.dispatchEvent(new MouseEvent("mouseup"));
+    expect(isDragging.value).toBe(false);
+  });
 
-  it('should clamp during drag', async () => {
-    const container = createMockContainer(1000)
+  it("should clamp during drag", async () => {
+    const container = createMockContainer(1000);
     const { leftWidth, onMouseDown } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.35,
       minLeftPx: 280,
       minRightPx: 320,
-    })
+    });
 
-    onMouseDown(new MouseEvent('mousedown', { clientX: 350 }))
+    onMouseDown(new MouseEvent("mousedown", { clientX: 350 }));
 
     // Drag far left — should clamp to minLeftPx
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 100 }))
-    await nextTick()
-    expect(leftWidth.value).toBe(280)
+    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 100 }));
+    await nextTick();
+    expect(leftWidth.value).toBe(280);
 
     // Drag far right — should clamp to containerWidth - minRightPx
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 900 }))
-    await nextTick()
-    expect(leftWidth.value).toBe(680)
+    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 900 }));
+    await nextTick();
+    expect(leftWidth.value).toBe(680);
 
-    document.dispatchEvent(new MouseEvent('mouseup'))
-  })
+    document.dispatchEvent(new MouseEvent("mouseup"));
+  });
 
-  it('should reset to default ratio', () => {
-    const container = createMockContainer(1000)
+  it("should reset to default ratio", () => {
+    const container = createMockContainer(1000);
     const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.35,
       minLeftPx: 280,
       minRightPx: 320,
-    })
+    });
 
     // Simulate drag to change width
-    onMouseDown(new MouseEvent('mousedown', { clientX: 350 }))
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 500 }))
-    document.dispatchEvent(new MouseEvent('mouseup'))
-    expect(leftWidth.value).toBe(500)
+    onMouseDown(new MouseEvent("mousedown", { clientX: 350 }));
+    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 500 }));
+    document.dispatchEvent(new MouseEvent("mouseup"));
+    expect(leftWidth.value).toBe(500);
 
     // Reset
-    resetToDefault()
-    expect(leftWidth.value).toBe(350)
-  })
-})
+    resetToDefault();
+    expect(leftWidth.value).toBe(350);
+  });
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -162,83 +163,83 @@ Expected: FAIL — module `@/composables/useSplitPane` not found
 
 ```ts
 // src/renderer/src/composables/useSplitPane.ts
-import { ref, watch, onUnmounted, type Ref } from 'vue'
+import { ref, watch, onUnmounted, type Ref } from "vue";
 
 interface UseSplitPaneOptions {
-  containerRef: Ref<HTMLElement | null>
-  defaultRatio?: number
-  minLeftPx?: number
-  minRightPx?: number
+  containerRef: Ref<HTMLElement | null>;
+  defaultRatio?: number;
+  minLeftPx?: number;
+  minRightPx?: number;
 }
 
 export function useSplitPane(options: UseSplitPaneOptions) {
-  const { containerRef, defaultRatio = 0.35, minLeftPx = 280, minRightPx = 320 } = options
+  const { containerRef, defaultRatio = 0.35, minLeftPx = 280, minRightPx = 320 } = options;
 
-  const leftWidth = ref(0)
-  const isDragging = ref(false)
+  const leftWidth = ref(0);
+  const isDragging = ref(false);
 
   function clamp(value: number): number {
-    const containerWidth = containerRef.value?.clientWidth ?? 0
-    if (containerWidth === 0) return 0
-    const max = containerWidth - minRightPx
-    return Math.min(Math.max(value, minLeftPx), max)
+    const containerWidth = containerRef.value?.clientWidth ?? 0;
+    if (containerWidth === 0) return 0;
+    const max = containerWidth - minRightPx;
+    return Math.min(Math.max(value, minLeftPx), max);
   }
 
   function recalc() {
-    const containerWidth = containerRef.value?.clientWidth ?? 0
+    const containerWidth = containerRef.value?.clientWidth ?? 0;
     if (containerWidth === 0) {
-      leftWidth.value = 0
-      return
+      leftWidth.value = 0;
+      return;
     }
-    leftWidth.value = clamp(containerWidth * defaultRatio)
+    leftWidth.value = clamp(containerWidth * defaultRatio);
   }
 
   // Init + watch container changes
-  watch(containerRef, () => recalc(), { immediate: true })
+  watch(containerRef, () => recalc(), { immediate: true });
 
-  let startX = 0
-  let startWidth = 0
+  let startX = 0;
+  let startWidth = 0;
 
   function onMouseMove(e: MouseEvent) {
-    const delta = e.clientX - startX
-    leftWidth.value = clamp(startWidth + delta)
+    const delta = e.clientX - startX;
+    leftWidth.value = clamp(startWidth + delta);
   }
 
   function onMouseUp() {
-    isDragging.value = false
-    document.removeEventListener('mousemove', onMouseMove)
-    document.removeEventListener('mouseup', onMouseUp)
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
+    isDragging.value = false;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
   }
 
   function onMouseDown(e: MouseEvent) {
-    startX = e.clientX
-    startWidth = leftWidth.value
-    isDragging.value = true
-    document.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseup', onMouseUp)
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+    startX = e.clientX;
+    startWidth = leftWidth.value;
+    isDragging.value = true;
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
   }
 
   function resetToDefault() {
-    recalc()
+    recalc();
   }
 
   // Handle window resize
   function onResize() {
-    leftWidth.value = clamp(leftWidth.value)
+    leftWidth.value = clamp(leftWidth.value);
   }
 
-  window.addEventListener('resize', onResize)
+  window.addEventListener("resize", onResize);
   onUnmounted(() => {
-    window.removeEventListener('resize', onResize)
-    document.removeEventListener('mousemove', onMouseMove)
-    document.removeEventListener('mouseup', onMouseUp)
-  })
+    window.removeEventListener("resize", onResize);
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  });
 
-  return { leftWidth, isDragging, onMouseDown, resetToDefault }
+  return { leftWidth, isDragging, onMouseDown, resetToDefault };
 }
 ```
 
@@ -259,6 +260,7 @@ git commit -m "feat: add useSplitPane composable with tests"
 ### Task 2: ChatPanel 和 FunctionPanel 占位组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/chat/ChatPanel.vue`
 - Create: `src/renderer/src/components/function/FunctionPanel.vue`
 
@@ -267,9 +269,7 @@ git commit -m "feat: add useSplitPane composable with tests"
 ```vue
 <!-- src/renderer/src/components/chat/ChatPanel.vue -->
 <template>
-  <div class="flex h-full items-center justify-center text-muted-foreground">
-    对话区
-  </div>
+  <div class="flex h-full items-center justify-center text-muted-foreground">对话区</div>
 </template>
 ```
 
@@ -278,9 +278,7 @@ git commit -m "feat: add useSplitPane composable with tests"
 ```vue
 <!-- src/renderer/src/components/function/FunctionPanel.vue -->
 <template>
-  <div class="flex h-full items-center justify-center text-muted-foreground">
-    功能区
-  </div>
+  <div class="flex h-full items-center justify-center text-muted-foreground">功能区</div>
 </template>
 ```
 
@@ -296,6 +294,7 @@ git commit -m "feat: add ChatPanel and FunctionPanel placeholder components"
 ### Task 3: 改造 EvolutionCenter.vue
 
 **Files:**
+
 - Modify: `src/renderer/src/views/EvolutionCenter.vue`
 
 - [ ] **Step 1: Rewrite EvolutionCenter.vue**
@@ -305,18 +304,18 @@ Replace entire file content with:
 ```vue
 <!-- src/renderer/src/views/EvolutionCenter.vue -->
 <script setup lang="ts">
-import { ref } from 'vue'
-import ChatPanel from '../components/chat/ChatPanel.vue'
-import FunctionPanel from '../components/function/FunctionPanel.vue'
-import { useSplitPane } from '../composables/useSplitPane'
+import { ref } from "vue";
+import ChatPanel from "../components/chat/ChatPanel.vue";
+import FunctionPanel from "../components/function/FunctionPanel.vue";
+import { useSplitPane } from "../composables/useSplitPane";
 
-const mainRef = ref<HTMLElement | null>(null)
+const mainRef = ref<HTMLElement | null>(null);
 const { leftWidth, isDragging, onMouseDown, resetToDefault } = useSplitPane({
   containerRef: mainRef,
   defaultRatio: 0.35,
   minLeftPx: 280,
   minRightPx: 320,
-})
+});
 </script>
 
 <template>
@@ -378,6 +377,7 @@ git commit -m "feat: implement split layout for EvolutionCenter"
 ### Task 4: 更新 App.test.ts
 
 **Files:**
+
 - Modify: `test/renderer/App.test.ts`
 
 - [ ] **Step 1: Update test to match new layout**
@@ -386,43 +386,43 @@ Replace entire file content with:
 
 ```ts
 // test/renderer/App.test.ts
-import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createPinia } from 'pinia'
-import EvolutionCenter from '@/views/EvolutionCenter.vue'
+import { describe, it, expect, vi } from "vitest";
+import { mount } from "@vue/test-utils";
+import { createPinia } from "pinia";
+import EvolutionCenter from "@/views/EvolutionCenter.vue";
 
 // Mock window.addEventListener/removeEventListener for resize handler in useSplitPane
-vi.stubGlobal('addEventListener', vi.fn())
-vi.stubGlobal('removeEventListener', vi.fn())
+vi.stubGlobal("addEventListener", vi.fn());
+vi.stubGlobal("removeEventListener", vi.fn());
 
-describe('EvolutionCenter', () => {
-  it('should render title bar with main title and subtitle', () => {
+describe("EvolutionCenter", () => {
+  it("should render title bar with main title and subtitle", () => {
     const wrapper = mount(EvolutionCenter, {
       global: { plugins: [createPinia()] },
       attachTo: document.body,
-    })
-    expect(wrapper.text()).toContain('进化中心')
-    expect(wrapper.text()).toContain('Slime egg v0.1')
-  })
+    });
+    expect(wrapper.text()).toContain("进化中心");
+    expect(wrapper.text()).toContain("Slime egg v0.1");
+  });
 
-  it('should render chat and function panels', () => {
+  it("should render chat and function panels", () => {
     const wrapper = mount(EvolutionCenter, {
       global: { plugins: [createPinia()] },
       attachTo: document.body,
-    })
-    expect(wrapper.text()).toContain('对话区')
-    expect(wrapper.text()).toContain('功能区')
-  })
+    });
+    expect(wrapper.text()).toContain("对话区");
+    expect(wrapper.text()).toContain("功能区");
+  });
 
-  it('should render draggable divider', () => {
+  it("should render draggable divider", () => {
     const wrapper = mount(EvolutionCenter, {
       global: { plugins: [createPinia()] },
       attachTo: document.body,
-    })
-    const divider = wrapper.find('.cursor-col-resize')
-    expect(divider.exists()).toBe(true)
-  })
-})
+    });
+    const divider = wrapper.find(".cursor-col-resize");
+    expect(divider.exists()).toBe(true);
+  });
+});
 ```
 
 - [ ] **Step 2: Run all tests**
@@ -474,6 +474,7 @@ pnpm run dev
 ```
 
 Verify in the running app:
+
 1. 标题栏显示"进化中心" + "Slime egg v0.1"
 2. 左侧 35% 显示"对话区"，右侧 65% 显示"功能区"
 3. 拖拽分割线可调整比例

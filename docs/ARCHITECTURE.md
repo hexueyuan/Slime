@@ -51,9 +51,10 @@
   - `index.ts`: 入口，bootstrap 流程
 - `src/preload/`: 安全桥接层，暴露 `window.electron.ipcRenderer`
 - `src/renderer/`: Vue 3 SPA，用户界面
-  - `composables/`: usePresenter, useIpcQuery, useIpcMutation
+  - `components/`: UI 组件（chat/ChatPanel, function/FunctionPanel）
+  - `composables/`: usePresenter, useIpcQuery, useIpcMutation, useSplitPane
   - `stores/`: Pinia stores (chat, evolution, config)
-  - `views/`: 页面组件
+  - `views/`: 页面组件（EvolutionCenter 左右分栏布局）
   - `utils/`: 工具函数（safeSerialize 等）
 - `src/shared/`: 进程间共享的 TypeScript 类型
   - `types/presenters/`: Presenter 接口定义

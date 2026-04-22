@@ -20,7 +20,8 @@ test/
 └── renderer/                         # 渲染进程测试
     ├── App.test.ts
     ├── composables/
-    │   └── usePresenter.test.ts
+    │   ├── usePresenter.test.ts
+    │   └── useSplitPane.test.ts
     └── stores/
         ├── chat.test.ts
         ├── evolution.test.ts

@@ -43,6 +43,7 @@
 ### 改造：`src/renderer/src/views/EvolutionCenter.vue`
 
 将占位页替换为真实布局容器：
+
 - 顶部标题栏区域
 - flex 主体：ChatPanel + 分割线 div + FunctionPanel
 - 分割线绑定 `useSplitPane` 返回的事件和样式
@@ -61,18 +62,21 @@
 可拖拽分割线逻辑 composable：
 
 **输入**：
+
 - `containerRef: Ref<HTMLElement | null>` — 主体容器元素
 - `defaultRatio: number` — 默认左侧比例（0.35）
 - `minLeftPx: number` — 左侧最小宽度（280）
 - `minRightPx: number` — 右侧最小宽度（320）
 
 **输出**：
+
 - `leftWidth: Ref<number>` — 左侧面板当前宽度（px）
 - `isDragging: Ref<boolean>` — 是否正在拖拽
 - `onMouseDown: (e: MouseEvent) => void` — 分割线 mousedown 处理
 - `resetToDefault: () => void` — 双击重置为默认比例
 
 **实现要点**：
+
 - mousedown 在分割线上触发，mousemove/mouseup 监听在 document 上（避免鼠标移出分割线时丢失事件）
 - 拖拽时设置 `user-select: none` 和 `cursor: col-resize` 到 body 上
 - 拖拽结束恢复 body 样式
@@ -82,6 +86,7 @@
 ## 样式方案
 
 使用 TailwindCSS 类 + 少量内联 style（仅 `width` 动态绑定）：
+
 - 标题栏：`h-12 flex items-center border-b border-border px-4`
 - 主体：`flex flex-1 overflow-hidden`
 - 分割线：`w-[5px] cursor-col-resize flex items-center justify-center hover:bg-border transition-colors`
