@@ -88,10 +88,14 @@ export const useMessageStore = defineStore("message", () => {
     await agentPresenter.answerQuestion(sessionId, toolCallId, answer);
   }
 
-  async function sendMessage(sessionId: string, content: UserMessageContent): Promise<void> {
+  function sendMessage(sessionId: string, content: UserMessageContent): void {
     addOptimisticUserMessage(sessionId, content);
     clearStreamError();
-    await agentPresenter.chat(sessionId, content);
+    setStreamingState(sessionId, `pending-${Date.now()}`, []);
+    agentPresenter.chat(sessionId, content).catch((err: unknown) => {
+      clearStreamingState();
+      setStreamError(String(err));
+    });
   }
 
   async function stopGeneration(sessionId: string): Promise<void> {

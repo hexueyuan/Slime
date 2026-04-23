@@ -24,7 +24,7 @@ function onWorkspaceReady() {
 const mainRef = ref<HTMLElement | null>(null);
 const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
   containerRef: mainRef,
-  defaultRatio: 0.35,
+  defaultRatio: 0.65,
   minLeftPx: 280,
   minRightPx: 320,
 });

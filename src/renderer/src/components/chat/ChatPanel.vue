@@ -127,7 +127,7 @@ function onRemoveFile(id: string) {
 
 async function onSubmit(text: string) {
   if (!sessionStore.activeSessionId) return;
-  await messageStore.sendMessage(sessionStore.activeSessionId, {
+  messageStore.sendMessage(sessionStore.activeSessionId, {
     text,
     files: attachedFiles.value,
   });
