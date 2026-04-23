@@ -6,7 +6,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
+:root {
   --color-background: oklch(1 0 0);
   --color-foreground: oklch(0.145 0 0);
   --color-muted: oklch(0.97 0 0);
@@ -20,6 +20,7 @@
   --color-card-foreground: oklch(0.145 0 0);
   --color-destructive: oklch(0.577 0.245 27.325);
   --color-destructive-foreground: oklch(0.985 0 0);
+  --color-sidebar: oklch(0.97 0 0);
 }
 
 .dark {
@@ -36,6 +37,24 @@
   --color-card-foreground: oklch(0.985 0 0);
   --color-destructive: oklch(0.577 0.245 27.325);
   --color-destructive-foreground: oklch(0.985 0 0);
+  --color-sidebar: oklch(0.18 0 0);
+}
+
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-border: var(--color-border);
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+  --color-card: var(--color-card);
+  --color-card-foreground: var(--color-card-foreground);
+  --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: var(--color-destructive-foreground);
+  --color-sidebar: var(--color-sidebar);
 }
 
 .prose {
