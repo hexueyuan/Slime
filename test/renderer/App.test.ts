@@ -34,13 +34,12 @@ describe("EvolutionCenter", () => {
     mockOn.mockClear();
   });
 
-  it("should render title bar with main title and subtitle", () => {
+  it("should render title bar as drag region", () => {
     const wrapper = mount(EvolutionCenter, {
       global: { plugins: [createPinia()] },
       attachTo: document.body,
     });
-    expect(wrapper.text()).toContain("进化中心");
-    expect(wrapper.text()).toContain("Slime egg v0.1");
+    expect(wrapper.find(".h-9").exists()).toBe(true);
   });
 
   it("should render chat and function panels", () => {

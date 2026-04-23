@@ -16,23 +16,20 @@ const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
 </script>
 
 <template>
-  <div class="flex h-full flex-row">
-    <!-- Sidebar -->
-    <AppSidebar />
+  <div class="flex h-full flex-col bg-sidebar">
+    <!-- Title Bar (full width, above everything) -->
+    <div class="h-9 shrink-0" style="-webkit-app-region: drag" />
 
-    <!-- Right content area -->
-    <div class="flex min-w-0 flex-1 flex-col">
-      <!-- Title Bar -->
+    <!-- Body: Sidebar + Content card -->
+    <div class="flex min-h-0 flex-1">
+      <!-- Sidebar (below title bar, no overlap with traffic lights) -->
+      <AppSidebar />
+
+      <!-- Content area as a "card" with rounded top-left corner -->
       <div
-        class="flex h-12 shrink-0 items-center border-b border-border bg-sidebar px-4"
-        style="-webkit-app-region: drag"
+        ref="mainRef"
+        class="flex min-w-0 flex-1 overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
       >
-        <span class="text-[15px] font-semibold">进化中心</span>
-        <span class="ml-3 text-xs text-muted-foreground">Slime egg v0.1</span>
-      </div>
-
-      <!-- Main Content -->
-      <div ref="mainRef" class="flex flex-1 overflow-hidden">
         <!-- Left: Chat Panel -->
         <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
           <ChatPanel />
@@ -44,7 +41,6 @@ const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
           @mousedown="onMouseDown"
           @dblclick="resetToDefault"
         >
-          <!-- Invisible wider hit area -->
           <div class="absolute inset-y-0 -left-1 -right-1" />
         </div>
 

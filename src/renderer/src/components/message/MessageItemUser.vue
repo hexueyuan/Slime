@@ -1,8 +1,6 @@
 <template>
   <div class="group flex flex-row-reverse pt-5 pl-11 gap-2">
-    <div
-      class="bg-muted border border-border rounded-lg p-2 text-sm leading-[1.714] whitespace-pre-wrap break-all"
-    >
+    <div class="bg-muted/50 rounded-md p-2 text-sm leading-[1.714] whitespace-pre-wrap break-all">
       {{ parsedContent.text }}
     </div>
   </div>

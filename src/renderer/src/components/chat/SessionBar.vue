@@ -1,5 +1,7 @@
 <template>
-  <div class="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
+  <div
+    class="absolute top-0 left-0 right-0 z-10 flex h-10 items-center justify-between bg-background/50 px-4 backdrop-blur-lg"
+  >
     <button
       data-testid="session-title"
       class="flex items-center gap-1 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"

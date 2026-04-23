@@ -37,7 +37,7 @@
   --color-card-foreground: oklch(0.985 0 0);
   --color-destructive: oklch(0.577 0.245 27.325);
   --color-destructive-foreground: oklch(0.985 0 0);
-  --color-sidebar: oklch(0.18 0 0);
+  --color-sidebar: oklch(0.2 0 0);
 }
 
 @theme inline {

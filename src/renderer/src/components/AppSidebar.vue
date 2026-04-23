@@ -1,11 +1,11 @@
 <template>
   <div
     data-testid="app-sidebar"
-    class="flex w-12 shrink-0 flex-col items-center border-r border-border bg-sidebar pt-12"
+    class="flex w-[45px] shrink-0 flex-col items-center bg-sidebar pt-2"
   >
     <button
       data-testid="sidebar-evolution"
-      class="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-foreground"
+      class="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-foreground"
       title="进化中心"
     >
       <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

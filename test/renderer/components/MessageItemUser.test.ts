@@ -32,6 +32,6 @@ describe("MessageItemUser", () => {
     const wrapper = mount(MessageItemUser, {
       props: { message: makeMessage("test") },
     });
-    expect(wrapper.find(".rounded-lg").exists()).toBe(true);
+    expect(wrapper.find(".rounded-md").exists()).toBe(true);
   });
 });
