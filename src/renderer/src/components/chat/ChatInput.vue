@@ -26,7 +26,7 @@
         <textarea
           ref="textareaRef"
           v-model="inputText"
-          class="w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none"
+          class="w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none overflow-y-auto"
           :style="{ minHeight: '60px', maxHeight: '240px' }"
           placeholder="输入消息..."
           @keydown="onKeydown"
