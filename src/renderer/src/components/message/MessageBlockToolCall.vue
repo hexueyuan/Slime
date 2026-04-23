@@ -4,7 +4,7 @@
       data-testid="tool-call-toggle"
       class="flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
       :class="isSelected ? 'border-primary' : 'border-border'"
-      @click="$emit('select-tool-call', block.id)"
+      @click="$emit('select-tool-call', block.id!)"
     >
       <svg
         v-if="block.status === 'loading'"

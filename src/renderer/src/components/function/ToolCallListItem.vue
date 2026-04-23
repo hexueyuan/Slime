@@ -2,7 +2,7 @@
   <button
     data-testid="tool-list-item"
     class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
-    @click="$emit('select', block.id)"
+    @click="$emit('select', block.id!)"
   >
     <svg
       v-if="block.status === 'loading'"
