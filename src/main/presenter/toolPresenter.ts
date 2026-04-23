@@ -77,7 +77,7 @@ export class ToolPresenter {
             .describe("Timeout in milliseconds"),
         }),
         execute: async ({ command, timeout_ms }) => {
-          const cwd = paths.projectRoot;
+          const cwd = paths.effectiveProjectRoot;
           try {
             const { stdout, stderr } = await execAsync(command, {
               cwd,
