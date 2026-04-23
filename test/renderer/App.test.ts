@@ -49,7 +49,7 @@ describe("EvolutionCenter", () => {
       attachTo: document.body,
     });
     expect(wrapper.find("textarea").exists()).toBe(true);
-    expect(wrapper.text()).toContain("功能区");
+    expect(wrapper.text()).toContain("工作区");
   });
 
   it("should render draggable divider", () => {

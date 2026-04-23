@@ -1,3 +1,3 @@
 <template>
-  <div class="flex h-full items-center justify-center text-muted-foreground">功能区</div>
+  <div class="flex h-full items-center justify-center text-muted-foreground">工作区</div>
 </template>
