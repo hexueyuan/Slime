@@ -21,6 +21,8 @@
   --color-destructive: oklch(0.577 0.245 27.325);
   --color-destructive-foreground: oklch(0.985 0 0);
   --color-sidebar: oklch(0.97 0 0);
+  --color-input: oklch(0.93 0 0);
+  --color-input-border: oklch(0.87 0 0);
 }
 
 .dark {
@@ -29,6 +31,7 @@
   --color-muted: oklch(0.269 0 0);
   --color-muted-foreground: oklch(0.708 0 0);
   --color-border: oklch(0.269 0 0);
+  --color-input: oklch(0.205 0 0);
   --color-primary: oklch(0.985 0 0);
   --color-primary-foreground: oklch(0.205 0 0);
   --color-accent: oklch(0.269 0 0);
@@ -38,6 +41,7 @@
   --color-destructive: oklch(0.577 0.245 27.325);
   --color-destructive-foreground: oklch(0.985 0 0);
   --color-sidebar: oklch(0.2 0 0);
+  --color-input-border: oklch(0.35 0 0);
 }
 
 @theme inline {
@@ -55,6 +59,8 @@
   --color-destructive: var(--color-destructive);
   --color-destructive-foreground: var(--color-destructive-foreground);
   --color-sidebar: var(--color-sidebar);
+  --color-input: var(--color-input);
+  --color-input-border: var(--color-input-border);
 }
 
 .prose {

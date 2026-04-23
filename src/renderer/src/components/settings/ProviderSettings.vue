@@ -7,7 +7,7 @@
         <select
           v-model="form.provider"
           data-testid="provider-select"
-          class="w-full rounded-md border border-border bg-muted px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+          class="w-full rounded-md border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="anthropic">Anthropic</option>
           <option value="openai">OpenAI</option>
@@ -22,7 +22,7 @@
             v-model="form.apiKey"
             data-testid="api-key-input"
             :type="showKey ? 'text' : 'password'"
-            class="w-full rounded-md border border-border bg-muted px-3 py-1.5 pr-9 text-sm text-foreground outline-none focus:border-primary"
+            class="w-full rounded-md border border-input-border bg-input px-3 py-1.5 pr-9 text-sm text-foreground outline-none focus:border-primary"
             placeholder="sk-..."
           />
           <button
@@ -66,7 +66,7 @@
           v-model="form.model"
           data-testid="model-input"
           type="text"
-          class="w-full rounded-md border border-border bg-muted px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+          class="w-full rounded-md border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
           :placeholder="form.provider === 'anthropic' ? 'claude-sonnet-4-20250514' : 'gpt-4o-mini'"
         />
       </div>
@@ -80,7 +80,7 @@
           v-model="form.baseUrl"
           data-testid="base-url-input"
           type="text"
-          class="w-full rounded-md border border-border bg-muted px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+          class="w-full rounded-md border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
           placeholder="https://api.openai.com/v1"
         />
       </div>
