@@ -1,6 +1,6 @@
 <template>
   <div ref="scrollContainer" class="flex-1 overflow-y-auto" @scroll="onScroll">
-    <div class="mx-auto w-full space-y-1 px-6 py-6">
+    <div class="mx-auto w-full space-y-1 px-6 pt-6 pb-24">
       <template v-for="msg in messages" :key="msg.id">
         <MessageItemUser v-if="msg.role === 'user'" :message="msg" />
         <MessageItemAssistant

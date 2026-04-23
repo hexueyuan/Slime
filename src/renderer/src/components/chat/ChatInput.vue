@@ -1,9 +1,5 @@
 <template>
-  <div class="sticky bottom-0 z-10 px-6 pb-3">
-    <!-- 渐变遮罩 -->
-    <div
-      class="pointer-events-none absolute -top-10 left-0 right-0 h-10 bg-gradient-to-b from-transparent to-background"
-    />
+  <div class="absolute bottom-0 left-0 right-0 z-10 px-6 pb-3">
     <!-- 输入框容器 -->
     <div
       class="overflow-hidden rounded-xl border border-border bg-card/30 shadow-sm backdrop-blur-lg"
