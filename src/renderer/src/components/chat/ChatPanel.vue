@@ -4,6 +4,9 @@
       :title="currentSessionTitle"
       :sessions="sessionStore.sessions"
       :active-session-id="sessionStore.activeSessionId"
+      :is-generating="isGenerating"
+      :generating-phase-text="generatingPhaseText"
+      :phase-color="phaseColor"
       @new-session="onNewSession"
       @select-session="onSelectSession"
       @delete-session="onDeleteSession"
@@ -13,6 +16,9 @@
       :messages="messages"
       :streaming-blocks="messageStore.streamingBlocks"
       :current-stream-message-id="messageStore.currentStreamMessageId"
+      :is-generating="isGenerating"
+      :generating-phase-text="generatingPhaseText"
+      :phase-color="phaseColor"
     />
     <ChatInput
       :is-streaming="messageStore.isStreaming"
@@ -33,6 +39,7 @@ import { useSessionStore } from "@/stores/session";
 import { useMessageStore } from "@/stores/chat";
 import { setupMessageIpc } from "@/stores/messageIpc";
 import { useWorkflowStore, setupWorkflowIpc } from "@/stores/workflow";
+import { useGeneratingPhase } from "@/composables/useGeneratingPhase";
 import MessageList from "./MessageList.vue";
 import ChatInput from "./ChatInput.vue";
 import SessionBar from "./SessionBar.vue";
@@ -42,6 +49,7 @@ const sessionStore = useSessionStore();
 const messageStore = useMessageStore();
 const messageListRef = ref<InstanceType<typeof MessageList> | null>(null);
 const attachedFiles = ref<MessageFile[]>([]);
+const { isGenerating, generatingPhaseText, phaseColor } = useGeneratingPhase();
 
 // 设置 IPC 监听
 const cleanupIpc = setupMessageIpc(messageStore);
