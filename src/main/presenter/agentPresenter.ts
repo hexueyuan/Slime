@@ -120,18 +120,19 @@ export class AgentPresenter implements IAgentPresenter {
         model,
         system: EVOLAB_SYSTEM_PROMPT,
         messages,
-        tools,
+        tools: tools as any,
         maxSteps: 128,
         abortSignal: abortController.signal,
-      });
+      } as any);
 
       let currentContentBlock: AssistantMessageBlock | null = null;
       let currentReasoningBlock: AssistantMessageBlock | null = null;
 
       for await (const event of result.fullStream) {
         if (abortController.signal.aborted) break;
+        const e = event as any;
 
-        if (event.type === "text-delta") {
+        if (e.type === "text-delta") {
           if (!currentContentBlock) {
             currentContentBlock = {
               type: "content",
@@ -141,11 +142,11 @@ export class AgentPresenter implements IAgentPresenter {
             };
             blocks.push(currentContentBlock);
           }
-          currentContentBlock.content += event.text;
+          currentContentBlock.content += e.text;
           eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
             ...blocks,
           ]);
-        } else if (event.type === "reasoning-delta") {
+        } else if (e.type === "reasoning-delta") {
           if (!currentReasoningBlock) {
             currentReasoningBlock = {
               type: "reasoning_content",
@@ -156,39 +157,39 @@ export class AgentPresenter implements IAgentPresenter {
             };
             blocks.unshift(currentReasoningBlock);
           }
-          currentReasoningBlock.content += event.text;
+          currentReasoningBlock.content += e.text;
           eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
             ...blocks,
           ]);
-        } else if (event.type === "tool-call") {
+        } else if (e.type === "tool-call") {
           const toolBlock: AssistantMessageBlock = {
             type: "tool_call",
-            id: event.toolCallId,
+            id: e.toolCallId,
             status: "loading",
             timestamp: Date.now(),
             tool_call: {
-              name: event.toolName,
-              params: JSON.stringify(event.args),
+              name: e.toolName,
+              params: JSON.stringify(e.args),
             },
           };
           blocks.push(toolBlock);
           eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
             ...blocks,
           ]);
-        } else if (event.type === "tool-result") {
-          const toolBlock = blocks.find((b) => b.type === "tool_call" && b.id === event.toolCallId);
+        } else if (e.type === "tool-result") {
+          const toolBlock = blocks.find((b) => b.type === "tool_call" && b.id === e.toolCallId);
           if (toolBlock) {
             toolBlock.status = "success";
-            toolBlock.tool_call!.response = JSON.stringify(event.result);
+            toolBlock.tool_call!.response = JSON.stringify(e.result);
             eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
               ...blocks,
             ]);
           }
-        } else if (event.type === "step-finish") {
+        } else if (e.type === "step-finish") {
           // Reset content/reasoning blocks for next step
           currentContentBlock = null;
           currentReasoningBlock = null;
-        } else if (event.type === "finish") {
+        } else if (e.type === "finish") {
           for (const block of blocks) {
             if (block.status === "loading") block.status = "success";
           }

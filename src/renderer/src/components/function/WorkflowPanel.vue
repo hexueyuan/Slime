@@ -12,7 +12,7 @@
     <div v-else class="space-y-1">
       <div class="mb-3 text-xs font-medium uppercase text-muted-foreground">Workflow</div>
       <div
-        v-for="(step, i) in store.workflow.steps"
+        v-for="step in store.workflow.steps"
         :key="step.id"
         class="flex items-start gap-3 rounded-lg px-3 py-2 text-sm"
         :class="{ 'bg-muted/50': step.status === 'in_progress' }"
