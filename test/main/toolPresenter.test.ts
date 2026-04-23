@@ -30,7 +30,7 @@ describe("ToolPresenter", () => {
     rmSync(testRoot, { recursive: true, force: true });
   });
 
-  it("should return a ToolSet with all 8 tools", () => {
+  it("should return a ToolSet with all 9 tools", () => {
     const tools = tp.getToolSet("s1");
     expect(Object.keys(tools)).toEqual(
       expect.arrayContaining([
@@ -42,9 +42,16 @@ describe("ToolPresenter", () => {
         "workflow_query",
         "step_query",
         "step_update",
+        "ask_user",
       ]),
     );
-    expect(Object.keys(tools)).toHaveLength(8);
+    expect(Object.keys(tools)).toHaveLength(9);
+  });
+
+  it("should include ask_user tool in toolset", () => {
+    const tools = tp.getToolSet("s1");
+    expect(Object.keys(tools)).toContain("ask_user");
+    expect(Object.keys(tools)).toHaveLength(9);
   });
 
   it("should execute read tool", async () => {

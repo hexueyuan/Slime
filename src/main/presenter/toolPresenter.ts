@@ -136,6 +136,17 @@ export class ToolPresenter {
           return this.workflowPresenter.updateStep(sessionId, step_id, status) ?? "Step not found";
         },
       }),
+      ask_user: createTool({
+        description:
+          "Ask the user a question and wait for their response. Use when you need clarification or user input before proceeding.",
+        parameters: z.object({
+          question: z.string().describe("The question to ask the user"),
+          options: z.array(z.string()).optional().describe("Optional list of choices for the user"),
+        }),
+        execute: async () => {
+          throw new Error("ask_user should be handled by AgentPresenter");
+        },
+      }),
     };
   }
 
