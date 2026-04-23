@@ -7,6 +7,7 @@
 ## 动机
 
 当前对话中工具调用展开后显示原始 JSON（`JSON.stringify(…, null, 2)`），exec 工具的 stdout 等长文本可读性差。将详情移到右侧面板：
+
 1. 保持对话流干净
 2. 详情有更多展示空间
 3. 可按工具类型定制渲染
@@ -39,6 +40,7 @@ Tab 状态 `activeTab: 'workflow' | 'tools'` 由父组件 EvolutionCenter 通过
 ### 列表视图（ToolCallList）
 
 显示当前会话所有工具调用，每行包含：
+
 - 状态图标：loading=spinner, success=绿勾, error=红X
 - 工具名称（粗体）
 - 参数摘要（第一个参数值前 60 字符，灰色）
@@ -51,13 +53,13 @@ Tab 状态 `activeTab: 'workflow' | 'tools'` 由父组件 EvolutionCenter 通过
 
 根据 `block.tool_call.name` 分发到对应渲染器：
 
-| 工具名 | 渲染器 | 展示方式 |
-|--------|--------|----------|
-| exec | ToolDetailExec | 命令代码块（蓝色左边线）+ stdout/stderr 分区滚动，隐藏 timeout_ms |
-| read | ToolDetailRead | 顶栏文件路径+行范围，内容带行号显示 |
-| edit | ToolDetailEdit | 顶栏文件路径，红绿 diff 展示 old_text→new_text 变更 |
-| write | ToolDetailWrite | 顶栏文件路径+"新建/覆盖"标记，内容带行号（绿色左边线），底部写入结果 |
-| 其余 | ToolDetailGeneric | 参数和响应分区显示格式化 JSON |
+| 工具名 | 渲染器            | 展示方式                                                             |
+| ------ | ----------------- | -------------------------------------------------------------------- |
+| exec   | ToolDetailExec    | 命令代码块（蓝色左边线）+ stdout/stderr 分区滚动，隐藏 timeout_ms    |
+| read   | ToolDetailRead    | 顶栏文件路径+行范围，内容带行号显示                                  |
+| edit   | ToolDetailEdit    | 顶栏文件路径，红绿 diff 展示 old_text→new_text 变更                  |
+| write  | ToolDetailWrite   | 顶栏文件路径+"新建/覆盖"标记，内容带行号（绿色左边线），底部写入结果 |
+| 其余   | ToolDetailGeneric | 参数和响应分区显示格式化 JSON                                        |
 
 ### 各渲染器数据提取
 
@@ -78,10 +80,12 @@ v0.1 不做语法高亮，纯等宽文本展示。
 ### 数据源
 
 不新建 store。数据源复用现有 `chatStore`：
+
 - 流式期间：`chatStore.streamingBlocks`
 - 历史消息：`message.content` 解析后的 blocks
 
 ToolPanel 展示的工具调用范围：当前正在流式生成的消息的 tool_call blocks。具体来说：
+
 - 流式期间：从 `streamingBlocks` 过滤 `type === 'tool_call'`
 - 流式结束后：从最后一条 assistant 消息的 parsed blocks 中过滤
 - 用户发送新消息后：清空，等待新的工具调用出现
@@ -91,6 +95,7 @@ ToolPanel 通过 props 接收已过滤的 toolCallBlocks，不自己访问 store
 ### 选中状态
 
 在 EvolutionCenter 中维护：
+
 - `activeTab: Ref<'workflow' | 'tools'>` — 当前 tab
 - `selectedToolCallId: Ref<string | null>` — 选中的 tool call ID，null 时显示列表
 
@@ -120,6 +125,7 @@ MessageItemAssistant 接收 `selectedToolCallId` prop，传递给每个 MessageB
 ## 涉及文件
 
 ### 新建
+
 - `src/renderer/src/components/function/ToolPanel.vue`
 - `src/renderer/src/components/function/ToolCallList.vue`
 - `src/renderer/src/components/function/ToolCallListItem.vue`
@@ -131,6 +137,7 @@ MessageItemAssistant 接收 `selectedToolCallId` prop，传递给每个 MessageB
 - `src/renderer/src/components/function/details/ToolDetailGeneric.vue`
 
 ### 修改
+
 - `src/renderer/src/components/function/FunctionPanel.vue` — 加 tab 切换
 - `src/renderer/src/components/message/MessageBlockToolCall.vue` — 移除展开，加点击 emit
 - `src/renderer/src/components/message/MessageItemAssistant.vue` — 传递 selectedToolCallId
@@ -139,5 +146,6 @@ MessageItemAssistant 接收 `selectedToolCallId` prop，传递给每个 MessageB
 - `src/renderer/src/views/EvolutionCenter.vue` — 维护 activeTab + selectedToolCallId 状态
 
 ### 测试
+
 - 新建对应的 `test/renderer/components/` 测试文件
 - 修改 `MessageBlockToolCall.test.ts` 适配新行为
