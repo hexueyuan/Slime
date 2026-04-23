@@ -1,16 +1,22 @@
-import type { IConfigPresenter } from "@shared/types/presenters";
-import { logger } from "@/utils";
+import { JsonStore, logger, paths } from "@/utils";
+import { eventBus } from "@/eventbus";
+import { CONFIG_EVENTS } from "@shared/events";
+import type { IConfigPresenter } from "@shared/types";
 
 export class ConfigPresenter implements IConfigPresenter {
+  private store = new JsonStore<Record<string, unknown>>("slime.config.json", {}, paths.configDir);
+
   async get(key: string): Promise<unknown> {
-    logger.debug("config:get called", { key });
-    // TODO: 实现配置读取
-    return null;
+    const data = await this.store.read();
+    return data[key] ?? null;
   }
 
   async set(key: string, value: unknown): Promise<boolean> {
-    logger.debug("config:set called", { key, value });
-    // TODO: 实现配置写入
-    return false;
+    const data = await this.store.read();
+    data[key] = value;
+    await this.store.write(data);
+    eventBus.sendToRenderer(CONFIG_EVENTS.CHANGED, key, value);
+    logger.debug("Config set", { key });
+    return true;
   }
 }
