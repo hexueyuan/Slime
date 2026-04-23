@@ -1,7 +1,7 @@
 import { JsonStore, logger, paths } from "@/utils";
 import { eventBus } from "@/eventbus";
 import { CONFIG_EVENTS } from "@shared/events";
-import type { IConfigPresenter } from "@shared/types";
+import type { IConfigPresenter } from "@shared/types/presenters";
 
 export class ConfigPresenter implements IConfigPresenter {
   private store = new JsonStore<Record<string, unknown>>("slime.config.json", {}, paths.configDir);
