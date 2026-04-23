@@ -41,3 +41,10 @@ export interface ChatSession {
   createdAt: number;
   updatedAt: number;
 }
+
+export interface PendingQuestion {
+  messageId: string;
+  toolCallId: string;
+  question: string;
+  options?: string[];
+}
