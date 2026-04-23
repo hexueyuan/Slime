@@ -6,20 +6,20 @@
 
 ## 范围
 
-| 模块 | 说明 |
-|------|------|
-| ConfigPresenter | 实现 get/set，JSON 文件持久化 |
-| 设置 Dialog | 侧边栏底部按钮 → Dialog 弹窗 → LLM Provider 表单 |
-| AgentPresenter | 从 ConfigPresenter 读取 AI 配置 |
+| 模块            | 说明                                             |
+| --------------- | ------------------------------------------------ |
+| ConfigPresenter | 实现 get/set，JSON 文件持久化                    |
+| 设置 Dialog     | 侧边栏底部按钮 → Dialog 弹窗 → LLM Provider 表单 |
+| AgentPresenter  | 从 ConfigPresenter 读取 AI 配置                  |
 
 ## 技术选型
 
-| 模块 | 方案 |
-|------|------|
-| 持久化 | JsonStore（复用现有工具类） |
+| 模块         | 方案                                                      |
+| ------------ | --------------------------------------------------------- |
+| 持久化       | JsonStore（复用现有工具类）                               |
 | 配置文件路径 | `paths.configFile`（`~/.slime/config/slime.config.json`） |
-| Dialog UI | shadcn/vue Dialog 组件 |
-| 表单 | 原生 input + shadcn Select |
+| Dialog UI    | shadcn/vue Dialog 组件                                    |
+| 表单         | 原生 input + shadcn Select                                |
 
 ## 数据模型
 
@@ -36,12 +36,12 @@
 
 ### 配置 Key 约定
 
-| Key | 类型 | 默认值 | 说明 |
-|-----|------|--------|------|
-| `ai.provider` | `"openai" \| "anthropic"` | `"anthropic"` | AI 服务商 |
-| `ai.apiKey` | string | `""` | API 密钥 |
-| `ai.model` | string | `"claude-sonnet-4-20250514"` | 模型名 |
-| `ai.baseUrl` | string | `""` | 可选，OpenAI 兼容 endpoint |
+| Key           | 类型                      | 默认值                       | 说明                       |
+| ------------- | ------------------------- | ---------------------------- | -------------------------- |
+| `ai.provider` | `"openai" \| "anthropic"` | `"anthropic"`                | AI 服务商                  |
+| `ai.apiKey`   | string                    | `""`                         | API 密钥                   |
+| `ai.model`    | string                    | `"claude-sonnet-4-20250514"` | 模型名                     |
+| `ai.baseUrl`  | string                    | `""`                         | 可选，OpenAI 兼容 endpoint |
 
 ### 读取优先级
 
@@ -53,29 +53,30 @@ ConfigPresenter 配置文件 > process.env 环境变量
 
 ```typescript
 export class ConfigPresenter implements IConfigPresenter {
-  private store: JsonStore<Record<string, unknown>>
+  private store: JsonStore<Record<string, unknown>>;
 
   constructor() {
     // 使用 configFile 相对路径
-    this.store = new JsonStore<Record<string, unknown>>('../config/slime.config.json', {})
+    this.store = new JsonStore<Record<string, unknown>>("../config/slime.config.json", {});
   }
 
   async get(key: string): Promise<unknown> {
-    const data = await this.store.read()
-    return data[key] ?? null
+    const data = await this.store.read();
+    return data[key] ?? null;
   }
 
   async set(key: string, value: unknown): Promise<boolean> {
-    const data = await this.store.read()
-    data[key] = value
-    await this.store.write(data)
-    eventBus.sendToRenderer(CONFIG_EVENTS.CHANGED, key, value)
-    return true
+    const data = await this.store.read();
+    data[key] = value;
+    await this.store.write(data);
+    eventBus.sendToRenderer(CONFIG_EVENTS.CHANGED, key, value);
+    return true;
   }
 }
 ```
 
 注意：当前 JsonStore 硬编码使用 `paths.dataDir`，ConfigPresenter 需要存储到 `paths.configDir`。有两种处理方式：
+
 1. 给 JsonStore 加 baseDir 参数
 2. ConfigPresenter 直接读写文件，不用 JsonStore
 
@@ -138,6 +139,7 @@ AppSidebar.vue（改造）
 ### 视觉样式
 
 延续 dark mode 风格：
+
 - Dialog 背景：`bg-card`
 - 左侧导航：`bg-sidebar`
 - 输入框：`bg-muted border border-border`
@@ -145,15 +147,15 @@ AppSidebar.vue（改造）
 
 ## 文件变更清单
 
-| 操作 | 文件 |
-|------|------|
-| 改造 | `src/main/utils/jsonStore.ts` — 加 baseDir 参数 |
-| 改造 | `src/main/presenter/configPresenter.ts` — 实现 get/set |
+| 操作 | 文件                                                          |
+| ---- | ------------------------------------------------------------- |
+| 改造 | `src/main/utils/jsonStore.ts` — 加 baseDir 参数               |
+| 改造 | `src/main/presenter/configPresenter.ts` — 实现 get/set        |
 | 改造 | `src/main/presenter/agentPresenter.ts` — 注入 ConfigPresenter |
-| 改造 | `src/main/presenter/index.ts` — 传递 ConfigPresenter |
-| 新建 | `src/renderer/src/components/settings/SettingsDialog.vue` |
-| 新建 | `src/renderer/src/components/settings/ProviderSettings.vue` |
-| 改造 | `src/renderer/src/components/AppSidebar.vue` — 底部设置按钮 |
+| 改造 | `src/main/presenter/index.ts` — 传递 ConfigPresenter          |
+| 新建 | `src/renderer/src/components/settings/SettingsDialog.vue`     |
+| 新建 | `src/renderer/src/components/settings/ProviderSettings.vue`   |
+| 改造 | `src/renderer/src/components/AppSidebar.vue` — 底部设置按钮   |
 
 ## 验收标准
 

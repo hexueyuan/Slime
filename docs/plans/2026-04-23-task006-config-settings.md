@@ -12,18 +12,18 @@
 
 ## File Structure
 
-| Action | File | Responsibility |
-|--------|------|----------------|
-| Modify | `src/main/utils/jsonStore.ts` | 加可选 baseDir 参数 |
-| Modify | `test/main/jsonStore.test.ts` | 加 baseDir 测试 |
-| Modify | `src/main/presenter/configPresenter.ts` | 实现 get/set，JsonStore 持久化 |
-| Create | `test/main/configPresenter.test.ts` | ConfigPresenter 单元测试 |
-| Modify | `src/main/presenter/agentPresenter.ts` | 注入 ConfigPresenter，改造 getConfig |
-| Modify | `src/main/presenter/index.ts` | 传递 configPresenter 给 AgentPresenter |
-| Create | `src/renderer/src/components/settings/SettingsDialog.vue` | Dialog 壳 + 左右分栏 |
-| Create | `src/renderer/src/components/settings/ProviderSettings.vue` | AI Provider 配置表单 |
-| Modify | `src/renderer/src/components/AppSidebar.vue` | 底部设置按钮 + 引入 SettingsDialog |
-| Create | `test/renderer/components/ProviderSettings.test.ts` | 表单组件测试 |
+| Action | File                                                        | Responsibility                         |
+| ------ | ----------------------------------------------------------- | -------------------------------------- |
+| Modify | `src/main/utils/jsonStore.ts`                               | 加可选 baseDir 参数                    |
+| Modify | `test/main/jsonStore.test.ts`                               | 加 baseDir 测试                        |
+| Modify | `src/main/presenter/configPresenter.ts`                     | 实现 get/set，JsonStore 持久化         |
+| Create | `test/main/configPresenter.test.ts`                         | ConfigPresenter 单元测试               |
+| Modify | `src/main/presenter/agentPresenter.ts`                      | 注入 ConfigPresenter，改造 getConfig   |
+| Modify | `src/main/presenter/index.ts`                               | 传递 configPresenter 给 AgentPresenter |
+| Create | `src/renderer/src/components/settings/SettingsDialog.vue`   | Dialog 壳 + 左右分栏                   |
+| Create | `src/renderer/src/components/settings/ProviderSettings.vue` | AI Provider 配置表单                   |
+| Modify | `src/renderer/src/components/AppSidebar.vue`                | 底部设置按钮 + 引入 SettingsDialog     |
+| Create | `test/renderer/components/ProviderSettings.test.ts`         | 表单组件测试                           |
 
 ---
 
@@ -34,31 +34,31 @@
 - Modify: `src/main/utils/jsonStore.ts`
 - Modify: `test/main/jsonStore.test.ts`
 
-- [ ] **Step 1: 写测试**
+- [x] **Step 1: 写测试**
 
 在 `test/main/jsonStore.test.ts` 末尾（最后一个 `it` 块之后，`describe` 闭合之前）添加：
 
 ```typescript
-  it("should use custom baseDir when provided", async () => {
-    const customDir = join(tmpdir(), `slime-test-custom-${Date.now()}`);
-    mkdirSync(customDir, { recursive: true });
-    try {
-      const store = new JsonStore<{ key: string }>("custom.json", { key: "" }, customDir);
-      await store.write({ key: "custom" });
-      const data = await store.read();
-      expect(data).toEqual({ key: "custom" });
-    } finally {
-      rmSync(customDir, { recursive: true, force: true });
-    }
-  });
+it("should use custom baseDir when provided", async () => {
+  const customDir = join(tmpdir(), `slime-test-custom-${Date.now()}`);
+  mkdirSync(customDir, { recursive: true });
+  try {
+    const store = new JsonStore<{ key: string }>("custom.json", { key: "" }, customDir);
+    await store.write({ key: "custom" });
+    const data = await store.read();
+    expect(data).toEqual({ key: "custom" });
+  } finally {
+    rmSync(customDir, { recursive: true, force: true });
+  }
+});
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `pnpm test -- --project main test/main/jsonStore.test.ts`
 Expected: FAIL — JsonStore 构造函数不接受第三个参数（不影响行为但需确认新测试逻辑正确）
 
-- [ ] **Step 3: 实现 baseDir 参数**
+- [x] **Step 3: 实现 baseDir 参数**
 
 修改 `src/main/utils/jsonStore.ts`，将构造函数改为：
 
@@ -77,12 +77,12 @@ export class JsonStore<T> {
 
 仅改动构造函数签名和第 14 行的 `this.filePath` 赋值。其余不变。
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `pnpm test -- --project main test/main/jsonStore.test.ts`
 Expected: 5 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/utils/jsonStore.ts test/main/jsonStore.test.ts
@@ -98,7 +98,7 @@ git commit -m "feat: add optional baseDir param to JsonStore"
 - Modify: `src/main/presenter/configPresenter.ts`
 - Create: `test/main/configPresenter.test.ts`
 
-- [ ] **Step 1: 写测试**
+- [x] **Step 1: 写测试**
 
 创建 `test/main/configPresenter.test.ts`：
 
@@ -160,12 +160,12 @@ describe("ConfigPresenter", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `pnpm test -- --project main test/main/configPresenter.test.ts`
 Expected: FAIL — `get` returns null, `set` returns false
 
-- [ ] **Step 3: 实现 ConfigPresenter**
+- [x] **Step 3: 实现 ConfigPresenter**
 
 替换 `src/main/presenter/configPresenter.ts` 全部内容：
 
@@ -176,11 +176,7 @@ import { eventBus } from "@/eventbus";
 import { CONFIG_EVENTS } from "@shared/events";
 
 export class ConfigPresenter implements IConfigPresenter {
-  private store = new JsonStore<Record<string, unknown>>(
-    "slime.config.json",
-    {},
-    paths.configDir,
-  );
+  private store = new JsonStore<Record<string, unknown>>("slime.config.json", {}, paths.configDir);
 
   async get(key: string): Promise<unknown> {
     const data = await this.store.read();
@@ -198,12 +194,12 @@ export class ConfigPresenter implements IConfigPresenter {
 }
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `pnpm test -- --project main test/main/configPresenter.test.ts`
 Expected: 4 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/presenter/configPresenter.ts test/main/configPresenter.test.ts
@@ -219,7 +215,7 @@ git commit -m "feat: implement ConfigPresenter with JSON persistence"
 - Modify: `src/main/presenter/agentPresenter.ts`
 - Modify: `src/main/presenter/index.ts`
 
-- [ ] **Step 1: 修改 AgentPresenter 构造函数和 getConfig**
+- [x] **Step 1: 修改 AgentPresenter 构造函数和 getConfig**
 
 在 `src/main/presenter/agentPresenter.ts` 中：
 
@@ -290,26 +286,26 @@ import type { ConfigPresenter } from "./configPresenter";
   }
 ```
 
-- [ ] **Step 2: 修改 Presenter index 传递 configPresenter**
+- [x] **Step 2: 修改 Presenter index 传递 configPresenter**
 
 在 `src/main/presenter/index.ts` 第 27 行，将：
 
 ```typescript
-    this.agentPresenter = new AgentPresenter(this.sessionPresenter);
+this.agentPresenter = new AgentPresenter(this.sessionPresenter);
 ```
 
 改为：
 
 ```typescript
-    this.agentPresenter = new AgentPresenter(this.sessionPresenter, this.configPresenter);
+this.agentPresenter = new AgentPresenter(this.sessionPresenter, this.configPresenter);
 ```
 
-- [ ] **Step 3: 运行现有测试确认不破坏**
+- [x] **Step 3: 运行现有测试确认不破坏**
 
 Run: `pnpm test -- --project main`
 Expected: 全部 PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main/presenter/agentPresenter.ts src/main/presenter/index.ts
@@ -325,7 +321,7 @@ git commit -m "feat: inject ConfigPresenter into AgentPresenter"
 - Create: `src/renderer/src/components/settings/ProviderSettings.vue`
 - Create: `test/renderer/components/ProviderSettings.test.ts`
 
-- [ ] **Step 1: 写测试**
+- [x] **Step 1: 写测试**
 
 创建 `test/renderer/components/ProviderSettings.test.ts`：
 
@@ -337,8 +333,10 @@ import { ipcRenderer } from "electron";
 
 const mockInvoke = vi.mocked(ipcRenderer.invoke);
 
-;(globalThis as any).window = {
-  electron: { ipcRenderer: { invoke: mockInvoke, on: vi.fn(() => vi.fn()), removeAllListeners: vi.fn() } },
+(globalThis as any).window = {
+  electron: {
+    ipcRenderer: { invoke: mockInvoke, on: vi.fn(() => vi.fn()), removeAllListeners: vi.fn() },
+  },
 };
 
 import ProviderSettings from "@/components/settings/ProviderSettings.vue";
@@ -391,18 +389,30 @@ describe("ProviderSettings", () => {
     await wrapper.find('[data-testid="model-input"]').setValue("gpt-4o");
     await wrapper.find('[data-testid="save-btn"]').trigger("click");
 
-    expect(mockInvoke).toHaveBeenCalledWith("presenter:call", "configPresenter", "set", "ai.apiKey", "sk-test-key");
-    expect(mockInvoke).toHaveBeenCalledWith("presenter:call", "configPresenter", "set", "ai.model", "gpt-4o");
+    expect(mockInvoke).toHaveBeenCalledWith(
+      "presenter:call",
+      "configPresenter",
+      "set",
+      "ai.apiKey",
+      "sk-test-key",
+    );
+    expect(mockInvoke).toHaveBeenCalledWith(
+      "presenter:call",
+      "configPresenter",
+      "set",
+      "ai.model",
+      "gpt-4o",
+    );
   });
 });
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `pnpm test -- --project renderer test/renderer/components/ProviderSettings.test.ts`
 Expected: FAIL — 组件不存在
 
-- [ ] **Step 3: 创建目录并实现组件**
+- [x] **Step 3: 创建目录并实现组件**
 
 ```bash
 mkdir -p src/renderer/src/components/settings
@@ -487,7 +497,9 @@ mkdir -p src/renderer/src/components/settings
 
     <!-- Base URL -->
     <div class="space-y-1.5">
-      <label class="text-xs text-muted-foreground">Base URL <span class="text-muted-foreground/50">(可选)</span></label>
+      <label class="text-xs text-muted-foreground"
+        >Base URL <span class="text-muted-foreground/50">(可选)</span></label
+      >
       <input
         v-model="form.baseUrl"
         data-testid="base-url-input"
@@ -546,12 +558,12 @@ async function onSave() {
 </script>
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `pnpm test -- --project renderer test/renderer/components/ProviderSettings.test.ts`
 Expected: 7 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/settings/ProviderSettings.vue test/renderer/components/ProviderSettings.test.ts
@@ -566,28 +578,33 @@ git commit -m "feat: add ProviderSettings form component"
 
 - Create: `src/renderer/src/components/settings/SettingsDialog.vue`
 
-- [ ] **Step 1: 实现 SettingsDialog**
+- [x] **Step 1: 实现 SettingsDialog**
 
 创建 `src/renderer/src/components/settings/SettingsDialog.vue`：
 
 ```vue
 <template>
   <Teleport to="body">
-    <div
-      v-if="open"
-      class="fixed inset-0 z-50 flex items-center justify-center"
-    >
+    <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center">
       <!-- Overlay -->
       <div class="absolute inset-0 bg-black/50" @click="$emit('update:open', false)" />
       <!-- Dialog -->
-      <div class="relative flex h-[400px] w-[600px] overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+      <div
+        class="relative flex h-[400px] w-[600px] overflow-hidden rounded-xl border border-border bg-card shadow-xl"
+      >
         <!-- Left nav -->
         <div class="flex w-48 shrink-0 flex-col border-r border-border bg-sidebar p-4">
           <div class="text-xs font-medium uppercase text-muted-foreground mb-3">设置</div>
           <button
             class="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm font-medium text-foreground"
           >
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M12 2L2 7l10 5 10-5-10-5z" />
               <path d="M2 17l10 5 10-5" />
               <path d="M2 12l10 5 10-5" />
@@ -604,7 +621,13 @@ git commit -m "feat: add ProviderSettings form component"
           class="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           @click="$emit('update:open', false)"
         >
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -627,12 +650,12 @@ defineEmits<{
 </script>
 ```
 
-- [ ] **Step 2: 运行全量 renderer 测试确认不破坏**
+- [x] **Step 2: 运行全量 renderer 测试确认不破坏**
 
 Run: `pnpm test -- --project renderer`
 Expected: 全部 PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/renderer/src/components/settings/SettingsDialog.vue
@@ -648,23 +671,23 @@ git commit -m "feat: add SettingsDialog with left nav and provider form"
 - Modify: `src/renderer/src/components/AppSidebar.vue`
 - Modify: `test/renderer/components/AppSidebar.test.ts`
 
-- [ ] **Step 1: 更新 AppSidebar 测试**
+- [x] **Step 1: 更新 AppSidebar 测试**
 
 在 `test/renderer/components/AppSidebar.test.ts` 的 describe 内末尾添加：
 
 ```typescript
-  it("should render settings button", () => {
-    const wrapper = mount(AppSidebar);
-    expect(wrapper.find('[data-testid="sidebar-settings"]').exists()).toBe(true);
-  });
+it("should render settings button", () => {
+  const wrapper = mount(AppSidebar);
+  expect(wrapper.find('[data-testid="sidebar-settings"]').exists()).toBe(true);
+});
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `pnpm test -- --project renderer test/renderer/components/AppSidebar.test.ts`
 Expected: 新增测试 FAIL
 
-- [ ] **Step 3: 改造 AppSidebar.vue**
+- [x] **Step 3: 改造 AppSidebar.vue**
 
 替换 `src/renderer/src/components/AppSidebar.vue` 全部内容：
 
@@ -681,7 +704,13 @@ Expected: 新增测试 FAIL
         class="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-foreground"
         title="进化中心"
       >
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
           <circle cx="12" cy="12" r="3" />
           <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
           <path d="m5.6 5.6 2.8 2.8m7.2 7.2 2.8 2.8M5.6 18.4l2.8-2.8m7.2-7.2 2.8-2.8" />
@@ -715,12 +744,12 @@ const settingsOpen = ref(false);
 </script>
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `pnpm test -- --project renderer test/renderer/components/AppSidebar.test.ts`
 Expected: 4 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/AppSidebar.vue test/renderer/components/AppSidebar.test.ts
@@ -733,30 +762,30 @@ git commit -m "feat: add settings button to AppSidebar"
 
 **Files:** 无新文件
 
-- [ ] **Step 1: 运行全量测试**
+- [x] **Step 1: 运行全量测试**
 
 Run: `pnpm test`
 Expected: 所有测试 PASS
 
-- [ ] **Step 2: 格式化**
+- [x] **Step 2: 格式化**
 
 Run: `pnpm run format`
 
-- [ ] **Step 3: Lint**
+- [x] **Step 3: Lint**
 
 Run: `pnpm run lint`
 Expected: 无错误
 
-- [ ] **Step 4: 类型检查**
+- [x] **Step 4: 类型检查**
 
 Run: `pnpm run typecheck`
 Expected: PASS
 
-- [ ] **Step 5: 修复任何问题**
+- [x] **Step 5: 修复任何问题**
 
 如果上述步骤有失败，修复后重新运行直到全部通过。
 
-- [ ] **Step 6: Commit（如有格式化改动）**
+- [x] **Step 6: Commit（如有格式化改动）**
 
 ```bash
 git add -A
