@@ -76,4 +76,56 @@ describe("FilePresenter", () => {
       await expect(fp.edit("dup.ts", "aaa", "bbb")).rejects.toThrow("multiple");
     });
   });
+
+  describe("forbidden write paths", () => {
+    it("should reject write to .git/", async () => {
+      await expect(fp.write(".git/config", "bad")).rejects.toThrow("protected path");
+    });
+
+    it("should reject write to nested .git path", async () => {
+      await expect(fp.write(".git/hooks/pre-commit", "bad")).rejects.toThrow("protected path");
+    });
+
+    it("should reject write to node_modules/", async () => {
+      await expect(fp.write("node_modules/foo/index.js", "bad")).rejects.toThrow("protected path");
+    });
+
+    it("should reject write to dist/", async () => {
+      await expect(fp.write("dist/index.js", "bad")).rejects.toThrow("protected path");
+    });
+
+    it("should reject write to .slime/", async () => {
+      await expect(fp.write(".slime/state/context.json", "bad")).rejects.toThrow("protected path");
+    });
+
+    it("should reject write to .secret. file", async () => {
+      await expect(fp.write("db.secret.json", "bad")).rejects.toThrow("protected path");
+    });
+
+    it("should reject write to .key file", async () => {
+      await expect(fp.write("server.key", "bad")).rejects.toThrow("protected path");
+    });
+
+    it("should reject edit to .git/", async () => {
+      await expect(fp.edit(".git/config", "old", "new")).rejects.toThrow("protected path");
+    });
+
+    it("should reject edit to node_modules/", async () => {
+      await expect(fp.edit("node_modules/foo/index.js", "old", "new")).rejects.toThrow(
+        "protected path",
+      );
+    });
+
+    it("should allow write to normal src path", async () => {
+      const ok = await fp.write("src/main/test.ts", "content");
+      expect(ok).toBe(true);
+    });
+
+    it("should allow read from .git/ (read is not restricted)", async () => {
+      mkdirSync(join(testRoot, ".git"), { recursive: true });
+      writeFileSync(join(testRoot, ".git/config"), "gitconfig");
+      const content = await fp.read(".git/config");
+      expect(content).toBe("gitconfig");
+    });
+  });
 });

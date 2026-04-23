@@ -3,8 +3,26 @@ import { resolve, dirname } from "path";
 import type { IFilePresenter } from "@shared/types/presenters";
 import { logger } from "@/utils";
 
+const FORBIDDEN_WRITE_PATTERNS = [
+  /^\.git(\/|$)/,
+  /^node_modules(\/|$)/,
+  /^dist(\/|$)/,
+  /^\.slime(\/|$)/,
+  /\.secret\./,
+  /\.key$/,
+];
+
 export class FilePresenter implements IFilePresenter {
   constructor(private projectRoot?: string) {}
+
+  private validateWritable(userPath: string): void {
+    const normalized = userPath.replace(/\\/g, "/");
+    for (const pattern of FORBIDDEN_WRITE_PATTERNS) {
+      if (pattern.test(normalized)) {
+        throw new Error(`Cannot modify protected path: "${userPath}"`);
+      }
+    }
+  }
 
   private resolveSafe(userPath: string): string {
     const root = this.projectRoot || process.cwd();
@@ -27,6 +45,7 @@ export class FilePresenter implements IFilePresenter {
   }
 
   async write(path: string, content: string): Promise<boolean> {
+    this.validateWritable(path);
     const abs = this.resolveSafe(path);
     logger.debug("file:write", { path: abs, length: content.length });
     await mkdir(dirname(abs), { recursive: true });
@@ -35,6 +54,7 @@ export class FilePresenter implements IFilePresenter {
   }
 
   async edit(path: string, oldText: string, newText: string): Promise<boolean> {
+    this.validateWritable(path);
     const abs = this.resolveSafe(path);
     logger.debug("file:edit", { path: abs });
     const content = await readFile(abs, "utf-8");
