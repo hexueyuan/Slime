@@ -20,6 +20,14 @@
       </svg>
     </button>
 
+    <!-- 状态指示器 -->
+    <GeneratingIndicator
+      v-if="isGenerating && generatingPhaseText && phaseColor"
+      :text="generatingPhaseText"
+      :color="phaseColor"
+      class="ml-2"
+    />
+
     <button
       data-testid="new-session-btn"
       class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -75,12 +83,16 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { ChatSession } from "@shared/types/chat";
+import GeneratingIndicator from "./GeneratingIndicator.vue";
 
 defineProps<{
   title?: string;
   sessionCount?: number;
   sessions?: ChatSession[];
   activeSessionId?: string | null;
+  isGenerating?: boolean;
+  generatingPhaseText?: string;
+  phaseColor?: string;
 }>();
 
 const emit = defineEmits<{
