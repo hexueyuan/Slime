@@ -16,6 +16,7 @@ export const STREAM_EVENTS = {
   RESPONSE: "stream:response",
   END: "stream:end",
   ERROR: "stream:error",
+  QUESTION: "stream:question",
 } as const;
 
 export const SESSION_EVENTS = {
