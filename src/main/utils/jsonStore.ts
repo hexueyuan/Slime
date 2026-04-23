@@ -10,8 +10,9 @@ export class JsonStore<T> {
   constructor(
     relativePath: string,
     private defaultValue: T,
+    baseDir?: string,
   ) {
-    this.filePath = join(paths.dataDir, relativePath);
+    this.filePath = join(baseDir || paths.dataDir, relativePath);
   }
 
   async read(): Promise<T> {
