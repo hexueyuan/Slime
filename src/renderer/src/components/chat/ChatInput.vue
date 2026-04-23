@@ -1,5 +1,13 @@
 <template>
   <div class="absolute bottom-0 left-0 right-0 z-10 px-6 pb-3">
+    <!-- 错误提示 -->
+    <div
+      v-if="error"
+      class="mb-2 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive"
+    >
+      <span>{{ error }}</span>
+      <button class="ml-2 shrink-0 underline" @click="$emit('dismiss-error')">关闭</button>
+    </div>
     <!-- 输入框容器 -->
     <div
       class="overflow-hidden rounded-xl border border-border bg-card/30 shadow-sm backdrop-blur-lg"
@@ -23,6 +31,8 @@
           placeholder="输入消息..."
           @keydown="onKeydown"
           @input="autoResize"
+          @compositionstart="isComposing = true"
+          @compositionend="isComposing = false"
         />
       </div>
       <!-- 工具栏 -->
@@ -93,6 +103,7 @@ import type { MessageFile } from "@shared/types/chat";
 defineProps<{
   isStreaming: boolean;
   files?: MessageFile[];
+  error?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -100,6 +111,7 @@ const emit = defineEmits<{
   stop: [];
   "add-files": [files: File[]];
   "remove-file": [id: string];
+  "dismiss-error": [];
 }>();
 
 const inputText = ref("");

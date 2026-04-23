@@ -49,7 +49,10 @@ export class AgentPresenter implements IAgentPresenter {
     baseUrl?: string;
   }) {
     if (config.provider === "anthropic") {
-      const provider = createAnthropic({ apiKey: config.apiKey });
+      const provider = createAnthropic({
+        apiKey: config.apiKey,
+        baseURL: config.baseUrl,
+      });
       return provider(config.model);
     }
     const provider = createOpenAI({
@@ -61,7 +64,6 @@ export class AgentPresenter implements IAgentPresenter {
 
   private async buildMessages(
     sessionId: string,
-    content: UserMessageContent,
   ): Promise<Array<{ role: "user" | "assistant"; content: string }>> {
     const records = await this.sessionPresenter.getMessages(sessionId);
     const messages: Array<{ role: "user" | "assistant"; content: string }> = [];
@@ -78,7 +80,6 @@ export class AgentPresenter implements IAgentPresenter {
         if (text) messages.push({ role: "assistant", content: text });
       }
     }
-    messages.push({ role: "user", content: content.text });
     return messages;
   }
 
@@ -104,7 +105,7 @@ export class AgentPresenter implements IAgentPresenter {
     };
     await this.sessionPresenter.saveMessage(userMessage);
 
-    const messages = await this.buildMessages(sessionId, content);
+    const messages = await this.buildMessages(sessionId);
     const model = this.createModel(config);
 
     const blocks: AssistantMessageBlock[] = [];

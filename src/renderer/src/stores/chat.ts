@@ -14,6 +14,7 @@ export const useMessageStore = defineStore("message", () => {
   const streamingBlocks = ref<AssistantMessageBlock[]>([]);
   const currentStreamMessageId = ref<string | null>(null);
   const currentStreamSessionId = ref<string | null>(null);
+  const streamError = ref<string | null>(null);
 
   const sessionPresenter = usePresenter("sessionPresenter");
   const agentPresenter = usePresenter("agentPresenter");
@@ -62,8 +63,17 @@ export const useMessageStore = defineStore("message", () => {
     streamingBlocks.value = [];
   }
 
+  function setStreamError(error: string): void {
+    streamError.value = error;
+  }
+
+  function clearStreamError(): void {
+    streamError.value = null;
+  }
+
   async function sendMessage(sessionId: string, content: UserMessageContent): Promise<void> {
     addOptimisticUserMessage(sessionId, content);
+    clearStreamError();
     await agentPresenter.chat(sessionId, content);
   }
 
@@ -78,11 +88,14 @@ export const useMessageStore = defineStore("message", () => {
     streamingBlocks,
     currentStreamMessageId,
     currentStreamSessionId,
+    streamError,
     getMessage,
     loadMessages,
     addOptimisticUserMessage,
     setStreamingState,
     clearStreamingState,
+    setStreamError,
+    clearStreamError,
     sendMessage,
     stopGeneration,
   };

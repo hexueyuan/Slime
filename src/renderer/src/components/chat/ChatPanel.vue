@@ -17,10 +17,12 @@
     <ChatInput
       :is-streaming="messageStore.isStreaming"
       :files="attachedFiles"
+      :error="messageStore.streamError"
       @submit="onSubmit"
       @stop="onStop"
       @add-files="onAddFiles"
       @remove-file="onRemoveFile"
+      @dismiss-error="messageStore.clearStreamError()"
     />
   </div>
 </template>

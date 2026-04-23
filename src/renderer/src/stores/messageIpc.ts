@@ -28,8 +28,9 @@ export function setupMessageIpc(store: ReturnType<typeof useMessageStore>): () =
 
   const unsubError = window.electron.ipcRenderer.on(
     STREAM_EVENTS.ERROR,
-    (_sessionId: unknown, _error: unknown) => {
+    (_sessionId: unknown, error: unknown) => {
       store.clearStreamingState();
+      store.setStreamError(String(error));
     },
   );
   unsubs.push(unsubError);
