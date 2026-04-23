@@ -7,7 +7,12 @@
         :content="block.content || ''"
         :block-id="`${message.id}-${block.timestamp}`"
       />
-      <MessageBlockToolCall v-else-if="block.type === 'tool_call'" :block="block" />
+      <MessageBlockToolCall
+        v-else-if="block.type === 'tool_call'"
+        :block="block"
+        :selected-tool-call-id="selectedToolCallId"
+        @select-tool-call="$emit('select-tool-call', $event)"
+      />
       <MessageBlockError v-else-if="block.type === 'error'" :block="block" />
       <MessageBlockImage v-else-if="block.type === 'image'" :block="block" />
     </template>
@@ -28,10 +33,12 @@ import MessageToolbar from "./MessageToolbar.vue";
 const props = defineProps<{
   message: ChatMessageRecord;
   streamingBlocks?: AssistantMessageBlock[];
+  selectedToolCallId?: string | null;
 }>();
 
 defineEmits<{
   retry: [];
+  "select-tool-call": [id: string];
 }>();
 
 const parsedBlocks = computed<AssistantMessageBlock[]>(() => {

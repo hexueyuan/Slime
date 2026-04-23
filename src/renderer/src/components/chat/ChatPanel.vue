@@ -19,6 +19,8 @@
       :is-generating="isGenerating"
       :generating-phase-text="generatingPhaseText"
       :phase-color="phaseColor"
+      :selected-tool-call-id="props.selectedToolCallId"
+      @select-tool-call="emit('select-tool-call', $event)"
     />
     <ChatInput
       :is-streaming="messageStore.isStreaming"
@@ -37,6 +39,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+
+const props = defineProps<{
+  selectedToolCallId?: string | null;
+}>();
+
+const emit = defineEmits<{
+  "select-tool-call": [id: string];
+}>();
 import { useSessionStore } from "@/stores/session";
 import { useMessageStore } from "@/stores/chat";
 import { setupMessageIpc } from "@/stores/messageIpc";

@@ -7,6 +7,8 @@
           v-else-if="msg.role === 'assistant'"
           :message="msg"
           :streaming-blocks="msg.id === currentStreamMessageId ? streamingBlocks : undefined"
+          :selected-tool-call-id="selectedToolCallId"
+          @select-tool-call="$emit('select-tool-call', $event)"
         />
       </template>
       <!-- 流式消息（新消息还没有 record） -->
@@ -14,6 +16,8 @@
         v-if="currentStreamMessageId && !hasStreamMessageInList"
         :message="streamingPlaceholder"
         :streaming-blocks="streamingBlocks"
+        :selected-tool-call-id="selectedToolCallId"
+        @select-tool-call="$emit('select-tool-call', $event)"
       />
       <!-- 状态指示器 -->
       <GeneratingIndicator
@@ -40,6 +44,11 @@ const props = defineProps<{
   isGenerating?: boolean;
   generatingPhaseText?: string;
   phaseColor?: string;
+  selectedToolCallId?: string | null;
+}>();
+
+defineEmits<{
+  "select-tool-call": [id: string];
 }>();
 
 const scrollContainer = ref<HTMLElement | null>(null);
