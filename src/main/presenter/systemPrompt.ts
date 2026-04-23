@@ -1,4 +1,9 @@
-export const EVOLAB_SYSTEM_PROMPT = `You are Slime EvoLab, an AI agent that evolves the Slime application by modifying its own source code.
+import { readFile } from "fs/promises";
+import { join } from "path";
+import { paths } from "@/utils";
+import { logger } from "@/utils";
+
+const BASE_PROMPT = `You are Slime EvoLab, an AI agent that evolves the Slime application by modifying its own source code.
 
 You have access to tools for reading, writing, and editing files within the Slime project, executing shell commands, and managing evolution workflow steps.
 
@@ -12,3 +17,22 @@ When the user describes a feature or change:
 
 The project root is the Slime application directory. All file paths are relative to this root.
 Keep your workflow steps concise and actionable.`;
+
+async function loadDoc(filename: string): Promise<string> {
+  try {
+    const filePath = join(paths.effectiveProjectRoot, "docs", "evo", filename);
+    return await readFile(filePath, "utf-8");
+  } catch {
+    logger.warn(`Failed to load evo doc: ${filename}`);
+    return "";
+  }
+}
+
+export async function buildSystemPrompt(): Promise<string> {
+  const [soul, evolution] = await Promise.all([loadDoc("SOUL.md"), loadDoc("EVOLUTION.md")]);
+
+  const parts = [BASE_PROMPT];
+  if (soul) parts.push(`\n\n---\n\n${soul}`);
+  if (evolution) parts.push(`\n\n---\n\n${evolution}`);
+  return parts.join("");
+}

@@ -6,7 +6,7 @@ import { tmpdir } from "os";
 // Mock paths
 const testDir = join(tmpdir(), `slime-agent-test-${Date.now()}`);
 vi.mock("@/utils/paths", () => ({
-  paths: { dataDir: testDir },
+  paths: { dataDir: testDir, effectiveProjectRoot: testDir },
 }));
 
 // Mock eventBus
@@ -71,15 +71,12 @@ describe("AgentPresenter", () => {
   });
 
   it("should call streamText and emit stream events", async () => {
-    const chunks = [
-      { type: "text-delta", id: "1", text: "Hello" },
-      { type: "text-delta", id: "1", text: " world" },
-      { type: "finish", finishReason: "stop" },
-    ];
     mockStreamText.mockReturnValue({
-      fullStream: (async function* () {
-        for (const chunk of chunks) yield chunk;
+      textStream: (async function* () {
+        yield "Hello";
+        yield " world";
       })(),
+      toolCalls: Promise.resolve([]),
     });
 
     const session = await sessionPresenter.createSession("test");
@@ -94,9 +91,10 @@ describe("AgentPresenter", () => {
 
   it("should emit error event on streamText failure", async () => {
     mockStreamText.mockReturnValue({
-      fullStream: (async function* () {
+      textStream: (async function* () {
         throw new Error("API error");
       })(),
+      toolCalls: Promise.resolve([]),
     });
 
     const session = await sessionPresenter.createSession("test");
@@ -108,14 +106,13 @@ describe("AgentPresenter", () => {
 
   it("should stop generation", async () => {
     mockStreamText.mockReturnValue({
-      fullStream: (async function* () {
-        yield { type: "text-delta", id: "1", text: "Hello" };
+      textStream: (async function* () {
+        yield "Hello";
         await new Promise((_, reject) => {
-          setTimeout(() => {
-            reject(new Error("aborted"));
-          }, 50);
+          setTimeout(() => reject(new Error("aborted")), 50);
         });
       })(),
+      toolCalls: Promise.resolve([]),
     });
 
     const session = await sessionPresenter.createSession("test");

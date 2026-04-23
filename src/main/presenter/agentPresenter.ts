@@ -13,7 +13,7 @@ import { logger } from "@/utils";
 import type { SessionPresenter } from "./sessionPresenter";
 import type { ConfigPresenter } from "./configPresenter";
 import type { ToolPresenter } from "./toolPresenter";
-import { EVOLAB_SYSTEM_PROMPT } from "./systemPrompt";
+import { buildSystemPrompt } from "./systemPrompt";
 
 interface ToolCall {
   id: string;
@@ -325,6 +325,7 @@ export class AgentPresenter implements IAgentPresenter {
     const messages = await this.buildMessages(sessionId);
     const model = this.createModel(config);
     const tools = this.toolPresenter.getToolSet(sessionId);
+    const systemPrompt = await buildSystemPrompt();
 
     const blocks: AssistantMessageBlock[] = [];
     const assistantMessageId = crypto.randomUUID();
@@ -336,7 +337,7 @@ export class AgentPresenter implements IAgentPresenter {
 
         const result = streamText({
           model,
-          system: EVOLAB_SYSTEM_PROMPT,
+          system: systemPrompt,
           messages: messages as any,
           tools: tools as any,
           abortSignal: abortController.signal,
