@@ -7,12 +7,15 @@ const mockStreamingBlocks = ref<Array<{ type: string }>>([]);
 
 vi.mock("@/stores/chat", () => ({
   useMessageStore: () => ({
-    get isStreaming() {
-      return mockIsStreaming.value;
-    },
-    get streamingBlocks() {
-      return mockStreamingBlocks.value;
-    },
+    isStreaming: mockIsStreaming,
+    streamingBlocks: mockStreamingBlocks,
+  }),
+}));
+
+vi.mock("pinia", () => ({
+  storeToRefs: (store: any) => ({
+    isStreaming: store.isStreaming,
+    streamingBlocks: store.streamingBlocks,
   }),
 }));
 

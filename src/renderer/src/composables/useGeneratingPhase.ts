@@ -1,4 +1,5 @@
 import { computed } from "vue";
+import { storeToRefs } from "pinia";
 import { useMessageStore } from "@/stores/chat";
 
 export type GeneratingPhase = "preparing" | "thinking" | "toolCalling" | "generating";
@@ -12,12 +13,13 @@ const phaseConfig: Record<GeneratingPhase, { text: string; color: string }> = {
 
 export function useGeneratingPhase() {
   const store = useMessageStore();
+  const { isStreaming, streamingBlocks } = storeToRefs(store);
 
-  const isGenerating = computed(() => store.isStreaming);
+  const isGenerating = computed(() => isStreaming.value);
 
   const generatingPhase = computed<GeneratingPhase | null>(() => {
-    if (!isGenerating.value) return null;
-    const blocks = store.streamingBlocks;
+    if (!isStreaming.value) return null;
+    const blocks = streamingBlocks.value;
     if (blocks.length === 0) return "preparing";
     const last = blocks[blocks.length - 1];
     switch (last.type) {
