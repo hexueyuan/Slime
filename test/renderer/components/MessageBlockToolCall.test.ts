@@ -6,6 +6,7 @@ import type { AssistantMessageBlock } from "@shared/types/chat";
 describe("MessageBlockToolCall", () => {
   const makeBlock = (overrides: Partial<AssistantMessageBlock> = {}): AssistantMessageBlock => ({
     type: "tool_call",
+    id: "tc-1",
     content: "",
     status: "success",
     timestamp: Date.now(),
@@ -34,12 +35,36 @@ describe("MessageBlockToolCall", () => {
     expect(wrapper.find('[data-testid="tool-status-success"]').exists()).toBe(true);
   });
 
-  it("should expand to show params on click", async () => {
+  it("should emit select-tool-call on click", async () => {
     const wrapper = mount(MessageBlockToolCall, {
       props: { block: makeBlock() },
     });
     await wrapper.find('[data-testid="tool-call-toggle"]').trigger("click");
-    expect(wrapper.text()).toContain('"query"');
-    expect(wrapper.text()).toContain('"hello"');
+    expect(wrapper.emitted("select-tool-call")).toBeTruthy();
+    expect(wrapper.emitted("select-tool-call")![0]).toEqual(["tc-1"]);
+  });
+
+  it("should not expand params on click", async () => {
+    const wrapper = mount(MessageBlockToolCall, {
+      props: { block: makeBlock() },
+    });
+    await wrapper.find('[data-testid="tool-call-toggle"]').trigger("click");
+    expect(wrapper.text()).not.toContain('"query"');
+  });
+
+  it("should highlight when selected", () => {
+    const wrapper = mount(MessageBlockToolCall, {
+      props: { block: makeBlock(), selectedToolCallId: "tc-1" },
+    });
+    expect(wrapper.find('[data-testid="tool-call-toggle"]').classes()).toContain("border-primary");
+  });
+
+  it("should not highlight when different id selected", () => {
+    const wrapper = mount(MessageBlockToolCall, {
+      props: { block: makeBlock(), selectedToolCallId: "tc-other" },
+    });
+    expect(wrapper.find('[data-testid="tool-call-toggle"]').classes()).not.toContain(
+      "border-primary",
+    );
   });
 });
