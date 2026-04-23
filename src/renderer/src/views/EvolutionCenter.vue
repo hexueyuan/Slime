@@ -7,7 +7,7 @@ import FunctionPanel from "../components/function/FunctionPanel.vue";
 import { useSplitPane } from "../composables/useSplitPane";
 
 const mainRef = ref<HTMLElement | null>(null);
-const { leftWidth, isDragging, onMouseDown, resetToDefault } = useSplitPane({
+const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
   containerRef: mainRef,
   defaultRatio: 0.35,
   minLeftPx: 280,
