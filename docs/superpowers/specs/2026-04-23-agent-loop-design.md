@@ -7,6 +7,7 @@
 ## 问题分析
 
 当前实现使用 `streamText({ maxSteps: 128 })`，依赖 AI SDK 自动处理 tool calling 循环。但由于：
+
 1. `createTool` helper 使用 `as any` 绑过类型检查
 2. AI SDK v6 的 execute 函数签名可能不兼容
 
@@ -30,13 +31,16 @@
 
 ```typescript
 class AgentPresenter {
-  private abortControllers = new Map<string, AbortController>()
+  private abortControllers = new Map<string, AbortController>();
 
   // 新增：暂停等待用户回答
-  private pendingQuestions = new Map<string, {
-    toolCallId: string
-    resolve: (answer: string) => void
-  }>()
+  private pendingQuestions = new Map<
+    string,
+    {
+      toolCallId: string;
+      resolve: (answer: string) => void;
+    }
+  >();
 }
 ```
 
@@ -300,10 +304,10 @@ const result = streamText({
   model,
   system: EVOLAB_SYSTEM_PROMPT,
   messages,
-  tools: this.toolPresenter.getToolSet(sessionId),  // 完整 tool 定义
+  tools: this.toolPresenter.getToolSet(sessionId), // 完整 tool 定义
   // 不传 maxSteps，SDK 不会自动循环
   abortSignal: abortController.signal,
-})
+});
 
 // SDK 返回 tool-call 事件后，AgentPresenter 手动调用 executeTool()
 // 而不是依赖 SDK 内部调用 tool.execute()
@@ -317,8 +321,8 @@ export const STREAM_EVENTS = {
   RESPONSE: "stream:response",
   END: "stream:end",
   ERROR: "stream:error",
-  QUESTION: "stream:question",  // 新增：agent 向用户提问
-} as const
+  QUESTION: "stream:question", // 新增：agent 向用户提问
+} as const;
 ```
 
 ### 4. 渲染进程改造
@@ -328,25 +332,25 @@ export const STREAM_EVENTS = {
 ```typescript
 // src/renderer/src/stores/chat.ts
 const pendingQuestion = ref<{
-  messageId: string
-  toolCallId: string
-  question: string
-  options?: string[]
-} | null>(null)
+  messageId: string;
+  toolCallId: string;
+  question: string;
+  options?: string[];
+} | null>(null);
 
 function setPendingQuestion(q: typeof pendingQuestion.value) {
-  pendingQuestion.value = q
+  pendingQuestion.value = q;
 }
 
 function clearPendingQuestion() {
-  pendingQuestion.value = null
+  pendingQuestion.value = null;
 }
 
 async function answerQuestion(sessionId: string, answer: string) {
-  if (!pendingQuestion.value) return
-  const { toolCallId } = pendingQuestion.value
-  clearPendingQuestion()
-  await agentPresenter.answerQuestion(sessionId, toolCallId, answer)
+  if (!pendingQuestion.value) return;
+  const { toolCallId } = pendingQuestion.value;
+  clearPendingQuestion();
+  await agentPresenter.answerQuestion(sessionId, toolCallId, answer);
 }
 ```
 
@@ -358,15 +362,15 @@ const unsubQuestion = window.electron.ipcRenderer.on(
   STREAM_EVENTS.QUESTION,
   (sessionId: unknown, payload: unknown) => {
     const p = payload as {
-      messageId: string
-      toolCallId: string
-      question: string
-      options?: string[]
-    }
-    store.setPendingQuestion(p)
-  }
-)
-unsubs.push(unsubQuestion)
+      messageId: string;
+      toolCallId: string;
+      question: string;
+      options?: string[];
+    };
+    store.setPendingQuestion(p);
+  },
+);
+unsubs.push(unsubQuestion);
 ```
 
 #### 4.3 ChatInput 组件改造
@@ -381,11 +385,7 @@ unsubs.push(unsubQuestion)
 
     <!-- 有选项时显示按钮 -->
     <div v-if="pendingQuestion.options?.length" class="options">
-      <button
-        v-for="opt in pendingQuestion.options"
-        :key="opt"
-        @click="submitAnswer(opt)"
-      >
+      <button v-for="opt in pendingQuestion.options" :key="opt" @click="submitAnswer(opt)">
         {{ opt }}
       </button>
     </div>
@@ -407,9 +407,9 @@ unsubs.push(unsubQuestion)
 ```typescript
 // src/shared/types/presenters/index.ts
 export interface IAgentPresenter {
-  chat(sessionId: string, content: UserMessageContent): Promise<void>
-  stopGeneration(sessionId: string): Promise<void>
-  answerQuestion(sessionId: string, toolCallId: string, answer: string): Promise<void>  // 新增
+  chat(sessionId: string, content: UserMessageContent): Promise<void>;
+  stopGeneration(sessionId: string): Promise<void>;
+  answerQuestion(sessionId: string, toolCallId: string, answer: string): Promise<void>; // 新增
 }
 ```
 

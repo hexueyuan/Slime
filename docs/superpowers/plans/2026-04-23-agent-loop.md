@@ -12,24 +12,25 @@
 
 ## File Structure
 
-| Action | File | Responsibility |
-|--------|------|----------------|
-| Modify | `src/shared/events.ts` | Add QUESTION event constant |
-| Modify | `src/shared/types/chat.d.ts` | Add PendingQuestion type |
-| Modify | `src/shared/types/presenters/agent.presenter.d.ts` | Add answerQuestion method |
-| Modify | `src/main/presenter/toolPresenter.ts` | Add ask_user tool |
-| Rewrite | `src/main/presenter/agentPresenter.ts` | Manual while loop, tool execution |
-| Modify | `src/renderer/src/stores/chat.ts` | Add pendingQuestion state |
-| Modify | `src/renderer/src/stores/messageIpc.ts` | Add QUESTION event listener |
-| Modify | `src/renderer/src/components/chat/ChatInput.vue` | Add question UI |
-| Modify | `test/main/toolPresenter.test.ts` | Add ask_user tool test |
-| Create | `test/main/agentLoop.test.ts` | Agent loop integration tests |
+| Action  | File                                               | Responsibility                    |
+| ------- | -------------------------------------------------- | --------------------------------- |
+| Modify  | `src/shared/events.ts`                             | Add QUESTION event constant       |
+| Modify  | `src/shared/types/chat.d.ts`                       | Add PendingQuestion type          |
+| Modify  | `src/shared/types/presenters/agent.presenter.d.ts` | Add answerQuestion method         |
+| Modify  | `src/main/presenter/toolPresenter.ts`              | Add ask_user tool                 |
+| Rewrite | `src/main/presenter/agentPresenter.ts`             | Manual while loop, tool execution |
+| Modify  | `src/renderer/src/stores/chat.ts`                  | Add pendingQuestion state         |
+| Modify  | `src/renderer/src/stores/messageIpc.ts`            | Add QUESTION event listener       |
+| Modify  | `src/renderer/src/components/chat/ChatInput.vue`   | Add question UI                   |
+| Modify  | `test/main/toolPresenter.test.ts`                  | Add ask_user tool test            |
+| Create  | `test/main/agentLoop.test.ts`                      | Agent loop integration tests      |
 
 ---
 
 ### Task 1: Add QUESTION Event Constant
 
 **Files:**
+
 - Modify: `src/shared/events.ts:15-19`
 
 - [ ] **Step 1: Add QUESTION to STREAM_EVENTS**
@@ -61,6 +62,7 @@ git commit -m "feat(events): add QUESTION event for agent pause"
 ### Task 2: Add PendingQuestion Type
 
 **Files:**
+
 - Modify: `src/shared/types/chat.d.ts`
 
 - [ ] **Step 1: Add PendingQuestion interface**
@@ -92,6 +94,7 @@ git commit -m "feat(types): add PendingQuestion interface"
 ### Task 3: Add answerQuestion to IAgentPresenter
 
 **Files:**
+
 - Modify: `src/shared/types/presenters/agent.presenter.d.ts`
 
 - [ ] **Step 1: Add answerQuestion method to interface**
@@ -124,6 +127,7 @@ git commit -m "feat(types): add answerQuestion to IAgentPresenter"
 ### Task 4: Add ask_user Tool to ToolPresenter
 
 **Files:**
+
 - Modify: `src/main/presenter/toolPresenter.ts`
 - Test: `test/main/toolPresenter.test.ts`
 
@@ -177,6 +181,7 @@ git commit -m "feat(tools): add ask_user tool for agent pause"
 ### Task 5: Rewrite AgentPresenter with Manual Loop
 
 **Files:**
+
 - Rewrite: `src/main/presenter/agentPresenter.ts`
 
 - [ ] **Step 1: Rewrite AgentPresenter with manual while loop**
@@ -262,11 +267,21 @@ export class AgentPresenter implements IAgentPresenter {
     return provider(config.model);
   }
 
-  private async buildMessages(
-    sessionId: string,
-  ): Promise<Array<{ role: "user" | "assistant" | "tool"; content: string; tool_calls?: any[]; tool_call_id?: string }>> {
+  private async buildMessages(sessionId: string): Promise<
+    Array<{
+      role: "user" | "assistant" | "tool";
+      content: string;
+      tool_calls?: any[];
+      tool_call_id?: string;
+    }>
+  > {
     const records = await this.sessionPresenter.getMessages(sessionId);
-    const messages: Array<{ role: "user" | "assistant" | "tool"; content: string; tool_calls?: any[]; tool_call_id?: string }> = [];
+    const messages: Array<{
+      role: "user" | "assistant" | "tool";
+      content: string;
+      tool_calls?: any[];
+      tool_call_id?: string;
+    }> = [];
     for (const record of records) {
       if (record.role === "user") {
         const parsed = JSON.parse(record.content) as UserMessageContent;
@@ -598,6 +613,7 @@ git commit -m "feat(agent): rewrite with manual while loop for tool calling"
 ### Task 6: Add pendingQuestion State to Chat Store
 
 **Files:**
+
 - Modify: `src/renderer/src/stores/chat.ts`
 
 - [ ] **Step 1: Add pendingQuestion state and methods**
@@ -672,6 +688,7 @@ git commit -m "feat(store): add pendingQuestion state for agent pause"
 ### Task 7: Add QUESTION Event Listener to messageIpc
 
 **Files:**
+
 - Modify: `src/renderer/src/stores/messageIpc.ts`
 
 - [ ] **Step 1: Add QUESTION event listener**
@@ -707,6 +724,7 @@ git commit -m "feat(ipc): add QUESTION event listener"
 ### Task 8: Add Question UI to ChatInput
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatInput.vue`
 
 - [ ] **Step 1: Add pendingQuestion prop and question UI**
@@ -957,6 +975,7 @@ git commit -m "feat(ui): add question card for agent pause interaction"
 ### Task 9: Format and Lint
 
 **Files:**
+
 - All modified files
 
 - [ ] **Step 1: Run formatter**
