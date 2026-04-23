@@ -32,6 +32,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useSessionStore } from "@/stores/session";
 import { useMessageStore } from "@/stores/chat";
 import { setupMessageIpc } from "@/stores/messageIpc";
+import { useWorkflowStore, setupWorkflowIpc } from "@/stores/workflow";
 import MessageList from "./MessageList.vue";
 import ChatInput from "./ChatInput.vue";
 import SessionBar from "./SessionBar.vue";
@@ -44,7 +45,12 @@ const attachedFiles = ref<MessageFile[]>([]);
 
 // 设置 IPC 监听
 const cleanupIpc = setupMessageIpc(messageStore);
-onUnmounted(() => cleanupIpc());
+const workflowStore = useWorkflowStore();
+const cleanupWorkflowIpc = setupWorkflowIpc(workflowStore);
+onUnmounted(() => {
+  cleanupIpc();
+  cleanupWorkflowIpc();
+});
 
 const currentSessionTitle = computed(() => {
   const session = sessionStore.sessions.find((s) => s.id === sessionStore.activeSessionId);

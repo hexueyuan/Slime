@@ -1,3 +1,7 @@
 <template>
-  <div class="flex h-full items-center justify-center text-muted-foreground">工作区</div>
+  <WorkflowPanel />
 </template>
+
+<script setup lang="ts">
+import WorkflowPanel from "./WorkflowPanel.vue";
+</script>
