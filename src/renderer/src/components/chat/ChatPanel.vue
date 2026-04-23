@@ -24,11 +24,13 @@
       :is-streaming="messageStore.isStreaming"
       :files="attachedFiles"
       :error="messageStore.streamError"
+      :pending-question="messageStore.pendingQuestion"
       @submit="onSubmit"
       @stop="onStop"
       @add-files="onAddFiles"
       @remove-file="onRemoveFile"
       @dismiss-error="messageStore.clearStreamError()"
+      @answer-question="onAnswerQuestion"
     />
   </div>
 </template>
@@ -145,5 +147,10 @@ async function onDeleteSession(id: string) {
   if (sessionStore.activeSessionId) {
     await messageStore.loadMessages(sessionStore.activeSessionId);
   }
+}
+
+async function onAnswerQuestion(answer: string) {
+  if (!sessionStore.activeSessionId) return;
+  await messageStore.answerQuestion(sessionStore.activeSessionId, answer);
 }
 </script>

@@ -8,6 +8,42 @@
       <span>{{ error }}</span>
       <button class="ml-2 shrink-0 underline" @click="$emit('dismiss-error')">关闭</button>
     </div>
+    <!-- 问答卡片 -->
+    <div
+      v-if="pendingQuestion"
+      class="mb-2 overflow-hidden rounded-xl border border-primary/30 bg-primary/5 shadow-sm backdrop-blur-lg"
+    >
+      <div class="px-4 py-3">
+        <p class="mb-3 text-sm font-medium text-foreground">{{ pendingQuestion.question }}</p>
+        <!-- 选项按钮 -->
+        <div v-if="pendingQuestion.options?.length" class="mb-3 flex flex-wrap gap-2">
+          <button
+            v-for="opt in pendingQuestion.options"
+            :key="opt"
+            class="rounded-lg border border-border bg-card px-3 py-1.5 text-sm hover:bg-accent"
+            @click="submitAnswer(opt)"
+          >
+            {{ opt }}
+          </button>
+        </div>
+        <!-- 自定义输入 -->
+        <div class="flex gap-2">
+          <input
+            v-model="questionAnswer"
+            class="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-primary"
+            placeholder="输入回答..."
+            @keydown.enter="submitAnswer(questionAnswer)"
+          />
+          <button
+            class="rounded-lg bg-primary px-4 py-1.5 text-sm text-primary-foreground hover:opacity-90"
+            :disabled="!questionAnswer.trim()"
+            @click="submitAnswer(questionAnswer)"
+          >
+            回答
+          </button>
+        </div>
+      </div>
+    </div>
     <!-- 输入框容器 -->
     <div
       class="overflow-hidden rounded-xl border border-border bg-card/30 shadow-sm backdrop-blur-lg"
@@ -29,6 +65,7 @@
           class="w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none overflow-y-auto"
           :style="{ minHeight: '60px', maxHeight: '240px' }"
           placeholder="输入消息..."
+          :disabled="!!pendingQuestion"
           @keydown="onKeydown"
           @input="autoResize"
           @compositionstart="isComposing = true"
@@ -71,8 +108,8 @@
           v-else
           data-testid="send-btn"
           class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90"
-          :disabled="!inputText.trim()"
-          :class="{ 'opacity-40': !inputText.trim() }"
+          :disabled="!inputText.trim() || !!pendingQuestion"
+          :class="{ 'opacity-40': !inputText.trim() || !!pendingQuestion }"
           title="发送"
           @click="submit"
         >
@@ -98,12 +135,13 @@
 <script setup lang="ts">
 import { ref, nextTick } from "vue";
 import ChatAttachmentItem from "./ChatAttachmentItem.vue";
-import type { MessageFile } from "@shared/types/chat";
+import type { MessageFile, PendingQuestion } from "@shared/types/chat";
 
 defineProps<{
   isStreaming: boolean;
   files?: MessageFile[];
   error?: string | null;
+  pendingQuestion?: PendingQuestion | null;
 }>();
 
 const emit = defineEmits<{
@@ -112,9 +150,11 @@ const emit = defineEmits<{
   "add-files": [files: File[]];
   "remove-file": [id: string];
   "dismiss-error": [];
+  "answer-question": [answer: string];
 }>();
 
 const inputText = ref("");
+const questionAnswer = ref("");
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
@@ -147,5 +187,12 @@ function autoResize() {
   if (!el) return;
   el.style.height = "auto";
   el.style.height = Math.min(el.scrollHeight, 240) + "px";
+}
+
+function submitAnswer(answer: string) {
+  const text = answer.trim();
+  if (!text) return;
+  emit("answer-question", text);
+  questionAnswer.value = "";
 }
 </script>
