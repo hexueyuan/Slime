@@ -1,8 +1,8 @@
-# TASK-008 设计文档：进化实验室（Evolution Lab）
+# TASK-008 设计文档：进化实验室（EvoLab）
 
 ## 概述
 
-将 Slime 的聊天区从通用 Chat 升级为 **进化实验室（Evolution Lab）**。AI 通过 tool calling 自主读写 Slime 自身源码、执行命令、管理进化流程，验证 v0.1 核心假设："软件可以通过 AI Agent 实现自我迭代进化"。
+将 Slime 的聊天区从通用 Chat 升级为 **进化实验室（EvoLab）**。AI 通过 tool calling 自主读写 Slime 自身源码、执行命令、管理进化流程，验证 v0.1 核心假设："软件可以通过 AI Agent 实现自我迭代进化"。
 
 ## 设计决策
 
@@ -186,7 +186,7 @@ ToolPresenter
 ```typescript
 const result = streamText({
   model,
-  system: EVOLUTION_LAB_SYSTEM_PROMPT,
+  system: EVOLAB_SYSTEM_PROMPT,
   messages,
   tools: toolPresenter.getToolSet(),
   maxSteps: 128,  // 最大 tool call 轮次
@@ -229,7 +229,7 @@ AgentPresenter 处理 `fullStream` 新增事件类型：
 ## System Prompt
 
 ```
-You are Slime Evolution Lab, an AI agent that evolves the Slime application by modifying its own source code.
+You are Slime EvoLab, an AI agent that evolves the Slime application by modifying its own source code.
 
 You have access to tools for reading, writing, and editing files within the Slime project, executing shell commands, and managing evolution workflow steps.
 
