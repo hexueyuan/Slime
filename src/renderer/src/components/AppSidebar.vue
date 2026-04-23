@@ -6,12 +6,20 @@
     <button
       data-testid="sidebar-evolution"
       class="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-foreground"
-      title="进化中心"
+      title="进化实验室"
     >
       <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
-        <path d="m5.6 5.6 2.8 2.8m7.2 7.2 2.8 2.8M5.6 18.4l2.8-2.8m7.2-7.2 2.8-2.8" />
+        <path d="M2 15c6.667-6 13.333 0 20-6" />
+        <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993" />
+        <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993" />
+        <path d="m17 6-2.5-2.5" />
+        <path d="m14 8-1-1" />
+        <path d="m7 18 2.5 2.5" />
+        <path d="m3.5 14.5.5.5" />
+        <path d="m20 9 .5.5" />
+        <path d="m6.5 12.5 1 1" />
+        <path d="m16.5 10.5 1 1" />
+        <path d="m10 16 1.5 1.5" />
       </svg>
     </button>
 
