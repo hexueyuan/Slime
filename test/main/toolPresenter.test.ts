@@ -31,7 +31,7 @@ describe("ToolPresenter", () => {
   });
 
   it("should return a ToolSet with all 8 tools", () => {
-    const tools = tp.getToolSet();
+    const tools = tp.getToolSet("s1");
     expect(Object.keys(tools)).toEqual(
       expect.arrayContaining([
         "read",
@@ -55,7 +55,7 @@ describe("ToolPresenter", () => {
 
   it("should execute write tool", async () => {
     const result = await tp.callTool("s1", "write", { path: "out.txt", content: "written" });
-    expect(result).toBe(true);
+    expect(result).toBe("Written to out.txt");
   });
 
   it("should execute edit tool", async () => {
@@ -65,7 +65,7 @@ describe("ToolPresenter", () => {
       old_text: "const x = 1;",
       new_text: "const x = 2;",
     });
-    expect(result).toBe(true);
+    expect(result).toBe("Edited code.ts");
   });
 
   it("should execute exec tool", async () => {

@@ -12,6 +12,8 @@ import { eventBus } from "@/eventbus";
 import { logger } from "@/utils";
 import type { SessionPresenter } from "./sessionPresenter";
 import type { ConfigPresenter } from "./configPresenter";
+import type { ToolPresenter } from "./toolPresenter";
+import { EVOLAB_SYSTEM_PROMPT } from "./systemPrompt";
 
 export class AgentPresenter implements IAgentPresenter {
   private abortControllers = new Map<string, AbortController>();
@@ -19,6 +21,7 @@ export class AgentPresenter implements IAgentPresenter {
   constructor(
     private sessionPresenter: SessionPresenter,
     private configPresenter: ConfigPresenter,
+    private toolPresenter: ToolPresenter,
   ) {}
 
   private async getConfig() {
@@ -107,6 +110,7 @@ export class AgentPresenter implements IAgentPresenter {
 
     const messages = await this.buildMessages(sessionId);
     const model = this.createModel(config);
+    const tools = this.toolPresenter.getToolSet(sessionId);
 
     const blocks: AssistantMessageBlock[] = [];
     const assistantMessageId = crypto.randomUUID();
@@ -114,7 +118,10 @@ export class AgentPresenter implements IAgentPresenter {
     try {
       const result = streamText({
         model,
+        system: EVOLAB_SYSTEM_PROMPT,
         messages,
+        tools,
+        maxSteps: 128,
         abortSignal: abortController.signal,
       });
 
@@ -153,9 +160,37 @@ export class AgentPresenter implements IAgentPresenter {
           eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
             ...blocks,
           ]);
+        } else if (event.type === "tool-call") {
+          const toolBlock: AssistantMessageBlock = {
+            type: "tool_call",
+            id: event.toolCallId,
+            status: "loading",
+            timestamp: Date.now(),
+            tool_call: {
+              name: event.toolName,
+              params: JSON.stringify(event.args),
+            },
+          };
+          blocks.push(toolBlock);
+          eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
+            ...blocks,
+          ]);
+        } else if (event.type === "tool-result") {
+          const toolBlock = blocks.find((b) => b.type === "tool_call" && b.id === event.toolCallId);
+          if (toolBlock) {
+            toolBlock.status = "success";
+            toolBlock.tool_call!.response = JSON.stringify(event.result);
+            eventBus.sendToRenderer(STREAM_EVENTS.RESPONSE, sessionId, assistantMessageId, [
+              ...blocks,
+            ]);
+          }
+        } else if (event.type === "step-finish") {
+          // Reset content/reasoning blocks for next step
+          currentContentBlock = null;
+          currentReasoningBlock = null;
         } else if (event.type === "finish") {
           for (const block of blocks) {
-            block.status = "success";
+            if (block.status === "loading") block.status = "success";
           }
           if (currentReasoningBlock?.reasoning_time) {
             currentReasoningBlock.reasoning_time.end = Date.now();

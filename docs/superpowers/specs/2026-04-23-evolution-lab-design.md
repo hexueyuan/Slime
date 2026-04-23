@@ -18,51 +18,55 @@
 ### 文件/命令工具（4 个）
 
 #### `read`
+
 读取文件内容。
 
 ```typescript
 z.object({
-  path: z.string().describe('文件路径，相对于项目根目录'),
-  offset: z.number().int().min(0).optional().describe('起始行号（0-based）'),
-  limit: z.number().int().positive().optional().describe('读取行数'),
-})
+  path: z.string().describe("文件路径，相对于项目根目录"),
+  offset: z.number().int().min(0).optional().describe("起始行号（0-based）"),
+  limit: z.number().int().positive().optional().describe("读取行数"),
+});
 ```
 
 返回：文件内容字符串。路径解析相对于 Slime 项目根目录，禁止 `..` 逃逸。
 
 #### `write`
+
 写入/创建文件（完整覆写）。
 
 ```typescript
 z.object({
-  path: z.string().describe('文件路径，相对于项目根目录'),
-  content: z.string().describe('文件完整内容'),
-})
+  path: z.string().describe("文件路径，相对于项目根目录"),
+  content: z.string().describe("文件完整内容"),
+});
 ```
 
 返回：写入结果（成功/失败）。自动创建中间目录。
 
 #### `edit`
+
 查找替换编辑文件。
 
 ```typescript
 z.object({
-  path: z.string().describe('文件路径，相对于项目根目录'),
-  old_text: z.string().describe('要替换的原文本（精确匹配）'),
-  new_text: z.string().describe('替换后的新文本'),
-})
+  path: z.string().describe("文件路径，相对于项目根目录"),
+  old_text: z.string().describe("要替换的原文本（精确匹配）"),
+  new_text: z.string().describe("替换后的新文本"),
+});
 ```
 
 返回：替换结果。old_text 必须在文件中唯一匹配，否则报错。
 
 #### `exec`
+
 执行 shell 命令。
 
 ```typescript
 z.object({
-  command: z.string().min(1).describe('要执行的 shell 命令'),
-  timeout_ms: z.number().int().positive().optional().default(30000).describe('超时毫秒数'),
-})
+  command: z.string().min(1).describe("要执行的 shell 命令"),
+  timeout_ms: z.number().int().positive().optional().default(30000).describe("超时毫秒数"),
+});
 ```
 
 返回：`{ stdout, stderr, exit_code }`。工作目录固定为 Slime 项目根目录。v0.1 不做命令限制。
@@ -75,62 +79,71 @@ AI 通过这组工具维护一个有序的进化流程图，前端在 FunctionPa
 
 ```typescript
 interface WorkflowStep {
-  id: string              // 步骤唯一标识
-  title: string           // 步骤标题
-  description?: string    // 步骤描述
-  status: 'pending' | 'in_progress' | 'completed' | 'skipped' | 'failed'
+  id: string; // 步骤唯一标识
+  title: string; // 步骤标题
+  description?: string; // 步骤描述
+  status: "pending" | "in_progress" | "completed" | "skipped" | "failed";
 }
 
 interface Workflow {
-  steps: WorkflowStep[]   // 有序步骤列表
+  steps: WorkflowStep[]; // 有序步骤列表
 }
 ```
 
 每个 session 维护一个 Workflow 实例，内存中持有即可（不需要持久化）。
 
 #### `workflow_edit`
+
 创建或覆盖整个流程（overwrite 语义）。
 
 ```typescript
 z.object({
-  steps: z.array(z.object({
-    id: z.string(),
-    title: z.string(),
-    description: z.string().optional(),
-  })).min(1).describe('有序步骤列表'),
-})
+  steps: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        description: z.string().optional(),
+      }),
+    )
+    .min(1)
+    .describe("有序步骤列表"),
+});
 ```
 
 返回：创建的流程。所有步骤初始状态为 `pending`。
 
 #### `workflow_query`
+
 查询完整流程状态。
 
 ```typescript
-z.object({})  // 无参数
+z.object({}); // 无参数
 ```
 
 返回：完整 Workflow 对象（所有步骤及其当前状态）。
 
 #### `step_query`
+
 查询单个步骤状态。
 
 ```typescript
 z.object({
-  step_id: z.string().describe('步骤 ID'),
-})
+  step_id: z.string().describe("步骤 ID"),
+});
 ```
 
 返回：对应 WorkflowStep 对象。
 
 #### `step_update`
+
 更新步骤状态。
 
 ```typescript
 z.object({
-  step_id: z.string().describe('步骤 ID'),
-  status: z.enum(['in_progress', 'completed', 'skipped', 'failed']).describe('新状态'),
-})
+  step_id: z.string().describe("步骤 ID"),
+  status: z.enum(["in_progress", "completed", "skipped", "failed"]).describe("新状态"),
+});
 ```
 
 返回：更新后的 WorkflowStep。通过 EventBus 推送 `WORKFLOW_EVENTS.STEP_UPDATED` 到渲染进程。
@@ -159,6 +172,7 @@ src/renderer/src/
 ### ToolPresenter
 
 统一的工具管理入口，职责：
+
 1. 定义所有工具的 Zod schema
 2. 转换为 AI SDK ToolSet（`tool({ description, parameters: jsonSchema(...) })`）
 3. 执行工具调用，路由到对应 handler
@@ -175,6 +189,7 @@ ToolPresenter
 ### WorkflowPresenter
 
 进化流程状态管理，职责：
+
 1. 维护每个 session 的 Workflow（内存 Map<sessionId, Workflow>）
 2. 提供 CRUD 操作
 3. 状态变更时通过 EventBus 推送到渲染进程
@@ -189,9 +204,9 @@ const result = streamText({
   system: EVOLAB_SYSTEM_PROMPT,
   messages,
   tools: toolPresenter.getToolSet(),
-  maxSteps: 128,  // 最大 tool call 轮次
+  maxSteps: 128, // 最大 tool call 轮次
   abortSignal,
-})
+});
 ```
 
 使用 Vercel AI SDK 的 `maxSteps` 参数自动处理 tool call 循环（stream → tool_call → execute → result 回填 → 继续），不需要手动实现 processStream 循环。
@@ -199,12 +214,14 @@ const result = streamText({
 ### 流式事件处理
 
 AgentPresenter 处理 `fullStream` 新增事件类型：
+
 - `tool-call`：AI 发起工具调用，推送到渲染进程渲染 pill 卡片
 - `tool-result`：工具执行结果，更新 pill 卡片状态
 
 ### FilePresenter 改造
 
 实现真实的文件读写：
+
 - `read(path)`: `fs.readFile`，支持 offset/limit 按行切片
 - `write(path, content)`: `fs.writeFile`，自动 `mkdir -p`
 - 新增 `edit(path, oldText, newText)`: 精确查找替换
@@ -248,10 +265,12 @@ Keep your workflow steps concise and actionable.
 ## UI 变更
 
 ### 侧栏
+
 - 图标改为 DNA 符号（🧬 或 Lucide `dna` 图标）
 - 文字改为"进化实验室"
 
 ### FunctionPanel → WorkflowPanel
+
 - 空状态：居中显示"在对话中开始进化，流程将在此展示"
 - 有流程时：竖向步骤条，每个步骤显示：
   - 状态图标：⏳ pending / 🔄 in_progress / ✅ completed / ⏭ skipped / ❌ failed
@@ -259,6 +278,7 @@ Keep your workflow steps concise and actionable.
   - 当前进行中的步骤高亮
 
 ### 聊天区 Tool Call 渲染
+
 - 借鉴 DeepChat 的 pill 式卡片
 - 折叠态：图标 + 工具名 + 参数摘要（如 `read src/main/index.ts`）
 - 展开态：完整参数 + 返回结果
@@ -269,14 +289,14 @@ Keep your workflow steps concise and actionable.
 
 ```typescript
 export const WORKFLOW_EVENTS = {
-  UPDATED: 'workflow:updated',        // 整个流程更新（workflow_edit）
-  STEP_UPDATED: 'workflow:step-updated', // 单步状态更新
-} as const
+  UPDATED: "workflow:updated", // 整个流程更新（workflow_edit）
+  STEP_UPDATED: "workflow:step-updated", // 单步状态更新
+} as const;
 
 export const TOOL_EVENTS = {
-  CALL_START: 'tool:call-start',      // tool 开始执行
-  CALL_END: 'tool:call-end',          // tool 执行完成
-} as const
+  CALL_START: "tool:call-start", // tool 开始执行
+  CALL_END: "tool:call-end", // tool 执行完成
+} as const;
 ```
 
 ## 依赖变更

@@ -42,11 +42,18 @@ describe("AgentPresenter", () => {
     get: vi.fn(async () => null),
     set: vi.fn(async () => true),
   };
+  const mockToolPresenter = {
+    getToolSet: vi.fn(() => ({})),
+  };
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });
     sessionPresenter = new SessionPresenter();
-    agent = new AgentPresenter(sessionPresenter, mockConfigPresenter as any);
+    agent = new AgentPresenter(
+      sessionPresenter,
+      mockConfigPresenter as any,
+      mockToolPresenter as any,
+    );
     mockSendToRenderer.mockClear();
     // Set env vars for getConfig()
     process.env.SLIME_AI_PROVIDER = "openai";

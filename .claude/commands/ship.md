@@ -24,16 +24,19 @@
 读取 MEMORY.md（路径：`~/.claude/projects/-Users-hexueyuan-Workroot-src-github-com-hexueyuan-Slime/memory/MEMORY.md`），基于本次变更：
 
 ### 添加
+
 - 本次变更中遇到的重要 bug 修复经验、架构决策、技术陷阱
 - 任务进度更新（如有新 TASK 完成或推进）
 - 新发现的关键模式或约定
 
 ### 清理
+
 - 已不再适用的信息（如已实现的 stub 模块标注、已过时的技术方案）
 - 过于细节的临时信息（只保留对未来有价值的经验）
 - 与当前代码状态矛盾的描述
 
 ### 原则
+
 - 保持 MEMORY.md 在 200 行以内
 - 信息按语义组织，不按时间堆积
 - 只记录跨会话有价值的信息
