@@ -36,7 +36,8 @@
     "ai": "^6.0.168",
     "markstream-vue": "0.0.13-beta.4",
     "pinia": "^3.0.4",
-    "vue": "^3.5.31"
+    "vue": "^3.5.31",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^1.0.1",
