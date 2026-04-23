@@ -1,11 +1,25 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import AppSidebar from "../components/AppSidebar.vue";
 import ChatPanel from "../components/chat/ChatPanel.vue";
 import FunctionPanel from "../components/function/FunctionPanel.vue";
+import WorkspaceSetup from "../components/workspace/WorkspaceSetup.vue";
 import { useSplitPane } from "../composables/useSplitPane";
+import { usePresenter } from "@/composables/usePresenter";
 import { useMessageStore } from "@/stores/chat";
 import type { AssistantMessageBlock } from "@shared/types/chat";
+
+// Workspace init check
+const workspacePresenter = usePresenter("workspacePresenter");
+const needsWorkspaceInit = ref<boolean | null>(null);
+
+onMounted(async () => {
+  needsWorkspaceInit.value = await workspacePresenter.needsInit();
+});
+
+function onWorkspaceReady() {
+  needsWorkspaceInit.value = false;
+}
 
 const mainRef = ref<HTMLElement | null>(null);
 const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
@@ -53,7 +67,19 @@ function onSelectToolCall(id: string | null) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-sidebar">
+  <!-- Loading -->
+  <div
+    v-if="needsWorkspaceInit === null"
+    class="flex h-full items-center justify-center bg-background"
+  >
+    <div class="text-muted-foreground">加载中...</div>
+  </div>
+
+  <!-- Workspace setup -->
+  <WorkspaceSetup v-else-if="needsWorkspaceInit" @ready="onWorkspaceReady" />
+
+  <!-- Evolution center -->
+  <div v-else class="flex h-full flex-col bg-sidebar">
     <div class="h-9 shrink-0" style="-webkit-app-region: drag" />
     <div class="flex min-h-0 flex-1">
       <AppSidebar />
