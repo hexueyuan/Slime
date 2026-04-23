@@ -8,6 +8,22 @@ import { logger, paths } from "@/utils";
 
 const execAsync = promisify(execCb);
 
+const EXEC_BLOCKED_PATTERNS: [RegExp, string][] = [
+  [/(?:^|\s)\//, "absolute paths are not allowed"],
+  [/rm\s+(-[^\s]*\s+)*\.git/, "cannot delete .git"],
+  [/rm\s+(-[^\s]*\s+)*node_modules/, "cannot delete node_modules"],
+  [/curl\s.*\|\s*(?:sh|bash)/, "piping curl to shell is not allowed"],
+  [/wget\b/, "wget is not allowed"],
+];
+
+function validateCommand(command: string): void {
+  for (const [pattern, reason] of EXEC_BLOCKED_PATTERNS) {
+    if (pattern.test(command)) {
+      throw new Error(`Command blocked: ${reason} — "${command}"`);
+    }
+  }
+}
+
 // Helper: AI SDK v6 uses 'inputSchema' instead of 'parameters'
 function createTool(config: {
   description: string;
@@ -77,6 +93,7 @@ export class ToolPresenter {
             .describe("Timeout in milliseconds"),
         }),
         execute: async ({ command, timeout_ms }) => {
+          validateCommand(command);
           const cwd = paths.effectiveProjectRoot;
           try {
             const { stdout, stderr } = await execAsync(command, {
