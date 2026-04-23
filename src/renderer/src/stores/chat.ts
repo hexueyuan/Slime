@@ -4,6 +4,7 @@ import type {
   ChatMessageRecord,
   AssistantMessageBlock,
   UserMessageContent,
+  PendingQuestion,
 } from "@shared/types/chat";
 import { usePresenter } from "@/composables/usePresenter";
 
@@ -15,6 +16,7 @@ export const useMessageStore = defineStore("message", () => {
   const currentStreamMessageId = ref<string | null>(null);
   const currentStreamSessionId = ref<string | null>(null);
   const streamError = ref<string | null>(null);
+  const pendingQuestion = ref<PendingQuestion | null>(null);
 
   const sessionPresenter = usePresenter("sessionPresenter");
   const agentPresenter = usePresenter("agentPresenter");
@@ -71,6 +73,21 @@ export const useMessageStore = defineStore("message", () => {
     streamError.value = null;
   }
 
+  function setPendingQuestion(q: PendingQuestion | null): void {
+    pendingQuestion.value = q;
+  }
+
+  function clearPendingQuestion(): void {
+    pendingQuestion.value = null;
+  }
+
+  async function answerQuestion(sessionId: string, answer: string): Promise<void> {
+    if (!pendingQuestion.value) return;
+    const { toolCallId } = pendingQuestion.value;
+    clearPendingQuestion();
+    await agentPresenter.answerQuestion(sessionId, toolCallId, answer);
+  }
+
   async function sendMessage(sessionId: string, content: UserMessageContent): Promise<void> {
     addOptimisticUserMessage(sessionId, content);
     clearStreamError();
@@ -89,6 +106,7 @@ export const useMessageStore = defineStore("message", () => {
     currentStreamMessageId,
     currentStreamSessionId,
     streamError,
+    pendingQuestion,
     getMessage,
     loadMessages,
     addOptimisticUserMessage,
@@ -96,6 +114,9 @@ export const useMessageStore = defineStore("message", () => {
     clearStreamingState,
     setStreamError,
     clearStreamError,
+    setPendingQuestion,
+    clearPendingQuestion,
+    answerQuestion,
     sendMessage,
     stopGeneration,
   };
