@@ -38,11 +38,15 @@ const { SessionPresenter } = await import("@/presenter/sessionPresenter");
 describe("AgentPresenter", () => {
   let agent: InstanceType<typeof AgentPresenter>;
   let sessionPresenter: InstanceType<typeof SessionPresenter>;
+  const mockConfigPresenter = {
+    get: vi.fn(async () => null),
+    set: vi.fn(async () => true),
+  };
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });
     sessionPresenter = new SessionPresenter();
-    agent = new AgentPresenter(sessionPresenter);
+    agent = new AgentPresenter(sessionPresenter, mockConfigPresenter as any);
     mockSendToRenderer.mockClear();
     // Set env vars for getConfig()
     process.env.SLIME_AI_PROVIDER = "openai";

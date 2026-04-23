@@ -11,28 +11,50 @@ import { STREAM_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger } from "@/utils";
 import type { SessionPresenter } from "./sessionPresenter";
+import type { ConfigPresenter } from "./configPresenter";
 
 export class AgentPresenter implements IAgentPresenter {
   private abortControllers = new Map<string, AbortController>();
 
-  constructor(private sessionPresenter: SessionPresenter) {}
+  constructor(
+    private sessionPresenter: SessionPresenter,
+    private configPresenter: ConfigPresenter,
+  ) {}
 
-  private async getConfig(): Promise<{ provider: string; apiKey: string; model: string }> {
+  private async getConfig() {
     return {
-      provider: process.env.SLIME_AI_PROVIDER || "openai",
-      apiKey: process.env.SLIME_AI_API_KEY || "",
-      model: process.env.SLIME_AI_MODEL || "gpt-4o-mini",
+      provider:
+        ((await this.configPresenter.get("ai.provider")) as string) ||
+        process.env.SLIME_AI_PROVIDER ||
+        "anthropic",
+      apiKey:
+        ((await this.configPresenter.get("ai.apiKey")) as string) ||
+        process.env.SLIME_AI_API_KEY ||
+        "",
+      model:
+        ((await this.configPresenter.get("ai.model")) as string) ||
+        process.env.SLIME_AI_MODEL ||
+        "claude-sonnet-4-20250514",
+      baseUrl:
+        ((await this.configPresenter.get("ai.baseUrl")) as string) ||
+        process.env.SLIME_AI_BASE_URL ||
+        undefined,
     };
   }
 
-  private createModel(config: { provider: string; apiKey: string; model: string }) {
+  private createModel(config: {
+    provider: string;
+    apiKey: string;
+    model: string;
+    baseUrl?: string;
+  }) {
     if (config.provider === "anthropic") {
       const provider = createAnthropic({ apiKey: config.apiKey });
       return provider(config.model);
     }
     const provider = createOpenAI({
       apiKey: config.apiKey,
-      baseURL: process.env.SLIME_AI_BASE_URL || undefined,
+      baseURL: config.baseUrl,
     });
     return provider(config.model);
   }

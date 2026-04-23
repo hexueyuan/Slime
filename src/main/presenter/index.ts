@@ -24,7 +24,7 @@ export class Presenter implements IPresenter {
     this.appPresenter = new AppPresenter();
     this.configPresenter = new ConfigPresenter();
     this.sessionPresenter = new SessionPresenter();
-    this.agentPresenter = new AgentPresenter(this.sessionPresenter);
+    this.agentPresenter = new AgentPresenter(this.sessionPresenter, this.configPresenter);
     this.filePresenter = new FilePresenter();
     this.gitPresenter = new GitPresenter();
   }
