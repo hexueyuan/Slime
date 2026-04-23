@@ -33,3 +33,8 @@ export const TOOL_EVENTS = {
   CALL_START: "tool:call-start",
   CALL_END: "tool:call-end",
 } as const;
+
+export const WORKSPACE_EVENTS = {
+  STATUS_CHANGED: "workspace:status-changed",
+  INIT_PROGRESS: "workspace:init-progress",
+} as const;
