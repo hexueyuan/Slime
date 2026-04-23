@@ -23,7 +23,7 @@
           </button>
         </div>
         <!-- Right content -->
-        <div class="flex-1 overflow-y-auto p-6">
+        <div class="flex flex-1 flex-col overflow-y-auto p-5">
           <ProviderSettings />
         </div>
       </div>
