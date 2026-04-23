@@ -7,6 +7,7 @@ import FunctionPanel from "../components/function/FunctionPanel.vue";
 import { useSplitPane } from "../composables/useSplitPane";
 
 const mainRef = ref<HTMLElement | null>(null);
+const activeTab = ref<"workflow" | "tools">("workflow");
 const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
   containerRef: mainRef,
   defaultRatio: 0.35,
@@ -46,7 +47,7 @@ const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
 
         <!-- Right: Work Area -->
         <div class="min-w-[320px] flex-1 overflow-hidden">
-          <FunctionPanel />
+          <FunctionPanel v-model:active-tab="activeTab" :tool-call-blocks="[]" />
         </div>
       </div>
     </div>
