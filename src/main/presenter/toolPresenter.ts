@@ -8,14 +8,17 @@ import { logger, paths } from "@/utils";
 
 const execAsync = promisify(execCb);
 
-// Helper to bypass AI SDK v6 strict type checking for execute functions
-// Runtime behavior is correct — tested by 9 passing tests
+// Helper: AI SDK v6 uses 'inputSchema' instead of 'parameters'
 function createTool(config: {
   description: string;
   parameters: z.ZodObject<any>;
   execute: (...args: any[]) => Promise<any>;
 }) {
-  return tool(config as any);
+  return tool({
+    description: config.description,
+    inputSchema: config.parameters,
+    execute: config.execute,
+  } as any);
 }
 
 export class ToolPresenter {

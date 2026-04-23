@@ -77,32 +77,64 @@ export class AgentPresenter implements IAgentPresenter {
     return provider(config.model);
   }
 
-  private async buildMessages(sessionId: string): Promise<
-    Array<{
-      role: "user" | "assistant" | "tool";
-      content: string;
-      tool_calls?: any[];
-      tool_call_id?: string;
-    }>
-  > {
+  /**
+   * 从存储的消息记录构建 AI SDK 兼容的消息数组
+   * assistant 消息需要从 blocks 重建为 CoreMessage 格式
+   */
+  private async buildMessages(sessionId: string): Promise<any[]> {
     const records = await this.sessionPresenter.getMessages(sessionId);
-    const messages: Array<{
-      role: "user" | "assistant" | "tool";
-      content: string;
-      tool_calls?: any[];
-      tool_call_id?: string;
-    }> = [];
+    const messages: any[] = [];
+
     for (const record of records) {
       if (record.role === "user") {
         const parsed = JSON.parse(record.content) as UserMessageContent;
         messages.push({ role: "user", content: parsed.text });
       } else {
+        // assistant 消息：从 blocks 重建
         const blocks = JSON.parse(record.content) as AssistantMessageBlock[];
-        const text = blocks
+
+        // 提取文本内容
+        const textContent = blocks
           .filter((b) => b.type === "content")
           .map((b) => b.content || "")
           .join("");
-        if (text) messages.push({ role: "assistant", content: text });
+
+        // 提取工具调用
+        const toolCallBlocks = blocks.filter((b) => b.type === "tool_call" && b.tool_call);
+
+        if (toolCallBlocks.length === 0) {
+          // 纯文本消息
+          if (textContent) {
+            messages.push({ role: "assistant", content: textContent });
+          }
+        } else {
+          // 带工具调用的消息：使用 AI SDK v6 CoreMessage 格式
+          const parts: any[] = [];
+          if (textContent) {
+            parts.push({ type: "text", text: textContent });
+          }
+          for (const b of toolCallBlocks) {
+            parts.push({
+              type: "tool-call",
+              toolCallId: b.id,
+              toolName: b.tool_call!.name,
+              input: b.tool_call!.params ? JSON.parse(b.tool_call!.params) : {},
+            });
+          }
+          messages.push({ role: "assistant", content: parts });
+
+          // 添加对应的 tool result 消息
+          const toolResults: any[] = [];
+          for (const b of toolCallBlocks) {
+            toolResults.push({
+              type: "tool-result",
+              toolCallId: b.id,
+              toolName: b.tool_call!.name,
+              output: { type: "text", value: b.tool_call!.response || "" },
+            });
+          }
+          messages.push({ role: "tool", content: toolResults });
+        }
       }
     }
     return messages;
@@ -138,82 +170,75 @@ export class AgentPresenter implements IAgentPresenter {
     }
   }
 
-  private async collectStream(
-    stream: AsyncIterable<any>,
+  /**
+   * 使用 textStream 流式读取文本，然后获取 toolCalls
+   * 比 fullStream 更可靠，因为某些 OpenAI 兼容 API 的 fullStream 不产生 text-delta 事件
+   */
+  private async collectStreamResult(
+    result: {
+      textStream: AsyncIterable<string>;
+      toolCalls: PromiseLike<any[]>;
+    },
     sessionId: string,
     messageId: string,
     blocks: AssistantMessageBlock[],
     abortSignal: AbortSignal,
   ): Promise<{ textContent: string; toolCalls: ToolCall[] }> {
     let textContent = "";
-    const toolCalls: ToolCall[] = [];
     let currentContentBlock: AssistantMessageBlock | null = null;
-    let currentReasoningBlock: AssistantMessageBlock | null = null;
 
-    for await (const event of stream) {
+    // 1. 流式读取文本
+    for await (const chunk of result.textStream) {
       if (abortSignal.aborted) break;
-      const e = event as any;
+      if (!chunk) continue;
 
-      if (e.type === "text-delta") {
-        textContent += e.textDelta;
-        if (!currentContentBlock) {
-          currentContentBlock = {
-            type: "content",
-            content: "",
-            status: "loading",
-            timestamp: Date.now(),
-          };
-          blocks.push(currentContentBlock);
-        }
-        currentContentBlock.content += e.textDelta;
-        this.pushToRenderer(sessionId, messageId, blocks);
-      } else if (e.type === "reasoning" || e.type === "reasoning-delta") {
-        const delta = e.textDelta || e.text || "";
-        if (!currentReasoningBlock) {
-          currentReasoningBlock = {
-            type: "reasoning_content",
-            content: "",
-            status: "loading",
-            timestamp: Date.now(),
-            reasoning_time: { start: Date.now(), end: 0 },
-          };
-          blocks.unshift(currentReasoningBlock);
-        }
-        currentReasoningBlock.content += delta;
-        this.pushToRenderer(sessionId, messageId, blocks);
-      } else if (e.type === "tool-call") {
-        toolCalls.push({
-          id: e.toolCallId,
-          name: e.toolName,
-          args: JSON.stringify(e.args),
-        });
-        blocks.push({
-          type: "tool_call",
-          id: e.toolCallId,
+      textContent += chunk;
+      if (!currentContentBlock) {
+        currentContentBlock = {
+          type: "content",
           content: "",
           status: "loading",
           timestamp: Date.now(),
-          tool_call: {
-            name: e.toolName,
-            params: JSON.stringify(e.args),
-          },
-        });
-        this.pushToRenderer(sessionId, messageId, blocks);
-      } else if (e.type === "finish" || e.type === "step-finish") {
-        if (currentContentBlock && currentContentBlock.status === "loading") {
-          currentContentBlock.status = "success";
-        }
-        if (currentReasoningBlock) {
-          if (currentReasoningBlock.status === "loading") {
-            currentReasoningBlock.status = "success";
-          }
-          if (currentReasoningBlock.reasoning_time) {
-            currentReasoningBlock.reasoning_time.end = Date.now();
-          }
-        }
-        currentContentBlock = null;
-        currentReasoningBlock = null;
+        };
+        blocks.push(currentContentBlock);
       }
+      currentContentBlock.content += chunk;
+      this.pushToRenderer(sessionId, messageId, blocks);
+    }
+
+    // 标记文本完成
+    if (currentContentBlock) {
+      currentContentBlock.status = "success";
+      this.pushToRenderer(sessionId, messageId, blocks);
+    }
+
+    // 2. 获取工具调用
+    const rawToolCalls = await result.toolCalls;
+    const toolCalls: ToolCall[] = [];
+
+    for (const tc of rawToolCalls || []) {
+      const argsObj = tc.input ?? tc.args ?? {};
+      const argsStr = JSON.stringify(argsObj);
+      toolCalls.push({
+        id: tc.toolCallId,
+        name: tc.toolName,
+        args: argsStr,
+      });
+      blocks.push({
+        type: "tool_call",
+        id: tc.toolCallId,
+        content: "",
+        status: "loading",
+        timestamp: Date.now(),
+        tool_call: {
+          name: tc.toolName,
+          params: argsStr,
+        },
+      });
+    }
+
+    if (toolCalls.length > 0) {
+      this.pushToRenderer(sessionId, messageId, blocks);
     }
 
     return { textContent, toolCalls };
@@ -317,8 +342,8 @@ export class AgentPresenter implements IAgentPresenter {
           abortSignal: abortController.signal,
         });
 
-        const { textContent, toolCalls } = await this.collectStream(
-          result.fullStream,
+        const { textContent, toolCalls } = await this.collectStreamResult(
+          result,
           sessionId,
           assistantMessageId,
           blocks,
@@ -329,27 +354,36 @@ export class AgentPresenter implements IAgentPresenter {
           break;
         }
 
-        messages.push({
-          role: "assistant",
-          content: textContent,
-          tool_calls: toolCalls.map((tc) => ({
-            id: tc.id,
-            type: "function",
-            function: { name: tc.name, arguments: tc.args },
-          })),
-        });
+        // AI SDK v6 CoreMessage 格式：assistant 带 toolCalls
+        const assistantParts: any[] = [];
+        if (textContent) {
+          assistantParts.push({ type: "text", text: textContent });
+        }
+        for (const tc of toolCalls) {
+          assistantParts.push({
+            type: "tool-call",
+            toolCallId: tc.id,
+            toolName: tc.name,
+            input: JSON.parse(tc.args),
+          });
+        }
+        messages.push({ role: "assistant", content: assistantParts });
 
+        // 执行工具并以 tool-result 格式回填
+        const toolResultParts: any[] = [];
         for (const tc of toolCalls) {
           if (abortController.signal.aborted) break;
 
           const toolResult = await this.executeTool(sessionId, tc, blocks, assistantMessageId);
 
-          messages.push({
-            role: "tool",
-            tool_call_id: tc.id,
-            content: toolResult,
+          toolResultParts.push({
+            type: "tool-result",
+            toolCallId: tc.id,
+            toolName: tc.name,
+            output: { type: "text", value: toolResult },
           });
         }
+        messages.push({ role: "tool", content: toolResultParts });
       }
 
       for (const block of blocks) {
