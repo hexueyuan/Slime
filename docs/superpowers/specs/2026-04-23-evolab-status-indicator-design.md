@@ -8,18 +8,19 @@
 
 4 种状态，从 `chatStore.streamingBlocks` 的最后一个 block type 推断：
 
-| 条件 | Phase | 文案 | 颜色 |
-|------|-------|------|------|
-| blocks 为空 | `preparing` | 正在准备... | `hsl(220 14% 60%)` 灰色 |
-| 最后 block 是 `reasoning_content` | `thinking` | 正在思考... | `hsl(265 90% 66%)` 紫色 |
-| 最后 block 是 `tool_call` | `toolCalling` | 正在调用工具... | `hsl(25 95% 60%)` 橙色 |
-| 其他（content 等） | `generating` | 正在生成... | `hsl(145 65% 50%)` 绿色 |
+| 条件                              | Phase         | 文案            | 颜色                    |
+| --------------------------------- | ------------- | --------------- | ----------------------- |
+| blocks 为空                       | `preparing`   | 正在准备...     | `hsl(220 14% 60%)` 灰色 |
+| 最后 block 是 `reasoning_content` | `thinking`    | 正在思考...     | `hsl(265 90% 66%)` 紫色 |
+| 最后 block 是 `tool_call`         | `toolCalling` | 正在调用工具... | `hsl(25 95% 60%)` 橙色  |
+| 其他（content 等）                | `generating`  | 正在生成...     | `hsl(145 65% 50%)` 绿色 |
 
 只在 `chatStore.isStreaming === true` 时显示。
 
 ## 视觉样式
 
 彩色 Spinner + 文字：
+
 - 10px 圆形 spinner，`border: 2px solid`，`border-top-color` 为阶段颜色，其余边框为颜色的 20% 透明度
 - 右侧文字使用同色，`text-xs`
 - spinner 动画：`0.8s linear infinite rotate`
