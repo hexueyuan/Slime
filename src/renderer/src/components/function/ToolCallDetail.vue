@@ -10,17 +10,65 @@
           <polyline points="15 18 9 12 15 6" />
         </svg>
       </button>
-      <span class="text-xs font-medium">{{ block.tool_call?.name || "unknown" }}</span>
+      <svg
+        v-if="block.status === 'loading'"
+        class="h-3.5 w-3.5 animate-spin"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+      </svg>
+      <svg
+        v-else-if="block.status === 'error'"
+        class="h-3.5 w-3.5 text-destructive"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+      <svg
+        v-else
+        class="h-3.5 w-3.5 text-green-500"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+      <span class="text-xs font-medium">{{ toolName }}</span>
     </div>
     <div class="flex-1 overflow-y-auto p-3">
-      <pre class="text-xs leading-5 whitespace-pre-wrap break-all text-foreground/80">{{
-        formattedParams
-      }}</pre>
-      <pre
-        v-if="block.tool_call?.response"
-        class="mt-2 text-xs leading-5 whitespace-pre-wrap break-all text-foreground/80"
-        >{{ formattedResponse }}</pre
-      >
+      <ToolDetailExec
+        v-if="toolName === 'exec'"
+        :params="params"
+        :response="response"
+        :status="block.status"
+      />
+      <ToolDetailRead
+        v-else-if="toolName === 'read'"
+        :params="params"
+        :response="response"
+        :status="block.status"
+      />
+      <ToolDetailEdit
+        v-else-if="toolName === 'edit'"
+        :params="params"
+        :response="response"
+        :status="block.status"
+      />
+      <ToolDetailWrite
+        v-else-if="toolName === 'write'"
+        :params="params"
+        :response="response"
+        :status="block.status"
+      />
+      <ToolDetailGeneric v-else :params="params" :response="response" :status="block.status" />
     </div>
   </div>
 </template>
@@ -28,6 +76,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { AssistantMessageBlock } from "@shared/types/chat";
+import ToolDetailExec from "./details/ToolDetailExec.vue";
+import ToolDetailRead from "./details/ToolDetailRead.vue";
+import ToolDetailEdit from "./details/ToolDetailEdit.vue";
+import ToolDetailWrite from "./details/ToolDetailWrite.vue";
+import ToolDetailGeneric from "./details/ToolDetailGeneric.vue";
 
 const props = defineProps<{
   block: AssistantMessageBlock;
@@ -37,19 +90,7 @@ defineEmits<{
   back: [];
 }>();
 
-const formattedParams = computed(() => {
-  try {
-    return JSON.stringify(JSON.parse(props.block.tool_call?.params || "{}"), null, 2);
-  } catch {
-    return props.block.tool_call?.params || "";
-  }
-});
-
-const formattedResponse = computed(() => {
-  try {
-    return JSON.stringify(JSON.parse(props.block.tool_call?.response || ""), null, 2);
-  } catch {
-    return props.block.tool_call?.response || "";
-  }
-});
+const toolName = computed(() => props.block.tool_call?.name || "unknown");
+const params = computed(() => props.block.tool_call?.params || "{}");
+const response = computed(() => props.block.tool_call?.response);
 </script>
