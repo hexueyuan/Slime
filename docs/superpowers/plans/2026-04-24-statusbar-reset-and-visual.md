@@ -14,16 +14,17 @@
 
 ### File Structure
 
-| File | Action | Responsibility |
-|------|--------|----------------|
+| File                                                           | Action | Responsibility                                        |
+| -------------------------------------------------------------- | ------ | ----------------------------------------------------- |
 | `src/renderer/src/components/evolution/EvolutionStatusBar.vue` | Modify | stageStatus 逻辑修复 + 模板视觉重写 + scoped CSS 动画 |
-| `test/renderer/components/EvolutionStatusBar.test.ts` | Modify | 新增 dormant 测试 + 重置归零测试 + 修复现有断言 |
+| `test/renderer/components/EvolutionStatusBar.test.ts`          | Modify | 新增 dormant 测试 + 重置归零测试 + 修复现有断言       |
 
 ---
 
 ### Task 1: 修复 stageStatus 逻辑 + handleConfirmReset
 
 **Files:**
+
 - Modify: `src/renderer/src/components/evolution/EvolutionStatusBar.vue:24-32,44-59`
 - Test: `test/renderer/components/EvolutionStatusBar.test.ts`
 
@@ -125,7 +126,7 @@ if (evolutionStore.stage === "idle") {
     'stage-active': stageStatus(stage.key) === 'active',
     'stage-dormant': stageStatus(stage.key) === 'pending',
   }"
->
+></div>
 ```
 
 注意：这里 pending 对应 dormant（初始 idle 时）和 pending（进化中未来阶段），因为 `stageStatus` 返回值就是 `pending`，统一用 `stage-dormant` class 名在测试中区分。
@@ -147,6 +148,7 @@ git commit -m "fix(evolution): reset statusbar state on confirm, distinguish dor
 ### Task 2: 视觉升级 — 生物细胞膜节点 + 有机曲线连线
 
 **Files:**
+
 - Modify: `src/renderer/src/components/evolution/EvolutionStatusBar.vue:67-99` (template 步骤区域 + scoped style)
 
 - [ ] **Step 1: 添加 scoped CSS 动画**
@@ -188,13 +190,7 @@ git commit -m "fix(evolution): reset statusbar state on confirm, distinguish dor
 ```html
 <template v-for="(stage, i) in stages" :key="stage.key">
   <!-- 有机曲线连线 -->
-  <svg
-    v-if="i > 0"
-    class="mx-1"
-    width="40"
-    height="16"
-    viewBox="0 0 40 16"
-  >
+  <svg v-if="i > 0" class="mx-1" width="40" height="16" viewBox="0 0 40 16">
     <path
       d="M0,8 C10,3 30,13 40,8"
       :stroke="
@@ -206,16 +202,8 @@ git commit -m "fix(evolution): reset statusbar state on confirm, distinguish dor
       fill="none"
     />
     <!-- 粒子：仅 completed 连线 -->
-    <circle
-      v-if="stageStatus(stages[i - 1].key) === 'completed'"
-      r="2"
-      fill="rgb(34 197 94 / 0.8)"
-    >
-      <animateMotion
-        dur="2s"
-        repeatCount="indefinite"
-        path="M0,8 C10,3 30,13 40,8"
-      />
+    <circle v-if="stageStatus(stages[i - 1].key) === 'completed'" r="2" fill="rgb(34 197 94 / 0.8)">
+      <animateMotion dur="2s" repeatCount="indefinite" path="M0,8 C10,3 30,13 40,8" />
     </circle>
   </svg>
 
@@ -230,7 +218,10 @@ git commit -m "fix(evolution): reset statusbar state on confirm, distinguish dor
     }"
   >
     <!-- 细胞膜节点容器 -->
-    <div class="relative flex shrink-0 items-center justify-center" style="width: 28px; height: 28px;">
+    <div
+      class="relative flex shrink-0 items-center justify-center"
+      style="width: 28px; height: 28px;"
+    >
       <!-- completed: 单层膜呼吸 -->
       <div
         v-if="stageStatus(stage.key) === 'completed'"
@@ -261,10 +252,7 @@ git commit -m "fix(evolution): reset statusbar state on confirm, distinguish dor
         v-else-if="stageStatus(stage.key) === 'active'"
         class="h-2 w-2 rounded-full bg-violet-500 shadow-[0_0_8px_rgb(139_92_246)]"
       />
-      <div
-        v-else
-        class="h-2 w-2 rounded-full border-[1.5px] border-muted-foreground/20"
-      />
+      <div v-else class="h-2 w-2 rounded-full border-[1.5px] border-muted-foreground/20" />
     </div>
 
     <!-- 文字标签 -->
@@ -283,6 +271,7 @@ git commit -m "fix(evolution): reset statusbar state on confirm, distinguish dor
 ```
 
 关键变化说明：
+
 - active 颜色从 `text-primary`（dark 下是白色）改为固定 `text-violet-500`
 - 节点从 10px 扁平圆改为 28px 容器内含膜环 + 8px 核心圆
 - 连线从 div 直线改为 SVG 贝塞尔曲线
@@ -307,16 +296,8 @@ SVG `stroke` 属性不识别 tailwind CSS 变量语法。连线 pending 段的 s
   fill="none"
 />
 <!-- 粒子 -->
-<circle
-  v-if="stageStatus(stages[i - 1].key) === 'completed'"
-  r="2"
-  class="fill-green-500/80"
->
-  <animateMotion
-    dur="2s"
-    repeatCount="indefinite"
-    path="M0,8 C10,3 30,13 40,8"
-  />
+<circle v-if="stageStatus(stages[i - 1].key) === 'completed'" r="2" class="fill-green-500/80">
+  <animateMotion dur="2s" repeatCount="indefinite" path="M0,8 C10,3 30,13 40,8" />
 </circle>
 ```
 
@@ -344,6 +325,7 @@ git commit -m "feat(evolution): bio-cell membrane visual for statusbar with brea
 ### Task 3: 补充视觉状态测试
 
 **Files:**
+
 - Modify: `test/renderer/components/EvolutionStatusBar.test.ts`
 
 - [ ] **Step 1: 写 active 阶段膜环存在性测试**
