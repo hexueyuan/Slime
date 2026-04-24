@@ -73,11 +73,29 @@ function handleRestart() {
     class="flex items-center border-b border-border px-4 py-2"
   >
     <template v-for="(stage, i) in stages" :key="stage.key">
-      <div
-        v-if="i > 0"
-        class="mx-2 h-0.5 w-6"
-        :class="stageStatus(stage.key) !== 'pending' ? 'bg-green-500' : 'bg-border'"
-      />
+      <!-- 有机曲线连线 (SVG) -->
+      <svg v-if="i > 0" class="mx-1" width="40" height="16" viewBox="0 0 40 16">
+        <path
+          d="M0,8 C10,3 30,13 40,8"
+          :class="[
+            'fill-none',
+            stageStatus(stages[i - 1].key) === 'completed'
+              ? 'stroke-green-500/50'
+              : 'stroke-muted-foreground/10',
+          ]"
+          stroke-width="1.5"
+        />
+        <!-- 粒子：仅 completed 连线 -->
+        <circle
+          v-if="stageStatus(stages[i - 1].key) === 'completed'"
+          r="2"
+          class="fill-green-500/80"
+        >
+          <animateMotion dur="2s" repeatCount="indefinite" path="M0,8 C10,3 30,13 40,8" />
+        </circle>
+      </svg>
+
+      <!-- 节点 -->
       <div
         data-testid="stage-node"
         class="flex items-center gap-1.5"
@@ -87,21 +105,50 @@ function handleRestart() {
           'stage-dormant': stageStatus(stage.key) === 'pending',
         }"
       >
+        <!-- 细胞膜节点容器 -->
         <div
-          class="h-2.5 w-2.5 shrink-0 rounded-full"
-          :class="{
-            'bg-green-500': stageStatus(stage.key) === 'completed',
-            'bg-primary shadow-[0_0_6px_rgba(124,106,239,0.5)]':
-              stageStatus(stage.key) === 'active',
-            'border-2 border-muted-foreground/30': stageStatus(stage.key) === 'pending',
-          }"
-        />
+          class="relative flex shrink-0 items-center justify-center"
+          style="width: 28px; height: 28px"
+        >
+          <!-- completed: 单层膜呼吸 -->
+          <div
+            v-if="stageStatus(stage.key) === 'completed'"
+            class="membrane-breathe absolute inset-0 rounded-full border border-green-500/40"
+          />
+          <!-- active: 双层膜交替呼吸 -->
+          <template v-if="stageStatus(stage.key) === 'active'">
+            <div
+              class="membrane-breathe-fast absolute inset-0 rounded-full border border-violet-500/50"
+            />
+            <div
+              class="membrane-breathe-delayed absolute inset-[3px] rounded-full border border-violet-500/20"
+            />
+          </template>
+          <!-- pending: 静态虚线环 (仅进化中，dormant 不显示) -->
+          <div
+            v-if="stageStatus(stage.key) === 'pending' && isInProgress"
+            class="absolute inset-0 rounded-full border border-dashed border-muted-foreground/10"
+          />
+
+          <!-- 核心圆 -->
+          <div
+            v-if="stageStatus(stage.key) === 'completed'"
+            class="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_6px_rgb(34_197_94)]"
+          />
+          <div
+            v-else-if="stageStatus(stage.key) === 'active'"
+            class="h-2 w-2 rounded-full bg-violet-500 shadow-[0_0_8px_rgb(139_92_246)]"
+          />
+          <div v-else class="h-2 w-2 rounded-full border-[1.5px] border-muted-foreground/20" />
+        </div>
+
+        <!-- 文字标签 -->
         <span
           class="text-xs"
           :class="{
             'text-green-500': stageStatus(stage.key) === 'completed',
-            'font-semibold text-primary': stageStatus(stage.key) === 'active',
-            'text-muted-foreground': stageStatus(stage.key) === 'pending',
+            'font-semibold text-violet-500': stageStatus(stage.key) === 'active',
+            'text-muted-foreground/40': stageStatus(stage.key) === 'pending',
           }"
         >
           {{ stage.label }}
@@ -171,3 +218,29 @@ function handleRestart() {
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+@keyframes cell-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+.membrane-breathe {
+  animation: cell-breathe 3s ease-in-out infinite;
+}
+
+.membrane-breathe-fast {
+  animation: cell-breathe 2.5s ease-in-out infinite;
+}
+
+.membrane-breathe-delayed {
+  animation: cell-breathe 2.5s ease-in-out infinite 0.3s;
+}
+</style>
