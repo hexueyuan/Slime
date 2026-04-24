@@ -18,15 +18,14 @@ describe("ContentDispatcher", () => {
     expect(wrapper.text()).toContain("暂无预览内容");
   });
 
-  it("should render QuizRenderer for quiz type", () => {
+  it("should render InteractionRenderer for interaction type", () => {
     const content: FunctionContent = {
-      type: "quiz",
-      questions: [
-        { id: "q1", text: "Q?", options: [{ value: "a", label: "A" }], allowCustom: false },
-      ],
+      type: "interaction",
+      question: "Pick one",
+      options: [{ value: "a", label: "Option A" }],
     };
     const wrapper = mount(ContentDispatcher, { props: { content } });
-    expect(wrapper.text()).toContain("Q?");
+    expect(wrapper.text()).toContain("Pick one");
   });
 
   it("should render MarkdownRenderer for markdown type", () => {
@@ -44,13 +43,5 @@ describe("ContentDispatcher", () => {
     };
     const wrapper = mount(ContentDispatcher, { props: { content } });
     expect(wrapper.text()).toContain("75%");
-  });
-
-  it("should render PreviewRenderer for preview type", () => {
-    const content: FunctionContent = { type: "preview", html: "<p>Hi</p>" };
-    const wrapper = mount(ContentDispatcher, { props: { content } });
-    const iframe = wrapper.find("iframe");
-    expect(iframe.exists()).toBe(true);
-    expect(iframe.attributes("srcdoc")).toBe("<p>Hi</p>");
   });
 });

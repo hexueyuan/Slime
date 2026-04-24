@@ -31,10 +31,10 @@ export const useEvolutionStore = defineStore("evolution", () => {
 });
 
 export function setupEvolutionIpc(store: ReturnType<typeof useEvolutionStore>) {
-  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.STAGE_CHANGED, (_stage: EvolutionStage) => {
-    store.setStage(_stage);
+  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.STAGE_CHANGED, (...args: unknown[]) => {
+    store.setStage(args[0] as EvolutionStage);
   });
-  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.COMPLETED, (tag: string, summary: string) => {
-    store.setCompleted(tag, summary);
+  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.COMPLETED, (...args: unknown[]) => {
+    store.setCompleted(args[0] as string, args[1] as string);
   });
 }

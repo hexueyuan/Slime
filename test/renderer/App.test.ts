@@ -51,7 +51,7 @@ describe("EvolutionCenter", () => {
     });
     await flushPromises();
     expect(wrapper.find("textarea").exists()).toBe(true);
-    expect(wrapper.text()).toContain("在对话中开始进化");
+    expect(wrapper.text()).toContain("等待进化需求");
   });
 
   it("should render draggable divider", async () => {

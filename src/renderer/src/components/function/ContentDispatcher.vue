@@ -6,10 +6,10 @@
     >
       暂无预览内容
     </div>
-    <QuizRenderer
-      v-else-if="content.type === 'quiz'"
+    <InteractionRenderer
+      v-else-if="content.type === 'interaction'"
       :content="content"
-      @submit="$emit('quiz-submit', $event)"
+      @submit="$emit('interaction-submit', $event)"
     />
     <MarkdownRenderer v-else-if="content.type === 'markdown'" :content="content" />
     <ProgressRenderer
@@ -17,27 +17,18 @@
       :content="content"
       @cancel="$emit('progress-cancel')"
     />
-    <PreviewRenderer
-      v-else-if="content.type === 'preview'"
-      :content="content"
-      @confirm="$emit('preview-confirm')"
-      @adjust="$emit('preview-adjust')"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { FunctionContent } from "@shared/types/content";
-import QuizRenderer from "./renderers/QuizRenderer.vue";
+import InteractionRenderer from "./renderers/InteractionRenderer.vue";
 import MarkdownRenderer from "./renderers/MarkdownRenderer.vue";
 import ProgressRenderer from "./renderers/ProgressRenderer.vue";
-import PreviewRenderer from "./renderers/PreviewRenderer.vue";
 
 defineProps<{ content: FunctionContent | null }>();
 defineEmits<{
-  "quiz-submit": [answers: Record<string, string | string[]>];
-  "preview-confirm": [];
-  "preview-adjust": [];
+  "interaction-submit": [result: { selected: string | string[]; extra_input?: string }];
   "progress-cancel": [];
 }>();
 </script>

@@ -8,6 +8,7 @@ import { useSplitPane } from "../composables/useSplitPane";
 import { usePresenter } from "@/composables/usePresenter";
 import { useMessageStore } from "@/stores/chat";
 import { useContentStore, setupContentIpc } from "@/stores/content";
+import { useEvolutionStore, setupEvolutionIpc } from "@/stores/evolution";
 import type { AssistantMessageBlock } from "@shared/types/chat";
 
 // Workspace init check
@@ -37,6 +38,9 @@ const selectedToolCallId = ref<string | null>(null);
 const contentStore = useContentStore();
 const cleanupContentIpc = setupContentIpc(contentStore);
 onUnmounted(cleanupContentIpc);
+
+const evolutionStore = useEvolutionStore();
+setupEvolutionIpc(evolutionStore);
 
 watch(
   () => contentStore.content,

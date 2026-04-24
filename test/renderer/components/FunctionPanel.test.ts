@@ -12,7 +12,7 @@ describe("FunctionPanel", () => {
     const wrapper = mount(FunctionPanel, {
       props: { activeTab: "workflow", toolCallBlocks: [] },
     });
-    expect(wrapper.text()).toContain("在对话中开始进化");
+    expect(wrapper.text()).toContain("等待进化需求");
   });
 
   it("should show tool panel when activeTab is tools", () => {

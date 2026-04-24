@@ -39,7 +39,7 @@
       </button>
     </div>
     <div class="min-h-0 flex-1 overflow-hidden">
-      <WorkflowPanel v-if="activeTab === 'workflow'" />
+      <EvolutionPanel v-if="activeTab === 'workflow'" />
       <ToolPanel
         v-else-if="activeTab === 'tools'"
         :blocks="toolCallBlocks"
@@ -50,9 +50,7 @@
       <ContentDispatcher
         v-else-if="activeTab === 'preview'"
         :content="contentStore.content"
-        @quiz-submit="onQuizSubmit"
-        @preview-confirm="onPreviewConfirm"
-        @preview-adjust="onPreviewAdjust"
+        @interaction-submit="onInteractionSubmit"
         @progress-cancel="onProgressCancel"
       />
     </div>
@@ -61,11 +59,12 @@
 
 <script setup lang="ts">
 import type { AssistantMessageBlock } from "@shared/types/chat";
-import WorkflowPanel from "./WorkflowPanel.vue";
+import EvolutionPanel from "./EvolutionPanel.vue";
 import ToolPanel from "./ToolPanel.vue";
 import ContentDispatcher from "./ContentDispatcher.vue";
 import { useContentStore } from "@/stores/content";
 import { usePresenter } from "@/composables/usePresenter";
+import { useMessageStore } from "@/stores/chat";
 
 defineProps<{
   activeTab: "workflow" | "tools" | "preview";
@@ -80,17 +79,11 @@ defineEmits<{
 
 const contentStore = useContentStore();
 const contentPresenter = usePresenter("contentPresenter");
+const messageStore = useMessageStore();
 
-function onQuizSubmit(answers: Record<string, string | string[]>) {
-  contentPresenter.submitQuizAnswer("current", answers);
-}
-
-function onPreviewConfirm() {
-  contentPresenter.confirmPreview("current");
-}
-
-function onPreviewAdjust() {
-  contentPresenter.adjustPreview("current");
+function onInteractionSubmit(result: { selected: string | string[]; extra_input?: string }) {
+  const sessionId = messageStore.currentStreamSessionId || "current";
+  messageStore.answerQuestion(sessionId, JSON.stringify(result));
 }
 
 function onProgressCancel() {

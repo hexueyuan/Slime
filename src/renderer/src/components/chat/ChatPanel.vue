@@ -50,7 +50,6 @@ const emit = defineEmits<{
 import { useSessionStore } from "@/stores/session";
 import { useMessageStore } from "@/stores/chat";
 import { setupMessageIpc } from "@/stores/messageIpc";
-import { useWorkflowStore, setupWorkflowIpc } from "@/stores/workflow";
 import { useGeneratingPhase } from "@/composables/useGeneratingPhase";
 import MessageList from "./MessageList.vue";
 import ChatInput from "./ChatInput.vue";
@@ -65,11 +64,8 @@ const { isGenerating, generatingPhaseText, phaseColor } = useGeneratingPhase();
 
 // 设置 IPC 监听
 const cleanupIpc = setupMessageIpc(messageStore);
-const workflowStore = useWorkflowStore();
-const cleanupWorkflowIpc = setupWorkflowIpc(workflowStore);
 onUnmounted(() => {
   cleanupIpc();
-  cleanupWorkflowIpc();
 });
 
 const currentSessionTitle = computed(() => {
