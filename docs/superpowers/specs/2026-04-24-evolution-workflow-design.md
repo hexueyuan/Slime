@@ -27,16 +27,16 @@ EvolutionPresenter              GitPresenter（新实现）
 
 ### 改造点
 
-| 组件 | 变更 |
-|------|------|
-| WorkflowPresenter → EvolutionPresenter | 管理进化阶段 + CHANGELOG + 节点 |
-| workflow_*/step_* 工具 | 删除 |
-| 新增 evolution_start/plan/complete 工具 | Agent 进化流程控制 |
-| GitPresenter | 从 stub 实现为真实 git 操作 |
-| systemPrompt.ts | 阶段感知，不同阶段注入不同行为指令 |
-| ask_user 工具 | 改造，对接功能区统一交互面板 |
-| QuizRenderer + PreviewRenderer | 合并为统一交互组件 |
-| WorkflowPanel（流程 Tab） | 改为显示进化阶段状态 |
+| 组件                                    | 变更                               |
+| --------------------------------------- | ---------------------------------- |
+| WorkflowPresenter → EvolutionPresenter  | 管理进化阶段 + CHANGELOG + 节点    |
+| workflow*\*/step*\* 工具                | 删除                               |
+| 新增 evolution_start/plan/complete 工具 | Agent 进化流程控制                 |
+| GitPresenter                            | 从 stub 实现为真实 git 操作        |
+| systemPrompt.ts                         | 阶段感知，不同阶段注入不同行为指令 |
+| ask_user 工具                           | 改造，对接功能区统一交互面板       |
+| QuizRenderer + PreviewRenderer          | 合并为统一交互组件                 |
+| WorkflowPanel（流程 Tab）               | 改为显示进化阶段状态               |
 
 ## 进化阶段状态机
 
@@ -50,12 +50,12 @@ idle ──evolution_start──> discuss ──evolution_plan──> coding ─
 
 阶段定义：
 
-| 阶段 | 说明 | 进入条件 | 退出条件 |
-|------|------|----------|----------|
-| idle | 无进化任务 | 初始 / 进化完成 / 取消 / 回滚 | evolution_start |
-| discuss | 需求澄清 + 方案确认 | evolution_start 调用 | evolution_plan 调用 |
-| coding | Agent 自主修改代码 | evolution_plan 调用 | evolution_complete 调用 |
-| applying | 自动执行 apply 流程 | evolution_complete 调用 | apply 成功或失败 |
+| 阶段     | 说明                | 进入条件                      | 退出条件                |
+| -------- | ------------------- | ----------------------------- | ----------------------- |
+| idle     | 无进化任务          | 初始 / 进化完成 / 取消 / 回滚 | evolution_start         |
+| discuss  | 需求澄清 + 方案确认 | evolution_start 调用          | evolution_plan 调用     |
+| coding   | Agent 自主修改代码  | evolution_plan 调用           | evolution_complete 调用 |
+| applying | 自动执行 apply 流程 | evolution_complete 调用       | apply 成功或失败        |
 
 ## Agent 工具设计
 
@@ -71,8 +71,8 @@ idle ──evolution_start──> discuss ──evolution_plan──> coding ─
 
 ```typescript
 evolution_start({
-  description: string  // 用户需求描述
-})
+  description: string, // 用户需求描述
+});
 ```
 
 门禁：当前阶段必须为 idle。
@@ -99,8 +99,8 @@ evolution_plan({
 
 ```typescript
 evolution_complete({
-  summary: string  // 本次进化摘要
-})
+  summary: string, // 本次进化摘要
+});
 ```
 
 门禁：当前阶段必须为 coding。
@@ -141,6 +141,7 @@ ask_user({
 **目标**：从用户需求到明确的进化方案。
 
 **Agent 行为**（由 system prompt 引导）：
+
 1. 用 `read` 探索相关代码，理解当前状态
 2. 逐个追问澄清歧义（`ask_user` 渲染选择题到功能区）
 3. 形成方案后编写 HTML 效果预览（`write` 写 HTML 文件）
@@ -148,11 +149,13 @@ ask_user({
 5. 用户满意 → 调用 `evolution_plan(plan)` 进入 coding
 
 **参考 superpowers brainstorming 模式**：
+
 - 一次一个问题，prefer 选择题
 - 增量确认，不一次性 dump
 - 先探索代码再提问
 
 **system prompt 指令要点**：
+
 - 角色：产品经理，理解需求，不写代码
 - 强调用 ask_user 和 HTML 预览与用户交互
 - 禁止在 discuss 阶段修改代码
@@ -163,6 +166,7 @@ ask_user({
 **目标**：按方案修改代码，确保验证通过。
 
 **Agent 行为**（由 system prompt 引导）：
+
 1. `read` 相关文件，理解当前代码结构
 2. `write` / `edit` 按方案逐步修改代码
 3. `exec` 运行验证（`pnpm run typecheck && pnpm test && pnpm run lint`）
@@ -174,11 +178,13 @@ ask_user({
 **状态指示**：渲染进程监听 `EVOLUTION_EVENTS.STAGE_CHANGED`，显示"正在执行进化..."。
 
 **失败处理**：
+
 - `evolution_complete` 内部验证失败 → 返回错误信息给 Agent
 - Agent 输出错误到对话 → loop 结束
 - 用户选择：发消息让 Agent 继续修复 / 点 UI 取消按钮
 
 **system prompt 指令要点**：
+
 - 角色：程序员，按方案修改代码
 - 强调修改前先读代码、修改后必须验证
 - 不用 ask_user，自主完成
@@ -209,10 +215,12 @@ ask_user({
 ## [egg-v0.1-alice.3] - 2026-04-24
 
 ### Evolution
+
 - Request: "把进化历史改成可折叠的"
 - Status: Success
 
 ### Changes
+
 - Added collapsible history list
 - Default state: collapsed
 - Animation: smooth transition (300ms)
@@ -256,26 +264,26 @@ ask_user({
 
 以下操作由 UI 直接调用，不经过 Agent：
 
-| 方法 | 说明 |
-|------|------|
-| `getStatus()` | 返回当前阶段、进化信息 |
-| `getHistory()` | 从 CHANGELOG 解析进化节点列表 |
-| `cancel()` | 取消当前进化，git reset 到进化开始前的 commit |
-| `rollback(nodeId)` | 回滚到指定节点的 git_ref，中间节点标记废弃 |
-| `restart()` | 重启 dev server（dev 模式） |
+| 方法               | 说明                                          |
+| ------------------ | --------------------------------------------- |
+| `getStatus()`      | 返回当前阶段、进化信息                        |
+| `getHistory()`     | 从 CHANGELOG 解析进化节点列表                 |
+| `cancel()`         | 取消当前进化，git reset 到进化开始前的 commit |
+| `rollback(nodeId)` | 回滚到指定节点的 git_ref，中间节点标记废弃    |
+| `restart()`        | 重启 dev server（dev 模式）                   |
 
 ## GitPresenter 实现
 
 从 stub 实现为真实 git 操作，使用 `child_process.spawn('git', [...])` 不用 `shell: true`：
 
-| 方法 | git 命令 |
-|------|----------|
-| `tag(name, message)` | `git tag -a <name> -m <message>` |
-| `listTags(pattern?)` | `git tag -l <pattern> --sort=-creatordate` |
-| `getCurrentCommit()` | `git rev-parse HEAD` |
-| `rollbackToRef(ref)` | `git checkout <ref> -- .` + `git commit` |
-| `addAndCommit(message, files?)` | `git add` + `git commit -m` |
-| `getChangedFiles(fromRef, toRef?)` | `git diff --name-only <from> <to>` |
+| 方法                               | git 命令                                   |
+| ---------------------------------- | ------------------------------------------ |
+| `tag(name, message)`               | `git tag -a <name> -m <message>`           |
+| `listTags(pattern?)`               | `git tag -l <pattern> --sort=-creatordate` |
+| `getCurrentCommit()`               | `git rev-parse HEAD`                       |
+| `rollbackToRef(ref)`               | `git checkout <ref> -- .` + `git commit`   |
+| `addAndCommit(message, files?)`    | `git add` + `git commit -m`                |
+| `getChangedFiles(fromRef, toRef?)` | `git diff --name-only <from> <to>`         |
 
 ## systemPrompt 阶段感知
 
@@ -300,7 +308,7 @@ ask_user({
 
 ## 不在本次范围
 
-- task_* 子任务工具（coding 阶段细粒度任务管理）
+- task\_\* 子任务工具（coding 阶段细粒度任务管理）
 - 打包模式的编译打包 + 应用替换
 - 进化历史列表 UI（TASK-008，依赖本次工作完成）
 - 进度条展示（ProgressRenderer 保留但本次不集成）
