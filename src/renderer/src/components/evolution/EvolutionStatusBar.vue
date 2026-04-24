@@ -72,7 +72,7 @@ function handleRestart() {
         v-if="i > 0"
         class="mx-2 h-0.5 w-6"
         :class="
-          stageStatus(stage.key) === 'completed' || stageStatus(stages[i - 1].key) === 'active'
+          stageStatus(stage.key) !== 'pending'
             ? 'bg-green-500'
             : 'bg-border'
         "
@@ -102,7 +102,7 @@ function handleRestart() {
 
     <template v-if="evolutionStore.completedTag">
       <div class="ml-4 rounded bg-green-500/10 px-2 py-0.5">
-        <span class="text-xs font-medium text-green-500">进化完成</span>
+        <span class="text-xs font-medium text-green-500">✓ 进化完成</span>
       </div>
       <span class="ml-2 font-mono text-xs text-primary">{{ evolutionStore.completedTag }}</span>
     </template>
