@@ -45,6 +45,9 @@ describe("AgentPresenter", () => {
   const mockToolPresenter = {
     getToolSet: vi.fn(() => ({})),
   };
+  const mockEvolutionPresenter = {
+    getStatus: vi.fn(() => ({ stage: "idle" })),
+  };
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });
@@ -53,6 +56,7 @@ describe("AgentPresenter", () => {
       sessionPresenter,
       mockConfigPresenter as any,
       mockToolPresenter as any,
+      mockEvolutionPresenter as any,
     );
     mockSendToRenderer.mockClear();
     // Set env vars for getConfig()

@@ -13,6 +13,7 @@ import { logger } from "@/utils";
 import type { SessionPresenter } from "./sessionPresenter";
 import type { ConfigPresenter } from "./configPresenter";
 import type { ToolPresenter } from "./toolPresenter";
+import type { EvolutionPresenter } from "./evolutionPresenter";
 import { buildSystemPrompt } from "./systemPrompt";
 
 interface ToolCall {
@@ -34,6 +35,7 @@ export class AgentPresenter implements IAgentPresenter {
     private sessionPresenter: SessionPresenter,
     private configPresenter: ConfigPresenter,
     private toolPresenter: ToolPresenter,
+    private evolutionPresenter: EvolutionPresenter,
   ) {}
 
   private async getConfig() {
@@ -325,7 +327,7 @@ export class AgentPresenter implements IAgentPresenter {
     const messages = await this.buildMessages(sessionId);
     const model = this.createModel(config);
     const tools = this.toolPresenter.getToolSet(sessionId);
-    const systemPrompt = await buildSystemPrompt();
+    const systemPrompt = await buildSystemPrompt(this.evolutionPresenter.getStatus().stage);
 
     const blocks: AssistantMessageBlock[] = [];
     const assistantMessageId = crypto.randomUUID();

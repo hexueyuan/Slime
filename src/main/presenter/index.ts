@@ -7,7 +7,6 @@ import { SessionPresenter } from "./sessionPresenter";
 import { FilePresenter } from "./filePresenter";
 import { GitPresenter } from "./gitPresenter";
 import { ToolPresenter } from "./toolPresenter";
-import { WorkflowPresenter } from "./workflowPresenter";
 import { EvolutionPresenter } from "./evolutionPresenter";
 import { WorkspacePresenter } from "./workspacePresenter";
 import { ContentPresenter } from "./contentPresenter";
@@ -25,8 +24,8 @@ export class Presenter implements IPresenter {
   contentPresenter: ContentPresenter;
   workspacePresenter: WorkspacePresenter;
 
-  private workflowPresenter: WorkflowPresenter;
-  private evolutionPresenter: EvolutionPresenter;
+  evolutionPresenter: EvolutionPresenter;
+
   private toolPresenter: ToolPresenter;
 
   private static instance: Presenter | null = null;
@@ -36,7 +35,6 @@ export class Presenter implements IPresenter {
     this.appPresenter = new AppPresenter();
     this.configPresenter = new ConfigPresenter();
     this.sessionPresenter = new SessionPresenter();
-    this.workflowPresenter = new WorkflowPresenter();
     this.filePresenter = new FilePresenter(paths.effectiveProjectRoot);
     this.contentPresenter = new ContentPresenter();
     this.gitPresenter = new GitPresenter(paths.effectiveProjectRoot);
@@ -50,6 +48,7 @@ export class Presenter implements IPresenter {
       this.sessionPresenter,
       this.configPresenter,
       this.toolPresenter,
+      this.evolutionPresenter,
     );
   }
 
@@ -74,6 +73,7 @@ export class Presenter implements IPresenter {
     "gitPresenter",
     "contentPresenter",
     "workspacePresenter",
+    "evolutionPresenter",
   ]);
 
   init(): void {
