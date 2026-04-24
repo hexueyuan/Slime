@@ -39,7 +39,7 @@
 - Create: `src/shared/types/content.d.ts`
 - Modify: `src/shared/events.ts`
 
-- [ ] **Step 1: Create content types**
+- [x] **Step 1: Create content types**
 
 Create `src/shared/types/content.d.ts`:
 
@@ -90,7 +90,7 @@ export interface ProgressContent {
 export type FunctionContent = QuizContent | PreviewContent | MarkdownContent | ProgressContent;
 ```
 
-- [ ] **Step 2: Add CONTENT_EVENTS to events.ts**
+- [x] **Step 2: Add CONTENT_EVENTS to events.ts**
 
 In `src/shared/events.ts`, add after the `WORKSPACE_EVENTS` block:
 
@@ -101,12 +101,12 @@ export const CONTENT_EVENTS = {
 } as const;
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `pnpm run typecheck`
 Expected: PASS (types are only declarations, no consumers yet)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/shared/types/content.d.ts src/shared/events.ts
@@ -124,7 +124,7 @@ git commit -m "feat(shared): add content types and CONTENT_EVENTS"
 - Create: `src/main/presenter/contentPresenter.ts`
 - Test: `test/main/contentPresenter.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/main/contentPresenter.test.ts`:
 
@@ -171,12 +171,12 @@ describe("ContentPresenter", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- test/main/contentPresenter.test.ts`
 Expected: FAIL — module `@/presenter/contentPresenter` does not exist
 
-- [ ] **Step 3: Create IContentPresenter interface**
+- [x] **Step 3: Create IContentPresenter interface**
 
 Create `src/shared/types/presenters/content.presenter.d.ts`:
 
@@ -195,7 +195,7 @@ export interface IContentPresenter {
 }
 ```
 
-- [ ] **Step 4: Update presenters/index.d.ts**
+- [x] **Step 4: Update presenters/index.d.ts**
 
 In `src/shared/types/presenters/index.d.ts`, add the import/export and add `contentPresenter` to `IPresenter`:
 
@@ -220,7 +220,7 @@ export interface IPresenter {
 }
 ```
 
-- [ ] **Step 5: Implement ContentPresenter**
+- [x] **Step 5: Implement ContentPresenter**
 
 Create `src/main/presenter/contentPresenter.ts`:
 
@@ -290,12 +290,12 @@ export class ContentPresenter implements IContentPresenter {
 }
 ````
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `pnpm test -- test/main/contentPresenter.test.ts`
 Expected: PASS (4 tests)
 
-- [ ] **Step 7: Add openFile test**
+- [x] **Step 7: Add openFile test**
 
 Add to `test/main/contentPresenter.test.ts`:
 
@@ -374,12 +374,12 @@ it("should reject paths outside project root", async () => {
 });
 ````
 
-- [ ] **Step 8: Run test to verify openFile tests pass**
+- [x] **Step 8: Run test to verify openFile tests pass**
 
 Run: `pnpm test -- test/main/contentPresenter.test.ts`
 Expected: PASS (8 tests)
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/shared/types/presenters/content.presenter.d.ts src/shared/types/presenters/index.d.ts src/main/presenter/contentPresenter.ts test/main/contentPresenter.test.ts
@@ -396,7 +396,7 @@ git commit -m "feat(content): add ContentPresenter with openFile support"
 - Modify: `src/main/presenter/toolPresenter.ts`
 - Modify: `test/main/toolPresenter.test.ts`
 
-- [ ] **Step 1: Write the failing test for open tool**
+- [x] **Step 1: Write the failing test for open tool**
 
 Add to `test/main/toolPresenter.test.ts`, update the tool count test:
 
@@ -437,12 +437,12 @@ it("should execute open tool for .md file", async () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- test/main/toolPresenter.test.ts`
 Expected: FAIL — `open` tool does not exist in toolset
 
-- [ ] **Step 3: Register ContentPresenter in Presenter**
+- [x] **Step 3: Register ContentPresenter in Presenter**
 
 In `src/main/presenter/index.ts`:
 
@@ -476,7 +476,7 @@ this.toolPresenter = new ToolPresenter(
 
 Add `'contentPresenter'` to `DISPATCHABLE` set.
 
-- [ ] **Step 4: Add open tool to ToolPresenter**
+- [x] **Step 4: Add open tool to ToolPresenter**
 
 In `src/main/presenter/toolPresenter.ts`:
 
@@ -511,7 +511,7 @@ open: createTool({
 }),
 ```
 
-- [ ] **Step 5: Update toolPresenter test setup**
+- [x] **Step 5: Update toolPresenter test setup**
 
 In `test/main/toolPresenter.test.ts`, add ContentPresenter import:
 
@@ -532,17 +532,17 @@ beforeEach(() => {
 });
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `pnpm test -- test/main/toolPresenter.test.ts`
 Expected: PASS
 
-- [ ] **Step 7: Run full test suite**
+- [x] **Step 7: Run full test suite**
 
 Run: `pnpm test`
 Expected: PASS (some existing tests referencing tool count need updating — fix if needed)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/main/presenter/index.ts src/main/presenter/toolPresenter.ts test/main/toolPresenter.test.ts
@@ -558,7 +558,7 @@ git commit -m "feat(tool): add open tool and register ContentPresenter"
 - Create: `src/renderer/src/stores/content.ts`
 - Test: `test/renderer/stores/content.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/renderer/stores/content.test.ts`:
 
@@ -643,12 +643,12 @@ describe("setupContentIpc", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- test/renderer/stores/content.test.ts`
 Expected: FAIL — module `@/stores/content` does not exist
 
-- [ ] **Step 3: Implement content store**
+- [x] **Step 3: Implement content store**
 
 Create `src/renderer/src/stores/content.ts`:
 
@@ -692,12 +692,12 @@ export function setupContentIpc(store: ReturnType<typeof useContentStore>): () =
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm test -- test/renderer/stores/content.test.ts`
 Expected: PASS (5 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/stores/content.ts test/renderer/stores/content.test.ts
@@ -713,7 +713,7 @@ git commit -m "feat(store): add content store with IPC listeners"
 - Create: `src/renderer/src/components/function/renderers/QuizRenderer.vue`
 - Test: `test/renderer/components/renderers/QuizRenderer.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/renderer/components/renderers/QuizRenderer.test.ts`:
 
@@ -802,12 +802,12 @@ describe("QuizRenderer", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- test/renderer/components/renderers/QuizRenderer.test.ts`
 Expected: FAIL — component does not exist
 
-- [ ] **Step 3: Implement QuizRenderer**
+- [x] **Step 3: Implement QuizRenderer**
 
 Create `src/renderer/src/components/function/renderers/QuizRenderer.vue`:
 
@@ -922,12 +922,12 @@ function handleSubmit() {
 </script>
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm test -- test/renderer/components/renderers/QuizRenderer.test.ts`
 Expected: PASS (6 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/function/renderers/QuizRenderer.vue test/renderer/components/renderers/QuizRenderer.test.ts
@@ -943,7 +943,7 @@ git commit -m "feat(ui): add QuizRenderer component"
 - Create: `src/renderer/src/components/function/renderers/MarkdownRenderer.vue`
 - Test: `test/renderer/components/renderers/MarkdownRenderer.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/renderer/components/renderers/MarkdownRenderer.test.ts`:
 
@@ -988,12 +988,12 @@ describe("MarkdownRenderer", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- test/renderer/components/renderers/MarkdownRenderer.test.ts`
 Expected: FAIL — component does not exist
 
-- [ ] **Step 3: Implement MarkdownRenderer**
+- [x] **Step 3: Implement MarkdownRenderer**
 
 Create `src/renderer/src/components/function/renderers/MarkdownRenderer.vue`:
 
@@ -1021,12 +1021,12 @@ defineProps<{ content: MarkdownContent }>();
 </script>
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm test -- test/renderer/components/renderers/MarkdownRenderer.test.ts`
 Expected: PASS (3 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/function/renderers/MarkdownRenderer.vue test/renderer/components/renderers/MarkdownRenderer.test.ts
@@ -1042,7 +1042,7 @@ git commit -m "feat(ui): add MarkdownRenderer component"
 - Create: `src/renderer/src/components/function/renderers/ProgressRenderer.vue`
 - Test: `test/renderer/components/renderers/ProgressRenderer.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/renderer/components/renderers/ProgressRenderer.test.ts`:
 
@@ -1103,12 +1103,12 @@ describe("ProgressRenderer", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- test/renderer/components/renderers/ProgressRenderer.test.ts`
 Expected: FAIL — component does not exist
 
-- [ ] **Step 3: Implement ProgressRenderer**
+- [x] **Step 3: Implement ProgressRenderer**
 
 Create `src/renderer/src/components/function/renderers/ProgressRenderer.vue`:
 
@@ -1156,12 +1156,12 @@ defineEmits<{ cancel: [] }>();
 </script>
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm test -- test/renderer/components/renderers/ProgressRenderer.test.ts`
 Expected: PASS (7 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/function/renderers/ProgressRenderer.vue test/renderer/components/renderers/ProgressRenderer.test.ts
@@ -1177,7 +1177,7 @@ git commit -m "feat(ui): add ProgressRenderer component"
 - Create: `src/renderer/src/components/function/renderers/PreviewRenderer.vue`
 - Test: `test/renderer/components/renderers/PreviewRenderer.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/renderer/components/renderers/PreviewRenderer.test.ts`:
 
@@ -1239,12 +1239,12 @@ describe("PreviewRenderer", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- test/renderer/components/renderers/PreviewRenderer.test.ts`
 Expected: FAIL — component does not exist
 
-- [ ] **Step 3: Implement PreviewRenderer**
+- [x] **Step 3: Implement PreviewRenderer**
 
 Create `src/renderer/src/components/function/renderers/PreviewRenderer.vue`:
 
@@ -1289,12 +1289,12 @@ defineEmits<{ confirm: []; adjust: [] }>();
 </script>
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm test -- test/renderer/components/renderers/PreviewRenderer.test.ts`
 Expected: PASS (6 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/function/renderers/PreviewRenderer.vue test/renderer/components/renderers/PreviewRenderer.test.ts
@@ -1313,7 +1313,7 @@ git commit -m "feat(ui): add PreviewRenderer with iframe sandbox"
 - Modify: `test/renderer/components/FunctionPanel.test.ts`
 - Test: `test/renderer/components/ContentDispatcher.test.ts`
 
-- [ ] **Step 1: Write ContentDispatcher test**
+- [x] **Step 1: Write ContentDispatcher test**
 
 Create `test/renderer/components/ContentDispatcher.test.ts`:
 
@@ -1376,12 +1376,12 @@ describe("ContentDispatcher", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- test/renderer/components/ContentDispatcher.test.ts`
 Expected: FAIL — component does not exist
 
-- [ ] **Step 3: Implement ContentDispatcher**
+- [x] **Step 3: Implement ContentDispatcher**
 
 Create `src/renderer/src/components/function/ContentDispatcher.vue`:
 
@@ -1431,12 +1431,12 @@ defineEmits<{
 </script>
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm test -- test/renderer/components/ContentDispatcher.test.ts`
 Expected: PASS (5 tests)
 
-- [ ] **Step 5: Update FunctionPanel to add preview tab**
+- [x] **Step 5: Update FunctionPanel to add preview tab**
 
 Replace `src/renderer/src/components/function/FunctionPanel.vue` with:
 
@@ -1542,7 +1542,7 @@ function onProgressCancel() {
 </script>
 ```
 
-- [ ] **Step 6: Update EvolutionCenter.vue activeTab type**
+- [x] **Step 6: Update EvolutionCenter.vue activeTab type**
 
 In `src/renderer/src/views/EvolutionCenter.vue`, change:
 
@@ -1556,7 +1556,7 @@ to:
 const activeTab = ref<"workflow" | "tools" | "preview">("workflow");
 ```
 
-- [ ] **Step 7: Add auto-switch to preview tab**
+- [x] **Step 7: Add auto-switch to preview tab**
 
 In `src/renderer/src/views/EvolutionCenter.vue`, add imports and watcher:
 
@@ -1580,7 +1580,7 @@ watch(
 );
 ```
 
-- [ ] **Step 8: Update FunctionPanel test**
+- [x] **Step 8: Update FunctionPanel test**
 
 In `test/renderer/components/FunctionPanel.test.ts`, add:
 
@@ -1604,17 +1604,17 @@ it("should show ContentDispatcher when activeTab is preview", () => {
 });
 ```
 
-- [ ] **Step 9: Run all tests**
+- [x] **Step 9: Run all tests**
 
 Run: `pnpm test`
 Expected: PASS
 
-- [ ] **Step 10: Run format + lint**
+- [x] **Step 10: Run format + lint**
 
 Run: `pnpm run format && pnpm run lint`
 Expected: clean
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add src/renderer/src/components/function/ContentDispatcher.vue src/renderer/src/components/function/FunctionPanel.vue src/renderer/src/views/EvolutionCenter.vue test/renderer/components/ContentDispatcher.test.ts test/renderer/components/FunctionPanel.test.ts
@@ -1625,22 +1625,22 @@ git commit -m "feat(ui): add preview tab with ContentDispatcher integration"
 
 ### Task 10: Final verification
 
-- [ ] **Step 1: Run full test suite**
+- [x] **Step 1: Run full test suite**
 
 Run: `pnpm test`
 Expected: All tests PASS
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `pnpm run typecheck`
 Expected: No errors
 
-- [ ] **Step 3: Run format + lint**
+- [x] **Step 3: Run format + lint**
 
 Run: `pnpm run format && pnpm run lint`
 Expected: clean
 
-- [ ] **Step 4: Run dev and manually verify**
+- [x] **Step 4: Run dev and manually verify**
 
 Run: `pnpm run dev`
 Verify:
@@ -1649,7 +1649,7 @@ Verify:
 - 预览 tab shows "暂无预览内容" when empty
 - Agent can use `open` tool to display files in preview
 
-- [ ] **Step 5: Final commit if any format changes**
+- [x] **Step 5: Final commit if any format changes**
 
 ```bash
 git add -A && git status
