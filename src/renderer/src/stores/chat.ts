@@ -102,6 +102,14 @@ export const useMessageStore = defineStore("message", () => {
     await agentPresenter.stopGeneration(sessionId);
   }
 
+  function clearAll(): void {
+    messageIds.value = [];
+    messageCache.value = new Map();
+    clearStreamingState();
+    clearStreamError();
+    clearPendingQuestion();
+  }
+
   return {
     messageIds,
     messageCache,
@@ -123,5 +131,6 @@ export const useMessageStore = defineStore("message", () => {
     answerQuestion,
     sendMessage,
     stopGeneration,
+    clearAll,
   };
 });
