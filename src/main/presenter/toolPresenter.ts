@@ -4,6 +4,7 @@ import { exec as execCb } from "child_process";
 import { promisify } from "util";
 import type { FilePresenter } from "./filePresenter";
 import type { WorkflowPresenter } from "./workflowPresenter";
+import type { ContentPresenter } from "./contentPresenter";
 import { logger, paths } from "@/utils";
 
 const execAsync = promisify(execCb);
@@ -41,6 +42,7 @@ export class ToolPresenter {
   constructor(
     private filePresenter: FilePresenter,
     private workflowPresenter: WorkflowPresenter,
+    private contentPresenter: ContentPresenter,
   ) {}
 
   getToolSet(sessionId: string) {
@@ -165,6 +167,17 @@ export class ToolPresenter {
         }),
         execute: async () => {
           throw new Error("ask_user should be handled by AgentPresenter");
+        },
+      }),
+      open: createTool({
+        description:
+          "Open a file in the preview panel. Supports .md (Markdown), .html (HTML preview), and other text files.",
+        parameters: z.object({
+          path: z.string().describe("File path relative to project root"),
+        }),
+        execute: async ({ path }) => {
+          await this.contentPresenter.openFile(sessionId, path);
+          return `Opened ${path} in preview panel`;
         },
       }),
     };

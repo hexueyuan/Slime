@@ -15,6 +15,7 @@ vi.mock("@/utils/paths", () => ({
 const { ToolPresenter } = await import("@/presenter/toolPresenter");
 const { FilePresenter } = await import("@/presenter/filePresenter");
 const { WorkflowPresenter } = await import("@/presenter/workflowPresenter");
+const { ContentPresenter } = await import("@/presenter/contentPresenter");
 
 describe("ToolPresenter", () => {
   const testRoot = join(tmpdir(), `slime-tool-test-${Date.now()}`);
@@ -25,14 +26,15 @@ describe("ToolPresenter", () => {
     mockPaths.effectiveProjectRoot = testRoot;
     const fp = new FilePresenter(testRoot);
     const wp = new WorkflowPresenter();
-    tp = new ToolPresenter(fp, wp);
+    const cp = new ContentPresenter();
+    tp = new ToolPresenter(fp, wp, cp);
   });
 
   afterEach(() => {
     rmSync(testRoot, { recursive: true, force: true });
   });
 
-  it("should return a ToolSet with all 9 tools", () => {
+  it("should return a ToolSet with all 10 tools", () => {
     const tools = tp.getToolSet("s1");
     expect(Object.keys(tools)).toEqual(
       expect.arrayContaining([
@@ -45,15 +47,16 @@ describe("ToolPresenter", () => {
         "step_query",
         "step_update",
         "ask_user",
+        "open",
       ]),
     );
-    expect(Object.keys(tools)).toHaveLength(9);
+    expect(Object.keys(tools)).toHaveLength(10);
   });
 
   it("should include ask_user tool in toolset", () => {
     const tools = tp.getToolSet("s1");
     expect(Object.keys(tools)).toContain("ask_user");
-    expect(Object.keys(tools)).toHaveLength(9);
+    expect(Object.keys(tools)).toHaveLength(10);
   });
 
   it("should execute read tool", async () => {
@@ -111,6 +114,12 @@ describe("ToolPresenter", () => {
 
   it("should throw on unknown tool", async () => {
     await expect(tp.callTool("s1", "unknown", {})).rejects.toThrow("Unknown tool");
+  });
+
+  it("should execute open tool for .md file", async () => {
+    writeFileSync(join(testRoot, "preview.md"), "# Preview");
+    const result = await tp.callTool("s1", "open", { path: "preview.md" });
+    expect(result).toContain("preview.md");
   });
 
   describe("exec command blacklist", () => {

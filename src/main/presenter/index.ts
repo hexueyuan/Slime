@@ -9,6 +9,7 @@ import { GitPresenter } from "./gitPresenter";
 import { ToolPresenter } from "./toolPresenter";
 import { WorkflowPresenter } from "./workflowPresenter";
 import { WorkspacePresenter } from "./workspacePresenter";
+import { ContentPresenter } from "./contentPresenter";
 import { logger, paths } from "@/utils";
 
 type DispatchableKey = Exclude<keyof IPresenter, "init" | "destroy">;
@@ -20,6 +21,7 @@ export class Presenter implements IPresenter {
   sessionPresenter: SessionPresenter;
   filePresenter: FilePresenter;
   gitPresenter: GitPresenter;
+  contentPresenter: ContentPresenter;
   workspacePresenter: WorkspacePresenter;
 
   private workflowPresenter: WorkflowPresenter;
@@ -34,7 +36,12 @@ export class Presenter implements IPresenter {
     this.sessionPresenter = new SessionPresenter();
     this.workflowPresenter = new WorkflowPresenter();
     this.filePresenter = new FilePresenter(paths.effectiveProjectRoot);
-    this.toolPresenter = new ToolPresenter(this.filePresenter, this.workflowPresenter);
+    this.contentPresenter = new ContentPresenter();
+    this.toolPresenter = new ToolPresenter(
+      this.filePresenter,
+      this.workflowPresenter,
+      this.contentPresenter,
+    );
     this.agentPresenter = new AgentPresenter(
       this.sessionPresenter,
       this.configPresenter,
@@ -62,6 +69,7 @@ export class Presenter implements IPresenter {
     "sessionPresenter",
     "filePresenter",
     "gitPresenter",
+    "contentPresenter",
     "workspacePresenter",
   ]);
 
