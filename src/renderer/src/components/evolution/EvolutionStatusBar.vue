@@ -10,6 +10,7 @@ const sessionStore = useSessionStore();
 const messageStore = useMessageStore();
 const evolutionPresenter = usePresenter("evolutionPresenter");
 const sessionPresenter = usePresenter("sessionPresenter");
+const agentPresenter = usePresenter("agentPresenter");
 
 const stages = [
   { key: "discuss", label: "需求澄清" },
@@ -45,6 +46,9 @@ function handleCancelDialog() {
 async function handleConfirmDiscard() {
   isDiscarding.value = true;
   try {
+    if (sessionStore.activeSessionId) {
+      await agentPresenter.stopGeneration(sessionStore.activeSessionId);
+    }
     await evolutionPresenter.cancel();
     if (sessionStore.activeSessionId) {
       await sessionPresenter.clearMessages(sessionStore.activeSessionId);
