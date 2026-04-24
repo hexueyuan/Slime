@@ -342,7 +342,6 @@ export class AgentPresenter implements IAgentPresenter {
     const messages = await this.buildMessages(sessionId);
     const model = this.createModel(config);
     const tools = this.toolPresenter.getToolSet(sessionId);
-    const systemPrompt = await buildSystemPrompt(this.evolutionPresenter.getStatus().stage);
 
     const blocks: AssistantMessageBlock[] = [];
     const assistantMessageId = crypto.randomUUID();
@@ -352,6 +351,7 @@ export class AgentPresenter implements IAgentPresenter {
         if (abortController.signal.aborted) break;
         stepCount++;
 
+        const systemPrompt = await buildSystemPrompt(this.evolutionPresenter.getStatus().stage);
         const result = streamText({
           model,
           system: systemPrompt,
