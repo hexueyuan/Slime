@@ -14,7 +14,6 @@ vi.mock("@/utils/paths", () => ({
 
 const { ToolPresenter } = await import("@/presenter/toolPresenter");
 const { FilePresenter } = await import("@/presenter/filePresenter");
-const { WorkflowPresenter } = await import("@/presenter/workflowPresenter");
 const { ContentPresenter } = await import("@/presenter/contentPresenter");
 
 describe("ToolPresenter", () => {
@@ -25,9 +24,14 @@ describe("ToolPresenter", () => {
     mkdirSync(testRoot, { recursive: true });
     mockPaths.effectiveProjectRoot = testRoot;
     const fp = new FilePresenter(testRoot);
-    const wp = new WorkflowPresenter();
     const cp = new ContentPresenter();
-    tp = new ToolPresenter(fp, wp, cp);
+    const evo = {
+      startEvolution: vi.fn().mockReturnValue(true),
+      submitPlan: vi.fn().mockReturnValue(true),
+      completeEvolution: vi.fn().mockResolvedValue({ success: true, tag: "egg-v0.1-dev.1" }),
+      getStatus: vi.fn().mockReturnValue({ stage: "idle" }),
+    } as any;
+    tp = new ToolPresenter(fp, cp, evo);
   });
 
   afterEach(() => {
@@ -42,21 +46,20 @@ describe("ToolPresenter", () => {
         "write",
         "edit",
         "exec",
-        "workflow_edit",
-        "workflow_query",
-        "step_query",
-        "step_update",
         "ask_user",
         "open",
+        "evolution_start",
+        "evolution_plan",
+        "evolution_complete",
       ]),
     );
-    expect(Object.keys(tools)).toHaveLength(10);
+    expect(Object.keys(tools)).toHaveLength(9);
   });
 
   it("should include ask_user tool in toolset", () => {
     const tools = tp.getToolSet("s1");
     expect(Object.keys(tools)).toContain("ask_user");
-    expect(Object.keys(tools)).toHaveLength(10);
+    expect(Object.keys(tools)).toHaveLength(9);
   });
 
   it("should execute read tool", async () => {
@@ -84,32 +87,6 @@ describe("ToolPresenter", () => {
     const result = (await tp.callTool("s1", "exec", { command: "echo hello" })) as any;
     expect(result.stdout.trim()).toBe("hello");
     expect(result.exit_code).toBe(0);
-  });
-
-  it("should execute workflow_edit tool", async () => {
-    const result = (await tp.callTool("s1", "workflow_edit", {
-      steps: [{ id: "a", title: "Step A" }],
-    })) as any;
-    expect(result.steps).toHaveLength(1);
-  });
-
-  it("should execute workflow_query tool", async () => {
-    await tp.callTool("s1", "workflow_edit", {
-      steps: [{ id: "a", title: "Step A" }],
-    });
-    const result = await tp.callTool("s1", "workflow_query", {});
-    expect(result).not.toBeNull();
-  });
-
-  it("should execute step_update tool", async () => {
-    await tp.callTool("s1", "workflow_edit", {
-      steps: [{ id: "a", title: "Step A" }],
-    });
-    const result = (await tp.callTool("s1", "step_update", {
-      step_id: "a",
-      status: "completed",
-    })) as any;
-    expect(result.status).toBe("completed");
   });
 
   it("should throw on unknown tool", async () => {

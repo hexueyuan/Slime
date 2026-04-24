@@ -3,8 +3,8 @@ import { z } from "zod";
 import { exec as execCb } from "child_process";
 import { promisify } from "util";
 import type { FilePresenter } from "./filePresenter";
-import type { WorkflowPresenter } from "./workflowPresenter";
 import type { ContentPresenter } from "./contentPresenter";
+import type { EvolutionPresenter } from "./evolutionPresenter";
 import { logger, paths } from "@/utils";
 
 const execAsync = promisify(execCb);
@@ -41,8 +41,8 @@ function createTool(config: {
 export class ToolPresenter {
   constructor(
     private filePresenter: FilePresenter,
-    private workflowPresenter: WorkflowPresenter,
     private contentPresenter: ContentPresenter,
+    private evolutionPresenter: EvolutionPresenter,
   ) {}
 
   getToolSet(sessionId: string) {
@@ -114,56 +114,26 @@ export class ToolPresenter {
           }
         },
       }),
-      workflow_edit: createTool({
-        description: "Create or overwrite the evolution workflow. All steps start as pending.",
+      ask_user: createTool({
+        description:
+          "Ask the user a question with options. Renders in the function panel. Optionally include an HTML file for preview above options.",
         parameters: z.object({
-          steps: z
+          question: z.string().describe("The question to ask"),
+          options: z
             .array(
               z.object({
-                id: z.string(),
-                title: z.string(),
-                description: z.string().optional(),
+                label: z.string(),
+                value: z.string(),
+                recommended: z.boolean().optional(),
               }),
             )
             .min(1)
-            .describe("Ordered list of workflow steps"),
-        }),
-        execute: async ({ steps }) => {
-          return this.workflowPresenter.editWorkflow(sessionId, steps);
-        },
-      }),
-      workflow_query: createTool({
-        description: "Query the current workflow and all step statuses.",
-        parameters: z.object({}),
-        execute: async () => {
-          return this.workflowPresenter.queryWorkflow(sessionId) ?? "No workflow found";
-        },
-      }),
-      step_query: createTool({
-        description: "Query a single workflow step by ID.",
-        parameters: z.object({
-          step_id: z.string().describe("Step ID"),
-        }),
-        execute: async ({ step_id }) => {
-          return this.workflowPresenter.queryStep(sessionId, step_id) ?? "Step not found";
-        },
-      }),
-      step_update: createTool({
-        description: "Update a workflow step status.",
-        parameters: z.object({
-          step_id: z.string().describe("Step ID"),
-          status: z.enum(["in_progress", "completed", "skipped", "failed"]).describe("New status"),
-        }),
-        execute: async ({ step_id, status }) => {
-          return this.workflowPresenter.updateStep(sessionId, step_id, status) ?? "Step not found";
-        },
-      }),
-      ask_user: createTool({
-        description:
-          "Ask the user a question and wait for their response. Use when you need clarification or user input before proceeding.",
-        parameters: z.object({
-          question: z.string().describe("The question to ask the user"),
-          options: z.array(z.string()).optional().describe("Optional list of choices for the user"),
+            .describe("Choice options"),
+          multiple: z.boolean().optional().default(false).describe("Allow multiple selection"),
+          html_file: z
+            .string()
+            .optional()
+            .describe("Optional HTML file path (relative) to show above options"),
         }),
         execute: async () => {
           throw new Error("ask_user should be handled by AgentPresenter");
@@ -178,6 +148,47 @@ export class ToolPresenter {
         execute: async ({ path }) => {
           await this.contentPresenter.openFile(sessionId, path);
           return `Opened ${path} in preview panel`;
+        },
+      }),
+      evolution_start: createTool({
+        description: "Start an evolution. Transitions to discuss stage. Must be in idle stage.",
+        parameters: z.object({
+          description: z.string().describe("User's evolution request"),
+        }),
+        execute: async ({ description }) => {
+          const ok = this.evolutionPresenter.startEvolution(description);
+          return ok
+            ? "Evolution started. You are now in discuss stage. Clarify requirements with ask_user before calling evolution_plan."
+            : "Cannot start: another evolution is in progress.";
+        },
+      }),
+      evolution_plan: createTool({
+        description:
+          "Submit the evolution plan. Transitions from discuss to coding stage. Must be in discuss stage.",
+        parameters: z.object({
+          scope: z.array(z.string()).describe("Files/modules affected"),
+          changes: z.array(z.string()).describe("What will be changed"),
+          risks: z.array(z.string()).optional().describe("Potential risks"),
+        }),
+        execute: async ({ scope, changes, risks }) => {
+          const ok = this.evolutionPresenter.submitPlan({ scope, changes, risks });
+          return ok
+            ? "Plan submitted. You are now in coding stage. Implement the changes and call evolution_complete when done."
+            : "Cannot submit plan: not in discuss stage.";
+        },
+      }),
+      evolution_complete: createTool({
+        description:
+          "Complete the evolution. Triggers apply flow (CHANGELOG, commit, tag). Must be in coding stage.",
+        parameters: z.object({
+          summary: z.string().describe("One-line summary of what was evolved"),
+        }),
+        execute: async ({ summary }) => {
+          const result = await this.evolutionPresenter.completeEvolution(summary);
+          if (result.success) {
+            return `Evolution complete! Tagged as ${result.tag}. Restart to see changes.`;
+          }
+          return `Apply failed: ${result.error}. Fix the issue and try again.`;
         },
       }),
     };
