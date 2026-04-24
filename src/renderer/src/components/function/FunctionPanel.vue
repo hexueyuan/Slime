@@ -64,7 +64,6 @@ import ToolPanel from "./ToolPanel.vue";
 import ContentDispatcher from "./ContentDispatcher.vue";
 import { useContentStore } from "@/stores/content";
 import { usePresenter } from "@/composables/usePresenter";
-import { useMessageStore } from "@/stores/chat";
 
 defineProps<{
   activeTab: "workflow" | "tools" | "preview";
@@ -79,11 +78,12 @@ defineEmits<{
 
 const contentStore = useContentStore();
 const contentPresenter = usePresenter("contentPresenter");
-const messageStore = useMessageStore();
+const agentPresenter = usePresenter("agentPresenter");
 
-function onInteractionSubmit(result: { selected: string | string[]; extra_input?: string }) {
-  const sessionId = messageStore.currentStreamSessionId || "current";
-  messageStore.answerQuestion(sessionId, JSON.stringify(result));
+function onInteractionSubmit(result: { selected?: string | string[]; extra_input?: string }) {
+  const content = contentStore.content;
+  if (content?.type !== "interaction") return;
+  agentPresenter.answerQuestion(content.sessionId, content.toolCallId, JSON.stringify(result));
 }
 
 function onProgressCancel() {

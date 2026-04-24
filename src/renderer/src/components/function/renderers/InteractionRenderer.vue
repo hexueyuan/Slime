@@ -4,7 +4,7 @@ import type { InteractionContent } from "@shared/types/content";
 
 const props = defineProps<{ content: InteractionContent }>();
 const emit = defineEmits<{
-  submit: [result: { selected: string | string[]; extra_input?: string }];
+  submit: [result: { selected?: string | string[]; extra_input?: string }];
 }>();
 
 const selected = ref<Set<string>>(new Set());
@@ -19,12 +19,14 @@ function toggle(value: string) {
   }
 }
 
-const canSubmit = computed(() => selected.value.size > 0);
+const canSubmit = computed(() => selected.value.size > 0 || extraInput.value.trim().length > 0);
 
 function submit() {
   if (!canSubmit.value) return;
-  const sel = props.content.multiple ? [...selected.value] : [...selected.value][0];
-  const result: { selected: string | string[]; extra_input?: string } = { selected: sel };
+  const result: { selected?: string | string[]; extra_input?: string } = {};
+  if (selected.value.size > 0) {
+    result.selected = props.content.multiple ? [...selected.value] : [...selected.value][0];
+  }
   if (extraInput.value.trim()) result.extra_input = extraInput.value.trim();
   emit("submit", result);
 }
@@ -103,7 +105,7 @@ function submit() {
 .interaction-renderer__question {
   font-size: 14px;
   font-weight: 500;
-  color: var(--color-text);
+  color: var(--color-foreground);
 }
 
 .interaction-renderer__options {
@@ -117,12 +119,12 @@ function submit() {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--color-surface);
+  background: var(--color-muted);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-  color: var(--color-text);
+  color: var(--color-foreground);
   text-align: left;
   transition: all 0.15s;
 }
@@ -133,7 +135,7 @@ function submit() {
 
 .interaction-renderer__option--selected {
   border-color: var(--color-primary);
-  background: rgba(139, 92, 246, 0.08);
+  background: rgba(139, 92, 246, 0.15);
 }
 
 .interaction-renderer__radio {
@@ -145,7 +147,7 @@ function submit() {
 .interaction-renderer__badge {
   font-size: 11px;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-primary-foreground);
   padding: 1px 6px;
   border-radius: 10px;
   margin-left: auto;
@@ -156,19 +158,19 @@ function submit() {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-surface);
-  color: var(--color-text);
+  color: var(--color-foreground);
   font-size: 13px;
   resize: vertical;
 }
 
 .interaction-renderer__extra::placeholder {
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
 .interaction-renderer__submit {
   padding: 10px;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-primary-foreground);
   border: none;
   border-radius: 6px;
   font-size: 14px;

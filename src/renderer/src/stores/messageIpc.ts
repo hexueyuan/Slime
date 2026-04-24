@@ -1,5 +1,5 @@
 import { STREAM_EVENTS } from "@shared/events";
-import type { AssistantMessageBlock, PendingQuestion } from "@shared/types/chat";
+import type { AssistantMessageBlock } from "@shared/types/chat";
 import type { useMessageStore } from "./chat";
 
 export function setupMessageIpc(store: ReturnType<typeof useMessageStore>): () => void {
@@ -34,14 +34,6 @@ export function setupMessageIpc(store: ReturnType<typeof useMessageStore>): () =
     },
   );
   unsubs.push(unsubError);
-
-  const unsubQuestion = window.electron.ipcRenderer.on(
-    STREAM_EVENTS.QUESTION,
-    (_sessionId: unknown, payload: unknown) => {
-      store.setPendingQuestion(payload as PendingQuestion);
-    },
-  );
-  unsubs.push(unsubQuestion);
 
   return () => unsubs.forEach((fn) => fn());
 }

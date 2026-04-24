@@ -251,16 +251,8 @@ export class AgentPresenter implements IAgentPresenter {
   private async handleAskUser(
     sessionId: string,
     toolCallId: string,
-    args: { question: string; options?: string[] },
-    messageId: string,
+    _args: { question: string; options?: string[] },
   ): Promise<string> {
-    eventBus.sendToRenderer(STREAM_EVENTS.QUESTION, sessionId, {
-      messageId,
-      toolCallId,
-      question: args.question,
-      options: args.options,
-    });
-
     const answer = await new Promise<string>((resolve) => {
       this.pendingQuestions.set(sessionId, { toolCallId, resolve });
     });
@@ -297,12 +289,14 @@ export class AgentPresenter implements IAgentPresenter {
         }
         this.contentPresenter.setContent(sessionId, {
           type: "interaction" as const,
+          sessionId,
+          toolCallId: id,
           question,
           options: options || [],
           multiple: multiple || false,
           htmlContent,
         });
-        result = await this.handleAskUser(sessionId, id, parsedArgs, messageId);
+        result = await this.handleAskUser(sessionId, id, parsedArgs);
         this.contentPresenter.clearContent(sessionId);
       } else {
         result = await this.toolPresenter.callTool(sessionId, name, parsedArgs);

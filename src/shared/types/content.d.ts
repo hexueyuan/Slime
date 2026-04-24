@@ -49,6 +49,8 @@ export interface InteractionOption {
 
 export interface InteractionContent {
   type: "interaction";
+  sessionId: string;
+  toolCallId: string;
   question: string;
   options: InteractionOption[];
   multiple?: boolean;
