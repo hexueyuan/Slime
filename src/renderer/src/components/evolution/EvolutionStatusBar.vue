@@ -25,7 +25,9 @@ function stageStatus(stageKey: string): "completed" | "active" | "pending" {
   const stageKeys = stages.map((s) => s.key);
   const idx = stageKeys.indexOf(stageKey as any);
   const currentIdx = stageKeys.indexOf(evolutionStore.stage as any);
-  if (evolutionStore.stage === "idle") return "completed";
+  if (evolutionStore.stage === "idle") {
+    return evolutionStore.completedTag ? "completed" : "pending";
+  }
   if (idx < currentIdx) return "completed";
   if (idx === currentIdx) return "active";
   return "pending";
@@ -54,6 +56,7 @@ async function handleConfirmReset() {
     }
     await window.electron.ipcRenderer.invoke("agent:reset");
   } finally {
+    evolutionStore.reset();
     isResetting.value = false;
     showDialog.value = false;
   }
@@ -75,7 +78,15 @@ function handleRestart() {
         class="mx-2 h-0.5 w-6"
         :class="stageStatus(stage.key) !== 'pending' ? 'bg-green-500' : 'bg-border'"
       />
-      <div class="flex items-center gap-1.5">
+      <div
+        data-testid="stage-node"
+        class="flex items-center gap-1.5"
+        :class="{
+          'stage-completed': stageStatus(stage.key) === 'completed',
+          'stage-active': stageStatus(stage.key) === 'active',
+          'stage-dormant': stageStatus(stage.key) === 'pending',
+        }"
+      >
         <div
           class="h-2.5 w-2.5 shrink-0 rounded-full"
           :class="{
