@@ -29,50 +29,50 @@
 文件：`src/shared/types/content.d.ts`
 
 ```typescript
-export type FunctionContentType = 'quiz' | 'preview' | 'markdown' | 'progress'
+export type FunctionContentType = "quiz" | "preview" | "markdown" | "progress";
 
 export interface QuizContent {
-  type: 'quiz'
-  questions: QuizQuestion[]
+  type: "quiz";
+  questions: QuizQuestion[];
 }
 
 export interface QuizQuestion {
-  id: string
-  text: string
-  options: QuizOption[]
-  allowCustom: boolean
-  multiple?: boolean
+  id: string;
+  text: string;
+  options: QuizOption[];
+  allowCustom: boolean;
+  multiple?: boolean;
 }
 
 export interface QuizOption {
-  value: string
-  label: string
-  recommended?: boolean
+  value: string;
+  label: string;
+  recommended?: boolean;
 }
 
 export interface PreviewContent {
-  type: 'preview'
-  html: string
-  title?: string
-  confirmLabel?: string
-  adjustLabel?: string
+  type: "preview";
+  html: string;
+  title?: string;
+  confirmLabel?: string;
+  adjustLabel?: string;
 }
 
 export interface MarkdownContent {
-  type: 'markdown'
-  content: string
-  title?: string
+  type: "markdown";
+  content: string;
+  title?: string;
 }
 
 export interface ProgressContent {
-  type: 'progress'
-  percentage: number
-  label: string
-  stage: string
-  cancellable?: boolean
+  type: "progress";
+  percentage: number;
+  label: string;
+  stage: string;
+  cancellable?: boolean;
 }
 
-export type FunctionContent = QuizContent | PreviewContent | MarkdownContent | ProgressContent
+export type FunctionContent = QuizContent | PreviewContent | MarkdownContent | ProgressContent;
 ```
 
 ## 事件定义
@@ -81,9 +81,9 @@ export type FunctionContent = QuizContent | PreviewContent | MarkdownContent | P
 
 ```typescript
 export const CONTENT_EVENTS = {
-  UPDATED: 'content:updated',
-  CLEARED: 'content:cleared',
-} as const
+  UPDATED: "content:updated",
+  CLEARED: "content:cleared",
+} as const;
 ```
 
 ## 主进程：ContentPresenter
@@ -92,14 +92,14 @@ export const CONTENT_EVENTS = {
 
 ```typescript
 interface IContentPresenter {
-  setContent(sessionId: string, content: FunctionContent): void
-  getContent(sessionId: string): FunctionContent | null
-  clearContent(sessionId: string): void
-  submitQuizAnswer(sessionId: string, answers: Record<string, string | string[]>): void
-  confirmPreview(sessionId: string): void
-  adjustPreview(sessionId: string): void
-  cancelProgress(sessionId: string): void
-  openFile(sessionId: string, filePath: string): Promise<void>
+  setContent(sessionId: string, content: FunctionContent): void;
+  getContent(sessionId: string): FunctionContent | null;
+  clearContent(sessionId: string): void;
+  submitQuizAnswer(sessionId: string, answers: Record<string, string | string[]>): void;
+  confirmPreview(sessionId: string): void;
+  adjustPreview(sessionId: string): void;
+  cancelProgress(sessionId: string): void;
+  openFile(sessionId: string, filePath: string): Promise<void>;
 }
 ```
 
@@ -138,12 +138,16 @@ Handler：调用 `contentPresenter.openFile(sessionId, path)`。
 
 ```typescript
 // Pinia store
-const content = ref<FunctionContent | null>(null)
+const content = ref<FunctionContent | null>(null);
 
 function setupContentIpc() {
-  onContentUpdated((_sessionId, data) => { content.value = data })
-  onContentCleared(() => { content.value = null })
-  return cleanup
+  onContentUpdated((_sessionId, data) => {
+    content.value = data;
+  });
+  onContentCleared(() => {
+    content.value = null;
+  });
+  return cleanup;
 }
 ```
 
@@ -160,6 +164,7 @@ function setupContentIpc() {
 文件：`src/renderer/src/components/function/ContentDispatcher.vue`
 
 根据 `content.type` 分发到对应渲染器组件：
+
 - `quiz` → QuizRenderer
 - `markdown` → MarkdownRenderer
 - `progress` → ProgressRenderer
@@ -204,38 +209,38 @@ content 为 null 时显示空状态占位。
 
 ### 新增文件
 
-| 文件 | 职责 |
-|---|---|
-| `src/shared/types/content.d.ts` | 4 种内容类型定义 |
-| `src/main/presenter/contentPresenter.ts` | 内容管理 Presenter |
-| `src/renderer/src/stores/content.ts` | 内容状态 Store |
-| `src/renderer/src/components/function/ContentDispatcher.vue` | 类型分发器 |
-| `src/renderer/src/components/function/renderers/QuizRenderer.vue` | 选择题渲染器 |
-| `src/renderer/src/components/function/renderers/MarkdownRenderer.vue` | Markdown 渲染器 |
-| `src/renderer/src/components/function/renderers/ProgressRenderer.vue` | 进度条渲染器 |
-| `src/renderer/src/components/function/renderers/PreviewRenderer.vue` | HTML 预览渲染器 |
+| 文件                                                                  | 职责               |
+| --------------------------------------------------------------------- | ------------------ |
+| `src/shared/types/content.d.ts`                                       | 4 种内容类型定义   |
+| `src/main/presenter/contentPresenter.ts`                              | 内容管理 Presenter |
+| `src/renderer/src/stores/content.ts`                                  | 内容状态 Store     |
+| `src/renderer/src/components/function/ContentDispatcher.vue`          | 类型分发器         |
+| `src/renderer/src/components/function/renderers/QuizRenderer.vue`     | 选择题渲染器       |
+| `src/renderer/src/components/function/renderers/MarkdownRenderer.vue` | Markdown 渲染器    |
+| `src/renderer/src/components/function/renderers/ProgressRenderer.vue` | 进度条渲染器       |
+| `src/renderer/src/components/function/renderers/PreviewRenderer.vue`  | HTML 预览渲染器    |
 
 ### 修改文件
 
-| 文件 | 变更 |
-|---|---|
-| `src/shared/events.ts` | 新增 CONTENT_EVENTS |
-| `src/shared/types/presenters/index.ts` | 导出 IContentPresenter 接口 |
-| `src/main/presenter/index.ts` | 注册 ContentPresenter |
-| `src/main/presenter/toolPresenter.ts` | 新增 open 工具定义 + handler |
-| `src/renderer/src/components/function/FunctionPanel.vue` | 三 Tab 切换 + 预览 Tab |
+| 文件                                                     | 变更                         |
+| -------------------------------------------------------- | ---------------------------- |
+| `src/shared/events.ts`                                   | 新增 CONTENT_EVENTS          |
+| `src/shared/types/presenters/index.ts`                   | 导出 IContentPresenter 接口  |
+| `src/main/presenter/index.ts`                            | 注册 ContentPresenter        |
+| `src/main/presenter/toolPresenter.ts`                    | 新增 open 工具定义 + handler |
+| `src/renderer/src/components/function/FunctionPanel.vue` | 三 Tab 切换 + 预览 Tab       |
 
 ### 测试文件
 
-| 文件 | 覆盖范围 |
-|---|---|
-| `test/main/contentPresenter.test.ts` | setContent/clearContent/openFile |
-| `test/renderer/stores/content.test.ts` | IPC 监听 + 状态管理 |
-| `test/renderer/components/function/ContentDispatcher.test.ts` | 类型分发正确性 |
-| `test/renderer/components/function/renderers/QuizRenderer.test.ts` | 选择/提交逻辑 |
-| `test/renderer/components/function/renderers/MarkdownRenderer.test.ts` | Markdown 渲染 |
-| `test/renderer/components/function/renderers/ProgressRenderer.test.ts` | 进度显示 + 取消 |
-| `test/renderer/components/function/renderers/PreviewRenderer.test.ts` | iframe 渲染 |
+| 文件                                                                   | 覆盖范围                         |
+| ---------------------------------------------------------------------- | -------------------------------- |
+| `test/main/contentPresenter.test.ts`                                   | setContent/clearContent/openFile |
+| `test/renderer/stores/content.test.ts`                                 | IPC 监听 + 状态管理              |
+| `test/renderer/components/function/ContentDispatcher.test.ts`          | 类型分发正确性                   |
+| `test/renderer/components/function/renderers/QuizRenderer.test.ts`     | 选择/提交逻辑                    |
+| `test/renderer/components/function/renderers/MarkdownRenderer.test.ts` | Markdown 渲染                    |
+| `test/renderer/components/function/renderers/ProgressRenderer.test.ts` | 进度显示 + 取消                  |
+| `test/renderer/components/function/renderers/PreviewRenderer.test.ts`  | iframe 渲染                      |
 
 ## 验收标准
 
