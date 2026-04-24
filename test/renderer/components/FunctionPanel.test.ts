@@ -8,13 +8,6 @@ describe("FunctionPanel", () => {
     setActivePinia(createPinia());
   });
 
-  it("should show workflow tab by default", () => {
-    const wrapper = mount(FunctionPanel, {
-      props: { activeTab: "workflow", toolCallBlocks: [] },
-    });
-    expect(wrapper.text()).toContain("等待进化需求");
-  });
-
   it("should show tool panel when activeTab is tools", () => {
     const wrapper = mount(FunctionPanel, {
       props: { activeTab: "tools", toolCallBlocks: [] },
@@ -24,20 +17,9 @@ describe("FunctionPanel", () => {
 
   it("should emit update:activeTab on tab click", async () => {
     const wrapper = mount(FunctionPanel, {
-      props: { activeTab: "workflow", toolCallBlocks: [] },
+      props: { activeTab: "tools", toolCallBlocks: [] },
     });
-    await wrapper.find('[data-testid="tab-tools"]').trigger("click");
-    expect(wrapper.emitted("update:activeTab")).toBeTruthy();
-    expect(wrapper.emitted("update:activeTab")![0]).toEqual(["tools"]);
-  });
-
-  it("should show preview tab and emit update:activeTab", async () => {
-    const wrapper = mount(FunctionPanel, {
-      props: { activeTab: "workflow", toolCallBlocks: [] },
-    });
-    const previewTab = wrapper.find('[data-testid="tab-preview"]');
-    expect(previewTab.exists()).toBe(true);
-    await previewTab.trigger("click");
+    await wrapper.find('[data-testid="tab-preview"]').trigger("click");
     expect(wrapper.emitted("update:activeTab")).toBeTruthy();
     expect(wrapper.emitted("update:activeTab")![0]).toEqual(["preview"]);
   });
