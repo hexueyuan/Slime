@@ -28,7 +28,7 @@ import ProgressRenderer from "./renderers/ProgressRenderer.vue";
 
 defineProps<{ content: FunctionContent | null }>();
 defineEmits<{
-  "interaction-submit": [result: { selected: string | string[]; extra_input?: string }];
+  "interaction-submit": [result: { selected?: string | string[]; extra_input?: string }];
   "progress-cancel": [];
 }>();
 </script>

@@ -5,12 +5,16 @@ import ChatPanel from "../components/chat/ChatPanel.vue";
 import FunctionPanel from "../components/function/FunctionPanel.vue";
 import WorkspaceSetup from "../components/workspace/WorkspaceSetup.vue";
 import EvolutionStatusBar from "../components/evolution/EvolutionStatusBar.vue";
+import CyberClock from "../components/clock/CyberClock.vue";
 import { useSplitPane } from "../composables/useSplitPane";
 import { usePresenter } from "@/composables/usePresenter";
 import { useMessageStore } from "@/stores/chat";
 import { useContentStore, setupContentIpc } from "@/stores/content";
 import { useEvolutionStore, setupEvolutionIpc } from "@/stores/evolution";
 import type { AssistantMessageBlock } from "@shared/types/chat";
+
+// Sidebar active view
+const activeView = ref<"evolution" | "clock">("evolution");
 
 // Workspace init check
 const workspacePresenter = usePresenter("workspacePresenter");
@@ -94,40 +98,46 @@ function onSelectToolCall(id: string | null) {
   <!-- Workspace setup -->
   <WorkspaceSetup v-else-if="needsWorkspaceInit" @ready="onWorkspaceReady" />
 
-  <!-- Evolution center -->
+  <!-- Main layout -->
   <div v-else class="flex h-full flex-col bg-sidebar">
     <div class="h-9 shrink-0" style="-webkit-app-region: drag" />
     <div class="flex min-h-0 flex-1">
-      <AppSidebar />
+      <AppSidebar v-model:active-view="activeView" />
       <div
         ref="mainRef"
         class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
       >
-        <EvolutionStatusBar />
-        <div class="flex min-h-0 flex-1 overflow-hidden">
-          <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
-            <ChatPanel
-              :selected-tool-call-id="selectedToolCallId"
-              @select-tool-call="onSelectToolCall"
-            />
+        <!-- Clock view: full-screen cyberpunk clock -->
+        <CyberClock v-if="activeView === 'clock'" />
+
+        <!-- Evolution view: chat + function panel -->
+        <template v-else>
+          <EvolutionStatusBar />
+          <div class="flex min-h-0 flex-1 overflow-hidden">
+            <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
+              <ChatPanel
+                :selected-tool-call-id="selectedToolCallId"
+                @select-tool-call="onSelectToolCall"
+              />
+            </div>
+            <div
+              class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
+              @mousedown="onMouseDown"
+              @dblclick="resetToDefault"
+            >
+              <div class="absolute inset-y-0 -left-1 -right-1" />
+            </div>
+            <div class="min-w-[320px] flex-1 overflow-hidden">
+              <FunctionPanel
+                :active-tab="activeTab"
+                :tool-call-blocks="toolCallBlocks"
+                :selected-tool-call-id="selectedToolCallId"
+                @update:active-tab="activeTab = $event"
+                @select-tool-call="onSelectToolCall"
+              />
+            </div>
           </div>
-          <div
-            class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
-            @mousedown="onMouseDown"
-            @dblclick="resetToDefault"
-          >
-            <div class="absolute inset-y-0 -left-1 -right-1" />
-          </div>
-          <div class="min-w-[320px] flex-1 overflow-hidden">
-            <FunctionPanel
-              :active-tab="activeTab"
-              :tool-call-blocks="toolCallBlocks"
-              :selected-tool-call-id="selectedToolCallId"
-              @update:active-tab="activeTab = $event"
-              @select-tool-call="onSelectToolCall"
-            />
-          </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>

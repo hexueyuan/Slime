@@ -5,8 +5,12 @@
   >
     <button
       data-testid="sidebar-evolution"
-      class="flex h-8 w-8 items-center justify-center rounded-md bg-muted"
+      :class="[
+        'flex h-8 w-8 items-center justify-center rounded-md',
+        activeView === 'evolution' ? 'bg-muted' : 'hover:bg-muted/50',
+      ]"
       title="进化实验室"
+      @click="$emit('update:activeView', 'evolution')"
     >
       <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke-width="1.5">
         <defs>
@@ -33,6 +37,23 @@
       </svg>
     </button>
 
+    <button
+      data-testid="sidebar-clock"
+      :class="[
+        'mt-1 flex h-8 w-8 items-center justify-center rounded-md',
+        activeView === 'clock'
+          ? 'bg-muted text-foreground'
+          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+      ]"
+      title="赛博时钟"
+      @click="$emit('update:activeView', 'clock')"
+    >
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    </button>
+
     <div class="flex-1" />
 
     <button
@@ -56,6 +77,14 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import SettingsDialog from "./settings/SettingsDialog.vue";
+
+defineProps<{
+  activeView: "evolution" | "clock";
+}>();
+
+defineEmits<{
+  "update:activeView": [view: "evolution" | "clock"];
+}>();
 
 const showSettings = ref(false);
 </script>
