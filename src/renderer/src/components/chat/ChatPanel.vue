@@ -1,5 +1,12 @@
 <template>
   <div class="flex flex-col h-full bg-background relative">
+    <button
+      v-if="messages.length > 0 && !messageStore.isStreaming"
+      class="absolute top-2 right-2 z-10 rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      @click="onClearMessages"
+    >
+      清空对话
+    </button>
     <MessageList
       ref="messageListRef"
       :messages="messages"
@@ -37,12 +44,14 @@ const emit = defineEmits<{
 import { useSessionStore } from "@/stores/session";
 import { useMessageStore } from "@/stores/chat";
 import { setupMessageIpc } from "@/stores/messageIpc";
+import { usePresenter } from "@/composables/usePresenter";
 import MessageList from "./MessageList.vue";
 import ChatInput from "./ChatInput.vue";
 import type { ChatMessageRecord, MessageFile } from "@shared/types/chat";
 
 const sessionStore = useSessionStore();
 const messageStore = useMessageStore();
+const sessionPresenter = usePresenter("sessionPresenter");
 const messageListRef = ref<InstanceType<typeof MessageList> | null>(null);
 const attachedFiles = ref<MessageFile[]>([]);
 
@@ -100,5 +109,11 @@ async function onStop() {
 async function onAnswerQuestion(answer: string) {
   if (!sessionStore.activeSessionId) return;
   await messageStore.answerQuestion(sessionStore.activeSessionId, answer);
+}
+
+async function onClearMessages() {
+  if (!sessionStore.activeSessionId) return;
+  await sessionPresenter.clearMessages(sessionStore.activeSessionId);
+  messageStore.clearAll();
 }
 </script>
