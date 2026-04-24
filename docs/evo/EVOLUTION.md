@@ -76,9 +76,44 @@ Node-1 → Node-2 (当前)
 
 > 回退不会删除历史节点记录，只改变当前激活节点。废弃的节点仍可重新激活。
 
+## 实现机制
+
+### 阶段状态机
+
+```
+idle → discuss → coding → applying → idle
+```
+
+| 阶段     | 角色     | 可用工具                                            |
+| -------- | -------- | --------------------------------------------------- |
+| idle     | -        | evolution_start                                     |
+| discuss  | 产品经理 | read, ask_user(结构化选项+HTML预览), evolution_plan |
+| coding   | 程序员   | read, write, edit, exec, evolution_complete         |
+| applying | 自动流程 | -（内部自动: CHANGELOG → commit → tag）             |
+
+### Agent 工具
+
+- `evolution_start(description)` — 开始进化，idle→discuss
+- `evolution_plan(scope, changes, risks?)` — 提交计划，discuss→coding
+- `evolution_complete(summary)` — 完成进化，coding→applying→idle
+- `ask_user(question, options, multiple?, html_file?)` — 结构化提问，渲染到功能面板
+
+### 版本标签
+
+格式: `egg-v0.1-{user}.{seq}`，如 `egg-v0.1-dev.1`
+
+进化记录写入 `CHANGELOG.slime.md`，每个节点包含 tag、日期、请求、摘要、变更文件。
+
+### 用户操作（非 Agent 工具）
+
+- 取消进化 — UI 按钮，重置到 startCommit
+- 按 tag 回滚 — UI 按钮，git checkout + commit
+- 重启 — 进化完成后 UI 按钮
+
 ## 进化约束
 
 - 每次进化只做一件事，避免混合变更
 - 进化前必须通过现有测试，确保基线稳定
 - 进化后必须通过所有测试，不引入回归
+- discuss 阶段禁止修改代码，coding 阶段禁止 ask_user
 - 违反进化方向的需求，Evo 会提出警告但不阻止
