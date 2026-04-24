@@ -12,29 +12,30 @@
 
 ## 文件变更总览
 
-| 操作 | 文件 |
-|------|------|
-| 新建 | `src/renderer/src/components/evolution/EvolutionStatusBar.vue` |
-| 新建 | `test/renderer/components/EvolutionStatusBar.test.ts` |
+| 操作 | 文件                                                                      |
+| ---- | ------------------------------------------------------------------------- |
+| 新建 | `src/renderer/src/components/evolution/EvolutionStatusBar.vue`            |
+| 新建 | `test/renderer/components/EvolutionStatusBar.test.ts`                     |
 | 修改 | `src/shared/types/presenters/session.presenter.d.ts` — 新增 clearMessages |
-| 修改 | `src/main/presenter/sessionPresenter.ts` — 实现 clearMessages |
-| 修改 | `test/main/sessionPresenter.test.ts` — 新增测试 |
-| 修改 | `src/renderer/src/stores/chat.ts` — 新增 clearAll |
-| 修改 | `src/renderer/src/views/EvolutionCenter.vue` — 引入横条，移除 SessionBar |
-| 修改 | `src/renderer/src/components/chat/ChatPanel.vue` — 移除 SessionBar/phase |
-| 修改 | `src/renderer/src/components/function/FunctionPanel.vue` — 去掉流程 tab |
-| 删除 | `src/renderer/src/components/chat/SessionBar.vue` |
-| 删除 | `src/renderer/src/components/chat/GeneratingIndicator.vue` |
-| 删除 | `src/renderer/src/composables/useGeneratingPhase.ts` |
-| 删除 | `src/renderer/src/components/function/EvolutionPanel.vue` |
-| 删除 | `test/renderer/components/SessionBar.test.ts` |
-| 删除 | `test/renderer/components/GeneratingIndicator.test.ts` |
+| 修改 | `src/main/presenter/sessionPresenter.ts` — 实现 clearMessages             |
+| 修改 | `test/main/sessionPresenter.test.ts` — 新增测试                           |
+| 修改 | `src/renderer/src/stores/chat.ts` — 新增 clearAll                         |
+| 修改 | `src/renderer/src/views/EvolutionCenter.vue` — 引入横条，移除 SessionBar  |
+| 修改 | `src/renderer/src/components/chat/ChatPanel.vue` — 移除 SessionBar/phase  |
+| 修改 | `src/renderer/src/components/function/FunctionPanel.vue` — 去掉流程 tab   |
+| 删除 | `src/renderer/src/components/chat/SessionBar.vue`                         |
+| 删除 | `src/renderer/src/components/chat/GeneratingIndicator.vue`                |
+| 删除 | `src/renderer/src/composables/useGeneratingPhase.ts`                      |
+| 删除 | `src/renderer/src/components/function/EvolutionPanel.vue`                 |
+| 删除 | `test/renderer/components/SessionBar.test.ts`                             |
+| 删除 | `test/renderer/components/GeneratingIndicator.test.ts`                    |
 
 ---
 
 ### Task 1: 后端 — SessionPresenter.clearMessages
 
 **Files:**
+
 - Modify: `src/shared/types/presenters/session.presenter.d.ts`
 - Modify: `src/main/presenter/sessionPresenter.ts`
 - Test: `test/main/sessionPresenter.test.ts`
@@ -115,6 +116,7 @@ git commit -m "feat(session): add clearMessages method"
 ### Task 2: 前端 Store — messageStore.clearAll
 
 **Files:**
+
 - Modify: `src/renderer/src/stores/chat.ts`
 
 - [ ] **Step 1: 在 messageStore 中追加 clearAll**
@@ -160,6 +162,7 @@ git commit -m "feat(store): add messageStore.clearAll"
 ### Task 3: 新建 EvolutionStatusBar 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/evolution/EvolutionStatusBar.vue`
 - Create: `test/renderer/components/EvolutionStatusBar.test.ts`
 
@@ -243,67 +246,65 @@ Expected: FAIL — 模块不存在
 
 ```vue
 <script setup lang="ts">
-import { ref } from "vue"
-import { useEvolutionStore } from "@/stores/evolution"
-import { usePresenter } from "@/composables/usePresenter"
-import { useSessionStore } from "@/stores/session"
-import { useMessageStore } from "@/stores/chat"
+import { ref } from "vue";
+import { useEvolutionStore } from "@/stores/evolution";
+import { usePresenter } from "@/composables/usePresenter";
+import { useSessionStore } from "@/stores/session";
+import { useMessageStore } from "@/stores/chat";
 
-const evolutionStore = useEvolutionStore()
-const sessionStore = useSessionStore()
-const messageStore = useMessageStore()
-const evolutionPresenter = usePresenter("evolutionPresenter")
-const sessionPresenter = usePresenter("sessionPresenter")
+const evolutionStore = useEvolutionStore();
+const sessionStore = useSessionStore();
+const messageStore = useMessageStore();
+const evolutionPresenter = usePresenter("evolutionPresenter");
+const sessionPresenter = usePresenter("sessionPresenter");
 
 const stages = [
   { key: "discuss", label: "需求澄清" },
   { key: "coding", label: "执行进化" },
   { key: "applying", label: "应用变更" },
-] as const
+] as const;
 
-const showDialog = ref(false)
-const isDiscarding = ref(false)
+const showDialog = ref(false);
+const isDiscarding = ref(false);
 
 function stageStatus(stageKey: string): "completed" | "active" | "pending" {
-  const stageKeys = stages.map((s) => s.key)
-  const idx = stageKeys.indexOf(stageKey as any)
-  const currentIdx = stageKeys.indexOf(evolutionStore.stage as any)
-  if (evolutionStore.stage === "idle") return "completed"
-  if (idx < currentIdx) return "completed"
-  if (idx === currentIdx) return "active"
-  return "pending"
+  const stageKeys = stages.map((s) => s.key);
+  const idx = stageKeys.indexOf(stageKey as any);
+  const currentIdx = stageKeys.indexOf(evolutionStore.stage as any);
+  if (evolutionStore.stage === "idle") return "completed";
+  if (idx < currentIdx) return "completed";
+  if (idx === currentIdx) return "active";
+  return "pending";
 }
 
-const isActive = computed(() =>
-  evolutionStore.stage !== "idle" || !!evolutionStore.completedTag,
-)
+const isActive = computed(() => evolutionStore.stage !== "idle" || !!evolutionStore.completedTag);
 
-const isInProgress = computed(() => evolutionStore.stage !== "idle")
+const isInProgress = computed(() => evolutionStore.stage !== "idle");
 
 function handleDiscardClick() {
-  showDialog.value = true
+  showDialog.value = true;
 }
 
 function handleCancelDialog() {
-  showDialog.value = false
+  showDialog.value = false;
 }
 
 async function handleConfirmDiscard() {
-  isDiscarding.value = true
+  isDiscarding.value = true;
   try {
-    await evolutionPresenter.cancel()
+    await evolutionPresenter.cancel();
     if (sessionStore.activeSessionId) {
-      await sessionPresenter.clearMessages(sessionStore.activeSessionId)
-      messageStore.clearAll()
+      await sessionPresenter.clearMessages(sessionStore.activeSessionId);
+      messageStore.clearAll();
     }
   } finally {
-    isDiscarding.value = false
-    showDialog.value = false
+    isDiscarding.value = false;
+    showDialog.value = false;
   }
 }
 
 function handleRestart() {
-  evolutionPresenter.restart()
+  evolutionPresenter.restart();
 }
 </script>
 
@@ -410,7 +411,7 @@ function handleRestart() {
 注意：`computed` 需要在 `<script setup>` 顶部从 vue 导入。修改第一行为：
 
 ```ts
-import { ref, computed } from "vue"
+import { ref, computed } from "vue";
 ```
 
 - [ ] **Step 4: 运行测试确认通过**
@@ -430,6 +431,7 @@ git commit -m "feat(ui): add EvolutionStatusBar component"
 ### Task 4: 修改 EvolutionCenter — 引入横条，移除 SessionBar
 
 **Files:**
+
 - Modify: `src/renderer/src/views/EvolutionCenter.vue`
 
 - [ ] **Step 1: 替换 import**
@@ -437,17 +439,21 @@ git commit -m "feat(ui): add EvolutionStatusBar component"
 在 `EvolutionCenter.vue` 的 `<script setup>` 中：
 
 移除：
+
 ```ts
 import { useMessageStore } from "@/stores/chat";
 ```
 
 移除：
+
 ```ts
 import { useGeneratingPhase } from "@/composables/useGeneratingPhase";
 ```
+
 （如果 ChatPanel 不再需要 phase props，EvolutionCenter 也不需要）
 
 新增：
+
 ```ts
 import EvolutionStatusBar from "../components/evolution/EvolutionStatusBar.vue";
 ```
@@ -457,16 +463,20 @@ import EvolutionStatusBar from "../components/evolution/EvolutionStatusBar.vue";
 **注意**：`toolCallBlocks` 仍然需要传给 FunctionPanel，所以 `useMessageStore` 需保留。只移除 `useGeneratingPhase` 相关。
 
 实际只需要：
+
 - 新增 `import EvolutionStatusBar`
 - 移除对 FunctionPanel 传递的 `activeTab` 默认值从 `"workflow"` 改为 `"tools"`
 
 - [ ] **Step 2: 修改 activeTab 默认值**
 
 将：
+
 ```ts
 const activeTab = ref<"workflow" | "tools" | "preview">("workflow");
 ```
+
 改为：
+
 ```ts
 const activeTab = ref<"tools" | "preview">("tools");
 ```
@@ -486,18 +496,21 @@ const activeTab = ref<"tools" | "preview">("tools");
 同时将 mainRef 容器改为 flex-col 布局，让横条在上、split 区域在下：
 
 将 mainRef 的：
+
 ```html
 <div
   ref="mainRef"
   class="flex min-w-0 flex-1 overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
->
+></div>
 ```
+
 改为：
+
 ```html
 <div
   ref="mainRef"
   class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
->
+></div>
 ```
 
 然后将原来的 ChatPanel + divider + FunctionPanel 包在一个 `<div class="flex min-h-0 flex-1 overflow-hidden">` 中：
@@ -506,10 +519,7 @@ const activeTab = ref<"tools" | "preview">("tools");
 <EvolutionStatusBar />
 <div class="flex min-h-0 flex-1 overflow-hidden">
   <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
-    <ChatPanel
-      :selected-tool-call-id="selectedToolCallId"
-      @select-tool-call="onSelectToolCall"
-    />
+    <ChatPanel :selected-tool-call-id="selectedToolCallId" @select-tool-call="onSelectToolCall" />
   </div>
   <div
     class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
@@ -547,11 +557,13 @@ git commit -m "feat(ui): wire EvolutionStatusBar into EvolutionCenter"
 ### Task 5: 修改 ChatPanel — 移除 SessionBar 和 phase 逻辑
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatPanel.vue`
 
 - [ ] **Step 1: 移除 imports**
 
 移除以下 import：
+
 ```ts
 import { useGeneratingPhase } from "@/composables/useGeneratingPhase";
 import SessionBar from "./SessionBar.vue";
@@ -560,6 +572,7 @@ import SessionBar from "./SessionBar.vue";
 - [ ] **Step 2: 移除 phase 变量**
 
 移除：
+
 ```ts
 const { isGenerating, generatingPhaseText, phaseColor } = useGeneratingPhase();
 ```
@@ -569,6 +582,7 @@ const { isGenerating, generatingPhaseText, phaseColor } = useGeneratingPhase();
 移除整个 `<SessionBar ... />` 组件。
 
 ChatPanel template 变为：
+
 ```html
 <template>
   <div class="flex flex-col h-full bg-background relative">
@@ -620,11 +634,13 @@ git commit -m "refactor(chat): remove SessionBar and generating phase from ChatP
 ### Task 6: 修改 FunctionPanel — 去掉"流程"tab
 
 **Files:**
+
 - Modify: `src/renderer/src/components/function/FunctionPanel.vue`
 
 - [ ] **Step 1: 移除 EvolutionPanel import**
 
 移除：
+
 ```ts
 import EvolutionPanel from "./EvolutionPanel.vue";
 ```
@@ -632,6 +648,7 @@ import EvolutionPanel from "./EvolutionPanel.vue";
 - [ ] **Step 2: 修改 props 类型**
 
 将：
+
 ```ts
 defineProps<{
   activeTab: "workflow" | "tools" | "preview";
@@ -639,7 +656,9 @@ defineProps<{
   selectedToolCallId?: string | null;
 }>();
 ```
+
 改为：
+
 ```ts
 defineProps<{
   activeTab: "tools" | "preview";
@@ -651,13 +670,16 @@ defineProps<{
 - [ ] **Step 3: 修改 emits 类型**
 
 将：
+
 ```ts
 defineEmits<{
   "update:activeTab": [tab: "workflow" | "tools" | "preview"];
   "select-tool-call": [id: string | null];
 }>();
 ```
+
 改为：
+
 ```ts
 defineEmits<{
   "update:activeTab": [tab: "tools" | "preview"];
@@ -670,16 +692,15 @@ defineEmits<{
 删除整个 `data-testid="tab-workflow"` 的 `<button>` 块。
 
 删除：
+
 ```html
 <EvolutionPanel v-if="activeTab === 'workflow'" />
 ```
 
 将 ToolPanel 的 `v-else-if` 改为 `v-if`：
+
 ```html
-<ToolPanel
-  v-if="activeTab === 'tools'"
-  ...
-/>
+<ToolPanel v-if="activeTab === 'tools'" ... />
 ```
 
 - [ ] **Step 5: 运行测试**
@@ -699,6 +720,7 @@ git commit -m "refactor(function): remove workflow tab from FunctionPanel"
 ### Task 7: 删除废弃文件和测试
 
 **Files:**
+
 - Delete: `src/renderer/src/components/chat/SessionBar.vue`
 - Delete: `src/renderer/src/components/chat/GeneratingIndicator.vue`
 - Delete: `src/renderer/src/composables/useGeneratingPhase.ts`
@@ -767,6 +789,7 @@ Expected: 无错误
 Run: `pnpm run dev`
 
 验证：
+
 1. idle 状态：横条不显示
 2. 发起进化对话后，进入 discuss：横条出现，"需求澄清"为 active 状态
 3. 进入 coding："需求澄清"变绿，"执行进化"为 active

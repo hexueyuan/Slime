@@ -16,63 +16,30 @@ describe("sessionStore", () => {
     mockInvoke.mockReset();
   });
 
-  it("should start with empty sessions and no active session", () => {
+  it("should start with no active session", () => {
     const store = useSessionStore();
-    expect(store.sessions).toEqual([]);
     expect(store.activeSessionId).toBeNull();
   });
 
-  it("should fetch sessions via IPC", async () => {
+  it("ensureSession should use existing session", async () => {
     const mockSessions = [{ id: "s1", title: "test", createdAt: 1, updatedAt: 1 }];
     mockInvoke.mockResolvedValueOnce(mockSessions);
 
     const store = useSessionStore();
-    await store.fetchSessions();
+    await store.ensureSession();
 
     expect(mockInvoke).toHaveBeenCalledWith("presenter:call", "sessionPresenter", "getSessions");
-    expect(store.sessions).toEqual(mockSessions);
-  });
-
-  it("should create session via IPC and set as active", async () => {
-    const newSession = { id: "s1", title: "新对话", createdAt: 1, updatedAt: 1 };
-    mockInvoke.mockResolvedValueOnce(newSession);
-
-    const store = useSessionStore();
-    await store.createSession();
-
-    expect(mockInvoke).toHaveBeenCalledWith(
-      "presenter:call",
-      "sessionPresenter",
-      "createSession",
-      undefined,
-    );
-    expect(store.sessions).toContainEqual(newSession);
     expect(store.activeSessionId).toBe("s1");
   });
 
-  it("should select session", () => {
-    const store = useSessionStore();
-    store.sessions = [{ id: "s1", title: "test", createdAt: 1, updatedAt: 1 }];
-    store.selectSession("s1");
-    expect(store.activeSessionId).toBe("s1");
-  });
-
-  it("should delete session via IPC", async () => {
-    mockInvoke.mockResolvedValueOnce(true);
+  it("ensureSession should create session when none exist", async () => {
+    const newSession = { id: "s2", title: "新对话", createdAt: 1, updatedAt: 1 };
+    mockInvoke.mockResolvedValueOnce([]); // getSessions returns empty
+    mockInvoke.mockResolvedValueOnce(newSession); // createSession
 
     const store = useSessionStore();
-    store.sessions = [{ id: "s1", title: "test", createdAt: 1, updatedAt: 1 }];
-    store.activeSessionId = "s1";
+    await store.ensureSession();
 
-    await store.deleteSession("s1");
-
-    expect(mockInvoke).toHaveBeenCalledWith(
-      "presenter:call",
-      "sessionPresenter",
-      "deleteSession",
-      "s1",
-    );
-    expect(store.sessions).toHaveLength(0);
-    expect(store.activeSessionId).toBeNull();
+    expect(store.activeSessionId).toBe("s2");
   });
 });

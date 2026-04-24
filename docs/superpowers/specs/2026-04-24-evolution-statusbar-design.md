@@ -29,11 +29,11 @@
 
 ### 可见性规则
 
-| 条件 | 横条状态 |
-|------|---------|
-| stage 为 discuss/coding/applying | 显示进行中态 |
-| stage 为 idle 且 completedTag 存在 | 显示完成态 |
-| stage 为 idle 且无 completedTag | 完全隐藏 |
+| 条件                               | 横条状态     |
+| ---------------------------------- | ------------ |
+| stage 为 discuss/coding/applying   | 显示进行中态 |
+| stage 为 idle 且 completedTag 存在 | 显示完成态   |
+| stage 为 idle 且无 completedTag    | 完全隐藏     |
 
 ### 进行中态
 

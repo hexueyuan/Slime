@@ -71,11 +71,7 @@ function handleRestart() {
       <div
         v-if="i > 0"
         class="mx-2 h-0.5 w-6"
-        :class="
-          stageStatus(stage.key) !== 'pending'
-            ? 'bg-green-500'
-            : 'bg-border'
-        "
+        :class="stageStatus(stage.key) !== 'pending' ? 'bg-green-500' : 'bg-border'"
       />
       <div class="flex items-center gap-1.5">
         <div
