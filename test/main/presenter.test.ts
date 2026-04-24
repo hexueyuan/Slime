@@ -3,6 +3,11 @@ import { ipcMain } from "electron";
 
 const mockHandle = vi.mocked(ipcMain.handle);
 
+function findHandler(channel: string) {
+  const call = mockHandle.mock.calls.find((c) => c[0] === channel);
+  return call?.[1];
+}
+
 describe("Presenter", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -29,20 +34,20 @@ describe("Presenter", () => {
 
   it("should dispatch to sessionPresenter via IPC", async () => {
     await import("@/presenter/index");
-    const handler = mockHandle.mock.calls[0][1];
+    const handler = findHandler("presenter:call")!;
     const result = await handler({} as any, "sessionPresenter", "getSessions");
     expect(Array.isArray(result)).toBe(true);
   });
 
   it("should reject non-dispatchable presenter names", async () => {
     await import("@/presenter/index");
-    const handler = mockHandle.mock.calls[0][1];
+    const handler = findHandler("presenter:call")!;
     await expect(handler({} as any, "notReal", "method")).rejects.toThrow("not dispatchable");
   });
 
   it("should reject non-existent methods", async () => {
     await import("@/presenter/index");
-    const handler = mockHandle.mock.calls[0][1];
+    const handler = findHandler("presenter:call")!;
     await expect(handler({} as any, "appPresenter", "noSuchMethod")).rejects.toThrow("not found");
   });
 });

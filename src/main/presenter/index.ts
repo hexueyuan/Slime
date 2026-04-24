@@ -81,10 +81,25 @@ export class Presenter implements IPresenter {
     logger.info("Presenter initialized");
   }
 
+  resetAgent(): void {
+    this.agentPresenter = new AgentPresenter(
+      this.sessionPresenter,
+      this.configPresenter,
+      this.toolPresenter,
+      this.evolutionPresenter,
+      this.contentPresenter,
+    );
+    logger.info("AgentPresenter reset");
+  }
+
   async destroy(): Promise<void> {
     logger.info("Presenter destroyed");
   }
 }
+
+ipcMain.handle("agent:reset", () => {
+  Presenter.getInstance().resetAgent();
+});
 
 ipcMain.handle(
   "presenter:call",

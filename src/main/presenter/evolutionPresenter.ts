@@ -80,11 +80,12 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   }
 
   async cancel(): Promise<boolean> {
-    if (this.stage === "idle") return false;
     if ((this.stage === "coding" || this.stage === "applying") && this.startCommit) {
       await this.git.rollbackToRef(this.startCommit);
     }
-    this.reset();
+    if (this.stage !== "idle") {
+      this.reset();
+    }
     logger.info("Evolution cancelled");
     return true;
   }

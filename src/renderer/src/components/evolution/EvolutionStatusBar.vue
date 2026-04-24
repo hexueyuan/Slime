@@ -19,7 +19,7 @@ const stages = [
 ] as const;
 
 const showDialog = ref(false);
-const isDiscarding = ref(false);
+const isResetting = ref(false);
 
 function stageStatus(stageKey: string): "completed" | "active" | "pending" {
   const stageKeys = stages.map((s) => s.key);
@@ -31,11 +31,9 @@ function stageStatus(stageKey: string): "completed" | "active" | "pending" {
   return "pending";
 }
 
-const isActive = computed(() => evolutionStore.stage !== "idle" || !!evolutionStore.completedTag);
-
 const isInProgress = computed(() => evolutionStore.stage !== "idle");
 
-function handleDiscardClick() {
+function handleResetClick() {
   showDialog.value = true;
 }
 
@@ -43,8 +41,8 @@ function handleCancelDialog() {
   showDialog.value = false;
 }
 
-async function handleConfirmDiscard() {
-  isDiscarding.value = true;
+async function handleConfirmReset() {
+  isResetting.value = true;
   try {
     if (sessionStore.activeSessionId) {
       await agentPresenter.stopGeneration(sessionStore.activeSessionId);
@@ -54,8 +52,9 @@ async function handleConfirmDiscard() {
       await sessionPresenter.clearMessages(sessionStore.activeSessionId);
       messageStore.clearAll();
     }
+    await window.electron.ipcRenderer.invoke("agent:reset");
   } finally {
-    isDiscarding.value = false;
+    isResetting.value = false;
     showDialog.value = false;
   }
 }
@@ -67,7 +66,6 @@ function handleRestart() {
 
 <template>
   <div
-    v-if="isActive"
     data-testid="evolution-status-bar"
     class="flex items-center border-b border-border px-4 py-2"
   >
@@ -110,18 +108,17 @@ function handleRestart() {
     <div class="flex-1" />
 
     <button
-      v-if="isInProgress"
-      data-testid="discard-btn"
+      data-testid="reset-btn"
       class="rounded border border-red-500 px-3 py-1 text-xs text-red-500 transition-colors hover:bg-red-500/10"
-      :disabled="isDiscarding"
-      @click="handleDiscardClick"
+      :disabled="isResetting"
+      @click="handleResetClick"
     >
-      丢弃进化
+      重置
     </button>
 
     <button
       v-if="evolutionStore.completedTag"
-      class="rounded bg-primary px-3 py-1 text-xs text-primary-foreground transition-opacity hover:opacity-90"
+      class="ml-2 rounded bg-primary px-3 py-1 text-xs text-primary-foreground transition-opacity hover:opacity-90"
       @click="handleRestart"
     >
       重启以生效
@@ -131,14 +128,18 @@ function handleRestart() {
   <Teleport to="body">
     <div
       v-if="showDialog"
-      data-testid="discard-dialog"
+      data-testid="reset-dialog"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       @click.self="handleCancelDialog"
     >
       <div class="w-[360px] rounded-lg border border-border bg-background p-6 shadow-lg">
-        <h3 class="text-sm font-semibold text-foreground">确认丢弃进化？</h3>
+        <h3 class="text-sm font-semibold text-foreground">确认重置？</h3>
         <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
-          此操作将丢弃本次进化的所有代码修改，回退到进化开始前的状态，并清空当前对话记录。此操作不可恢复。
+          <template v-if="isInProgress">
+            此操作将丢弃本次进化的所有代码修改，回退到进化开始前的状态，清空对话记录并重建
+            Agent。此操作不可恢复。
+          </template>
+          <template v-else> 此操作将清空当前对话记录并重建 Agent。 </template>
         </p>
         <div class="mt-5 flex justify-end gap-3">
           <button
@@ -149,10 +150,10 @@ function handleRestart() {
           </button>
           <button
             class="rounded bg-red-500 px-4 py-1.5 text-xs text-white hover:bg-red-600"
-            :disabled="isDiscarding"
-            @click="handleConfirmDiscard"
+            :disabled="isResetting"
+            @click="handleConfirmReset"
           >
-            确认丢弃
+            确认重置
           </button>
         </div>
       </div>

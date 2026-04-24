@@ -14,14 +14,23 @@ vi.mock("@/composables/usePresenter", () => ({
     ),
 }));
 
+// mock window.electron for agent:reset IPC
+(window as any).electron = {
+  ipcRenderer: {
+    invoke: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn(),
+    removeAllListeners: vi.fn(),
+  },
+};
+
 describe("EvolutionStatusBar", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
 
-  it("should be hidden when idle and no completedTag", () => {
+  it("should always be visible even when idle", () => {
     const wrapper = mount(EvolutionStatusBar);
-    expect(wrapper.find('[data-testid="evolution-status-bar"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="evolution-status-bar"]').exists()).toBe(true);
   });
 
   it("should show stepper when stage is discuss", () => {
@@ -34,11 +43,9 @@ describe("EvolutionStatusBar", () => {
     expect(wrapper.text()).toContain("应用变更");
   });
 
-  it("should show discard button when in progress", () => {
-    const store = useEvolutionStore();
-    store.setStage("coding");
+  it("should always show reset button", () => {
     const wrapper = mount(EvolutionStatusBar);
-    expect(wrapper.find('[data-testid="discard-btn"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="reset-btn"]').exists()).toBe(true);
   });
 
   it("should show completed state when completedTag exists", () => {
@@ -51,14 +58,14 @@ describe("EvolutionStatusBar", () => {
     expect(wrapper.text()).toContain("重启以生效");
   });
 
-  it("should show confirm dialog when discard clicked", async () => {
+  it("should show confirm dialog when reset clicked", async () => {
     const store = useEvolutionStore();
     store.setStage("coding");
     const wrapper = mount(EvolutionStatusBar, {
       global: { stubs: { teleport: true } },
     });
-    await wrapper.find('[data-testid="discard-btn"]').trigger("click");
-    expect(wrapper.find('[data-testid="discard-dialog"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain("确认丢弃进化");
+    await wrapper.find('[data-testid="reset-btn"]').trigger("click");
+    expect(wrapper.find('[data-testid="reset-dialog"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain("确认重置");
   });
 });
