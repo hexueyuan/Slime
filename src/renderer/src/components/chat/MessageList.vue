@@ -19,13 +19,6 @@
         :selected-tool-call-id="selectedToolCallId"
         @select-tool-call="$emit('select-tool-call', $event)"
       />
-      <!-- 状态指示器 -->
-      <GeneratingIndicator
-        v-if="isGenerating && generatingPhaseText && phaseColor"
-        :text="generatingPhaseText"
-        :color="phaseColor"
-        class="pl-3 pt-2"
-      />
     </div>
   </div>
 </template>
@@ -35,15 +28,12 @@ import { ref, computed, watch, nextTick, onMounted } from "vue";
 import type { ChatMessageRecord, AssistantMessageBlock } from "@shared/types/chat";
 import MessageItemUser from "@/components/message/MessageItemUser.vue";
 import MessageItemAssistant from "@/components/message/MessageItemAssistant.vue";
-import GeneratingIndicator from "./GeneratingIndicator.vue";
 
 const props = defineProps<{
   messages: ChatMessageRecord[];
   streamingBlocks: AssistantMessageBlock[];
   currentStreamMessageId: string | null;
   isGenerating?: boolean;
-  generatingPhaseText?: string;
-  phaseColor?: string;
   selectedToolCallId?: string | null;
 }>();
 

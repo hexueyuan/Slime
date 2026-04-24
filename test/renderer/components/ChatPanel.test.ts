@@ -37,9 +37,4 @@ describe("ChatPanel", () => {
     const wrapper = mount(ChatPanel);
     expect(wrapper.find(".flex.flex-col.h-full").exists()).toBe(true);
   });
-
-  it("should render session bar", () => {
-    const wrapper = mount(ChatPanel);
-    expect(wrapper.find('[data-testid="new-session-btn"]').exists()).toBe(true);
-  });
 });

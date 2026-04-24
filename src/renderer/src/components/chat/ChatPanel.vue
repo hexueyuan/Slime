@@ -1,24 +1,11 @@
 <template>
   <div class="flex flex-col h-full bg-background relative">
-    <SessionBar
-      :title="currentSessionTitle"
-      :sessions="sessionStore.sessions"
-      :active-session-id="sessionStore.activeSessionId"
-      :is-generating="isGenerating"
-      :generating-phase-text="generatingPhaseText"
-      :phase-color="phaseColor"
-      @new-session="onNewSession"
-      @select-session="onSelectSession"
-      @delete-session="onDeleteSession"
-    />
     <MessageList
       ref="messageListRef"
       :messages="messages"
       :streaming-blocks="messageStore.streamingBlocks"
       :current-stream-message-id="messageStore.currentStreamMessageId"
-      :is-generating="isGenerating"
-      :generating-phase-text="generatingPhaseText"
-      :phase-color="phaseColor"
+      :is-generating="messageStore.isStreaming"
       :selected-tool-call-id="props.selectedToolCallId"
       @select-tool-call="emit('select-tool-call', $event)"
     />
@@ -38,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 const props = defineProps<{
   selectedToolCallId?: string | null;
@@ -50,27 +37,19 @@ const emit = defineEmits<{
 import { useSessionStore } from "@/stores/session";
 import { useMessageStore } from "@/stores/chat";
 import { setupMessageIpc } from "@/stores/messageIpc";
-import { useGeneratingPhase } from "@/composables/useGeneratingPhase";
 import MessageList from "./MessageList.vue";
 import ChatInput from "./ChatInput.vue";
-import SessionBar from "./SessionBar.vue";
 import type { ChatMessageRecord, MessageFile } from "@shared/types/chat";
 
 const sessionStore = useSessionStore();
 const messageStore = useMessageStore();
 const messageListRef = ref<InstanceType<typeof MessageList> | null>(null);
 const attachedFiles = ref<MessageFile[]>([]);
-const { isGenerating, generatingPhaseText, phaseColor } = useGeneratingPhase();
 
 // 设置 IPC 监听
 const cleanupIpc = setupMessageIpc(messageStore);
 onUnmounted(() => {
   cleanupIpc();
-});
-
-const currentSessionTitle = computed(() => {
-  const session = sessionStore.sessions.find((s) => s.id === sessionStore.activeSessionId);
-  return session?.title || "新对话";
 });
 
 const messages = computed<ChatMessageRecord[]>(() => {
@@ -79,31 +58,13 @@ const messages = computed<ChatMessageRecord[]>(() => {
     .filter((m): m is ChatMessageRecord => !!m);
 });
 
-// 首次加载：如果没有活跃会话则创建一个
+// 首次加载：确保有会话并加载消息
 onMounted(async () => {
-  await sessionStore.fetchSessions();
-  if (!sessionStore.activeSessionId) {
-    if (sessionStore.sessions.length > 0) {
-      sessionStore.selectSession(sessionStore.sessions[0].id);
-    } else {
-      await sessionStore.createSession();
-    }
-  }
+  await sessionStore.ensureSession();
   if (sessionStore.activeSessionId) {
     await messageStore.loadMessages(sessionStore.activeSessionId);
   }
 });
-
-// 会话切换时加载消息
-watch(
-  () => sessionStore.activeSessionId,
-  async (sessionId) => {
-    if (sessionId) {
-      await messageStore.loadMessages(sessionId);
-      messageListRef.value?.scrollToBottom(true);
-    }
-  },
-);
 
 function onAddFiles(files: File[]) {
   for (const file of files) {
@@ -134,25 +95,6 @@ async function onSubmit(text: string) {
 async function onStop() {
   if (!sessionStore.activeSessionId) return;
   await messageStore.stopGeneration(sessionStore.activeSessionId);
-}
-
-async function onNewSession() {
-  await sessionStore.createSession();
-  if (sessionStore.activeSessionId) {
-    await messageStore.loadMessages(sessionStore.activeSessionId);
-    messageListRef.value?.scrollToBottom(true);
-  }
-}
-
-function onSelectSession(id: string) {
-  sessionStore.selectSession(id);
-}
-
-async function onDeleteSession(id: string) {
-  await sessionStore.deleteSession(id);
-  if (sessionStore.activeSessionId) {
-    await messageStore.loadMessages(sessionStore.activeSessionId);
-  }
 }
 
 async function onAnswerQuestion(answer: string) {
