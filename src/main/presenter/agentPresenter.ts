@@ -14,6 +14,7 @@ import type { SessionPresenter } from "./sessionPresenter";
 import type { ConfigPresenter } from "./configPresenter";
 import type { ToolPresenter } from "./toolPresenter";
 import type { EvolutionPresenter } from "./evolutionPresenter";
+import type { ContentPresenter } from "./contentPresenter";
 import { buildSystemPrompt } from "./systemPrompt";
 
 interface ToolCall {
@@ -36,6 +37,7 @@ export class AgentPresenter implements IAgentPresenter {
     private configPresenter: ConfigPresenter,
     private toolPresenter: ToolPresenter,
     private evolutionPresenter: EvolutionPresenter,
+    private contentPresenter: ContentPresenter,
   ) {}
 
   private async getConfig() {
@@ -282,7 +284,26 @@ export class AgentPresenter implements IAgentPresenter {
       let result: unknown;
 
       if (name === "ask_user") {
+        const { question, options, multiple, html_file } = parsedArgs;
+        let htmlContent: string | undefined;
+        if (html_file) {
+          try {
+            htmlContent = (await this.toolPresenter.callTool(sessionId, "read", {
+              path: html_file,
+            })) as string;
+          } catch {
+            /* ignore read failure */
+          }
+        }
+        this.contentPresenter.setContent(sessionId, {
+          type: "interaction" as const,
+          question,
+          options: options || [],
+          multiple: multiple || false,
+          htmlContent,
+        });
         result = await this.handleAskUser(sessionId, id, parsedArgs, messageId);
+        this.contentPresenter.clearContent(sessionId);
       } else {
         result = await this.toolPresenter.callTool(sessionId, name, parsedArgs);
       }

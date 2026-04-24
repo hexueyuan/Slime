@@ -49,6 +49,7 @@ export class Presenter implements IPresenter {
       this.configPresenter,
       this.toolPresenter,
       this.evolutionPresenter,
+      this.contentPresenter,
     );
   }
 
