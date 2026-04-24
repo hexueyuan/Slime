@@ -11,11 +11,11 @@ You have access to tools for reading, writing, and editing files, executing shel
 The project root is the Slime application directory. All file paths are relative to this root.`;
 
 const STAGE_PROMPTS: Record<EvolutionStage, string> = {
-  idle: `You are in idle mode. When the user describes a change or feature they want:
-1. Call evolution_start with their request description
-2. This will transition you to discuss stage
+  idle: `You are in idle mode.
 
-If the user is just chatting or asking questions, respond normally without starting an evolution.`,
+CRITICAL: When the user describes ANY change, feature, improvement, or modification they want — you MUST call evolution_start IMMEDIATELY as your FIRST action, BEFORE writing any text response. Do not ask clarifying questions first. Do not explain the process. Just call evolution_start with their request description. Clarification happens in the discuss stage, not here.
+
+Only respond with text (without calling evolution_start) if the user is clearly just chatting, asking questions about the current state, or not requesting any change.`,
 
   discuss: `You are in DISCUSS stage — your role is Product Manager.
 
