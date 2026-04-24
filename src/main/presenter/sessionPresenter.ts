@@ -42,6 +42,12 @@ export class SessionPresenter implements ISessionPresenter {
     return this.messageStore(sessionId).read();
   }
 
+  async clearMessages(sessionId: string): Promise<void> {
+    const store = this.messageStore(sessionId);
+    await store.write([]);
+    logger.info("Messages cleared", { sessionId });
+  }
+
   async saveMessage(message: ChatMessageRecord): Promise<void> {
     const store = this.messageStore(message.sessionId);
     const messages = await store.read();

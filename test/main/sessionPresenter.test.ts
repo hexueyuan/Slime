@@ -84,4 +84,32 @@ describe("SessionPresenter", () => {
     expect(messages).toHaveLength(1);
     expect(messages[0].id).toBe("msg-1");
   });
+
+  it("should clear all messages for a session", async () => {
+    const session = await presenter.createSession("test");
+    await presenter.saveMessage({
+      id: "msg-1",
+      sessionId: session.id,
+      role: "user" as const,
+      content: JSON.stringify({ text: "hello", files: [] }),
+      status: "sent" as const,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    await presenter.saveMessage({
+      id: "msg-2",
+      sessionId: session.id,
+      role: "assistant" as const,
+      content: "hi",
+      status: "sent" as const,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    const before = await presenter.getMessages(session.id);
+    expect(before).toHaveLength(2);
+
+    await presenter.clearMessages(session.id);
+    const after = await presenter.getMessages(session.id);
+    expect(after).toEqual([]);
+  });
 });

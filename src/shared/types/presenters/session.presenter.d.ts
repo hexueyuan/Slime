@@ -5,4 +5,5 @@ export interface ISessionPresenter {
   createSession(title?: string): Promise<ChatSession>;
   deleteSession(id: string): Promise<boolean>;
   getMessages(sessionId: string): Promise<ChatMessageRecord[]>;
+  clearMessages(sessionId: string): Promise<void>;
 }
