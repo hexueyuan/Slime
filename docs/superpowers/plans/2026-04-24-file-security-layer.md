@@ -1,6 +1,6 @@
 # File Security Layer Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add security constraints to FilePresenter (forbidden write paths) and exec tool (command blacklist) so the Agent can only operate within the Slime project root.
 
@@ -27,7 +27,7 @@
 
 - Modify: `test/main/filePresenter.test.ts`
 
-- [ ] **Step 1: Add failing tests for write forbidden paths**
+- [x] **Step 1: Add failing tests for write forbidden paths**
 
 Append a new `describe` block after the existing `edit` describe in `test/main/filePresenter.test.ts`:
 
@@ -87,13 +87,13 @@ describe("forbidden write paths", () => {
 
 Note: `mkdirSync`, `writeFileSync`, and `join` are already imported at the top of the test file. `testRoot` and `fp` are defined in the outer `describe` scope.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pnpm test -- test/main/filePresenter.test.ts`
 
 Expected: 9 new tests FAIL (the "protected path" ones), 2 PASS (normal write + read from .git).
 
-- [ ] **Step 3: Commit failing tests**
+- [x] **Step 3: Commit failing tests**
 
 ```bash
 git add test/main/filePresenter.test.ts
@@ -108,7 +108,7 @@ git commit -m "test(file): add forbidden write path test cases"
 
 - Modify: `src/main/presenter/filePresenter.ts`
 
-- [ ] **Step 1: Add FORBIDDEN_WRITE_PATTERNS and validateWritable**
+- [x] **Step 1: Add FORBIDDEN_WRITE_PATTERNS and validateWritable**
 
 Add the constant and method to `filePresenter.ts`. Insert the constant before the class definition, and `validateWritable` as a private method:
 
@@ -137,7 +137,7 @@ private validateWritable(userPath: string): void {
 }
 ```
 
-- [ ] **Step 2: Add validateWritable call to write()**
+- [x] **Step 2: Add validateWritable call to write()**
 
 In the `write` method, add `this.validateWritable(path)` as the first line, before `resolveSafe`:
 
@@ -152,7 +152,7 @@ async write(path: string, content: string): Promise<boolean> {
 }
 ```
 
-- [ ] **Step 3: Add validateWritable call to edit()**
+- [x] **Step 3: Add validateWritable call to edit()**
 
 In the `edit` method, add `this.validateWritable(path)` as the first line, before `resolveSafe`:
 
@@ -173,13 +173,13 @@ async edit(path: string, oldText: string, newText: string): Promise<boolean> {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `pnpm test -- test/main/filePresenter.test.ts`
 
 Expected: All tests PASS including the 11 new forbidden path tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/presenter/filePresenter.ts
@@ -194,7 +194,7 @@ git commit -m "feat(file): add forbidden write path protection"
 
 - Modify: `test/main/toolPresenter.test.ts`
 
-- [ ] **Step 1: Add failing tests for exec command blacklist**
+- [x] **Step 1: Add failing tests for exec command blacklist**
 
 Append a new `describe` block inside the existing `ToolPresenter` describe:
 
@@ -250,13 +250,13 @@ describe("exec command blacklist", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pnpm test -- test/main/toolPresenter.test.ts`
 
 Expected: 6 blacklist tests FAIL (the "blocked" ones), 3 allowed tests PASS.
 
-- [ ] **Step 3: Commit failing tests**
+- [x] **Step 3: Commit failing tests**
 
 ```bash
 git add test/main/toolPresenter.test.ts
@@ -271,7 +271,7 @@ git commit -m "test(tool): add exec command blacklist test cases"
 
 - Modify: `src/main/presenter/toolPresenter.ts`
 
-- [ ] **Step 1: Add EXEC_BLOCKED_PATTERNS constant**
+- [x] **Step 1: Add EXEC_BLOCKED_PATTERNS constant**
 
 Add after the `execAsync` definition, before the `createTool` helper:
 
@@ -293,7 +293,7 @@ function validateCommand(command: string): void {
 }
 ```
 
-- [ ] **Step 2: Add validateCommand call to exec tool execute**
+- [x] **Step 2: Add validateCommand call to exec tool execute**
 
 In the exec tool's `execute` function, add `validateCommand(command)` as the first line before the try block:
 
@@ -332,13 +332,13 @@ exec: createTool({
 }),
 ```
 
-- [ ] **Step 3: Run tests to verify they pass**
+- [x] **Step 3: Run tests to verify they pass**
 
 Run: `pnpm test -- test/main/toolPresenter.test.ts`
 
 Expected: All tests PASS including the 9 new exec blacklist tests.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main/presenter/toolPresenter.ts
@@ -353,19 +353,19 @@ git commit -m "feat(tool): add exec command blacklist protection"
 
 - All modified files
 
-- [ ] **Step 1: Run full test suite**
+- [x] **Step 1: Run full test suite**
 
 Run: `pnpm test`
 
 Expected: All tests PASS (no regressions).
 
-- [ ] **Step 2: Format and lint**
+- [x] **Step 2: Format and lint**
 
 Run: `pnpm run format && pnpm run lint`
 
 Expected: No errors.
 
-- [ ] **Step 3: Final commit if format changed anything**
+- [x] **Step 3: Final commit if format changed anything**
 
 ```bash
 git add -A
