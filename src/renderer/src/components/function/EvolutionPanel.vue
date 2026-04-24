@@ -101,7 +101,7 @@ function handleCancel() {
   align-items: center;
   gap: 12px;
   font-size: 13px;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
 .evolution-panel__dot {
@@ -135,7 +135,7 @@ function handleCancel() {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: transparent;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
   font-size: 13px;
   cursor: pointer;
 }
@@ -148,11 +148,9 @@ function handleCancel() {
 .evolution-panel__completed {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
   gap: 8px;
-  height: 100%;
-  text-align: center;
+  padding-top: 32px;
 }
 
 .evolution-panel__completed-icon {
@@ -173,17 +171,19 @@ function handleCancel() {
 
 .evolution-panel__completed-summary {
   font-size: 13px;
-  color: var(--color-muted);
+  color: var(--color-foreground);
+  line-height: 1.5;
 }
 
 .evolution-panel__restart-btn {
   margin-top: 12px;
   padding: 10px 24px;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-primary-foreground);
   border: none;
   border-radius: 6px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
 }
 
