@@ -103,4 +103,29 @@ describe("EvolutionStatusBar", () => {
       expect(node.classes()).not.toContain("stage-completed");
     });
   });
+
+  it("should show active membrane rings when stage is coding", () => {
+    const store = useEvolutionStore();
+    store.setStage("coding");
+    const wrapper = mount(EvolutionStatusBar);
+    const nodes = wrapper.findAll('[data-testid="stage-node"]');
+
+    // discuss(idx=0) should be completed
+    expect(nodes[0].classes()).toContain("stage-completed");
+    // coding(idx=1) should be active
+    expect(nodes[1].classes()).toContain("stage-active");
+    // applying(idx=2) should be dormant (pending)
+    expect(nodes[2].classes()).toContain("stage-dormant");
+  });
+
+  it("should show completed membrane for all stages when idle with completedTag", () => {
+    const store = useEvolutionStore();
+    store.setCompleted("egg-v0.1-dev.5", "Improved X");
+    const wrapper = mount(EvolutionStatusBar);
+    const nodes = wrapper.findAll('[data-testid="stage-node"]');
+
+    nodes.forEach((node) => {
+      expect(node.classes()).toContain("stage-completed");
+    });
+  });
 });
