@@ -5,6 +5,7 @@ export const CONFIG_EVENTS = {
 export const EVOLUTION_EVENTS = {
   STAGE_CHANGED: "evolution:stage-changed",
   PROGRESS: "evolution:progress",
+  COMPLETED: "evolution:completed",
 } as const;
 
 export const CHAT_EVENTS = {
@@ -22,11 +23,6 @@ export const STREAM_EVENTS = {
 export const SESSION_EVENTS = {
   LIST_UPDATED: "session:list-updated",
   ACTIVATED: "session:activated",
-} as const;
-
-export const WORKFLOW_EVENTS = {
-  UPDATED: "workflow:updated",
-  STEP_UPDATED: "workflow:step-updated",
 } as const;
 
 export const TOOL_EVENTS = {

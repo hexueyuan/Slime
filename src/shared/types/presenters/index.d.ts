@@ -6,6 +6,7 @@ import type { IFilePresenter } from "./file.presenter";
 import type { IGitPresenter } from "./git.presenter";
 import type { IWorkspacePresenter } from "./workspace.presenter";
 import type { IContentPresenter } from "./content.presenter";
+import type { IEvolutionPresenter } from "./evolution.presenter";
 
 export type { IAppPresenter } from "./app.presenter";
 export type { IConfigPresenter } from "./config.presenter";
@@ -15,6 +16,8 @@ export type { IFilePresenter } from "./file.presenter";
 export type { IGitPresenter } from "./git.presenter";
 export type { IWorkspacePresenter, WorkspaceStatus, InitProgress } from "./workspace.presenter";
 export type { IContentPresenter } from "./content.presenter";
+export type { IEvolutionPresenter } from "./evolution.presenter";
+export type { EvolutionStatus, EvolutionNode, EvolutionStage, EvolutionPlan } from "../evolution";
 
 export interface IPresenter {
   appPresenter: IAppPresenter;
@@ -25,6 +28,7 @@ export interface IPresenter {
   gitPresenter: IGitPresenter;
   workspacePresenter: IWorkspacePresenter;
   contentPresenter: IContentPresenter;
+  evolutionPresenter: IEvolutionPresenter;
   init(): void;
   destroy(): Promise<void>;
 }

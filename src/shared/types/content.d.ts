@@ -1,4 +1,4 @@
-export type FunctionContentType = "quiz" | "preview" | "markdown" | "progress";
+export type FunctionContentType = "quiz" | "preview" | "markdown" | "progress" | "interaction";
 
 export interface QuizOption {
   value: string;
@@ -41,4 +41,24 @@ export interface ProgressContent {
   cancellable?: boolean;
 }
 
-export type FunctionContent = QuizContent | PreviewContent | MarkdownContent | ProgressContent;
+export interface InteractionOption {
+  value: string;
+  label: string;
+  recommended?: boolean;
+}
+
+export interface InteractionContent {
+  type: "interaction";
+  question: string;
+  options: InteractionOption[];
+  multiple?: boolean;
+  htmlFile?: string;
+  htmlContent?: string;
+}
+
+export type FunctionContent =
+  | QuizContent
+  | PreviewContent
+  | MarkdownContent
+  | ProgressContent
+  | InteractionContent;
