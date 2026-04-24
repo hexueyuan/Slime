@@ -47,7 +47,7 @@ export class Presenter implements IPresenter {
       this.configPresenter,
       this.toolPresenter,
     );
-    this.gitPresenter = new GitPresenter();
+    this.gitPresenter = new GitPresenter(paths.effectiveProjectRoot);
   }
 
   static getInstance(): Presenter {
