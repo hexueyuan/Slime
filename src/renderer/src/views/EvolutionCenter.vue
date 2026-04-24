@@ -4,6 +4,7 @@ import AppSidebar from "../components/AppSidebar.vue";
 import ChatPanel from "../components/chat/ChatPanel.vue";
 import FunctionPanel from "../components/function/FunctionPanel.vue";
 import WorkspaceSetup from "../components/workspace/WorkspaceSetup.vue";
+import EvolutionStatusBar from "../components/evolution/EvolutionStatusBar.vue";
 import { useSplitPane } from "../composables/useSplitPane";
 import { usePresenter } from "@/composables/usePresenter";
 import { useMessageStore } from "@/stores/chat";
@@ -32,7 +33,7 @@ const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
 });
 
 const messageStore = useMessageStore();
-const activeTab = ref<"workflow" | "tools" | "preview">("workflow");
+const activeTab = ref<"tools" | "preview">("tools");
 const selectedToolCallId = ref<string | null>(null);
 
 const contentStore = useContentStore();
@@ -50,27 +51,26 @@ watch(
 );
 
 const toolCallBlocks = computed<AssistantMessageBlock[]>(() => {
-  const blocks =
-    messageStore.streamingBlocks.length > 0
-      ? messageStore.streamingBlocks
-      : getLastAssistantBlocks();
-  return blocks.filter((b) => b.type === "tool_call");
-});
-
-function getLastAssistantBlocks(): AssistantMessageBlock[] {
-  const ids = messageStore.messageIds;
-  for (let i = ids.length - 1; i >= 0; i--) {
-    const msg = messageStore.getMessage(ids[i]);
+  const all: AssistantMessageBlock[] = [];
+  for (const id of messageStore.messageIds) {
+    const msg = messageStore.getMessage(id);
     if (msg?.role === "assistant") {
       try {
-        return JSON.parse(msg.content);
+        const blocks: AssistantMessageBlock[] = JSON.parse(msg.content);
+        for (const b of blocks) {
+          if (b.type === "tool_call") all.push(b);
+        }
       } catch {
-        return [];
+        /* ignore */
       }
     }
   }
-  return [];
-}
+  // 追加流式中的工具调用
+  for (const b of messageStore.streamingBlocks) {
+    if (b.type === "tool_call") all.push(b);
+  }
+  return all;
+});
 
 function onSelectToolCall(id: string | null) {
   if (id) {
@@ -101,29 +101,32 @@ function onSelectToolCall(id: string | null) {
       <AppSidebar />
       <div
         ref="mainRef"
-        class="flex min-w-0 flex-1 overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
+        class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
       >
-        <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
-          <ChatPanel
-            :selected-tool-call-id="selectedToolCallId"
-            @select-tool-call="onSelectToolCall"
-          />
-        </div>
-        <div
-          class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
-          @mousedown="onMouseDown"
-          @dblclick="resetToDefault"
-        >
-          <div class="absolute inset-y-0 -left-1 -right-1" />
-        </div>
-        <div class="min-w-[320px] flex-1 overflow-hidden">
-          <FunctionPanel
-            :active-tab="activeTab"
-            :tool-call-blocks="toolCallBlocks"
-            :selected-tool-call-id="selectedToolCallId"
-            @update:active-tab="activeTab = $event"
-            @select-tool-call="onSelectToolCall"
-          />
+        <EvolutionStatusBar />
+        <div class="flex min-h-0 flex-1 overflow-hidden">
+          <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
+            <ChatPanel
+              :selected-tool-call-id="selectedToolCallId"
+              @select-tool-call="onSelectToolCall"
+            />
+          </div>
+          <div
+            class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
+            @mousedown="onMouseDown"
+            @dblclick="resetToDefault"
+          >
+            <div class="absolute inset-y-0 -left-1 -right-1" />
+          </div>
+          <div class="min-w-[320px] flex-1 overflow-hidden">
+            <FunctionPanel
+              :active-tab="activeTab"
+              :tool-call-blocks="toolCallBlocks"
+              :selected-tool-call-id="selectedToolCallId"
+              @update:active-tab="activeTab = $event"
+              @select-tool-call="onSelectToolCall"
+            />
+          </div>
         </div>
       </div>
     </div>
