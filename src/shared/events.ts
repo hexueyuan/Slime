@@ -38,3 +38,8 @@ export const WORKSPACE_EVENTS = {
   STATUS_CHANGED: "workspace:status-changed",
   INIT_PROGRESS: "workspace:init-progress",
 } as const;
+
+export const CONTENT_EVENTS = {
+  UPDATED: "content:updated",
+  CLEARED: "content:cleared",
+} as const;
