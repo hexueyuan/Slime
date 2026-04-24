@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import AppSidebar from "../components/AppSidebar.vue";
 import ChatPanel from "../components/chat/ChatPanel.vue";
 import FunctionPanel from "../components/function/FunctionPanel.vue";
@@ -7,6 +7,7 @@ import WorkspaceSetup from "../components/workspace/WorkspaceSetup.vue";
 import { useSplitPane } from "../composables/useSplitPane";
 import { usePresenter } from "@/composables/usePresenter";
 import { useMessageStore } from "@/stores/chat";
+import { useContentStore, setupContentIpc } from "@/stores/content";
 import type { AssistantMessageBlock } from "@shared/types/chat";
 
 // Workspace init check
@@ -30,8 +31,19 @@ const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
 });
 
 const messageStore = useMessageStore();
-const activeTab = ref<"workflow" | "tools">("workflow");
+const activeTab = ref<"workflow" | "tools" | "preview">("workflow");
 const selectedToolCallId = ref<string | null>(null);
+
+const contentStore = useContentStore();
+const cleanupContentIpc = setupContentIpc(contentStore);
+onUnmounted(cleanupContentIpc);
+
+watch(
+  () => contentStore.content,
+  (newContent) => {
+    if (newContent) activeTab.value = "preview";
+  },
+);
 
 const toolCallBlocks = computed<AssistantMessageBlock[]>(() => {
   const blocks =
