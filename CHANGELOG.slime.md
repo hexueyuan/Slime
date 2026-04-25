@@ -3,11 +3,13 @@
 ## [egg-v0.1-dev.3] - 2026-04-25
 
 ### Evolution
+
 - Request: "将时钟的星期信息从英文改为中文显示"
 - Summary: 将时钟星期显示从英文改为中文（星期日、星期一...星期六）
 - Status: Success
 
 ### Changes
+
 - .gitignore
 - docs/AGENTS.md
 - docs/evo/EVOLUTION.md
