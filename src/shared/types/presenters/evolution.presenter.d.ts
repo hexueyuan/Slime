@@ -12,4 +12,5 @@ export interface IEvolutionPresenter {
   restart(): void;
   checkDependencies(tag: string): Promise<{ dependencies: EvolutionDependency[] }>;
   readArchive(tag: string): Promise<EvolutionArchive | null>;
+  runBuildVerification(): Promise<{ success: boolean; error?: string }>;
 }

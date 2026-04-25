@@ -15,6 +15,7 @@ import { logger, paths } from "@/utils";
 import { readFile, writeFile, mkdir, readdir } from "fs/promises";
 import { join } from "path";
 import { app } from "electron";
+import { execFile } from "child_process";
 
 const CHANGELOG_FILE = "CHANGELOG.slime.md";
 
@@ -190,6 +191,56 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     logger.info("Restart requested");
     app.relaunch();
     app.quit();
+  }
+
+  async runBuildVerification(): Promise<{ success: boolean; error?: string }> {
+    const cwd = paths.effectiveProjectRoot;
+    const MAX_OUTPUT = 2000;
+
+    logger.info("Running build verification: typecheck");
+    const tc = await this.execCommand("pnpm", ["run", "typecheck"], cwd);
+    if (tc.exitCode !== 0) {
+      const output = (tc.stderr || tc.stdout).slice(-MAX_OUTPUT);
+      logger.warn("Build verification failed: typecheck", { exitCode: tc.exitCode });
+      return { success: false, error: `typecheck failed:\n${output}` };
+    }
+
+    logger.info("Running build verification: build");
+    const build = await this.execCommand("pnpm", ["run", "build"], cwd);
+    if (build.exitCode !== 0) {
+      const output = (build.stderr || build.stdout).slice(-MAX_OUTPUT);
+      logger.warn("Build verification failed: build", { exitCode: build.exitCode });
+      return { success: false, error: `build failed:\n${output}` };
+    }
+
+    logger.info("Build verification passed");
+    return { success: true };
+  }
+
+  private execCommand(
+    cmd: string,
+    args: string[],
+    cwd: string,
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    return new Promise((resolve) => {
+      execFile(
+        cmd,
+        args,
+        { cwd, timeout: 300_000, maxBuffer: 2 * 1024 * 1024 },
+        (err, stdout, stderr) => {
+          if (err) {
+            const e = err as any;
+            resolve({
+              stdout: (stdout as string) || e.stdout || "",
+              stderr: (stderr as string) || e.stderr || "",
+              exitCode: e.code ?? 1,
+            });
+          } else {
+            resolve({ stdout: stdout as string, stderr: stderr as string, exitCode: 0 });
+          }
+        },
+      );
+    });
   }
 
   // --- Archive CRUD ---

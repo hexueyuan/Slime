@@ -20,9 +20,15 @@ vi.mock("fs/promises", () => ({
   readdir: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock("child_process", () => ({
+  exec: vi.fn(),
+  execFile: vi.fn(),
+}));
+
 import { EvolutionPresenter } from "../../src/main/presenter/evolutionPresenter";
 import { eventBus } from "@/eventbus";
 import { readFile, writeFile, readdir } from "fs/promises";
+import { execFile } from "child_process";
 
 function mockGit() {
   return {
@@ -332,5 +338,87 @@ describe("EvolutionPresenter", () => {
       expect.stringContaining('"archived"'),
       "utf-8",
     );
+  });
+
+  // --- Build verification tests ---
+
+  it("runBuildVerification returns success when typecheck and build pass", async () => {
+    const git = mockGit();
+    evo = new EvolutionPresenter(git, mockConfig());
+
+    vi.mocked(execFile).mockImplementation((_cmd: any, _args: any, _opts: any, cb: any) => {
+      cb(null, { stdout: "ok", stderr: "" });
+      return {} as any;
+    });
+
+    const result = await evo.runBuildVerification();
+    expect(result.success).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+
+  it("runBuildVerification returns error when typecheck fails", async () => {
+    const git = mockGit();
+    evo = new EvolutionPresenter(git, mockConfig());
+
+    vi.mocked(execFile).mockImplementation((_cmd: any, _args: any, _opts: any, cb: any) => {
+      const err: any = new Error("typecheck error");
+      err.stdout = "";
+      err.stderr = "error TS2345: Argument of type 'string' is not assignable";
+      err.code = 1;
+      cb(err);
+      return {} as any;
+    });
+
+    const result = await evo.runBuildVerification();
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("typecheck failed");
+    expect(result.error).toContain("TS2345");
+  });
+
+  it("runBuildVerification returns error when build fails after typecheck passes", async () => {
+    const git = mockGit();
+    evo = new EvolutionPresenter(git, mockConfig());
+
+    let callCount = 0;
+    vi.mocked(execFile).mockImplementation((_cmd: any, _args: any, _opts: any, cb: any) => {
+      callCount++;
+      if (callCount === 1) {
+        // typecheck passes
+        cb(null, { stdout: "ok", stderr: "" });
+      } else {
+        // build fails
+        const err: any = new Error("build error");
+        err.stdout = "Build failed: Cannot find module";
+        err.stderr = "";
+        err.code = 1;
+        cb(err);
+      }
+      return {} as any;
+    });
+
+    const result = await evo.runBuildVerification();
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("build failed");
+    expect(result.error).toContain("Cannot find module");
+  });
+
+  it("runBuildVerification truncates long error output", async () => {
+    const git = mockGit();
+    evo = new EvolutionPresenter(git, mockConfig());
+
+    const longOutput = "x".repeat(5000);
+    vi.mocked(execFile).mockImplementation((_cmd: any, _args: any, _opts: any, cb: any) => {
+      const err: any = new Error("fail");
+      err.stdout = "";
+      err.stderr = longOutput;
+      err.code = 1;
+      cb(err);
+      return {} as any;
+    });
+
+    const result = await evo.runBuildVerification();
+    expect(result.success).toBe(false);
+    // Output should be truncated to MAX_OUTPUT (2000 chars) + label
+    expect(result.error!.length).toBeLessThan(2100);
   });
 });
