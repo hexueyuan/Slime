@@ -1,5 +1,17 @@
 # Slime Evolution Changelog
 
+## [egg-v0.1-dev.4] - 2026-04-25
+
+### Evolution
+- Request: "将时钟从24小时制修改为12小时制，增加AM/PM标记"
+- Summary: 将 CyberClock 时钟组件从 24 小时制改为 12 小时制，增加 AM/PM 徽章标记
+- Status: Success
+
+### Changes
+- src/renderer/src/components/clock/CyberClock.vue
+
+---
+
 ## [egg-v0.1-dev.3] - 2026-04-25
 
 ### Evolution
