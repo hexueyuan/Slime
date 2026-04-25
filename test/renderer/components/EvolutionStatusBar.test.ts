@@ -38,9 +38,9 @@ describe("EvolutionStatusBar", () => {
     store.setStage("discuss");
     const wrapper = mount(EvolutionStatusBar);
     expect(wrapper.find('[data-testid="evolution-status-bar"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain("需求澄清");
-    expect(wrapper.text()).toContain("执行进化");
-    expect(wrapper.text()).toContain("应用变更");
+    expect(wrapper.text()).toContain("选择进化方向");
+    expect(wrapper.text()).toContain("进化中");
+    expect(wrapper.text()).toContain("进化完成");
   });
 
   it("should always show reset button", () => {
@@ -96,7 +96,7 @@ describe("EvolutionStatusBar", () => {
 
     expect(store.completedTag).toBeNull();
     expect(store.stage).toBe("idle");
-    expect(wrapper.text()).not.toContain("进化完成");
+    expect(wrapper.text()).not.toContain("egg-v0.1-dev.3");
 
     const nodes = wrapper.findAll('[data-testid="stage-node"]');
     nodes.forEach((node) => {

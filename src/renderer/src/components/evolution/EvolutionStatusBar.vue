@@ -13,9 +13,9 @@ const agentPresenter = usePresenter("agentPresenter");
 const sessionPresenter = usePresenter("sessionPresenter");
 
 const stages = [
-  { key: "discuss", label: "需求澄清" },
-  { key: "coding", label: "执行进化" },
-  { key: "applying", label: "应用变更" },
+  { key: "discuss", label: "选择进化方向" },
+  { key: "coding", label: "进化中" },
+  { key: "applying", label: "进化完成" },
 ] as const;
 
 const showDialog = ref(false);
