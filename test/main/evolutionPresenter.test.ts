@@ -50,23 +50,24 @@ describe("EvolutionPresenter", () => {
     expect(evo.getStatus().stage).toBe("idle");
   });
 
-  it("startEvolution transitions to discuss", () => {
-    const result = evo.startEvolution("add dark mode");
+  it("startEvolution transitions to discuss", async () => {
+    const result = await evo.startEvolution("add dark mode");
     expect(result).toBe(true);
     expect(evo.getStatus().stage).toBe("discuss");
     expect(evo.getStatus().description).toBe("add dark mode");
+    expect(evo.getStatus().startCommit).toBe("abc123");
     expect(eventBus.sendToRenderer).toHaveBeenCalled();
   });
 
-  it("startEvolution rejects when not idle", () => {
-    evo.startEvolution("first");
-    const result = evo.startEvolution("second");
+  it("startEvolution rejects when not idle", async () => {
+    await evo.startEvolution("first");
+    const result = await evo.startEvolution("second");
     expect(result).toBe(false);
     expect(evo.getStatus().stage).toBe("discuss");
   });
 
-  it("submitPlan transitions discuss → coding", () => {
-    evo.startEvolution("test");
+  it("submitPlan transitions discuss → coding", async () => {
+    await evo.startEvolution("test");
     const result = evo.submitPlan({ scope: ["src/a.ts"], changes: ["modify a"] });
     expect(result).toBe(true);
     expect(evo.getStatus().stage).toBe("coding");
@@ -80,10 +81,8 @@ describe("EvolutionPresenter", () => {
   it("completeEvolution runs apply flow", async () => {
     const git = mockGit();
     evo = new EvolutionPresenter(git, mockConfig());
-    evo.startEvolution("test change");
-    await vi.waitFor(() => {
-      expect(evo.getStatus().startCommit).toBe("abc123");
-    });
+    await evo.startEvolution("test change");
+    expect(evo.getStatus().startCommit).toBe("abc123");
     evo.submitPlan({ scope: ["src/a.ts"], changes: ["modify a"] });
     const result = await evo.completeEvolution("did the thing");
     expect(result.success).toBe(true);
@@ -100,7 +99,7 @@ describe("EvolutionPresenter", () => {
   it("cancel resets to idle", async () => {
     const git = mockGit();
     evo = new EvolutionPresenter(git, mockConfig());
-    evo.startEvolution("test");
+    await evo.startEvolution("test");
     const result = await evo.cancel();
     expect(result).toBe(true);
     expect(evo.getStatus().stage).toBe("idle");
@@ -109,10 +108,8 @@ describe("EvolutionPresenter", () => {
   it("cancel with code changes does git reset", async () => {
     const git = mockGit();
     evo = new EvolutionPresenter(git, mockConfig());
-    evo.startEvolution("test");
-    await vi.waitFor(() => {
-      expect(evo.getStatus().startCommit).toBe("abc123");
-    });
+    await evo.startEvolution("test");
+    expect(evo.getStatus().startCommit).toBe("abc123");
     evo.submitPlan({ scope: ["a"], changes: ["b"] });
     await evo.cancel();
     expect(git.rollbackToRef).toHaveBeenCalledWith("abc123");

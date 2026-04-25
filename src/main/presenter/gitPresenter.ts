@@ -43,8 +43,10 @@ export class GitPresenter implements IGitPresenter {
   }
 
   async getChangedFiles(fromRef: string, toRef?: string): Promise<string[]> {
-    const range = toRef ? `${fromRef}..${toRef}` : `${fromRef}..HEAD`;
-    const { stdout, exitCode } = await this.run("git", ["diff", "--name-only", range]);
+    const args = toRef
+      ? ["diff", "--name-only", `${fromRef}..${toRef}`]
+      : ["diff", "--name-only", fromRef];
+    const { stdout, exitCode } = await this.run("git", args);
     if (exitCode !== 0) return [];
     return stdout
       .split("\n")

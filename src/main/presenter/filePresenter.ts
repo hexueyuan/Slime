@@ -1,6 +1,5 @@
 import { readFile, writeFile, mkdir, readdir } from "fs/promises";
 import { resolve, dirname, join, relative } from "path";
-import { statSync } from "fs";
 import type { IFilePresenter, DirEntry } from "@shared/types/presenters";
 import { logger } from "@/utils";
 
@@ -77,5 +76,18 @@ export class FilePresenter implements IFilePresenter {
     const updated = content.slice(0, idx) + newText + content.slice(idx + oldText.length);
     await writeFile(abs, updated, "utf-8");
     return true;
+  }
+
+  async listDir(path?: string): Promise<DirEntry[]> {
+    const root = this.projectRoot || process.cwd();
+    const abs = path ? this.resolveSafe(path) : root;
+    const entries = await readdir(abs, { withFileTypes: true });
+    return entries
+      .filter((e) => !HIDDEN_DIR_PATTERNS.includes(e.name))
+      .map((e) => ({
+        name: e.name,
+        path: relative(root, join(abs, e.name)),
+        type: e.isDirectory() ? ("dir" as const) : ("file" as const),
+      }));
   }
 }

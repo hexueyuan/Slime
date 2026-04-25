@@ -36,13 +36,11 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     };
   }
 
-  startEvolution(description: string): boolean {
+  async startEvolution(description: string): Promise<boolean> {
     if (this.stage !== "idle") return false;
     this.description = description;
     this.setStage("discuss");
-    this.git.getCurrentCommit().then((ref) => {
-      this.startCommit = ref;
-    });
+    this.startCommit = await this.git.getCurrentCommit();
     return true;
   }
 

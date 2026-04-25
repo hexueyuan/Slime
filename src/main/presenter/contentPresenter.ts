@@ -21,10 +21,6 @@ export class ContentPresenter implements IContentPresenter {
     eventBus.sendToRenderer(CONTENT_EVENTS.CLEARED, sessionId);
   }
 
-  submitQuizAnswer(sessionId: string, answers: Record<string, string | string[]>): void {
-    logger.debug("content:quiz-answer", { sessionId, answers });
-  }
-
   confirmPreview(sessionId: string): void {
     logger.debug("content:preview-confirm", { sessionId });
   }
