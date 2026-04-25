@@ -16,7 +16,12 @@
       <MessageBlockError v-else-if="block.type === 'error'" :block="block" />
       <MessageBlockImage v-else-if="block.type === 'image'" :block="block" />
     </template>
-    <MessageToolbar :is-assistant="true" @copy="onCopy" @retry="$emit('retry')" />
+    <MessageToolbar
+      :is-assistant="true"
+      :disabled="isStreaming"
+      @copy="onCopy"
+      @retry="$emit('retry')"
+    />
   </div>
 </template>
 
@@ -34,6 +39,7 @@ const props = defineProps<{
   message: ChatMessageRecord;
   streamingBlocks?: AssistantMessageBlock[];
   selectedToolCallId?: string | null;
+  isStreaming?: boolean;
 }>();
 
 defineEmits<{

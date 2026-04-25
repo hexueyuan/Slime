@@ -8,6 +8,7 @@
           :message="msg"
           :streaming-blocks="msg.id === currentStreamMessageId ? streamingBlocks : undefined"
           :selected-tool-call-id="selectedToolCallId"
+          :is-streaming="isGenerating"
           @select-tool-call="$emit('select-tool-call', $event)"
         />
       </template>
@@ -17,8 +18,25 @@
         :message="streamingPlaceholder"
         :streaming-blocks="streamingBlocks"
         :selected-tool-call-id="selectedToolCallId"
+        :is-streaming="isGenerating"
         @select-tool-call="$emit('select-tool-call', $event)"
       />
+      <!-- 生成中细胞膜指示器 -->
+      <div v-if="isGenerating" class="flex items-center gap-2 pl-4 pt-2 pb-1">
+        <div
+          class="relative flex shrink-0 items-center justify-center"
+          style="width: 20px; height: 20px"
+        >
+          <div
+            class="streaming-breathe absolute inset-0 rounded-full border border-violet-500/50"
+          />
+          <div
+            class="streaming-breathe-inner absolute inset-[2px] rounded-full border border-violet-500/20"
+          />
+          <div class="h-1.5 w-1.5 rounded-full bg-violet-500 shadow-[0_0_6px_rgb(139_92_246)]" />
+        </div>
+        <span class="text-xs text-violet-500/70">进化中...</span>
+      </div>
     </div>
   </div>
 </template>
@@ -93,3 +111,25 @@ onMounted(() => {
   scrollToBottom(true);
 });
 </script>
+
+<style scoped>
+@keyframes cell-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+.streaming-breathe {
+  animation: cell-breathe 2.5s ease-in-out infinite;
+}
+
+.streaming-breathe-inner {
+  animation: cell-breathe 2.5s ease-in-out infinite 0.3s;
+}
+</style>

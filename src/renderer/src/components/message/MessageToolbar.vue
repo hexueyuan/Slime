@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="!disabled"
     class="flex items-center gap-1 h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
   >
     <button
@@ -45,6 +46,7 @@
 <script setup lang="ts">
 defineProps<{
   isAssistant: boolean;
+  disabled?: boolean;
 }>();
 
 defineEmits<{

@@ -157,10 +157,19 @@ function handleRestart() {
     </template>
 
     <template v-if="evolutionStore.completedTag">
-      <div class="ml-4 rounded bg-green-500/10 px-2 py-0.5">
-        <span class="text-xs font-medium text-green-500">✓ 进化完成</span>
+      <div class="ml-4 flex items-center gap-1.5">
+        <div
+          class="relative flex shrink-0 items-center justify-center"
+          style="width: 20px; height: 20px"
+        >
+          <div class="membrane-breathe absolute inset-0 rounded-full border border-green-500/40" />
+          <div class="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgb(34_197_94)]" />
+        </div>
+        <span class="text-xs text-green-500">进化完成</span>
       </div>
-      <span class="ml-2 font-mono text-xs text-primary">{{ evolutionStore.completedTag }}</span>
+      <span class="ml-2 font-mono text-xs text-green-500/70">{{
+        evolutionStore.completedTag
+      }}</span>
     </template>
 
     <div class="flex-1" />
