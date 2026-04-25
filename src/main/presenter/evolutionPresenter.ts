@@ -136,12 +136,9 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   }
 
   restart(): void {
-    if (app.isPackaged) {
-      logger.warn("Packaged mode restart not yet implemented");
-      return;
-    }
-    logger.info("Restart requested (dev mode)");
-    eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, "restart-needed", "");
+    logger.info("Restart requested");
+    app.relaunch();
+    app.quit();
   }
 
   // --- Archive CRUD ---

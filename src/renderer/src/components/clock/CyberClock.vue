@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 
-const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const digits = ref(["0", "0", "0", "0", "0", "0"]);
 const dateStr = ref("");
 const weekdayStr = ref("");
@@ -243,6 +243,7 @@ onUnmounted(() => {
   font-size: 14px;
   color: #a855f7;
   letter-spacing: 4px;
+  text-transform: uppercase;
   text-shadow: 0 0 10px rgb(168 85 247 / 50%);
 }
 
