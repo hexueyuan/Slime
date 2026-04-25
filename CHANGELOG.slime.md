@@ -3,11 +3,13 @@
 ## [egg-v0.1-dev.2] - 2026-04-24
 
 ### Evolution
+
 - Request: "增加一个侧边栏tab，点击后显示一个炫酷的动态数字时钟"
 - Summary: 新增侧边栏时钟 tab，点击后全屏展示赛博朋克风格动态数字时钟（含翻转动画、扫描线、霓虹光晕）
 - Status: Success
 
 ### Changes
+
 - (no file changes recorded)
 
 ---

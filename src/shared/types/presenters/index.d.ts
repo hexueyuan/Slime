@@ -12,7 +12,7 @@ export type { IAppPresenter } from "./app.presenter";
 export type { IConfigPresenter } from "./config.presenter";
 export type { IAgentPresenter } from "./agent.presenter";
 export type { ISessionPresenter } from "./session.presenter";
-export type { IFilePresenter } from "./file.presenter";
+export type { IFilePresenter, DirEntry } from "./file.presenter";
 export type { IGitPresenter } from "./git.presenter";
 export type { IWorkspacePresenter, WorkspaceStatus, InitProgress } from "./workspace.presenter";
 export type { IContentPresenter } from "./content.presenter";

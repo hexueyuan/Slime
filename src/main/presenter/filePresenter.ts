@@ -1,7 +1,18 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
-import { resolve, dirname } from "path";
-import type { IFilePresenter } from "@shared/types/presenters";
+import { readFile, writeFile, mkdir, readdir } from "fs/promises";
+import { resolve, dirname, join, relative } from "path";
+import { statSync } from "fs";
+import type { IFilePresenter, DirEntry } from "@shared/types/presenters";
 import { logger } from "@/utils";
+
+const HIDDEN_DIR_PATTERNS = [
+  ".git",
+  "node_modules",
+  "dist",
+  ".slime",
+  ".turbo",
+  ".output",
+  ".nuxt",
+];
 
 const FORBIDDEN_WRITE_PATTERNS = [
   /^\.git(\/|$)/,

@@ -1,232 +1,285 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cyberpunk Clock Preview</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0a0a0f;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Courier New', monospace;
-    overflow: hidden;
-  }
-  .clock-panel {
-    width: 420px;
-    padding: 40px 32px;
-    background: linear-gradient(145deg, #0d0d1a 0%, #1a0a2e 50%, #0d0d1a 100%);
-    border: 1px solid rgba(0, 255, 255, 0.15);
-    border-radius: 16px;
-    position: relative;
-    box-shadow:
-      0 0 30px rgba(0, 255, 255, 0.05),
-      inset 0 0 60px rgba(0, 255, 255, 0.02);
-  }
-  .clock-panel::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(0,255,255,0.3), transparent 40%, transparent 60%, rgba(255,0,255,0.3));
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: xor;
-    padding: 1px;
-    pointer-events: none;
-  }
-  .scanline {
-    position: absolute;
-    inset: 0;
-    border-radius: 16px;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 255, 255, 0.015) 2px,
-      rgba(0, 255, 255, 0.015) 4px
-    );
-    pointer-events: none;
-  }
-  .date-row {
-    text-align: center;
-    margin-bottom: 8px;
-    font-size: 14px;
-    letter-spacing: 4px;
-    color: rgba(0, 255, 255, 0.6);
-    text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
-  }
-  .weekday-row {
-    text-align: center;
-    margin-bottom: 24px;
-    font-size: 13px;
-    letter-spacing: 6px;
-    color: rgba(255, 0, 255, 0.7);
-    text-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
-    text-transform: uppercase;
-  }
-  .time-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-  }
-  .time-segment {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .time-digits {
-    font-size: 64px;
-    font-weight: bold;
-    letter-spacing: 4px;
-    line-height: 1;
-    background: linear-gradient(180deg, #00ffff 0%, #0088aa 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.5));
-    position: relative;
-  }
-  .time-digits::after {
-    content: attr(data-value);
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(0,255,255,0.15) 0%, transparent 60%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: blur(4px);
-  }
-  .time-label {
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: rgba(0, 255, 255, 0.35);
-    margin-top: 8px;
-    text-transform: uppercase;
-  }
-  .time-colon {
-    font-size: 56px;
-    font-weight: bold;
-    color: rgba(0, 255, 255, 0.8);
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
-    animation: blink 1s step-end infinite;
-    line-height: 1;
-    margin-top: -8px;
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.2; }
-  }
-  .ampm {
-    font-size: 18px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    color: rgba(255, 0, 255, 0.8);
-    text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
-    align-self: flex-end;
-    margin-bottom: 8px;
-    margin-left: 8px;
-  }
-  .glow-bar {
-    height: 2px;
-    margin-top: 28px;
-    background: linear-gradient(90deg, transparent, rgba(0,255,255,0.5), rgba(255,0,255,0.5), transparent);
-    border-radius: 1px;
-    box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
-    animation: pulse-bar 2s ease-in-out infinite;
-  }
-  @keyframes pulse-bar {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-  }
-  /* Particle effect simulation */
-  .particles {
-    position: absolute;
-    inset: 0;
-    border-radius: 16px;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  .particle {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    border-radius: 50%;
-    animation: float linear infinite;
-    opacity: 0;
-  }
-  @keyframes float {
-    0% { transform: translateY(100%); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { transform: translateY(-100%); opacity: 0; }
-  }
-</style>
-</head>
-<body>
-<div class="clock-panel">
-  <div class="scanline"></div>
-  <div class="particles" id="particles"></div>
-  <div class="date-row" id="date-row">2025-01-01</div>
-  <div class="weekday-row" id="weekday-row">MONDAY</div>
-  <div class="time-display">
-    <div class="time-segment">
-      <div class="time-digits" id="hours" data-value="12">12</div>
-      <div class="time-label">Hours</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cyberpunk Clock Preview</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: "Courier New", monospace;
+        overflow: hidden;
+      }
+      .clock-panel {
+        width: 420px;
+        padding: 40px 32px;
+        background: linear-gradient(145deg, #0d0d1a 0%, #1a0a2e 50%, #0d0d1a 100%);
+        border: 1px solid rgba(0, 255, 255, 0.15);
+        border-radius: 16px;
+        position: relative;
+        box-shadow:
+          0 0 30px rgba(0, 255, 255, 0.05),
+          inset 0 0 60px rgba(0, 255, 255, 0.02);
+      }
+      .clock-panel::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: 16px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 255, 0.3),
+          transparent 40%,
+          transparent 60%,
+          rgba(255, 0, 255, 0.3)
+        );
+        mask:
+          linear-gradient(#fff 0 0) content-box,
+          linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        -webkit-mask-composite: xor;
+        padding: 1px;
+        pointer-events: none;
+      }
+      .scanline {
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 255, 255, 0.015) 2px,
+          rgba(0, 255, 255, 0.015) 4px
+        );
+        pointer-events: none;
+      }
+      .date-row {
+        text-align: center;
+        margin-bottom: 8px;
+        font-size: 14px;
+        letter-spacing: 4px;
+        color: rgba(0, 255, 255, 0.6);
+        text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+      }
+      .weekday-row {
+        text-align: center;
+        margin-bottom: 24px;
+        font-size: 13px;
+        letter-spacing: 6px;
+        color: rgba(255, 0, 255, 0.7);
+        text-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
+        text-transform: uppercase;
+      }
+      .time-display {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+      .time-segment {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .time-digits {
+        font-size: 64px;
+        font-weight: bold;
+        letter-spacing: 4px;
+        line-height: 1;
+        background: linear-gradient(180deg, #00ffff 0%, #0088aa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.5));
+        position: relative;
+      }
+      .time-digits::after {
+        content: attr(data-value);
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(0, 255, 255, 0.15) 0%, transparent 60%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: blur(4px);
+      }
+      .time-label {
+        font-size: 10px;
+        letter-spacing: 3px;
+        color: rgba(0, 255, 255, 0.35);
+        margin-top: 8px;
+        text-transform: uppercase;
+      }
+      .time-colon {
+        font-size: 56px;
+        font-weight: bold;
+        color: rgba(0, 255, 255, 0.8);
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        animation: blink 1s step-end infinite;
+        line-height: 1;
+        margin-top: -8px;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.2;
+        }
+      }
+      .ampm {
+        font-size: 18px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        color: rgba(255, 0, 255, 0.8);
+        text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        align-self: flex-end;
+        margin-bottom: 8px;
+        margin-left: 8px;
+      }
+      .glow-bar {
+        height: 2px;
+        margin-top: 28px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(0, 255, 255, 0.5),
+          rgba(255, 0, 255, 0.5),
+          transparent
+        );
+        border-radius: 1px;
+        box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+        animation: pulse-bar 2s ease-in-out infinite;
+      }
+      @keyframes pulse-bar {
+        0%,
+        100% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      /* Particle effect simulation */
+      .particles {
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        animation: float linear infinite;
+        opacity: 0;
+      }
+      @keyframes float {
+        0% {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-100%);
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="clock-panel">
+      <div class="scanline"></div>
+      <div class="particles" id="particles"></div>
+      <div class="date-row" id="date-row">2025-01-01</div>
+      <div class="weekday-row" id="weekday-row">MONDAY</div>
+      <div class="time-display">
+        <div class="time-segment">
+          <div class="time-digits" id="hours" data-value="12">12</div>
+          <div class="time-label">Hours</div>
+        </div>
+        <div class="time-colon">:</div>
+        <div class="time-segment">
+          <div class="time-digits" id="minutes" data-value="00">00</div>
+          <div class="time-label">Mins</div>
+        </div>
+        <div class="time-colon">:</div>
+        <div class="time-segment">
+          <div class="time-digits" id="seconds" data-value="00">00</div>
+          <div class="time-label">Secs</div>
+        </div>
+        <div class="ampm" id="ampm">PM</div>
+      </div>
+      <div class="glow-bar"></div>
     </div>
-    <div class="time-colon">:</div>
-    <div class="time-segment">
-      <div class="time-digits" id="minutes" data-value="00">00</div>
-      <div class="time-label">Mins</div>
-    </div>
-    <div class="time-colon">:</div>
-    <div class="time-segment">
-      <div class="time-digits" id="seconds" data-value="00">00</div>
-      <div class="time-label">Secs</div>
-    </div>
-    <div class="ampm" id="ampm">PM</div>
-  </div>
-  <div class="glow-bar"></div>
-</div>
 
-<script>
-  // Particles
-  const particlesEl = document.getElementById('particles');
-  for (let i = 0; i < 20; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.left = Math.random() * 100 + '%';
-    p.style.animationDuration = (3 + Math.random() * 4) + 's';
-    p.style.animationDelay = (Math.random() * 5) + 's';
-    p.style.backgroundColor = Math.random() > 0.5 ? 'rgba(0,255,255,0.6)' : 'rgba(255,0,255,0.6)';
-    particlesEl.appendChild(p);
-  }
+    <script>
+      // Particles
+      const particlesEl = document.getElementById("particles");
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement("div");
+        p.className = "particle";
+        p.style.left = Math.random() * 100 + "%";
+        p.style.animationDuration = 3 + Math.random() * 4 + "s";
+        p.style.animationDelay = Math.random() * 5 + "s";
+        p.style.backgroundColor =
+          Math.random() > 0.5 ? "rgba(0,255,255,0.6)" : "rgba(255,0,255,0.6)";
+        particlesEl.appendChild(p);
+      }
 
-  const weekdays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-  function update() {
-    const now = new Date();
-    let h = now.getHours();
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    document.getElementById('hours').textContent = String(h).padStart(2, '0');
-    document.getElementById('hours').dataset.value = String(h).padStart(2, '0');
-    document.getElementById('minutes').textContent = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('minutes').dataset.value = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('seconds').textContent = String(now.getSeconds()).padStart(2, '0');
-    document.getElementById('seconds').dataset.value = String(now.getSeconds()).padStart(2, '0');
-    document.getElementById('ampm').textContent = ampm;
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    document.getElementById('date-row').textContent = `${y}-${m}-${d}`;
-    document.getElementById('weekday-row').textContent = weekdays[now.getDay()];
-  }
-  update();
-  setInterval(update, 1000);
-</script>
-</body>
+      const weekdays = [
+        "SUNDAY",
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+      ];
+      function update() {
+        const now = new Date();
+        let h = now.getHours();
+        const ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12 || 12;
+        document.getElementById("hours").textContent = String(h).padStart(2, "0");
+        document.getElementById("hours").dataset.value = String(h).padStart(2, "0");
+        document.getElementById("minutes").textContent = String(now.getMinutes()).padStart(2, "0");
+        document.getElementById("minutes").dataset.value = String(now.getMinutes()).padStart(
+          2,
+          "0",
+        );
+        document.getElementById("seconds").textContent = String(now.getSeconds()).padStart(2, "0");
+        document.getElementById("seconds").dataset.value = String(now.getSeconds()).padStart(
+          2,
+          "0",
+        );
+        document.getElementById("ampm").textContent = ampm;
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        document.getElementById("date-row").textContent = `${y}-${m}-${d}`;
+        document.getElementById("weekday-row").textContent = weekdays[now.getDay()];
+      }
+      update();
+      setInterval(update, 1000);
+    </script>
+  </body>
 </html>

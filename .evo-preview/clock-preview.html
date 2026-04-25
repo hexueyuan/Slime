@@ -1,220 +1,267 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0a0a0f;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    font-family: 'Courier New', monospace;
-    overflow: hidden;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: "Courier New", monospace;
+        overflow: hidden;
+      }
 
-  .clock-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    padding: 48px 64px;
-  }
+      .clock-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 48px 64px;
+      }
 
-  /* 扫描线 */
-  .clock-container::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, #06b6d4, #a855f7, transparent);
-    animation: scanline 3s ease-in-out infinite;
-    opacity: 0.7;
-    filter: blur(1px);
-    box-shadow: 0 0 15px #06b6d4, 0 0 30px #a855f780;
-  }
+      /* 扫描线 */
+      .clock-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #06b6d4, #a855f7, transparent);
+        animation: scanline 3s ease-in-out infinite;
+        opacity: 0.7;
+        filter: blur(1px);
+        box-shadow:
+          0 0 15px #06b6d4,
+          0 0 30px #a855f780;
+      }
 
-  @keyframes scanline {
-    0%, 100% { top: 0; }
-    50% { top: 100%; }
-  }
-
-  /* 时间行 */
-  .time-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .digit-box {
-    position: relative;
-    width: 56px;
-    height: 78px;
-    background: #111119;
-    border: 1px solid #1e1e30;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    box-shadow: 0 0 12px #06b6d420, inset 0 0 20px #00000080;
-  }
-
-  .digit-box::after {
-    content: '';
-    position: absolute;
-    left: 0; right: 0;
-    top: 50%;
-    height: 1px;
-    background: #0a0a0f;
-    box-shadow: 0 0 4px #0a0a0f;
-    z-index: 2;
-  }
-
-  .digit {
-    font-size: 48px;
-    font-weight: bold;
-    background: linear-gradient(180deg, #06b6d4, #a855f7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: none;
-    filter: drop-shadow(0 0 8px #06b6d480);
-    transition: transform 0.3s ease;
-  }
-
-  .digit.flip {
-    animation: digitFlip 0.4s ease-in-out;
-  }
-
-  @keyframes digitFlip {
-    0% { transform: scaleY(1); opacity: 1; }
-    50% { transform: scaleY(0); opacity: 0.5; }
-    100% { transform: scaleY(1); opacity: 1; }
-  }
-
-  .colon {
-    font-size: 42px;
-    background: linear-gradient(180deg, #06b6d4, #a855f7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: colonBlink 1s ease-in-out infinite;
-    margin: 0 2px;
-  }
-
-  @keyframes colonBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.2; }
-  }
-
-  /* 日期和星期 */
-  .info-row {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    margin-top: 8px;
-  }
-
-  .date-text, .weekday-text {
-    font-size: 14px;
-    color: #6b7280;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-  }
-
-  .weekday-text {
-    color: #a855f7;
-    text-shadow: 0 0 10px #a855f780;
-  }
-
-  .dot-sep {
-    width: 4px;
-    height: 4px;
-    background: #06b6d4;
-    border-radius: 50%;
-    box-shadow: 0 0 6px #06b6d4;
-  }
-
-  /* 底部装饰线 */
-  .bottom-line {
-    width: 200px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, #a855f740, transparent);
-    margin-top: 12px;
-  }
-
-  /* 背景光晕 */
-  .glow {
-    position: absolute;
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.12;
-    pointer-events: none;
-  }
-  .glow-cyan { background: #06b6d4; top: -50px; left: -50px; }
-  .glow-purple { background: #a855f7; bottom: -50px; right: -50px; }
-</style>
-</head>
-<body>
-  <div class="clock-container">
-    <div class="glow glow-cyan"></div>
-    <div class="glow glow-purple"></div>
-
-    <div class="time-row">
-      <div class="digit-box"><span class="digit" id="h1">1</span></div>
-      <div class="digit-box"><span class="digit" id="h2">4</span></div>
-      <span class="colon">:</span>
-      <div class="digit-box"><span class="digit" id="m1">3</span></div>
-      <div class="digit-box"><span class="digit" id="m2">2</span></div>
-      <span class="colon">:</span>
-      <div class="digit-box"><span class="digit" id="s1">0</span></div>
-      <div class="digit-box"><span class="digit" id="s2">8</span></div>
-    </div>
-
-    <div class="info-row">
-      <span class="date-text" id="date">2025-01-15</span>
-      <span class="dot-sep"></span>
-      <span class="weekday-text" id="weekday">Wednesday</span>
-    </div>
-
-    <div class="bottom-line"></div>
-  </div>
-
-  <script>
-    const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const digitIds = ['h1', 'h2', 'm1', 'm2', 's1', 's2'];
-    let prevDigits = ['', '', '', '', '', ''];
-
-    function updateClock() {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      const s = String(now.getSeconds()).padStart(2, '0');
-      const digits = [h[0], h[1], m[0], m[1], s[0], s[1]];
-
-      digits.forEach((d, i) => {
-        const el = document.getElementById(digitIds[i]);
-        if (d !== prevDigits[i]) {
-          el.textContent = d;
-          el.classList.remove('flip');
-          void el.offsetWidth;
-          el.classList.add('flip');
+      @keyframes scanline {
+        0%,
+        100% {
+          top: 0;
         }
-      });
-      prevDigits = digits;
+        50% {
+          top: 100%;
+        }
+      }
 
-      const y = now.getFullYear();
-      const mo = String(now.getMonth() + 1).padStart(2, '0');
-      const da = String(now.getDate()).padStart(2, '0');
-      document.getElementById('date').textContent = `${y}-${mo}-${da}`;
-      document.getElementById('weekday').textContent = weekdays[now.getDay()];
-    }
+      /* 时间行 */
+      .time-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-    updateClock();
-    setInterval(updateClock, 200);
-  </script>
-</body>
+      .digit-box {
+        position: relative;
+        width: 56px;
+        height: 78px;
+        background: #111119;
+        border: 1px solid #1e1e30;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow:
+          0 0 12px #06b6d420,
+          inset 0 0 20px #00000080;
+      }
+
+      .digit-box::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 1px;
+        background: #0a0a0f;
+        box-shadow: 0 0 4px #0a0a0f;
+        z-index: 2;
+      }
+
+      .digit {
+        font-size: 48px;
+        font-weight: bold;
+        background: linear-gradient(180deg, #06b6d4, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+        filter: drop-shadow(0 0 8px #06b6d480);
+        transition: transform 0.3s ease;
+      }
+
+      .digit.flip {
+        animation: digitFlip 0.4s ease-in-out;
+      }
+
+      @keyframes digitFlip {
+        0% {
+          transform: scaleY(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scaleY(0);
+          opacity: 0.5;
+        }
+        100% {
+          transform: scaleY(1);
+          opacity: 1;
+        }
+      }
+
+      .colon {
+        font-size: 42px;
+        background: linear-gradient(180deg, #06b6d4, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: colonBlink 1s ease-in-out infinite;
+        margin: 0 2px;
+      }
+
+      @keyframes colonBlink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.2;
+        }
+      }
+
+      /* 日期和星期 */
+      .info-row {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-top: 8px;
+      }
+
+      .date-text,
+      .weekday-text {
+        font-size: 14px;
+        color: #6b7280;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+      }
+
+      .weekday-text {
+        color: #a855f7;
+        text-shadow: 0 0 10px #a855f780;
+      }
+
+      .dot-sep {
+        width: 4px;
+        height: 4px;
+        background: #06b6d4;
+        border-radius: 50%;
+        box-shadow: 0 0 6px #06b6d4;
+      }
+
+      /* 底部装饰线 */
+      .bottom-line {
+        width: 200px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #a855f740, transparent);
+        margin-top: 12px;
+      }
+
+      /* 背景光晕 */
+      .glow {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.12;
+        pointer-events: none;
+      }
+      .glow-cyan {
+        background: #06b6d4;
+        top: -50px;
+        left: -50px;
+      }
+      .glow-purple {
+        background: #a855f7;
+        bottom: -50px;
+        right: -50px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="clock-container">
+      <div class="glow glow-cyan"></div>
+      <div class="glow glow-purple"></div>
+
+      <div class="time-row">
+        <div class="digit-box"><span class="digit" id="h1">1</span></div>
+        <div class="digit-box"><span class="digit" id="h2">4</span></div>
+        <span class="colon">:</span>
+        <div class="digit-box"><span class="digit" id="m1">3</span></div>
+        <div class="digit-box"><span class="digit" id="m2">2</span></div>
+        <span class="colon">:</span>
+        <div class="digit-box"><span class="digit" id="s1">0</span></div>
+        <div class="digit-box"><span class="digit" id="s2">8</span></div>
+      </div>
+
+      <div class="info-row">
+        <span class="date-text" id="date">2025-01-15</span>
+        <span class="dot-sep"></span>
+        <span class="weekday-text" id="weekday">Wednesday</span>
+      </div>
+
+      <div class="bottom-line"></div>
+    </div>
+
+    <script>
+      const weekdays = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const digitIds = ["h1", "h2", "m1", "m2", "s1", "s2"];
+      let prevDigits = ["", "", "", "", "", ""];
+
+      function updateClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, "0");
+        const m = String(now.getMinutes()).padStart(2, "0");
+        const s = String(now.getSeconds()).padStart(2, "0");
+        const digits = [h[0], h[1], m[0], m[1], s[0], s[1]];
+
+        digits.forEach((d, i) => {
+          const el = document.getElementById(digitIds[i]);
+          if (d !== prevDigits[i]) {
+            el.textContent = d;
+            el.classList.remove("flip");
+            void el.offsetWidth;
+            el.classList.add("flip");
+          }
+        });
+        prevDigits = digits;
+
+        const y = now.getFullYear();
+        const mo = String(now.getMonth() + 1).padStart(2, "0");
+        const da = String(now.getDate()).padStart(2, "0");
+        document.getElementById("date").textContent = `${y}-${mo}-${da}`;
+        document.getElementById("weekday").textContent = weekdays[now.getDay()];
+      }
+
+      updateClock();
+      setInterval(updateClock, 200);
+    </script>
+  </body>
 </html>
