@@ -9,6 +9,7 @@ const evolutionPresenter = usePresenter("evolutionPresenter");
 const nodes = ref<EvolutionNode[]>([]);
 const isLoading = ref(true);
 const rollbackTarget = ref<EvolutionNode | null>(null);
+let cleanup: (() => void) | null = null;
 
 async function loadHistory() {
   isLoading.value = true;
@@ -23,18 +24,22 @@ async function loadHistory() {
 
 async function confirmRollback() {
   if (!rollbackTarget.value) return;
-  await evolutionPresenter.rollback(rollbackTarget.value.tag);
-  rollbackTarget.value = null;
-  await loadHistory();
+  try {
+    await evolutionPresenter.rollback(rollbackTarget.value.tag);
+    rollbackTarget.value = null;
+    await loadHistory();
+  } catch {
+    // keep dialog open on failure
+  }
 }
 
 onMounted(() => {
   loadHistory();
-  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.COMPLETED, () => loadHistory());
+  cleanup = window.electron.ipcRenderer.on(EVOLUTION_EVENTS.COMPLETED, () => loadHistory());
 });
 
 onUnmounted(() => {
-  window.electron.ipcRenderer.removeAllListeners(EVOLUTION_EVENTS.COMPLETED);
+  cleanup?.();
 });
 </script>
 
