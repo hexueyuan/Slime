@@ -5,40 +5,28 @@ const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四
 const digits = ref(["0", "0", "0", "0", "0", "0"]);
 const dateStr = ref("");
 const weekdayStr = ref("");
-const periodStr = ref("AM");
 const flipping = ref([false, false, false, false, false, false]);
 let prevDigits = ["", "", "", "", "", ""];
 let timer: ReturnType<typeof setInterval> | null = null;
 
 function updateClock() {
   const now = new Date();
-  const hours24 = now.getHours();
-  const period = hours24 < 12 ? "AM" : "PM";
-  let hours12 = hours24 % 12;
-  if (hours12 === 0) hours12 = 12;
-  // No leading zero: use space for tens digit when hour < 10
-  const hStr = String(hours12);
-  const h0 = hStr.length < 2 ? " " : hStr[0];
-  const h1 = hStr.length < 2 ? hStr[0] : hStr[1];
+  const h = String(now.getHours()).padStart(2, "0");
   const m = String(now.getMinutes()).padStart(2, "0");
   const s = String(now.getSeconds()).padStart(2, "0");
-  const current = [h0, h1, m[0], m[1], s[0], s[1]];
+  const current = [h[0], h[1], m[0], m[1], s[0], s[1]];
 
   current.forEach((d, i) => {
     if (d !== prevDigits[i]) {
-      // Don't animate empty (space) digit boxes
-      if (d !== " " && prevDigits[i] !== " ") {
-        flipping.value[i] = true;
-        setTimeout(() => {
-          flipping.value[i] = false;
-        }, 400);
-      }
+      flipping.value[i] = true;
+      setTimeout(() => {
+        flipping.value[i] = false;
+      }, 400);
     }
   });
 
   digits.value = current;
   prevDigits = [...current];
-  periodStr.value = period;
 
   const y = now.getFullYear();
   const mo = String(now.getMonth() + 1).padStart(2, "0");
@@ -69,10 +57,8 @@ onUnmounted(() => {
 
       <!-- 时间行 -->
       <div class="time-row">
-        <div class="digit-box" :class="{ 'digit-box--empty': digits[0] === ' ' }">
-          <span v-if="digits[0] !== ' '" class="digit" :class="{ flip: flipping[0] }">{{
-            digits[0]
-          }}</span>
+        <div class="digit-box">
+          <span class="digit" :class="{ flip: flipping[0] }">{{ digits[0] }}</span>
         </div>
         <div class="digit-box">
           <span class="digit" :class="{ flip: flipping[1] }">{{ digits[1] }}</span>
@@ -91,7 +77,6 @@ onUnmounted(() => {
         <div class="digit-box">
           <span class="digit" :class="{ flip: flipping[5] }">{{ digits[5] }}</span>
         </div>
-        <span class="period-text">{{ periodStr }}</span>
       </div>
 
       <!-- 日期和星期 -->
@@ -298,29 +283,5 @@ onUnmounted(() => {
   background: #a855f7;
   bottom: -50px;
   right: -50px;
-}
-
-/* AM/PM 标记 */
-.period-text {
-  font-size: 22px;
-  font-weight: bold;
-  color: #a855f7;
-  letter-spacing: 2px;
-  text-shadow: 0 0 10px rgb(168 85 247 / 50%);
-  margin-left: 10px;
-  align-self: flex-end;
-  margin-bottom: 8px;
-  min-width: 36px;
-}
-
-/* 空数字框（个位数小时的十位占位） */
-.digit-box--empty {
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.digit-box--empty::after {
-  display: none;
 }
 </style>
