@@ -93,8 +93,16 @@ describe("EvolutionPresenter", () => {
     await evo.startEvolution("test change");
     expect(evo.getStatus().startCommit).toBe("abc123");
     evo.submitPlan({ scope: ["src/a.ts"], changes: ["modify a"] });
+
+    // Phase 1: prepare (changelog only, no commit)
     const result = await evo.completeEvolution("did the thing", "revert a.ts changes");
     expect(result.success).toBe(true);
+    expect(evo.getStatus().stage).toBe("applying");
+    expect(git.addAndCommit).not.toHaveBeenCalled();
+
+    // Phase 2: finalize (commit + tag + archive)
+    const finalized = await evo.finalizeEvolution();
+    expect(finalized).toBe(true);
     expect(evo.getStatus().stage).toBe("idle");
     expect(git.addAndCommit).toHaveBeenCalled();
     expect(git.tag).toHaveBeenCalled();

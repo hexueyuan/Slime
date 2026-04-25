@@ -23,6 +23,12 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   private description?: string;
   private plan?: EvolutionPlan;
   private startCommit?: string;
+  private pendingFinalize?: {
+    tagName: string;
+    summary: string;
+    changedFiles: string[];
+    semanticSummary: string;
+  };
   rollbackInProgress = false;
 
   constructor(
@@ -54,6 +60,11 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     return true;
   }
 
+  /**
+   * Phase 1: prepare changelog + archive data, but DO NOT commit.
+   * Commit is deferred to finalizeEvolution() so the agentic loop can finish
+   * any remaining work (format, lint fix, etc.) before the actual git commit.
+   */
   async completeEvolution(
     summary: string,
     semanticSummary?: string,
@@ -65,39 +76,68 @@ export class EvolutionPresenter implements IEvolutionPresenter {
       const changedFiles = this.startCommit ? await this.git.getChangedFiles(this.startCommit) : [];
       const tagName = await this.nextTagName();
       await this.appendChangelog(tagName, summary, changedFiles);
-      const committed = await this.git.addAndCommit(`evo: ${summary}`);
+
+      // Stash pending data for finalizeEvolution()
+      this.pendingFinalize = {
+        tagName,
+        summary,
+        changedFiles,
+        semanticSummary: semanticSummary || "",
+      };
+
+      logger.info("Evolution prepared, awaiting finalize", { tag: tagName });
+      return { success: true, tag: tagName };
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      logger.error("Evolution prepare failed", { error });
+      this.setStage("coding");
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Phase 2: git add -A + commit + tag + archive.
+   * Called by agentPresenter AFTER the agentic loop exits, ensuring all file
+   * changes (including post-complete format/lint fixes) are captured.
+   */
+  async finalizeEvolution(): Promise<boolean> {
+    const pending = this.pendingFinalize;
+    if (!pending) return false;
+    this.pendingFinalize = undefined;
+
+    try {
+      const committed = await this.git.addAndCommit(`evo: ${pending.summary}`);
       if (!committed) throw new Error("git commit failed");
-      const tagged = await this.git.tag(tagName, summary);
+      const tagged = await this.git.tag(pending.tagName, pending.summary);
       if (!tagged) throw new Error("git tag failed");
 
-      // Generate archive
       const endCommit = await this.git.getCurrentCommit();
       const tags = await this.git.listTags("egg-*");
-      const parentTag = tags.find((t) => t !== tagName) || null;
+      const parentTag = tags.find((t) => t !== pending.tagName) || null;
       await this.writeArchive({
         version: 1,
-        tag: tagName,
+        tag: pending.tagName,
         parentTag,
         request: this.description || "",
-        summary,
+        summary: pending.summary,
         plan: this.plan || { scope: [], changes: [] },
         createdAt: new Date().toISOString(),
         startCommit: this.startCommit || "",
         endCommit,
-        changedFiles,
-        semanticSummary: semanticSummary || "",
+        changedFiles: pending.changedFiles,
+        semanticSummary: pending.semanticSummary,
         status: "active",
       });
 
       this.reset();
-      eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, tagName, summary);
-      logger.info("Evolution completed", { tag: tagName, summary });
-      return { success: true, tag: tagName };
+      eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, pending.tagName, pending.summary);
+      logger.info("Evolution finalized", { tag: pending.tagName });
+      return true;
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
-      logger.error("Evolution apply failed", { error });
+      logger.error("Evolution finalize failed", { error });
       this.setStage("coding");
-      return { success: false, error };
+      return false;
     }
   }
 
@@ -216,6 +256,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     this.description = undefined;
     this.plan = undefined;
     this.startCommit = undefined;
+    this.pendingFinalize = undefined;
     eventBus.sendToRenderer(EVOLUTION_EVENTS.STAGE_CHANGED, "idle");
   }
 
@@ -300,11 +341,11 @@ export class EvolutionPresenter implements IEvolutionPresenter {
 
     const entry =
       `## [${tag}] - ${date}\n\n` +
-      `### Evolution\n` +
+      `### Evolution\n\n` +
       `- Request: "${this.description || ""}"\n` +
       `- Summary: ${summary}\n` +
       `- Status: Success\n\n` +
-      `### Changes\n` +
+      `### Changes\n\n` +
       `${changesSection}\n\n---\n\n`;
 
     const headerEnd = existing.indexOf("\n\n");

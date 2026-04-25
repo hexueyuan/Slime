@@ -47,6 +47,7 @@ describe("AgentPresenter", () => {
   };
   const mockEvolutionPresenter = {
     getStatus: vi.fn(() => ({ stage: "idle" })),
+    finalizeEvolution: vi.fn(async () => false),
   };
   const mockContentPresenter = {
     setContent: vi.fn(),

@@ -52,8 +52,8 @@ onUnmounted(() => {
       <div class="scanline" />
 
       <!-- 背景光晕 -->
-      <div class="glow glow-green" />
-      <div class="glow glow-emerald" />
+      <div class="glow glow-cyan" />
+      <div class="glow glow-purple" />
 
       <!-- 时间行 -->
       <div class="time-row">
@@ -120,13 +120,13 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent, #22c55e, #16a34a, transparent);
+  background: linear-gradient(90deg, transparent, #06b6d4, #a855f7, transparent);
   animation: scanline-move 3s ease-in-out infinite;
   opacity: 0.7;
   filter: blur(1px);
   box-shadow:
-    0 0 15px #22c55e,
-    0 0 30px rgb(22 163 74 / 50%);
+    0 0 15px #06b6d4,
+    0 0 30px rgb(168 85 247 / 50%);
   pointer-events: none;
 }
 
@@ -159,7 +159,7 @@ onUnmounted(() => {
   justify-content: center;
   overflow: hidden;
   box-shadow:
-    0 0 12px rgb(34 197 94 / 12%),
+    0 0 12px rgb(6 182 212 / 12%),
     inset 0 0 20px rgb(0 0 0 / 50%);
 }
 
@@ -178,11 +178,11 @@ onUnmounted(() => {
 .digit {
   font-size: 48px;
   font-weight: bold;
-  background: linear-gradient(180deg, #22c55e, #16a34a);
+  background: linear-gradient(180deg, #06b6d4, #a855f7);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 8px rgb(34 197 94 / 50%));
+  filter: drop-shadow(0 0 8px rgb(6 182 212 / 50%));
 }
 
 .digit.flip {
@@ -206,7 +206,7 @@ onUnmounted(() => {
 
 .colon {
   font-size: 42px;
-  background: linear-gradient(180deg, #22c55e, #16a34a);
+  background: linear-gradient(180deg, #06b6d4, #a855f7);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -241,25 +241,25 @@ onUnmounted(() => {
 
 .weekday-text {
   font-size: 14px;
-  color: #16a34a;
+  color: #a855f7;
   letter-spacing: 4px;
   text-transform: uppercase;
-  text-shadow: 0 0 10px rgb(22 163 74 / 50%);
+  text-shadow: 0 0 10px rgb(168 85 247 / 50%);
 }
 
 .dot-sep {
   width: 4px;
   height: 4px;
-  background: #22c55e;
+  background: #06b6d4;
   border-radius: 50%;
-  box-shadow: 0 0 6px #22c55e;
+  box-shadow: 0 0 6px #06b6d4;
 }
 
 /* 底部装饰线 */
 .bottom-line {
   width: 200px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(22 163 74 / 25%), transparent);
+  background: linear-gradient(90deg, transparent, rgb(168 85 247 / 25%), transparent);
   margin-top: 12px;
 }
 
@@ -274,14 +274,14 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-.glow-green {
-  background: #22c55e;
+.glow-cyan {
+  background: #06b6d4;
   top: -50px;
   left: -50px;
 }
 
-.glow-emerald {
-  background: #16a34a;
+.glow-purple {
+  background: #a855f7;
   bottom: -50px;
   right: -50px;
 }

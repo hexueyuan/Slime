@@ -404,6 +404,10 @@ export class AgentPresenter implements IAgentPresenter {
         messages.push({ role: "tool", content: toolResultParts });
       }
 
+      // evolution_complete 只做了 prepare，loop 结束后统一 commit
+      // 确保 AI 在 complete 之后的 format/lint 修改也被收进去
+      await this.evolutionPresenter.finalizeEvolution();
+
       for (const block of blocks) {
         if (block.status === "loading") block.status = "success";
       }

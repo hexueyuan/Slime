@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onBeforeUnmount } from "vue";
 import type { InteractionContent } from "@shared/types/content";
 
 const props = defineProps<{ content: InteractionContent }>();
@@ -19,6 +19,33 @@ function toggle(value: string) {
   }
 }
 
+const iframeRef = ref<HTMLIFrameElement>();
+const iframeHeight = ref(300);
+let resizeObserver: ResizeObserver | null = null;
+
+function onIframeLoad() {
+  const iframe = iframeRef.value;
+  if (!iframe?.contentDocument?.body) return;
+
+  // 清理旧 observer
+  resizeObserver?.disconnect();
+
+  const updateHeight = () => {
+    const body = iframe.contentDocument?.body;
+    if (!body) return;
+    const h = body.scrollHeight;
+    if (h > 0) iframeHeight.value = h;
+  };
+
+  resizeObserver = new ResizeObserver(updateHeight);
+  resizeObserver.observe(iframe.contentDocument.body);
+  updateHeight();
+}
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+});
+
 const canSubmit = computed(() => selected.value.size > 0 || extraInput.value.trim().length > 0);
 
 function submit() {
@@ -36,9 +63,12 @@ function submit() {
   <div class="interaction-renderer">
     <div v-if="content.htmlContent" class="interaction-renderer__preview">
       <iframe
+        ref="iframeRef"
         sandbox="allow-scripts"
         :srcdoc="content.htmlContent"
         class="interaction-renderer__iframe"
+        :style="{ height: iframeHeight + 'px' }"
+        @load="onIframeLoad"
       />
     </div>
 
@@ -97,7 +127,6 @@ function submit() {
 
 .interaction-renderer__iframe {
   width: 100%;
-  height: 300px;
   border: none;
   background: #fff;
 }
