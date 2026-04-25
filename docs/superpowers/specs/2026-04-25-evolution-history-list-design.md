@@ -11,6 +11,7 @@
 当前 `getHistory()` 只返回 tag 名，description/request/createdAt/changes 全为空。
 
 改为：
+
 1. 读取 `CHANGELOG.slime.md` 并解析，提取每个 tag 的 request、summary、date、changes
 2. 调用 `git.listTags('egg-*')` 获取所有 tag
 3. 合并数据：CHANGELOG 中有的填充完整信息，没有的用 tag 名作 fallback
@@ -19,6 +20,7 @@
 **新增方法**: `parseChangelog(): Map<string, {request, summary, date, changes}>`
 
 解析规则：
+
 - `## [tag] - YYYY-MM-DD` → tag + date
 - `- Request: "..."` → request
 - `- Summary: ...` → summary (作为 description)
@@ -43,6 +45,7 @@
 文件：`src/renderer/src/components/function/HistoryPanel.vue`
 
 内容：
+
 - mount 时调用 `usePresenter("evolutionPresenter").getHistory()` 加载数据
 - 时间轴风格列表，每条展示：tag（monospace）、日期、request 摘要
 - 当前版本（列表第一条）紫色高亮 + "当前" badge
@@ -51,6 +54,7 @@
 - loading 状态
 
 样式：
+
 - 匹配现有暗色主题，使用 TailwindCSS
 - 当前版本用 `text-violet-500` 高亮
 - 时间轴左侧竖线 + 圆点指示器

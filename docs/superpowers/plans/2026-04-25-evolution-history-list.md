@@ -12,21 +12,22 @@
 
 ## File Map
 
-| Action | File | Responsibility |
-|--------|------|----------------|
-| Modify | `src/main/presenter/evolutionPresenter.ts` | Enrich `getHistory()` with CHANGELOG parsing |
-| Modify | `test/main/evolutionPresenter.test.ts` | Tests for `getHistory()` and `parseChangelog()` |
-| Create | `src/renderer/src/components/function/HistoryPanel.vue` | History list UI with rollback |
-| Modify | `src/renderer/src/components/function/FunctionPanel.vue` | Add "历史" tab + render HistoryPanel |
-| Modify | `src/renderer/src/views/EvolutionCenter.vue` | Extend `activeTab` type to include `"history"` |
-| Modify | `test/renderer/components/FunctionPanel.test.ts` | Test new tab rendering |
-| Create | `test/renderer/components/HistoryPanel.test.ts` | Tests for HistoryPanel |
+| Action | File                                                     | Responsibility                                  |
+| ------ | -------------------------------------------------------- | ----------------------------------------------- |
+| Modify | `src/main/presenter/evolutionPresenter.ts`               | Enrich `getHistory()` with CHANGELOG parsing    |
+| Modify | `test/main/evolutionPresenter.test.ts`                   | Tests for `getHistory()` and `parseChangelog()` |
+| Create | `src/renderer/src/components/function/HistoryPanel.vue`  | History list UI with rollback                   |
+| Modify | `src/renderer/src/components/function/FunctionPanel.vue` | Add "历史" tab + render HistoryPanel            |
+| Modify | `src/renderer/src/views/EvolutionCenter.vue`             | Extend `activeTab` type to include `"history"`  |
+| Modify | `test/renderer/components/FunctionPanel.test.ts`         | Test new tab rendering                          |
+| Create | `test/renderer/components/HistoryPanel.test.ts`          | Tests for HistoryPanel                          |
 
 ---
 
 ### Task 1: Enrich `getHistory()` with CHANGELOG Parsing (Backend)
 
 **Files:**
+
 - Modify: `src/main/presenter/evolutionPresenter.ts:101-113`
 - Modify: `test/main/evolutionPresenter.test.ts`
 
@@ -81,7 +82,7 @@ it("getHistory returns enriched nodes from CHANGELOG", async () => {
 - (no file changes recorded)
 
 ---
-`
+`,
   );
   evo = new EvolutionPresenter(git, mockConfig());
   const history = await evo.getHistory();
@@ -206,6 +207,7 @@ git commit -m "feat(evolution): enrich getHistory with CHANGELOG parsing"
 ### Task 2: Add "历史" Tab to FunctionPanel
 
 **Files:**
+
 - Modify: `src/renderer/src/components/function/FunctionPanel.vue`
 - Modify: `src/renderer/src/views/EvolutionCenter.vue:40`
 - Modify: `test/renderer/components/FunctionPanel.test.ts`
@@ -373,6 +375,7 @@ git commit -m "feat(ui): add history tab to FunctionPanel"
 ### Task 3: Implement HistoryPanel Component
 
 **Files:**
+
 - Modify: `src/renderer/src/components/function/HistoryPanel.vue`
 - Create: `test/renderer/components/HistoryPanel.test.ts`
 
@@ -394,10 +397,7 @@ vi.mock("@/composables/usePresenter", () => ({
     if (name === "evolutionPresenter") {
       return { getHistory: mockGetHistory, rollback: mockRollback };
     }
-    return new Proxy(
-      {},
-      { get: () => vi.fn().mockResolvedValue(undefined) },
-    );
+    return new Proxy({}, { get: () => vi.fn().mockResolvedValue(undefined) });
   },
 }));
 
@@ -480,7 +480,8 @@ describe("HistoryPanel", () => {
     await flushPromises();
 
     // Click rollback on second item
-    await wrapper.findAll('[data-testid="history-item"]')[1]
+    await wrapper
+      .findAll('[data-testid="history-item"]')[1]
       .find('[data-testid="rollback-btn"]')
       .trigger("click");
 
@@ -594,7 +595,10 @@ onUnmounted(() => {
         <!-- Content -->
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
-            <span class="font-mono text-xs font-semibold" :class="index === 0 ? 'text-violet-500' : 'text-foreground'">
+            <span
+              class="font-mono text-xs font-semibold"
+              :class="index === 0 ? 'text-violet-500' : 'text-foreground'"
+            >
               {{ node.tag }}
             </span>
             <span
