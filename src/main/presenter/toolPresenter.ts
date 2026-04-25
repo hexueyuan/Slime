@@ -189,6 +189,10 @@ export class ToolPresenter {
             ),
         }),
         execute: async ({ summary, rollback_description }) => {
+          const verification = await this.evolutionPresenter.runBuildVerification();
+          if (!verification.success) {
+            return `Build verification failed. Fix the issues and call evolution_complete again:\n${verification.error}`;
+          }
           const result = await this.evolutionPresenter.completeEvolution(
             summary,
             rollback_description,

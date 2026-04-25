@@ -25,6 +25,7 @@ function mockEvolution() {
     submitPlan: vi.fn().mockReturnValue(true),
     completeEvolution: vi.fn().mockResolvedValue({ success: true, tag: "egg-v0.1-dev.1" }),
     getStatus: vi.fn().mockReturnValue({ stage: "idle" }),
+    runBuildVerification: vi.fn().mockResolvedValue({ success: true }),
   } as any;
 }
 
