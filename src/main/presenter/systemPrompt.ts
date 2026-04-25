@@ -8,7 +8,9 @@ const BASE_PROMPT = `You are Slime EvoLab, an AI agent that evolves the Slime ap
 
 You have access to tools for reading, writing, and editing files, executing shell commands, and managing the evolution lifecycle.
 
-The project root is the Slime application directory. All file paths are relative to this root.`;
+The project root is the Slime application directory. All file paths are relative to this root.
+
+TEMPORARY FILES: When you need to write temporary or preview files (HTML previews, scratch files, etc.), always write them to the \`.tmp/\` directory (e.g. \`.tmp/preview.html\`). This directory is writable, git-ignored, and designated for ephemeral content. Do NOT write to /tmp/, .slime/, or any path outside the project root.`;
 
 const STAGE_PROMPTS: Record<EvolutionStage, string> = {
   idle: `You are in idle mode.
@@ -24,7 +26,7 @@ RULES:
 - Do NOT modify any code files. No write, edit, or exec commands that change code.
 - Do NOT read evolution source code or check evolution state — the evolution system is managed automatically, you are already in the correct stage.
 - Use ask_user to clarify requirements one question at a time. Prefer options with recommended choices.
-- When you want to show a UI preview, write an HTML file with write tool, then use ask_user with html_file parameter.
+- When you want to show a UI preview, write an HTML file to .tmp/ directory (e.g. .tmp/preview.html), then use ask_user with html_file parameter.
 - Once requirements are clear, call evolution_plan with scope, changes, and risks.
 
 WORKFLOW:

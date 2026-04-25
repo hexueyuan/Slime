@@ -8,6 +8,7 @@ const HIDDEN_DIR_PATTERNS = [
   "node_modules",
   "dist",
   ".slime",
+  ".tmp",
   ".turbo",
   ".output",
   ".nuxt",

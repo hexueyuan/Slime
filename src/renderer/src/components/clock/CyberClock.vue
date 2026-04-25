@@ -5,17 +5,13 @@ const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const digits = ref(["0", "0", "0", "0", "0", "0"]);
 const dateStr = ref("");
 const weekdayStr = ref("");
-const ampm = ref<"AM" | "PM">("AM");
 const flipping = ref([false, false, false, false, false, false]);
 let prevDigits = ["", "", "", "", "", ""];
 let timer: ReturnType<typeof setInterval> | null = null;
 
 function updateClock() {
   const now = new Date();
-  const hours24 = now.getHours();
-  ampm.value = hours24 < 12 ? "AM" : "PM";
-  const hours12 = hours24 % 12 || 12;
-  const h = String(hours12).padStart(2, "0");
+  const h = String(now.getHours()).padStart(2, "0");
   const m = String(now.getMinutes()).padStart(2, "0");
   const s = String(now.getSeconds()).padStart(2, "0");
   const current = [h[0], h[1], m[0], m[1], s[0], s[1]];
@@ -81,7 +77,6 @@ onUnmounted(() => {
         <div class="digit-box">
           <span class="digit" :class="{ flip: flipping[5] }">{{ digits[5] }}</span>
         </div>
-        <span class="ampm-badge" :class="{ pm: ampm === 'PM' }">{{ ampm }}</span>
       </div>
 
       <!-- 日期和星期 -->
@@ -258,29 +253,6 @@ onUnmounted(() => {
   background: #06b6d4;
   border-radius: 50%;
   box-shadow: 0 0 6px #06b6d4;
-}
-
-/* AM/PM 标记 */
-.ampm-badge {
-  font-size: 20px;
-  font-weight: bold;
-  color: #06b6d4;
-  letter-spacing: 2px;
-  padding: 4px 10px;
-  background: rgb(6 182 212 / 12%);
-  border: 1px solid rgb(6 182 212 / 30%);
-  border-radius: 6px;
-  text-shadow: 0 0 10px rgb(6 182 212 / 60%);
-  align-self: flex-end;
-  margin-left: 8px;
-  margin-bottom: 6px;
-}
-
-.ampm-badge.pm {
-  color: #a855f7;
-  background: rgb(168 85 247 / 12%);
-  border-color: rgb(168 85 247 / 30%);
-  text-shadow: 0 0 10px rgb(168 85 247 / 60%);
 }
 
 /* 底部装饰线 */
