@@ -100,16 +100,20 @@ export class EvolutionPresenter implements IEvolutionPresenter {
 
   async getHistory(): Promise<EvolutionNode[]> {
     const tags = await this.git.listTags("egg-*");
-    return tags.map((tag, i) => ({
-      id: tag,
-      tag,
-      description: tag,
-      request: "",
-      changes: [],
-      createdAt: "",
-      gitRef: tag,
-      parent: tags[i + 1],
-    }));
+    const changelog = await this.parseChangelog();
+    return tags.map((tag, i) => {
+      const entry = changelog.get(tag);
+      return {
+        id: tag,
+        tag,
+        description: entry?.summary || tag,
+        request: entry?.request || "",
+        changes: entry?.changes || [],
+        createdAt: entry?.date || "",
+        gitRef: tag,
+        parent: tags[i + 1],
+      };
+    });
   }
 
   restart(): void {
@@ -132,6 +136,55 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     this.plan = undefined;
     this.startCommit = undefined;
     eventBus.sendToRenderer(EVOLUTION_EVENTS.STAGE_CHANGED, "idle");
+  }
+
+  private async parseChangelog(): Promise<
+    Map<string, { request: string; summary: string; date: string; changes: string[] }>
+  > {
+    const result = new Map<
+      string,
+      { request: string; summary: string; date: string; changes: string[] }
+    >();
+    let content: string;
+    try {
+      content = (await readFile(
+        join(paths.effectiveProjectRoot, CHANGELOG_FILE),
+        "utf-8",
+      )) as string;
+    } catch {
+      return result;
+    }
+
+    const sections = content.split("## [");
+    for (let i = 1; i < sections.length; i++) {
+      const section = sections[i];
+      const headerMatch = section.match(/^(.+?)\]\s*-\s*(\S+)/);
+      if (!headerMatch) continue;
+      const tag = headerMatch[1];
+      const date = headerMatch[2];
+
+      const requestMatch = section.match(/- Request:\s*"(.*)"/);
+      const summaryMatch = section.match(/- Summary:\s*(.*)/);
+
+      const request = requestMatch ? requestMatch[1] : "";
+      const summary = summaryMatch ? summaryMatch[1].trim() : "";
+
+      const changes: string[] = [];
+      const changesIdx = section.indexOf("### Changes");
+      if (changesIdx !== -1) {
+        const changesBlock = section.slice(changesIdx);
+        const lines = changesBlock.split("\n");
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("- ") && !trimmed.includes("(no file changes recorded)")) {
+            changes.push(trimmed.slice(2));
+          }
+        }
+      }
+
+      result.set(tag, { request, summary, date, changes });
+    }
+    return result;
   }
 
   private async nextTagName(): Promise<string> {

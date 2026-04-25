@@ -20,6 +20,7 @@ vi.mock("fs/promises", () => ({
 
 import { EvolutionPresenter } from "../../src/main/presenter/evolutionPresenter";
 import { eventBus } from "@/eventbus";
+import { readFile } from "fs/promises";
 
 function mockGit() {
   return {
@@ -113,5 +114,71 @@ describe("EvolutionPresenter", () => {
     evo.submitPlan({ scope: ["a"], changes: ["b"] });
     await evo.cancel();
     expect(git.rollbackToRef).toHaveBeenCalledWith("abc123");
+  });
+
+  it("getHistory returns enriched nodes from CHANGELOG", async () => {
+    const git = mockGit();
+    git.listTags.mockResolvedValue(["egg-v0.1-dev.2", "egg-v0.1-dev.1"]);
+    evo = new EvolutionPresenter(git, mockConfig());
+
+    const changelog = `# Slime Evolution Changelog
+
+## [egg-v0.1-dev.2] - 2026-04-24
+
+### Evolution
+
+- Request: "添加时钟功能"
+- Summary: 新增赛博时钟
+- Status: Success
+
+### Changes
+
+- src/components/Clock.vue
+- src/views/Main.vue
+
+---
+
+## [egg-v0.1-dev.1] - 2026-04-24
+
+### Evolution
+
+- Request: "缩小字体"
+- Summary: 缩小对话字体
+- Status: Success
+
+### Changes
+
+- (no file changes recorded)
+
+---
+`;
+    vi.mocked(readFile).mockResolvedValue(changelog);
+
+    const history = await evo.getHistory();
+    expect(history).toHaveLength(2);
+
+    expect(history[0].tag).toBe("egg-v0.1-dev.2");
+    expect(history[0].request).toBe("添加时钟功能");
+    expect(history[0].description).toBe("新增赛博时钟");
+    expect(history[0].createdAt).toBe("2026-04-24");
+    expect(history[0].changes).toEqual(["src/components/Clock.vue", "src/views/Main.vue"]);
+
+    expect(history[1].tag).toBe("egg-v0.1-dev.1");
+    expect(history[1].request).toBe("缩小字体");
+    expect(history[1].changes).toEqual([]);
+  });
+
+  it("getHistory returns basic nodes when CHANGELOG is missing", async () => {
+    const git = mockGit();
+    git.listTags.mockResolvedValue(["egg-v0.1-dev.1"]);
+    evo = new EvolutionPresenter(git, mockConfig());
+
+    vi.mocked(readFile).mockRejectedValue(new Error("not found"));
+
+    const history = await evo.getHistory();
+    expect(history).toHaveLength(1);
+    expect(history[0].tag).toBe("egg-v0.1-dev.1");
+    expect(history[0].request).toBe("");
+    expect(history[0].description).toBe("egg-v0.1-dev.1");
   });
 });
