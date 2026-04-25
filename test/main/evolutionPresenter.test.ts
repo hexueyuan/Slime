@@ -31,6 +31,7 @@ function mockGit() {
     getCurrentCommit: vi.fn().mockResolvedValue("abc123"),
     rollbackToRef: vi.fn().mockResolvedValue(true),
     addAndCommit: vi.fn().mockResolvedValue(true),
+    stageAll: vi.fn().mockResolvedValue(true),
     getChangedFiles: vi.fn().mockResolvedValue(["src/a.ts"]),
   } as any;
 }
@@ -94,16 +95,19 @@ describe("EvolutionPresenter", () => {
     expect(evo.getStatus().startCommit).toBe("abc123");
     evo.submitPlan({ scope: ["src/a.ts"], changes: ["modify a"] });
 
-    // Phase 1: prepare (changelog only, no commit)
+    // Phase 1: prepare (no commit, no getChangedFiles)
     const result = await evo.completeEvolution("did the thing", "revert a.ts changes");
     expect(result.success).toBe(true);
     expect(evo.getStatus().stage).toBe("applying");
     expect(git.addAndCommit).not.toHaveBeenCalled();
+    expect(git.getChangedFiles).not.toHaveBeenCalled();
 
-    // Phase 2: finalize (commit + tag + archive)
+    // Phase 2: finalize (stageAll → getChangedFiles → changelog → commit + tag + archive)
     const finalized = await evo.finalizeEvolution();
     expect(finalized).toBe(true);
     expect(evo.getStatus().stage).toBe("idle");
+    expect(git.stageAll).toHaveBeenCalled();
+    expect(git.getChangedFiles).toHaveBeenCalledWith("abc123", undefined, { cached: true });
     expect(git.addAndCommit).toHaveBeenCalled();
     expect(git.tag).toHaveBeenCalled();
     // Archive should be written

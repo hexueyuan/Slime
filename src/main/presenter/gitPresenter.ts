@@ -42,10 +42,19 @@ export class GitPresenter implements IGitPresenter {
     return commit.exitCode === 0;
   }
 
-  async getChangedFiles(fromRef: string, toRef?: string): Promise<string[]> {
+  async stageAll(): Promise<boolean> {
+    const { exitCode } = await this.run("git", ["add", "-A"]);
+    return exitCode === 0;
+  }
+
+  async getChangedFiles(
+    fromRef: string,
+    toRef?: string,
+    options?: { cached?: boolean },
+  ): Promise<string[]> {
     const args = toRef
       ? ["diff", "--name-only", `${fromRef}..${toRef}`]
-      : ["diff", "--name-only", fromRef];
+      : ["diff", "--name-only", ...(options?.cached ? ["--cached"] : []), fromRef];
     const { stdout, exitCode } = await this.run("git", args);
     if (exitCode !== 0) return [];
     return stdout

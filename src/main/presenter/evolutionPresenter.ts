@@ -61,9 +61,9 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   }
 
   /**
-   * Phase 1: prepare changelog + archive data, but DO NOT commit.
-   * Commit is deferred to finalizeEvolution() so the agentic loop can finish
-   * any remaining work (format, lint fix, etc.) before the actual git commit.
+   * Phase 1: mark evolution as applying. Actual changelog/commit deferred to
+   * finalizeEvolution() so the agentic loop can finish any remaining work
+   * (format, lint fix, etc.) and changedFiles is captured after git add -A.
    */
   async completeEvolution(
     summary: string,
@@ -73,15 +73,12 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     this.setStage("applying");
 
     try {
-      const changedFiles = this.startCommit ? await this.git.getChangedFiles(this.startCommit) : [];
       const tagName = await this.nextTagName();
-      await this.appendChangelog(tagName, summary, changedFiles);
 
-      // Stash pending data for finalizeEvolution()
       this.pendingFinalize = {
         tagName,
         summary,
-        changedFiles,
+        changedFiles: [], // populated in finalizeEvolution after git add
         semanticSummary: semanticSummary || "",
       };
 
@@ -96,7 +93,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   }
 
   /**
-   * Phase 2: git add -A + commit + tag + archive.
+   * Phase 2: git add -A → detect changed files → write changelog → commit + tag + archive.
    * Called by agentPresenter AFTER the agentic loop exits, ensuring all file
    * changes (including post-complete format/lint fixes) are captured.
    */
@@ -106,6 +103,20 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     this.pendingFinalize = undefined;
 
     try {
+      // Stage all changes first
+      const staged = await this.git.stageAll();
+      if (!staged) throw new Error("git add failed");
+
+      // Detect changed files from staged content (after git add -A, before commit)
+      const changedFiles = this.startCommit
+        ? await this.git.getChangedFiles(this.startCommit, undefined, { cached: true })
+        : [];
+      pending.changedFiles = changedFiles;
+
+      // Write changelog with accurate file list
+      await this.appendChangelog(pending.tagName, pending.summary, changedFiles);
+
+      // Now commit (add -A again to include changelog)
       const committed = await this.git.addAndCommit(`evo: ${pending.summary}`);
       if (!committed) throw new Error("git commit failed");
       const tagged = await this.git.tag(pending.tagName, pending.summary);

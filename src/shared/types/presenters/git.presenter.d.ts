@@ -4,5 +4,10 @@ export interface IGitPresenter {
   getCurrentCommit(): Promise<string>;
   rollbackToRef(ref: string): Promise<boolean>;
   addAndCommit(message: string, files?: string[]): Promise<boolean>;
-  getChangedFiles(fromRef: string, toRef?: string): Promise<string[]>;
+  stageAll(): Promise<boolean>;
+  getChangedFiles(
+    fromRef: string,
+    toRef?: string,
+    options?: { cached?: boolean },
+  ): Promise<string[]>;
 }
