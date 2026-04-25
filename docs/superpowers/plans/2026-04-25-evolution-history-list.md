@@ -31,7 +31,7 @@
 - Modify: `src/main/presenter/evolutionPresenter.ts:101-113`
 - Modify: `test/main/evolutionPresenter.test.ts`
 
-- [ ] **Step 1: Write failing tests for `getHistory()` with CHANGELOG data**
+- [x] **Step 1: Write failing tests for `getHistory()` with CHANGELOG data**
 
 Add to `test/main/evolutionPresenter.test.ts`:
 
@@ -113,12 +113,12 @@ it("getHistory returns basic nodes when CHANGELOG is missing", async () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pnpm test -- test/main/evolutionPresenter.test.ts`
 Expected: FAIL — `getHistory` returns empty request/description/createdAt
 
-- [ ] **Step 3: Implement `parseChangelog()` and enrich `getHistory()`**
+- [x] **Step 3: Implement `parseChangelog()` and enrich `getHistory()`**
 
 In `src/main/presenter/evolutionPresenter.ts`, replace the `getHistory()` method (lines 101-113) and add `parseChangelog()`:
 
@@ -190,12 +190,12 @@ private async parseChangelog(): Promise<
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `pnpm test -- test/main/evolutionPresenter.test.ts`
 Expected: ALL PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/presenter/evolutionPresenter.ts test/main/evolutionPresenter.test.ts
@@ -212,7 +212,7 @@ git commit -m "feat(evolution): enrich getHistory with CHANGELOG parsing"
 - Modify: `src/renderer/src/views/EvolutionCenter.vue:40`
 - Modify: `test/renderer/components/FunctionPanel.test.ts`
 
-- [ ] **Step 1: Write failing test for the new tab**
+- [x] **Step 1: Write failing test for the new tab**
 
 Add to `test/renderer/components/FunctionPanel.test.ts`:
 
@@ -236,12 +236,12 @@ it("should emit update:activeTab with history on tab click", async () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pnpm test -- test/renderer/components/FunctionPanel.test.ts`
 Expected: FAIL — no element with `data-testid="tab-history"`
 
-- [ ] **Step 3: Add the history tab button and HistoryPanel rendering to FunctionPanel**
+- [x] **Step 3: Add the history tab button and HistoryPanel rendering to FunctionPanel**
 
 Replace `src/renderer/src/components/function/FunctionPanel.vue` entirely:
 
@@ -358,12 +358,12 @@ Create `src/renderer/src/components/function/HistoryPanel.vue`:
 </template>
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `pnpm test -- test/renderer/components/FunctionPanel.test.ts`
 Expected: ALL PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/function/FunctionPanel.vue src/renderer/src/components/function/HistoryPanel.vue src/renderer/src/views/EvolutionCenter.vue test/renderer/components/FunctionPanel.test.ts
@@ -379,7 +379,7 @@ git commit -m "feat(ui): add history tab to FunctionPanel"
 - Modify: `src/renderer/src/components/function/HistoryPanel.vue`
 - Create: `test/renderer/components/HistoryPanel.test.ts`
 
-- [ ] **Step 1: Write failing tests for HistoryPanel**
+- [x] **Step 1: Write failing tests for HistoryPanel**
 
 Create `test/renderer/components/HistoryPanel.test.ts`:
 
@@ -501,12 +501,12 @@ describe("HistoryPanel", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pnpm test -- test/renderer/components/HistoryPanel.test.ts`
 Expected: FAIL — HistoryPanel is a stub with no data-testid attributes
 
-- [ ] **Step 3: Implement HistoryPanel.vue**
+- [x] **Step 3: Implement HistoryPanel.vue**
 
 Replace `src/renderer/src/components/function/HistoryPanel.vue`:
 
@@ -667,12 +667,12 @@ onUnmounted(() => {
 </template>
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `pnpm test -- test/renderer/components/HistoryPanel.test.ts`
 Expected: ALL PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/function/HistoryPanel.vue test/renderer/components/HistoryPanel.test.ts
@@ -685,27 +685,27 @@ git commit -m "feat(ui): implement HistoryPanel with timeline and rollback"
 
 **Files:** All modified files
 
-- [ ] **Step 1: Run format**
+- [x] **Step 1: Run format**
 
 Run: `pnpm run format`
 Expected: Files formatted
 
-- [ ] **Step 2: Run lint**
+- [x] **Step 2: Run lint**
 
 Run: `pnpm run lint`
 Expected: No errors
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `pnpm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 4: Run full test suite**
+- [x] **Step 4: Run full test suite**
 
 Run: `pnpm test`
 Expected: ALL PASS
 
-- [ ] **Step 5: Fix any issues found and commit**
+- [x] **Step 5: Fix any issues found and commit**
 
 ```bash
 git add -A
