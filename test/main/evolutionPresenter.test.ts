@@ -76,6 +76,12 @@ describe("EvolutionPresenter", () => {
     expect(evo.getStatus().stage).toBe("discuss");
   });
 
+  it("startEvolution stores sessionId", async () => {
+    const result = await evo.startEvolution("test", "session-123");
+    expect(result).toBe(true);
+    expect(evo.getStatus().sessionId).toBe("session-123");
+  });
+
   it("startEvolution rejects when rollback in progress", async () => {
     evo.rollbackInProgress = true;
     const result = await evo.startEvolution("test");

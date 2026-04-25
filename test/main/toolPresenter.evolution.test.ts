@@ -65,7 +65,7 @@ describe("ToolPresenter evolution tools", () => {
     const evo = mockEvolution();
     tp = new ToolPresenter(mockFile(), mockContent(), evo);
     await tp.callTool("s1", "evolution_start", { description: "test" });
-    expect(evo.startEvolution).toHaveBeenCalledWith("test");
+    expect(evo.startEvolution).toHaveBeenCalledWith("test", "s1");
   });
 
   it("evolution_complete calls presenter", async () => {

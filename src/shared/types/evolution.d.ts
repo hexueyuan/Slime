@@ -46,4 +46,15 @@ export interface EvolutionStatus {
   description?: string;
   plan?: EvolutionPlan;
   startCommit?: string;
+  sessionId?: string;
+}
+
+export interface EvolutionContext {
+  stage: EvolutionStage;
+  description: string;
+  plan?: EvolutionPlan;
+  startCommit: string;
+  sessionId: string;
+  createdAt: string;
+  updatedAt: string;
 }

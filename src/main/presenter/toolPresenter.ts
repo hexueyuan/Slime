@@ -156,7 +156,7 @@ export class ToolPresenter {
           description: z.string().describe("User's evolution request"),
         }),
         execute: async ({ description }) => {
-          const ok = await this.evolutionPresenter.startEvolution(description);
+          const ok = await this.evolutionPresenter.startEvolution(description, sessionId);
           return ok
             ? "Evolution started. You are now in discuss stage. Clarify requirements with ask_user before calling evolution_plan."
             : "Cannot start: another evolution is in progress.";

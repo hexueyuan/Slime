@@ -3,6 +3,7 @@ import type {
   EvolutionNode,
   EvolutionArchive,
   EvolutionDependency,
+  EvolutionContext,
 } from "../evolution";
 
 export interface IEvolutionPresenter {
@@ -13,4 +14,5 @@ export interface IEvolutionPresenter {
   checkDependencies(tag: string): Promise<{ dependencies: EvolutionDependency[] }>;
   readArchive(tag: string): Promise<EvolutionArchive | null>;
   runBuildVerification(): Promise<{ success: boolean; error?: string }>;
+  restoreState(): Promise<EvolutionContext | null>;
 }

@@ -6,6 +6,7 @@ import type {
   EvolutionNode,
   EvolutionArchive,
   EvolutionDependency,
+  EvolutionContext,
 } from "@shared/types/evolution";
 import type { GitPresenter } from "./gitPresenter";
 import type { ConfigPresenter } from "./configPresenter";
@@ -24,6 +25,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   private description?: string;
   private plan?: EvolutionPlan;
   private startCommit?: string;
+  private sessionId?: string;
   private pendingFinalize?: {
     tagName: string;
     summary: string;
@@ -43,12 +45,14 @@ export class EvolutionPresenter implements IEvolutionPresenter {
       description: this.description,
       plan: this.plan,
       startCommit: this.startCommit,
+      sessionId: this.sessionId,
     };
   }
 
-  async startEvolution(description: string): Promise<boolean> {
+  async startEvolution(description: string, sessionId?: string): Promise<boolean> {
     if (this.stage !== "idle" || this.rollbackInProgress) return false;
     this.description = description;
+    this.sessionId = sessionId;
     this.setStage("discuss");
     this.startCommit = await this.git.getCurrentCommit();
     return true;
@@ -217,6 +221,10 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     return { success: true };
   }
 
+  async restoreState(): Promise<EvolutionContext | null> {
+    return null;
+  }
+
   private execCommand(
     cmd: string,
     args: string[],
@@ -318,6 +326,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     this.description = undefined;
     this.plan = undefined;
     this.startCommit = undefined;
+    this.sessionId = undefined;
     this.pendingFinalize = undefined;
     eventBus.sendToRenderer(EVOLUTION_EVENTS.STAGE_CHANGED, "idle");
   }
