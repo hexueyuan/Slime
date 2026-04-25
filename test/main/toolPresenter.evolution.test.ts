@@ -77,4 +77,20 @@ describe("ToolPresenter evolution tools", () => {
     });
     expect(evo.completeEvolution).toHaveBeenCalledWith("done", "revert changes");
   });
+
+  it("evolution_complete blocks on build verification failure", async () => {
+    const evo = mockEvolution();
+    evo.runBuildVerification.mockResolvedValue({
+      success: false,
+      error: "typecheck failed:\nerror TS2345",
+    });
+    tp = new ToolPresenter(mockFile(), mockContent(), evo);
+    const result = await tp.callTool("s1", "evolution_complete", {
+      summary: "done",
+      rollback_description: "revert changes",
+    });
+    expect(evo.completeEvolution).not.toHaveBeenCalled();
+    expect(result).toContain("Build verification failed");
+    expect(result).toContain("TS2345");
+  });
 });
