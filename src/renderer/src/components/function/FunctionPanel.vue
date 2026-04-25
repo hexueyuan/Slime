@@ -25,6 +25,18 @@
       >
         预览
       </button>
+      <button
+        data-testid="tab-history"
+        class="px-4 py-2 text-sm font-medium transition-colors"
+        :class="
+          activeTab === 'history'
+            ? 'text-foreground border-b-2 border-primary'
+            : 'text-muted-foreground hover:text-foreground'
+        "
+        @click="$emit('update:activeTab', 'history')"
+      >
+        历史
+      </button>
     </div>
     <div class="min-h-0 flex-1 overflow-hidden">
       <ToolPanel
@@ -40,6 +52,7 @@
         @interaction-submit="onInteractionSubmit"
         @progress-cancel="onProgressCancel"
       />
+      <HistoryPanel v-else-if="activeTab === 'history'" />
     </div>
   </div>
 </template>
@@ -48,17 +61,18 @@
 import type { AssistantMessageBlock } from "@shared/types/chat";
 import ToolPanel from "./ToolPanel.vue";
 import ContentDispatcher from "./ContentDispatcher.vue";
+import HistoryPanel from "./HistoryPanel.vue";
 import { useContentStore } from "@/stores/content";
 import { usePresenter } from "@/composables/usePresenter";
 
 defineProps<{
-  activeTab: "tools" | "preview";
+  activeTab: "tools" | "preview" | "history";
   toolCallBlocks: AssistantMessageBlock[];
   selectedToolCallId?: string | null;
 }>();
 
 defineEmits<{
-  "update:activeTab": [tab: "tools" | "preview"];
+  "update:activeTab": [tab: "tools" | "preview" | "history"];
   "select-tool-call": [id: string | null];
 }>();
 

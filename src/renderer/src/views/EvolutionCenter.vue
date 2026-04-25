@@ -37,7 +37,7 @@ const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
 });
 
 const messageStore = useMessageStore();
-const activeTab = ref<"tools" | "preview">("tools");
+const activeTab = ref<"tools" | "preview" | "history">("tools");
 const selectedToolCallId = ref<string | null>(null);
 
 const contentStore = useContentStore();

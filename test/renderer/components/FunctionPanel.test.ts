@@ -30,4 +30,22 @@ describe("FunctionPanel", () => {
     });
     expect(wrapper.text()).toContain("暂无预览内容");
   });
+
+  it("should show history tab button", () => {
+    const wrapper = mount(FunctionPanel, {
+      props: { activeTab: "tools", toolCallBlocks: [] },
+    });
+    const historyTab = wrapper.find('[data-testid="tab-history"]');
+    expect(historyTab.exists()).toBe(true);
+    expect(historyTab.text()).toContain("历史");
+  });
+
+  it("should emit update:activeTab with history on tab click", async () => {
+    const wrapper = mount(FunctionPanel, {
+      props: { activeTab: "tools", toolCallBlocks: [] },
+    });
+    await wrapper.find('[data-testid="tab-history"]').trigger("click");
+    expect(wrapper.emitted("update:activeTab")).toBeTruthy();
+    expect(wrapper.emitted("update:activeTab")![0]).toEqual(["history"]);
+  });
 });
