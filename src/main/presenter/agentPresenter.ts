@@ -314,7 +314,11 @@ export class AgentPresenter implements IAgentPresenter {
     }
   }
 
-  async chat(sessionId: string, content: UserMessageContent): Promise<void> {
+  async chat(
+    sessionId: string,
+    content: UserMessageContent,
+    options?: { hidden?: boolean },
+  ): Promise<void> {
     const MAX_STEPS = 128;
     let stepCount = 0;
 
@@ -336,6 +340,7 @@ export class AgentPresenter implements IAgentPresenter {
       status: "sent",
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      ...(options?.hidden && { hidden: true }),
     };
     await this.sessionPresenter.saveMessage(userMessage);
 

@@ -2,7 +2,7 @@
   <div ref="scrollContainer" class="flex-1 overflow-y-auto" @scroll="onScroll">
     <div class="mx-auto w-full space-y-1 px-6 pt-14 pb-44">
       <template v-for="msg in messages" :key="msg.id">
-        <MessageItemUser v-if="msg.role === 'user'" :message="msg" />
+        <MessageItemUser v-if="msg.role === 'user' && !msg.hidden" :message="msg" />
         <MessageItemAssistant
           v-else-if="msg.role === 'assistant'"
           :message="msg"

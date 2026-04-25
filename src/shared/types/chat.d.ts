@@ -33,6 +33,7 @@ export interface ChatMessageRecord {
   status: "sent" | "pending" | "error";
   createdAt: number;
   updatedAt: number;
+  hidden?: boolean;
 }
 
 export interface ChatSession {

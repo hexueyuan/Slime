@@ -162,8 +162,8 @@ ipcMain.handle("rollback:start", async (_event, tag: string) => {
     const { dependencies } = await evo.checkDependencies(tag);
     const prompt = buildRollbackPrompt(archive, dependencies);
 
-    // Run AI agent
-    await p.agentPresenter.chat(session.id, { text: prompt, files: [] });
+    // Run AI agent (hidden: true prevents prompt from showing in chat UI)
+    await p.agentPresenter.chat(session.id, { text: prompt, files: [] }, { hidden: true });
 
     // Verify with typecheck
     const { exec } = await import("child_process");
