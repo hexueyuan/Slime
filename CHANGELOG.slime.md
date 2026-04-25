@@ -1,5 +1,18 @@
 # Slime Evolution Changelog
 
+## [egg-v0.1-dev.5] - 2026-04-25
+
+### Evolution
+- Request: "把时钟的基础色系改成绿色"
+- Summary: 将时钟基础色系从青紫色（#06b6d4 + #a855f7）改为霓虹绿色系（#22c55e + #16a34a）
+- Status: Success
+
+### Changes
+- src/renderer/src/components/clock/CyberClock.vue
+- src/renderer/src/components/evolution/EvolutionStatusBar.vue
+
+---
+
 ## [egg-v0.1-dev.4] - 2026-04-25
 
 ### Evolution

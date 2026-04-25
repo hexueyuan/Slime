@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useEvolutionStore } from "@/stores/evolution";
+import { useMessageStore } from "@/stores/chat";
 import { usePresenter } from "@/composables/usePresenter";
 import { useSessionStore } from "@/stores/session";
 
 const evolutionStore = useEvolutionStore();
+const messageStore = useMessageStore();
 const sessionStore = useSessionStore();
 const evolutionPresenter = usePresenter("evolutionPresenter");
 const agentPresenter = usePresenter("agentPresenter");
+const sessionPresenter = usePresenter("sessionPresenter");
 
 const stages = [
   { key: "discuss", label: "需求澄清" },
@@ -49,6 +52,10 @@ async function handleConfirmReset() {
     await evolutionPresenter.cancel();
     await window.electron.ipcRenderer.invoke("agent:reset");
   } finally {
+    if (sessionStore.activeSessionId) {
+      await sessionPresenter.clearMessages(sessionStore.activeSessionId);
+    }
+    messageStore.clearAll();
     evolutionStore.reset();
     isResetting.value = false;
     showDialog.value = false;
@@ -197,9 +204,9 @@ function handleRestart() {
         <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
           <template v-if="isInProgress">
             此操作将丢弃本次进化的所有代码修改，回退到进化开始前的状态并重建
-            Agent。对话记录将保留。此操作不可恢复。
+            Agent。对话记录将被清空。此操作不可恢复。
           </template>
-          <template v-else> 此操作将重建 Agent，对话记录将保留。 </template>
+          <template v-else> 此操作将重建 Agent 并清空对话记录。 </template>
         </p>
         <div class="mt-5 flex justify-end gap-3">
           <button
