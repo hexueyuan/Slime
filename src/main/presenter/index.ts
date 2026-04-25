@@ -11,6 +11,7 @@ import { EvolutionPresenter } from "./evolutionPresenter";
 import { WorkspacePresenter } from "./workspacePresenter";
 import { ContentPresenter } from "./contentPresenter";
 import { buildRollbackPrompt } from "./rollbackPrompt";
+import type { EvolutionContext } from "@shared/types/evolution";
 import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
@@ -30,6 +31,7 @@ export class Presenter implements IPresenter {
   evolutionPresenter: EvolutionPresenter;
 
   private toolPresenter: ToolPresenter;
+  private pendingRecovery: EvolutionContext | null = null;
 
   private static instance: Presenter | null = null;
 
@@ -80,8 +82,20 @@ export class Presenter implements IPresenter {
     "evolutionPresenter",
   ]);
 
-  init(): void {
+  async init(): Promise<void> {
+    this.pendingRecovery = await this.evolutionPresenter.restoreState();
+    if (this.pendingRecovery) {
+      logger.info("Pending evolution recovery", { stage: this.pendingRecovery.stage });
+    }
     logger.info("Presenter initialized");
+  }
+
+  getPendingRecovery(): EvolutionContext | null {
+    return this.pendingRecovery;
+  }
+
+  clearPendingRecovery(): void {
+    this.pendingRecovery = null;
   }
 
   resetAgent(): void {
@@ -208,5 +222,39 @@ ipcMain.handle("rollback:abort", async () => {
   }
   p.evolutionPresenter.rollbackInProgress = false;
   logger.info("Rollback aborted, restored to saved commit");
+  return { success: true };
+});
+
+// --- Recovery IPC handlers ---
+
+ipcMain.handle("recovery:check", () => {
+  const p = Presenter.getInstance();
+  return p.getPendingRecovery();
+});
+
+ipcMain.handle("recovery:continue", async (_event, sessionId: string) => {
+  const p = Presenter.getInstance();
+  const recovery = p.getPendingRecovery();
+  if (!recovery) return { success: false, error: "No pending recovery" };
+
+  p.clearPendingRecovery();
+
+  if (recovery.stage === "coding" || recovery.stage === "applying") {
+    await p.agentPresenter.chat(
+      sessionId,
+      {
+        text: "Evolution task interrupted by app restart. Check current code state and continue completing the evolution task.",
+        files: [],
+      },
+      { hidden: true },
+    );
+  }
+  return { success: true, stage: recovery.stage };
+});
+
+ipcMain.handle("recovery:abandon", async () => {
+  const p = Presenter.getInstance();
+  p.clearPendingRecovery();
+  await p.evolutionPresenter.cancel();
   return { success: true };
 });

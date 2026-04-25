@@ -29,6 +29,6 @@ export interface IPresenter {
   workspacePresenter: IWorkspacePresenter;
   contentPresenter: IContentPresenter;
   evolutionPresenter: IEvolutionPresenter;
-  init(): void;
+  init(): void | Promise<void>;
   destroy(): Promise<void>;
 }

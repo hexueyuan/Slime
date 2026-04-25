@@ -28,7 +28,7 @@ async function bootstrap(): Promise<void> {
   ensureDirectories();
 
   const presenter = Presenter.getInstance();
-  presenter.init();
+  await presenter.init();
 
   const mainWindow = createMainWindow();
   eventBus.setWindow(mainWindow);

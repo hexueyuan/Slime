@@ -9,6 +9,7 @@ export const EVOLUTION_EVENTS = {
   ROLLBACK_STARTED: "evolution:rollback-started",
   ROLLBACK_COMPLETED: "evolution:rollback-completed",
   ROLLBACK_FAILED: "evolution:rollback-failed",
+  RECOVERY_PROMPT: "evolution:recovery-prompt",
 } as const;
 
 export const CHAT_EVENTS = {
