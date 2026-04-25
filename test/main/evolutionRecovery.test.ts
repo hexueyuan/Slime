@@ -30,7 +30,7 @@ vi.mock("child_process", () => ({
 }));
 
 import { EvolutionPresenter } from "../../src/main/presenter/evolutionPresenter";
-import { readFile, unlink } from "fs/promises";
+import { readFile, writeFile, unlink } from "fs/promises";
 
 function mockGit() {
   return {
@@ -137,5 +137,39 @@ describe("Evolution Recovery", () => {
     expect(evo.getStatus().stage).toBe("idle");
     expect(git.rollbackToRef).toHaveBeenCalledWith("abc123");
     expect(unlink).toHaveBeenCalled();
+  });
+
+  it("full persistence round-trip: start → save → restore → cancel", async () => {
+    const readFileMock = vi.mocked(readFile);
+
+    // Start evolution → triggers saveState
+    vi.mocked(writeFile).mockResolvedValue(undefined);
+    await evo.startEvolution("add feature", "sess-99");
+    evo.submitPlan({ scope: ["x.ts"], changes: ["add x"] });
+    expect(evo.getStatus().stage).toBe("coding");
+
+    // Simulate restart: create new EvolutionPresenter and restore
+    const evo2 = new EvolutionPresenter(git, mockConfig());
+    const savedContext = {
+      stage: "coding",
+      description: "add feature",
+      plan: { scope: ["x.ts"], changes: ["add x"] },
+      startCommit: "abc123",
+      sessionId: "sess-99",
+      createdAt: "2026-04-26T00:00:00.000Z",
+      updatedAt: "2026-04-26T00:00:00.000Z",
+    };
+    readFileMock.mockResolvedValue(JSON.stringify(savedContext));
+
+    const restored = await evo2.restoreState();
+    expect(restored).not.toBeNull();
+    expect(evo2.getStatus().stage).toBe("coding");
+    expect(evo2.getStatus().description).toBe("add feature");
+    expect(evo2.getStatus().sessionId).toBe("sess-99");
+
+    // User chooses abandon
+    await evo2.cancel();
+    expect(evo2.getStatus().stage).toBe("idle");
+    expect(git.rollbackToRef).toHaveBeenCalledWith("abc123");
   });
 });
