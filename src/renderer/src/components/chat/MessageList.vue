@@ -35,7 +35,7 @@
           />
           <div class="h-1.5 w-1.5 rounded-full bg-violet-500 shadow-[0_0_6px_rgb(139_92_246)]" />
         </div>
-        <span class="text-xs text-violet-500/70">进化中...</span>
+        <span class="text-xs text-violet-500/70">{{ streamingLabel }}</span>
       </div>
     </div>
   </div>
@@ -46,6 +46,12 @@ import { ref, computed, watch, nextTick, onMounted } from "vue";
 import type { ChatMessageRecord, AssistantMessageBlock } from "@shared/types/chat";
 import MessageItemUser from "@/components/message/MessageItemUser.vue";
 import MessageItemAssistant from "@/components/message/MessageItemAssistant.vue";
+import { useEvolutionStore } from "@/stores/evolution";
+
+const evolutionStore = useEvolutionStore();
+const streamingLabel = computed(() =>
+  evolutionStore.stage === "discuss" ? "思考中..." : "进化中...",
+);
 
 const props = defineProps<{
   messages: ChatMessageRecord[];

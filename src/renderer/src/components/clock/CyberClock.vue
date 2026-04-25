@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 
-const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
 const digits = ref(["0", "0", "0", "0", "0", "0"]);
 const dateStr = ref("");
 const weekdayStr = ref("");
@@ -70,7 +70,9 @@ onUnmounted(() => {
       <!-- 时间行 -->
       <div class="time-row">
         <div class="digit-box" :class="{ 'digit-box--empty': digits[0] === ' ' }">
-          <span v-if="digits[0] !== ' '" class="digit" :class="{ flip: flipping[0] }">{{ digits[0] }}</span>
+          <span v-if="digits[0] !== ' '" class="digit" :class="{ flip: flipping[0] }">{{
+            digits[0]
+          }}</span>
         </div>
         <div class="digit-box">
           <span class="digit" :class="{ flip: flipping[1] }">{{ digits[1] }}</span>
@@ -255,8 +257,7 @@ onUnmounted(() => {
 .weekday-text {
   font-size: 14px;
   color: #a855f7;
-  letter-spacing: 4px;
-  text-transform: uppercase;
+  letter-spacing: 2px;
   text-shadow: 0 0 10px rgb(168 85 247 / 50%);
 }
 

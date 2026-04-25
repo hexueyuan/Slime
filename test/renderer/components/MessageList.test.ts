@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
+import { setActivePinia, createPinia } from "pinia";
 
 vi.mock("markstream-vue", () => ({
   default: {
@@ -13,6 +14,10 @@ import MessageList from "@/components/chat/MessageList.vue";
 import type { ChatMessageRecord } from "@shared/types/chat";
 
 describe("MessageList", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   const userMsg: ChatMessageRecord = {
     id: "m1",
     sessionId: "s1",
