@@ -12,23 +12,24 @@
 
 ## File Structure
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `src/main/presenter/evolutionPresenter.ts` | Modify | Add `runBuildVerification()` + private `execCommand()` |
-| `src/main/presenter/toolPresenter.ts` | Modify | Gate `evolution_complete` with verification |
-| `src/shared/types/presenters/evolution.presenter.d.ts` | Modify | Add `runBuildVerification()` to interface |
-| `test/main/evolutionPresenter.test.ts` | Modify | Add verification tests |
+| File                                                   | Action | Responsibility                                         |
+| ------------------------------------------------------ | ------ | ------------------------------------------------------ |
+| `src/main/presenter/evolutionPresenter.ts`             | Modify | Add `runBuildVerification()` + private `execCommand()` |
+| `src/main/presenter/toolPresenter.ts`                  | Modify | Gate `evolution_complete` with verification            |
+| `src/shared/types/presenters/evolution.presenter.d.ts` | Modify | Add `runBuildVerification()` to interface              |
+| `test/main/evolutionPresenter.test.ts`                 | Modify | Add verification tests                                 |
 
 ---
 
 ### Task 1: Add `runBuildVerification()` to EvolutionPresenter
 
 **Files:**
+
 - Modify: `src/main/presenter/evolutionPresenter.ts`
 - Modify: `src/shared/types/presenters/evolution.presenter.d.ts`
 - Modify: `test/main/evolutionPresenter.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add these tests at the bottom of the `describe("EvolutionPresenter")` block in `test/main/evolutionPresenter.test.ts`:
 
@@ -136,13 +137,13 @@ And add the import:
 import { execFile } from "child_process";
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pnpm test -- test/main/evolutionPresenter.test.ts`
 
 Expected: 4 new tests FAIL because `runBuildVerification` does not exist yet.
 
-- [ ] **Step 3: Add interface declaration**
+- [x] **Step 3: Add interface declaration**
 
 In `src/shared/types/presenters/evolution.presenter.d.ts`, add `runBuildVerification` to the interface:
 
@@ -165,7 +166,7 @@ export interface IEvolutionPresenter {
 }
 ```
 
-- [ ] **Step 4: Implement `runBuildVerification()` and private `execCommand()`**
+- [x] **Step 4: Implement `runBuildVerification()` and private `execCommand()`**
 
 In `src/main/presenter/evolutionPresenter.ts`, add the import at the top:
 
@@ -222,13 +223,13 @@ Add these two methods to the `EvolutionPresenter` class, before the `// --- Arch
   }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `pnpm test -- test/main/evolutionPresenter.test.ts`
 
 Expected: All tests PASS including the 4 new build verification tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/main/presenter/evolutionPresenter.ts src/shared/types/presenters/evolution.presenter.d.ts test/main/evolutionPresenter.test.ts
@@ -240,13 +241,15 @@ git commit -m "feat(evolution): add runBuildVerification with typecheck + build"
 ### Task 2: Gate `evolution_complete` with build verification
 
 **Files:**
+
 - Modify: `src/main/presenter/toolPresenter.ts`
 
-- [ ] **Step 1: Modify `evolution_complete` execute function**
+- [x] **Step 1: Modify `evolution_complete` execute function**
 
 In `src/main/presenter/toolPresenter.ts`, replace the `evolution_complete` tool's `execute` function (lines 191-200):
 
 Current code:
+
 ```typescript
         execute: async ({ summary, rollback_description }) => {
           const result = await this.evolutionPresenter.completeEvolution(
@@ -261,6 +264,7 @@ Current code:
 ```
 
 Replace with:
+
 ```typescript
         execute: async ({ summary, rollback_description }) => {
           const verification = await this.evolutionPresenter.runBuildVerification();
@@ -278,19 +282,19 @@ Replace with:
         },
 ```
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 Run: `pnpm test`
 
 Expected: All tests PASS.
 
-- [ ] **Step 3: Run typecheck and lint**
+- [x] **Step 3: Run typecheck and lint**
 
 Run: `pnpm run typecheck && pnpm run lint && pnpm run format`
 
 Expected: No errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main/presenter/toolPresenter.ts

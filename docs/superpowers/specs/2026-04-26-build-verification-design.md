@@ -64,14 +64,14 @@ private execCommand(cmd: string, args: string[], cwd: string): Promise<{
 ```typescript
 evolution_complete: {
   execute: async ({ summary, rollback_description }) => {
-    const verification = await this.evolutionPresenter.runBuildVerification()
+    const verification = await this.evolutionPresenter.runBuildVerification();
     if (!verification.success) {
-      return `Build verification failed. Fix the issues and call evolution_complete again:\n${verification.error}`
+      return `Build verification failed. Fix the issues and call evolution_complete again:\n${verification.error}`;
     }
     // existing completeEvolution logic unchanged
-    const result = await this.evolutionPresenter.completeEvolution(summary, rollback_description)
-    return result.success ? `Evolution applying: ${result.tag}` : `Failed: ${result.error}`
-  }
+    const result = await this.evolutionPresenter.completeEvolution(summary, rollback_description);
+    return result.success ? `Evolution applying: ${result.tag}` : `Failed: ${result.error}`;
+  };
 }
 ```
 
@@ -86,12 +86,12 @@ evolution_complete: {
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `src/main/presenter/evolutionPresenter.ts` | Add `runBuildVerification()` + private `execCommand()` |
-| `src/main/presenter/toolPresenter.ts` | Gate `evolution_complete` with verification call |
-| `src/shared/types/presenters/evolution.presenter.d.ts` | Add `runBuildVerification()` to interface |
-| `test/main/evolutionPresenter.test.ts` | Add verification tests |
+| File                                                   | Change                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------ |
+| `src/main/presenter/evolutionPresenter.ts`             | Add `runBuildVerification()` + private `execCommand()` |
+| `src/main/presenter/toolPresenter.ts`                  | Gate `evolution_complete` with verification call       |
+| `src/shared/types/presenters/evolution.presenter.d.ts` | Add `runBuildVerification()` to interface              |
+| `test/main/evolutionPresenter.test.ts`                 | Add verification tests                                 |
 
 ## Not Changed
 
