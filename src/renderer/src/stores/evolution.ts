@@ -9,6 +9,11 @@ export const useEvolutionStore = defineStore("evolution", () => {
   const completedSummary = ref<string | null>(null);
   const rollbackInProgress = ref(false);
   const rollbackTag = ref<string | null>(null);
+  const recoveryContext = ref<{
+    stage: string;
+    description: string;
+    sessionId: string;
+  } | null>(null);
 
   function setStage(s: EvolutionStage) {
     stage.value = s;
@@ -23,12 +28,17 @@ export const useEvolutionStore = defineStore("evolution", () => {
     completedSummary.value = summary;
   }
 
+  function setRecovery(ctx: { stage: string; description: string; sessionId: string } | null) {
+    recoveryContext.value = ctx;
+  }
+
   function reset() {
     stage.value = "idle";
     completedTag.value = null;
     completedSummary.value = null;
     rollbackInProgress.value = false;
     rollbackTag.value = null;
+    recoveryContext.value = null;
   }
 
   return {
@@ -37,8 +47,10 @@ export const useEvolutionStore = defineStore("evolution", () => {
     completedSummary,
     rollbackInProgress,
     rollbackTag,
+    recoveryContext,
     setStage,
     setCompleted,
+    setRecovery,
     reset,
   };
 });

@@ -11,6 +11,7 @@ import { usePresenter } from "@/composables/usePresenter";
 import { useMessageStore } from "@/stores/chat";
 import { useContentStore, setupContentIpc } from "@/stores/content";
 import { useEvolutionStore, setupEvolutionIpc } from "@/stores/evolution";
+import { useSessionStore } from "@/stores/session";
 import type { AssistantMessageBlock } from "@shared/types/chat";
 
 // Sidebar active view
@@ -46,6 +47,35 @@ onUnmounted(cleanupContentIpc);
 
 const evolutionStore = useEvolutionStore();
 setupEvolutionIpc(evolutionStore);
+
+const sessionStore = useSessionStore();
+
+// Check for pending recovery
+onMounted(async () => {
+  const recovery = (await window.electron.ipcRenderer.invoke("recovery:check")) as {
+    stage: string;
+    description: string;
+    sessionId: string;
+  } | null;
+  if (recovery && recovery.stage !== "idle") {
+    evolutionStore.setRecovery(recovery);
+  }
+});
+
+async function onRecoveryContinue() {
+  const recovery = evolutionStore.recoveryContext;
+  if (!recovery) return;
+  if (recovery.sessionId) {
+    sessionStore.setActiveSession(recovery.sessionId);
+  }
+  evolutionStore.setRecovery(null);
+  await window.electron.ipcRenderer.invoke("recovery:continue", recovery.sessionId);
+}
+
+async function onRecoveryAbandon() {
+  evolutionStore.setRecovery(null);
+  await window.electron.ipcRenderer.invoke("recovery:abandon");
+}
 
 watch(
   () => contentStore.content,
@@ -113,6 +143,35 @@ function onSelectToolCall(id: string | null) {
         <!-- Evolution view: chat + function panel -->
         <template v-else>
           <EvolutionStatusBar />
+          <!-- Recovery banner -->
+          <div
+            v-if="evolutionStore.recoveryContext"
+            class="mx-4 mt-2 flex items-center justify-between rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3"
+          >
+            <div class="text-sm">
+              <span class="text-violet-400">检测到未完成的进化任务：</span>
+              <span class="text-foreground"
+                >「{{ evolutionStore.recoveryContext.description }}」</span
+              >
+              <span class="ml-2 text-muted-foreground"
+                >({{ evolutionStore.recoveryContext.stage }})</span
+              >
+            </div>
+            <div class="flex gap-2">
+              <button
+                class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
+                @click="onRecoveryContinue"
+              >
+                继续进化
+              </button>
+              <button
+                class="rounded px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                @click="onRecoveryAbandon"
+              >
+                放弃并回滚
+              </button>
+            </div>
+          </div>
           <div class="flex min-h-0 flex-1 overflow-hidden">
             <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
               <ChatPanel

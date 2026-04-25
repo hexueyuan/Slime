@@ -19,8 +19,13 @@ export const useSessionStore = defineStore("session", () => {
     }
   }
 
+  function setActiveSession(id: string) {
+    activeSessionId.value = id;
+  }
+
   return {
     activeSessionId,
     ensureSession,
+    setActiveSession,
   };
 });
