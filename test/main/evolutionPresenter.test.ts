@@ -6,7 +6,7 @@ vi.mock("@/eventbus", () => ({
 
 vi.mock("@/utils", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-  paths: { effectiveProjectRoot: "/tmp/test" },
+  paths: { effectiveProjectRoot: "/tmp/test", contextFile: "/tmp/test-state/context.json" },
 }));
 
 vi.mock("electron", () => ({
@@ -16,6 +16,7 @@ vi.mock("electron", () => ({
 vi.mock("fs/promises", () => ({
   readFile: vi.fn().mockRejectedValue(new Error("not found")),
   writeFile: vi.fn().mockResolvedValue(undefined),
+  unlink: vi.fn().mockResolvedValue(undefined),
   mkdir: vi.fn().mockResolvedValue(undefined),
   readdir: vi.fn().mockResolvedValue([]),
 }));
@@ -27,7 +28,7 @@ vi.mock("child_process", () => ({
 
 import { EvolutionPresenter } from "../../src/main/presenter/evolutionPresenter";
 import { eventBus } from "@/eventbus";
-import { readFile, writeFile, readdir } from "fs/promises";
+import { readFile, writeFile, readdir, unlink } from "fs/promises";
 import { execFile } from "child_process";
 
 function mockGit() {
@@ -426,5 +427,72 @@ describe("EvolutionPresenter", () => {
     expect(result.success).toBe(false);
     // Output should be truncated to MAX_OUTPUT (2000 chars) + label
     expect(result.error!.length).toBeLessThan(2100);
+  });
+
+  // --- State persistence tests ---
+
+  it("saveState writes context.json after startEvolution", async () => {
+    vi.mocked(writeFile).mockResolvedValue(undefined);
+    await evo.startEvolution("test change", "sess-1");
+
+    const writeCalls = vi.mocked(writeFile).mock.calls;
+    const contextCall = writeCalls.find((c) => (c[0] as string).includes("context.json"));
+    expect(contextCall).toBeDefined();
+    const saved = JSON.parse(contextCall![1] as string);
+    expect(saved.stage).toBe("discuss");
+    expect(saved.description).toBe("test change");
+    expect(saved.sessionId).toBe("sess-1");
+  });
+
+  it("saveState updates context.json after submitPlan", async () => {
+    vi.mocked(writeFile).mockResolvedValue(undefined);
+    await evo.startEvolution("test", "sess-1");
+    vi.mocked(writeFile).mockClear();
+
+    evo.submitPlan({ scope: ["a.ts"], changes: ["modify a"] });
+
+    const writeCalls = vi.mocked(writeFile).mock.calls;
+    const contextCall = writeCalls.find((c) => (c[0] as string).includes("context.json"));
+    expect(contextCall).toBeDefined();
+    const saved = JSON.parse(contextCall![1] as string);
+    expect(saved.stage).toBe("coding");
+    expect(saved.plan).toEqual({ scope: ["a.ts"], changes: ["modify a"] });
+  });
+
+  it("clearState deletes context.json on reset", async () => {
+    vi.mocked(writeFile).mockResolvedValue(undefined);
+    vi.mocked(unlink).mockResolvedValue(undefined);
+    await evo.startEvolution("test", "sess-1");
+    await evo.cancel();
+
+    expect(unlink).toHaveBeenCalledWith("/tmp/test-state/context.json");
+  });
+
+  it("loadState returns parsed context when file exists", async () => {
+    const context = {
+      stage: "coding",
+      description: "test",
+      startCommit: "abc123",
+      sessionId: "sess-1",
+      createdAt: "2026-04-26T00:00:00.000Z",
+      updatedAt: "2026-04-26T00:00:00.000Z",
+    };
+    vi.mocked(readFile).mockResolvedValue(JSON.stringify(context));
+
+    const result = await evo.restoreState();
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("coding");
+    expect(result!.sessionId).toBe("sess-1");
+    expect(evo.getStatus().stage).toBe("coding");
+  });
+
+  it("loadState returns null and cleans up when file is corrupted", async () => {
+    vi.mocked(readFile).mockResolvedValue("not valid json{{{");
+    vi.mocked(unlink).mockResolvedValue(undefined);
+
+    const result = await evo.restoreState();
+    expect(result).toBeNull();
+    expect(unlink).toHaveBeenCalledWith("/tmp/test-state/context.json");
+    expect(evo.getStatus().stage).toBe("idle");
   });
 });

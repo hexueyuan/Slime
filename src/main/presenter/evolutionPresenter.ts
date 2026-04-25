@@ -13,7 +13,7 @@ import type { ConfigPresenter } from "./configPresenter";
 import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
-import { readFile, writeFile, mkdir, readdir } from "fs/promises";
+import { readFile, writeFile, mkdir, readdir, unlink } from "fs/promises";
 import { join } from "path";
 import { app } from "electron";
 import { execFile } from "child_process";
@@ -26,6 +26,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   private plan?: EvolutionPlan;
   private startCommit?: string;
   private sessionId?: string;
+  private _createdAt?: string;
   private pendingFinalize?: {
     tagName: string;
     summary: string;
@@ -222,7 +223,32 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   }
 
   async restoreState(): Promise<EvolutionContext | null> {
-    return null;
+    let context: EvolutionContext | null;
+    try {
+      context = await this.loadState();
+    } catch {
+      await this.clearState();
+      return null;
+    }
+    if (!context) return null;
+
+    try {
+      if (!context.stage || context.stage === "idle") {
+        await this.clearState();
+        return null;
+      }
+      this.stage = context.stage;
+      this.description = context.description;
+      this.plan = context.plan;
+      this.startCommit = context.startCommit;
+      this.sessionId = context.sessionId;
+      this._createdAt = context.createdAt;
+      logger.info("Evolution state restored", { stage: context.stage });
+      return context;
+    } catch {
+      await this.clearState();
+      return null;
+    }
   }
 
   private execCommand(
@@ -249,6 +275,46 @@ export class EvolutionPresenter implements IEvolutionPresenter {
         },
       );
     });
+  }
+
+  // --- State persistence ---
+
+  private async saveState(): Promise<void> {
+    const context: EvolutionContext = {
+      stage: this.stage,
+      description: this.description || "",
+      plan: this.plan,
+      startCommit: this.startCommit || "",
+      sessionId: this.sessionId || "",
+      createdAt: this._createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this._createdAt = context.createdAt;
+    try {
+      await writeFile(paths.contextFile, JSON.stringify(context, null, 2), "utf-8");
+    } catch (err) {
+      logger.error("Failed to save evolution state", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  private async loadState(): Promise<EvolutionContext | null> {
+    let raw: string;
+    try {
+      raw = (await readFile(paths.contextFile, "utf-8")) as string;
+    } catch {
+      return null;
+    }
+    return JSON.parse(raw) as EvolutionContext;
+  }
+
+  private async clearState(): Promise<void> {
+    try {
+      await unlink(paths.contextFile);
+    } catch {
+      // file doesn't exist, that's fine
+    }
   }
 
   // --- Archive CRUD ---
@@ -319,6 +385,9 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   private setStage(stage: EvolutionStage): void {
     this.stage = stage;
     eventBus.sendToRenderer(EVOLUTION_EVENTS.STAGE_CHANGED, stage);
+    if (stage !== "idle") {
+      this.saveState();
+    }
   }
 
   private reset(): void {
@@ -328,6 +397,8 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     this.startCommit = undefined;
     this.sessionId = undefined;
     this.pendingFinalize = undefined;
+    this._createdAt = undefined;
+    this.clearState();
     eventBus.sendToRenderer(EVOLUTION_EVENTS.STAGE_CHANGED, "idle");
   }
 
