@@ -15,6 +15,30 @@ export interface EvolutionNode {
   createdAt: string;
   gitRef: string;
   parent?: string;
+  archived?: boolean;
+}
+
+export interface EvolutionArchive {
+  version: 1;
+  tag: string;
+  parentTag: string | null;
+  request: string;
+  summary: string;
+  plan: EvolutionPlan;
+  createdAt: string;
+  startCommit: string;
+  endCommit: string;
+  changedFiles: string[];
+  semanticSummary: string;
+  status: "active" | "archived";
+  archivedAt?: string;
+  archivedReason?: string;
+}
+
+export interface EvolutionDependency {
+  tag: string;
+  summary: string;
+  overlappingFiles: string[];
 }
 
 export interface EvolutionStatus {

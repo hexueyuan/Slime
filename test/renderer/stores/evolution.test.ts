@@ -30,12 +30,22 @@ describe("useEvolutionStore", () => {
     expect(store.completedSummary).toBe("did stuff");
   });
 
-  it("reset clears everything", () => {
+  it("reset clears everything including rollback state", () => {
     const store = useEvolutionStore();
     store.setStage("coding");
     store.setCompleted("tag", "summary");
+    store.rollbackInProgress = true;
+    store.rollbackTag = "some-tag";
     store.reset();
     expect(store.stage).toBe("idle");
     expect(store.completedTag).toBeNull();
+    expect(store.rollbackInProgress).toBe(false);
+    expect(store.rollbackTag).toBeNull();
+  });
+
+  it("has rollback state refs", () => {
+    const store = useEvolutionStore();
+    expect(store.rollbackInProgress).toBe(false);
+    expect(store.rollbackTag).toBeNull();
   });
 });

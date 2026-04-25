@@ -41,14 +41,21 @@ RULES:
 - Follow the evolution plan from discuss stage.
 - After making changes, run verification: exec pnpm run typecheck && pnpm test && pnpm run lint
 - If verification fails, analyze errors and fix them yourself.
-- When all verification passes, call evolution_complete with a summary.
+- When all verification passes, call evolution_complete with a summary AND a rollback_description.
+
+ROLLBACK DESCRIPTION:
+When calling evolution_complete, you MUST provide a rollback_description that includes:
+- What new files/components were added
+- What existing modules had their behavior modified
+- What new dependencies were introduced
+- How to safely revert these changes (what to delete, what to restore)
 
 WORKFLOW:
 1. Read existing code to understand structure
 2. Make changes using write/edit tools
 3. Run verification with exec
 4. Fix any failures
-5. Call evolution_complete when done`,
+5. Call evolution_complete with summary and rollback_description when done`,
 
   applying: "",
 };

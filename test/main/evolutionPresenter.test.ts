@@ -16,11 +16,13 @@ vi.mock("electron", () => ({
 vi.mock("fs/promises", () => ({
   readFile: vi.fn().mockRejectedValue(new Error("not found")),
   writeFile: vi.fn().mockResolvedValue(undefined),
+  mkdir: vi.fn().mockResolvedValue(undefined),
+  readdir: vi.fn().mockResolvedValue([]),
 }));
 
 import { EvolutionPresenter } from "../../src/main/presenter/evolutionPresenter";
 import { eventBus } from "@/eventbus";
-import { readFile } from "fs/promises";
+import { readFile, writeFile, readdir } from "fs/promises";
 
 function mockGit() {
   return {
@@ -67,6 +69,12 @@ describe("EvolutionPresenter", () => {
     expect(evo.getStatus().stage).toBe("discuss");
   });
 
+  it("startEvolution rejects when rollback in progress", async () => {
+    evo.rollbackInProgress = true;
+    const result = await evo.startEvolution("test");
+    expect(result).toBe(false);
+  });
+
   it("submitPlan transitions discuss → coding", async () => {
     await evo.startEvolution("test");
     const result = evo.submitPlan({ scope: ["src/a.ts"], changes: ["modify a"] });
@@ -79,17 +87,23 @@ describe("EvolutionPresenter", () => {
     expect(result).toBe(false);
   });
 
-  it("completeEvolution runs apply flow", async () => {
+  it("completeEvolution runs apply flow and writes archive", async () => {
     const git = mockGit();
     evo = new EvolutionPresenter(git, mockConfig());
     await evo.startEvolution("test change");
     expect(evo.getStatus().startCommit).toBe("abc123");
     evo.submitPlan({ scope: ["src/a.ts"], changes: ["modify a"] });
-    const result = await evo.completeEvolution("did the thing");
+    const result = await evo.completeEvolution("did the thing", "revert a.ts changes");
     expect(result.success).toBe(true);
     expect(evo.getStatus().stage).toBe("idle");
     expect(git.addAndCommit).toHaveBeenCalled();
     expect(git.tag).toHaveBeenCalled();
+    // Archive should be written
+    expect(writeFile).toHaveBeenCalledWith(
+      expect.stringContaining(".json"),
+      expect.stringContaining('"tag"'),
+      "utf-8",
+    );
   });
 
   it("completeEvolution rejects when not in coding", async () => {
@@ -180,5 +194,131 @@ describe("EvolutionPresenter", () => {
     expect(history[0].tag).toBe("egg-v0.1-dev.1");
     expect(history[0].request).toBe("");
     expect(history[0].description).toBe("egg-v0.1-dev.1");
+  });
+
+  // --- Archive tests ---
+
+  it("writeArchive + readArchive round-trip", async () => {
+    const archive = {
+      version: 1 as const,
+      tag: "egg-v0.1-dev.1",
+      parentTag: null,
+      request: "test",
+      summary: "test summary",
+      plan: { scope: [], changes: [] },
+      createdAt: "2026-04-25T00:00:00.000Z",
+      startCommit: "aaa",
+      endCommit: "bbb",
+      changedFiles: ["src/a.ts"],
+      semanticSummary: "revert a.ts",
+      status: "active" as const,
+    };
+
+    vi.mocked(writeFile).mockResolvedValue(undefined);
+    await evo.writeArchive(archive);
+    expect(writeFile).toHaveBeenCalledWith(
+      expect.stringContaining("egg-v0.1-dev.1.json"),
+      expect.any(String),
+      "utf-8",
+    );
+
+    // Mock readFile to return the archive
+    vi.mocked(readFile).mockResolvedValue(JSON.stringify(archive));
+    const read = await evo.readArchive("egg-v0.1-dev.1");
+    expect(read).not.toBeNull();
+    expect(read!.tag).toBe("egg-v0.1-dev.1");
+    expect(read!.status).toBe("active");
+  });
+
+  it("readArchive returns null for missing archive", async () => {
+    vi.mocked(readFile).mockRejectedValue(new Error("not found"));
+    const result = await evo.readArchive("nonexistent");
+    expect(result).toBeNull();
+  });
+
+  it("listArchives returns all archives", async () => {
+    const a1 = { tag: "egg-v0.1-dev.1", status: "active" };
+    const a2 = { tag: "egg-v0.1-dev.2", status: "archived" };
+
+    vi.mocked(readdir).mockResolvedValue(["egg-v0.1-dev.1.json", "egg-v0.1-dev.2.json"] as any);
+    vi.mocked(readFile)
+      .mockResolvedValueOnce(JSON.stringify(a1))
+      .mockResolvedValueOnce(JSON.stringify(a2));
+
+    const archives = await evo.listArchives();
+    expect(archives).toHaveLength(2);
+  });
+
+  it("checkDependencies finds overlapping files", async () => {
+    const target = {
+      version: 1,
+      tag: "egg-v0.1-dev.1",
+      parentTag: null,
+      request: "test",
+      summary: "first",
+      plan: { scope: [], changes: [] },
+      createdAt: "2026-04-24T00:00:00.000Z",
+      startCommit: "a",
+      endCommit: "b",
+      changedFiles: ["src/a.ts", "src/b.ts"],
+      semanticSummary: "",
+      status: "active",
+    };
+    const later = {
+      version: 1,
+      tag: "egg-v0.1-dev.2",
+      parentTag: "egg-v0.1-dev.1",
+      request: "test2",
+      summary: "second",
+      plan: { scope: [], changes: [] },
+      createdAt: "2026-04-25T00:00:00.000Z",
+      startCommit: "b",
+      endCommit: "c",
+      changedFiles: ["src/a.ts", "src/c.ts"],
+      semanticSummary: "",
+      status: "active",
+    };
+
+    // readArchive for target
+    vi.mocked(readFile).mockResolvedValue(JSON.stringify(target));
+    // listArchives
+    vi.mocked(readdir).mockResolvedValue(["egg-v0.1-dev.1.json", "egg-v0.1-dev.2.json"] as any);
+    vi.mocked(readFile)
+      .mockResolvedValueOnce(JSON.stringify(target)) // readArchive(tag)
+      .mockResolvedValueOnce(JSON.stringify(target)) // listArchives file 1
+      .mockResolvedValueOnce(JSON.stringify(later)); // listArchives file 2
+
+    const { dependencies } = await evo.checkDependencies("egg-v0.1-dev.1");
+    expect(dependencies).toHaveLength(1);
+    expect(dependencies[0].tag).toBe("egg-v0.1-dev.2");
+    expect(dependencies[0].overlappingFiles).toEqual(["src/a.ts"]);
+  });
+
+  it("archiveEvolution sets status to archived", async () => {
+    const archive = {
+      version: 1,
+      tag: "egg-v0.1-dev.1",
+      status: "active",
+      changedFiles: [],
+      semanticSummary: "",
+      request: "",
+      summary: "",
+      plan: { scope: [], changes: [] },
+      createdAt: "",
+      startCommit: "",
+      endCommit: "",
+      parentTag: null,
+    };
+
+    vi.mocked(readFile).mockResolvedValue(JSON.stringify(archive));
+    vi.mocked(writeFile).mockResolvedValue(undefined);
+
+    await evo.archiveEvolution("egg-v0.1-dev.1", "rolled back");
+
+    expect(writeFile).toHaveBeenCalledWith(
+      expect.stringContaining("egg-v0.1-dev.1.json"),
+      expect.stringContaining('"archived"'),
+      "utf-8",
+    );
   });
 });

@@ -1,5 +1,33 @@
 # Slime Evolution Changelog
 
+## [egg-v0.1-dev.3] - 2026-04-25
+
+### Evolution
+- Request: "将时钟的星期信息从英文改为中文显示"
+- Summary: 将时钟星期显示从英文改为中文（星期日、星期一...星期六）
+- Status: Success
+
+### Changes
+- .gitignore
+- docs/AGENTS.md
+- docs/evo/EVOLUTION.md
+- src/main/presenter/evolutionPresenter.ts
+- src/main/presenter/index.ts
+- src/main/presenter/systemPrompt.ts
+- src/main/presenter/toolPresenter.ts
+- src/renderer/src/components/clock/CyberClock.vue
+- src/renderer/src/components/function/HistoryPanel.vue
+- src/renderer/src/stores/evolution.ts
+- src/shared/events.ts
+- src/shared/types/evolution.d.ts
+- src/shared/types/presenters/evolution.presenter.d.ts
+- test/main/evolutionPresenter.test.ts
+- test/main/toolPresenter.evolution.test.ts
+- test/renderer/components/HistoryPanel.test.ts
+- test/renderer/stores/evolution.test.ts
+
+---
+
 ## [egg-v0.1-dev.2] - 2026-04-24
 
 ### Evolution

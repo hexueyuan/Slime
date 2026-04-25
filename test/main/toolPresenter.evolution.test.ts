@@ -70,7 +70,10 @@ describe("ToolPresenter evolution tools", () => {
   it("evolution_complete calls presenter", async () => {
     const evo = mockEvolution();
     tp = new ToolPresenter(mockFile(), mockContent(), evo);
-    await tp.callTool("s1", "evolution_complete", { summary: "done" });
-    expect(evo.completeEvolution).toHaveBeenCalledWith("done");
+    await tp.callTool("s1", "evolution_complete", {
+      summary: "done",
+      rollback_description: "revert changes",
+    });
+    expect(evo.completeEvolution).toHaveBeenCalledWith("done", "revert changes");
   });
 });

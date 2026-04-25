@@ -64,17 +64,29 @@ Evo 按方案逐步执行变更：
 
 用户对进化效果不满意时，可以回退：
 
-- **回退到上一节点**: 撤销最近一次进化
-- **回退到指定节点**: 跳转到任意历史节点，中间节点标记为废弃
-- **回退实现**: 基于 git 版本控制，通过 `git_ref` 恢复对应状态
+- **AI 语义回滚**: 选择目标进化版本，AI agent 读取进化档案中的语义摘要，智能清理该进化引入的代码变更，保留后续进化的有效修改
+- **依赖检测**: 回滚前自动检测后续进化是否修改了相同文件，提醒用户注意
+- **归档标记**: 被回滚的进化在档案中标记为 `archived`，在历史面板中半透明展示
+- **进化中取消**: 进化进行中取消仍使用 git 快照回滚（`rollbackToRef`），因为此时没有中间 commit 问题
+
+### 进化档案
+
+每次成功进化生成一份结构化档案（`.slime/evolutions/<tag>.json`），包含：
+
+- 版本信息（tag、parentTag、startCommit、endCommit）
+- 进化内容（request、summary、plan、changedFiles）
+- 回滚指引（semanticSummary：AI 生成的描述如何撤销此进化）
+- 状态（active / archived）
+
+档案不纳入 git 版本控制（`.slime/` 在 `.gitignore` 中）。
 
 ```
 Node-1 → Node-2 → Node-3 (当前)
-                     ↓ 回退
-Node-1 → Node-2 (当前)
+                     ↓ AI语义回滚 Node-2
+Node-1 → Node-2(archived) → Node-3 → Node-4(rollback commit)
 ```
 
-> 回退不会删除历史节点记录，只改变当前激活节点。废弃的节点仍可重新激活。
+> 回滚不删除历史节点记录，只将目标节点标记为 archived。归档版本在历史面板中半透明展示。
 
 ## 实现机制
 
@@ -95,7 +107,7 @@ idle → discuss → coding → applying → idle
 
 - `evolution_start(description)` — 开始进化，idle→discuss
 - `evolution_plan(scope, changes, risks?)` — 提交计划，discuss→coding
-- `evolution_complete(summary)` — 完成进化，coding→applying→idle
+- `evolution_complete(summary, rollback_description)` — 完成进化，coding→applying→idle
 - `ask_user(question, options, multiple?, html_file?)` — 结构化提问，渲染到功能面板
 
 ### 版本标签
@@ -107,7 +119,8 @@ idle → discuss → coding → applying → idle
 ### 用户操作（非 Agent 工具）
 
 - 取消进化 — UI 按钮，重置到 startCommit
-- 按 tag 回滚 — UI 按钮，git checkout + commit
+- AI 语义回滚 — UI 按钮，通过 `rollback:start` IPC 触发 AI agent 清理代码
+- 放弃回滚 — 回滚失败时 UI 按钮，通过 `rollback:abort` 恢复到回滚前状态
 - 重启 — 进化完成后 UI 按钮
 
 ## 进化约束

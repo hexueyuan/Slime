@@ -7,6 +7,8 @@ export const useEvolutionStore = defineStore("evolution", () => {
   const stage = ref<EvolutionStage>("idle");
   const completedTag = ref<string | null>(null);
   const completedSummary = ref<string | null>(null);
+  const rollbackInProgress = ref(false);
+  const rollbackTag = ref<string | null>(null);
 
   function setStage(s: EvolutionStage) {
     stage.value = s;
@@ -25,9 +27,20 @@ export const useEvolutionStore = defineStore("evolution", () => {
     stage.value = "idle";
     completedTag.value = null;
     completedSummary.value = null;
+    rollbackInProgress.value = false;
+    rollbackTag.value = null;
   }
 
-  return { stage, completedTag, completedSummary, setStage, setCompleted, reset };
+  return {
+    stage,
+    completedTag,
+    completedSummary,
+    rollbackInProgress,
+    rollbackTag,
+    setStage,
+    setCompleted,
+    reset,
+  };
 });
 
 export function setupEvolutionIpc(store: ReturnType<typeof useEvolutionStore>) {
@@ -36,5 +49,17 @@ export function setupEvolutionIpc(store: ReturnType<typeof useEvolutionStore>) {
   });
   window.electron.ipcRenderer.on(EVOLUTION_EVENTS.COMPLETED, (...args: unknown[]) => {
     store.setCompleted(args[0] as string, args[1] as string);
+  });
+  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.ROLLBACK_STARTED, (...args: unknown[]) => {
+    store.rollbackInProgress = true;
+    store.rollbackTag = args[0] as string;
+  });
+  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.ROLLBACK_COMPLETED, () => {
+    store.rollbackInProgress = false;
+    store.rollbackTag = null;
+  });
+  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.ROLLBACK_FAILED, () => {
+    store.rollbackInProgress = false;
+    store.rollbackTag = null;
   });
 }

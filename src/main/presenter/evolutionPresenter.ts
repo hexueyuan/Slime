@@ -4,13 +4,15 @@ import type {
   EvolutionStatus,
   EvolutionPlan,
   EvolutionNode,
+  EvolutionArchive,
+  EvolutionDependency,
 } from "@shared/types/evolution";
 import type { GitPresenter } from "./gitPresenter";
 import type { ConfigPresenter } from "./configPresenter";
 import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile, mkdir, readdir } from "fs/promises";
 import { join } from "path";
 import { app } from "electron";
 
@@ -21,6 +23,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   private description?: string;
   private plan?: EvolutionPlan;
   private startCommit?: string;
+  rollbackInProgress = false;
 
   constructor(
     private git: GitPresenter,
@@ -37,7 +40,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   }
 
   async startEvolution(description: string): Promise<boolean> {
-    if (this.stage !== "idle") return false;
+    if (this.stage !== "idle" || this.rollbackInProgress) return false;
     this.description = description;
     this.setStage("discuss");
     this.startCommit = await this.git.getCurrentCommit();
@@ -53,6 +56,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
 
   async completeEvolution(
     summary: string,
+    semanticSummary?: string,
   ): Promise<{ success: boolean; error?: string; tag?: string }> {
     if (this.stage !== "coding") return { success: false, error: "Not in coding stage" };
     this.setStage("applying");
@@ -65,6 +69,26 @@ export class EvolutionPresenter implements IEvolutionPresenter {
       if (!committed) throw new Error("git commit failed");
       const tagged = await this.git.tag(tagName, summary);
       if (!tagged) throw new Error("git tag failed");
+
+      // Generate archive
+      const endCommit = await this.git.getCurrentCommit();
+      const tags = await this.git.listTags("egg-*");
+      const parentTag = tags.find((t) => t !== tagName) || null;
+      await this.writeArchive({
+        version: 1,
+        tag: tagName,
+        parentTag,
+        request: this.description || "",
+        summary,
+        plan: this.plan || { scope: [], changes: [] },
+        createdAt: new Date().toISOString(),
+        startCommit: this.startCommit || "",
+        endCommit,
+        changedFiles,
+        semanticSummary: semanticSummary || "",
+        status: "active",
+      });
+
       this.reset();
       eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, tagName, summary);
       logger.info("Evolution completed", { tag: tagName, summary });
@@ -88,22 +112,15 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     return true;
   }
 
-  async rollback(tag: string): Promise<boolean> {
-    if (this.stage !== "idle") return false;
-    const result = await this.git.rollbackToRef(tag);
-    if (result) {
-      eventBus.sendToRenderer(EVOLUTION_EVENTS.STAGE_CHANGED, "idle");
-      logger.info("Rolled back to", { tag });
-    }
-    return result;
-  }
-
   async getHistory(): Promise<EvolutionNode[]> {
     const tags = await this.git.listTags("egg-*");
     const changelog = await this.parseChangelog();
-    return tags.map((tag, i) => {
+    const nodes: EvolutionNode[] = [];
+    for (let i = 0; i < tags.length; i++) {
+      const tag = tags[i];
       const entry = changelog.get(tag);
-      return {
+      const archive = await this.readArchive(tag);
+      nodes.push({
         id: tag,
         tag,
         description: entry?.summary || tag,
@@ -112,8 +129,10 @@ export class EvolutionPresenter implements IEvolutionPresenter {
         createdAt: entry?.date || "",
         gitRef: tag,
         parent: tags[i + 1],
-      };
-    });
+        archived: archive?.status === "archived",
+      });
+    }
+    return nodes;
   }
 
   restart(): void {
@@ -123,6 +142,71 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     }
     logger.info("Restart requested (dev mode)");
     eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, "restart-needed", "");
+  }
+
+  // --- Archive CRUD ---
+
+  private archiveDir(): string {
+    return join(paths.effectiveProjectRoot, ".slime", "evolutions");
+  }
+
+  async writeArchive(archive: EvolutionArchive): Promise<void> {
+    const dir = this.archiveDir();
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, `${archive.tag}.json`), JSON.stringify(archive, null, 2), "utf-8");
+  }
+
+  async readArchive(tag: string): Promise<EvolutionArchive | null> {
+    try {
+      const content = await readFile(join(this.archiveDir(), `${tag}.json`), "utf-8");
+      return JSON.parse(content) as EvolutionArchive;
+    } catch {
+      return null;
+    }
+  }
+
+  async listArchives(): Promise<EvolutionArchive[]> {
+    try {
+      const files = await readdir(this.archiveDir());
+      const archives: EvolutionArchive[] = [];
+      for (const file of files) {
+        if (!file.endsWith(".json")) continue;
+        try {
+          const content = await readFile(join(this.archiveDir(), file), "utf-8");
+          archives.push(JSON.parse(content) as EvolutionArchive);
+        } catch {
+          /* skip corrupt files */
+        }
+      }
+      return archives;
+    } catch {
+      return [];
+    }
+  }
+
+  async checkDependencies(tag: string): Promise<{ dependencies: EvolutionDependency[] }> {
+    const target = await this.readArchive(tag);
+    if (!target) return { dependencies: [] };
+    const all = await this.listArchives();
+    const dependencies: EvolutionDependency[] = [];
+    for (const a of all) {
+      if (a.tag === tag || a.status !== "active") continue;
+      if (a.createdAt <= target.createdAt) continue;
+      const overlapping = a.changedFiles.filter((f) => target.changedFiles.includes(f));
+      if (overlapping.length > 0) {
+        dependencies.push({ tag: a.tag, summary: a.summary, overlappingFiles: overlapping });
+      }
+    }
+    return { dependencies };
+  }
+
+  async archiveEvolution(tag: string, reason: string): Promise<void> {
+    const archive = await this.readArchive(tag);
+    if (!archive) return;
+    archive.status = "archived";
+    archive.archivedAt = new Date().toISOString();
+    archive.archivedReason = reason;
+    await this.writeArchive(archive);
   }
 
   private setStage(stage: EvolutionStage): void {

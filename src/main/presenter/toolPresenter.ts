@@ -182,9 +182,17 @@ export class ToolPresenter {
           "Complete the evolution. Triggers apply flow (CHANGELOG, commit, tag). Must be in coding stage.",
         parameters: z.object({
           summary: z.string().describe("One-line summary of what was evolved"),
+          rollback_description: z
+            .string()
+            .describe(
+              "Description of how to rollback: new files, modified modules, new dependencies, and how to safely revert",
+            ),
         }),
-        execute: async ({ summary }) => {
-          const result = await this.evolutionPresenter.completeEvolution(summary);
+        execute: async ({ summary, rollback_description }) => {
+          const result = await this.evolutionPresenter.completeEvolution(
+            summary,
+            rollback_description,
+          );
           if (result.success) {
             return `Evolution complete! Tagged as ${result.tag}. Restart to see changes.`;
           }
