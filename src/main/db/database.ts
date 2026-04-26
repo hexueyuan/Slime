@@ -156,6 +156,16 @@ function createDb(dbPath: string): BetterSqlite3.Database {
   } catch {
     // column already exists
   }
+  try {
+    instance.exec("ALTER TABLE relay_logs ADD COLUMN request_body TEXT");
+  } catch {
+    // column already exists
+  }
+  try {
+    instance.exec("ALTER TABLE relay_logs ADD COLUMN response_body TEXT");
+  } catch {
+    // column already exists
+  }
   return instance;
 }
 

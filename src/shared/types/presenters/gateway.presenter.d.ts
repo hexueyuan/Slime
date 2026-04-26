@@ -73,6 +73,7 @@ export interface IGatewayPresenter {
   getStatsByModel(from?: string, to?: string): ModelStats[];
   getStatsByChannel(from?: string, to?: string): ChannelStats[];
   getRecentLogs(limit: number, offset: number): RelayLog[];
+  getLogDetail(id: number): RelayLog | undefined;
 
   // Prices
   listPrices(): ModelPrice[];
