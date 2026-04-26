@@ -147,7 +147,6 @@ export class EvolutionPresenter implements IEvolutionPresenter {
         status: "active",
       });
 
-      this.reset();
       eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, pending.tagName, pending.summary);
       logger.info("Evolution finalized", { tag: pending.tagName });
       return true;

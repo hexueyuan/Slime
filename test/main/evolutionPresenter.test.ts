@@ -134,7 +134,7 @@ describe("EvolutionPresenter", () => {
     // Phase 2: finalize (stageAll → getChangedFiles → changelog → commit + tag + archive)
     const finalized = await evo.finalizeEvolution();
     expect(finalized).toBe(true);
-    expect(evo.getStatus().stage).toBe("idle");
+    expect(evo.getStatus().stage).toBe("applying");
     expect(git.stageAll).toHaveBeenCalled();
     expect(git.getChangedFiles).toHaveBeenCalledWith("abc123", undefined, { cached: true });
     expect(git.addAndCommit).toHaveBeenCalled();

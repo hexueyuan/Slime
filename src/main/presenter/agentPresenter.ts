@@ -411,7 +411,10 @@ export class AgentPresenter implements IAgentPresenter {
 
       // evolution_complete 只做了 prepare，loop 结束后统一 commit
       // 确保 AI 在 complete 之后的 format/lint 修改也被收进去
-      await this.evolutionPresenter.finalizeEvolution();
+      const finalized = await this.evolutionPresenter.finalizeEvolution();
+      if (finalized) {
+        await this.evolutionPresenter.applyEvolution();
+      }
 
       for (const block of blocks) {
         if (block.status === "loading") block.status = "success";
