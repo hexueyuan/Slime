@@ -16,7 +16,6 @@ const props = defineProps<{
   channelType: ChannelType;
   channelName: string;
   selectedModels: string[];
-  slotMapping: Record<string, string>;
 }>();
 
 const emit = defineEmits<{
@@ -37,8 +36,6 @@ const validationError = computed(() => {
 const canComplete = computed(() => localName.value.trim().length > 0 && !validationError.value);
 
 watch(localName, (val) => emit("update:userName", val));
-
-const assignedSlots = computed(() => Object.entries(props.slotMapping).filter(([, v]) => v));
 </script>
 
 <template>
@@ -82,15 +79,9 @@ const assignedSlots = computed(() => Object.entries(props.slotMapping).filter(([
           {{ channelName }} ({{ CHANNEL_LABELS[channelType] }})
         </span>
       </div>
-      <div class="flex items-center justify-between border-b border-violet-500/10 py-2.5">
+      <div class="flex items-center justify-between py-2.5">
         <span class="text-sm text-slate-500">模型数量</span>
         <span class="text-sm font-medium text-slate-200">{{ selectedModels.length }}</span>
-      </div>
-      <div class="flex items-center justify-between py-2.5">
-        <span class="text-sm text-slate-500">Slot 映射</span>
-        <span class="text-sm font-medium text-slate-200">
-          {{ assignedSlots.length > 0 ? `${assignedSlots.length} 个已分配` : "未配置" }}
-        </span>
       </div>
     </div>
 

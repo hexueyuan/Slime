@@ -2,13 +2,7 @@
 import { ref } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
-import type {
-  Group,
-  GroupItem,
-  ModelCategory,
-  TextModelTier,
-  ReasoningLevel,
-} from "@shared/types/gateway";
+import type { Group, GroupItem } from "@shared/types/gateway";
 import { Icon } from "@iconify/vue";
 
 const gw = usePresenter("gatewayPresenter");
@@ -20,9 +14,6 @@ const editingGroup = ref<Group | null>(null);
 const form = ref({
   name: "",
   balanceMode: "round_robin" as Group["balanceMode"],
-  slotCategory: "" as "" | ModelCategory,
-  slotTier: "" as "" | TextModelTier,
-  slotLevel: "" as "" | ReasoningLevel,
   items: [] as { channelId: number; modelName: string; priority: number; weight: number }[],
 });
 
@@ -38,9 +29,6 @@ function openCreate() {
   form.value = {
     name: "",
     balanceMode: "round_robin",
-    slotCategory: "",
-    slotTier: "",
-    slotLevel: "",
     items: [{ channelId: 0, modelName: "", priority: 0, weight: 1 }],
   };
   showEditor.value = true;
@@ -52,9 +40,6 @@ async function openEdit(g: Group) {
   form.value = {
     name: g.name,
     balanceMode: g.balanceMode,
-    slotCategory: g.slot?.category ?? "",
-    slotTier: g.slot?.tier ?? "",
-    slotLevel: g.slot?.level ?? "",
     items: items.length
       ? items.map((i: GroupItem) => ({
           channelId: i.channelId,
@@ -75,17 +60,7 @@ function removeItem(idx: number) {
   form.value.items.splice(idx, 1);
 }
 
-function buildSlot() {
-  if (!form.value.slotCategory) return undefined;
-  return {
-    category: form.value.slotCategory as ModelCategory,
-    tier: (form.value.slotTier || undefined) as TextModelTier | undefined,
-    level: (form.value.slotLevel || undefined) as ReasoningLevel | undefined,
-  };
-}
-
 async function save() {
-  const slot = buildSlot();
   const validItems = form.value.items.filter((i) => i.channelId && i.modelName.trim());
 
   if (editingGroup.value) {
@@ -93,14 +68,12 @@ async function save() {
     await gw.updateGroup(id, {
       name: form.value.name,
       balanceMode: form.value.balanceMode,
-      slot,
     });
     await gw.setGroupItems(id, validItems);
   } else {
     const g = await gw.createGroup({
       name: form.value.name,
       balanceMode: form.value.balanceMode,
-      slot,
     });
     await gw.setGroupItems(g.id, validItems);
   }
@@ -112,14 +85,6 @@ async function save() {
 async function deleteGroup(id: number) {
   await gw.deleteGroup(id);
   await store.loadGroups();
-}
-
-function slotLabel(g: Group): string {
-  if (!g.slot) return "";
-  const parts: string[] = [g.slot.category];
-  if (g.slot.tier) parts.push(g.slot.tier);
-  if (g.slot.level) parts.push(g.slot.level);
-  return parts.join("/");
 }
 
 function modelsForChannel(channelId: number): string[] {
@@ -151,12 +116,6 @@ function modelsForChannel(channelId: number): string[] {
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
             <span class="text-sm font-medium">{{ g.name }}</span>
-            <span
-              v-if="g.slot"
-              class="rounded bg-violet-500/20 px-1.5 py-0.5 text-xs text-violet-400"
-            >
-              {{ slotLabel(g) }}
-            </span>
           </div>
           <div class="mt-0.5 text-xs text-muted-foreground">
             {{ g.balanceMode }}
@@ -217,39 +176,6 @@ function modelsForChannel(channelId: number): string[] {
               </option>
             </select>
           </label>
-
-          <!-- Slot -->
-          <div class="mb-3">
-            <span class="mb-1 block text-xs text-muted-foreground">Slot 配置（可选）</span>
-            <div class="grid grid-cols-3 gap-2">
-              <select
-                v-model="form.slotCategory"
-                class="rounded border border-input-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-              >
-                <option value="">Category</option>
-                <option value="text">text</option>
-                <option value="image">image</option>
-              </select>
-              <select
-                v-model="form.slotTier"
-                class="rounded border border-input-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-              >
-                <option value="">Tier</option>
-                <option value="chat">chat</option>
-                <option value="reasoning">reasoning</option>
-              </select>
-              <select
-                v-model="form.slotLevel"
-                class="rounded border border-input-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-              >
-                <option value="">Level</option>
-                <option value="lite">lite</option>
-                <option value="pro">pro</option>
-                <option value="max">max</option>
-                <option value="auto">auto</option>
-              </select>
-            </div>
-          </div>
 
           <!-- Group Items -->
           <div class="mb-4">

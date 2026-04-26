@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from "vue";
-import type { ChannelType, ModelSlot } from "@shared/types/gateway";
+import { ref, reactive } from "vue";
+import type { ChannelType } from "@shared/types/gateway";
 import WelcomeStep from "./WelcomeStep.vue";
 import AddChannelStep from "./AddChannelStep.vue";
-import SlotMappingStep from "./SlotMappingStep.vue";
 import IdentityCompleteStep from "./IdentityCompleteStep.vue";
 
 const emit = defineEmits<{ done: [] }>();
 
 const currentStep = ref(0);
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 const config = reactive({
   channelType: "anthropic" as ChannelType,
@@ -17,25 +16,8 @@ const config = reactive({
   baseUrl: "https://api.anthropic.com",
   apiKey: "",
   selectedModels: [] as string[],
-  slotMapping: {} as Record<string, string>,
   userName: "",
 });
-
-// When only 1 model selected, auto-fill all slots
-watch(
-  () => config.selectedModels,
-  (models) => {
-    if (models.length === 1) {
-      config.slotMapping = {
-        reasoning_auto: models[0],
-        reasoning_lite: models[0],
-        reasoning_pro: models[0],
-        reasoning_max: models[0],
-        chat: models[0],
-      };
-    }
-  },
-);
 
 function next() {
   if (currentStep.value < TOTAL_STEPS - 1) currentStep.value++;
@@ -43,14 +25,6 @@ function next() {
 function prev() {
   if (currentStep.value > 0) currentStep.value--;
 }
-
-const SLOT_MAP: Record<string, ModelSlot> = {
-  reasoning_auto: { category: "text", tier: "reasoning", level: "auto" },
-  reasoning_lite: { category: "text", tier: "reasoning", level: "lite" },
-  reasoning_pro: { category: "text", tier: "reasoning", level: "pro" },
-  reasoning_max: { category: "text", tier: "reasoning", level: "max" },
-  chat: { category: "text", tier: "chat" },
-};
 
 const completing = ref(false);
 
@@ -94,14 +68,15 @@ async function complete() {
       groupMap.set(model, group.id);
     }
 
-    // 4. Assign slots
-    for (const [slotKey, modelName] of Object.entries(config.slotMapping)) {
-      if (!modelName) continue;
-      const groupId = groupMap.get(modelName);
-      const slot = SLOT_MAP[slotKey];
-      if (groupId && slot) {
-        await gw("updateGroup", groupId, { slot });
-      }
+    // 4. Register models with default capabilities
+    for (const model of config.selectedModels) {
+      await gw("createModel", {
+        channelId: channel.id,
+        modelName: model,
+        capabilities: ["reasoning", "chat"],
+        priority: 0,
+        enabled: true,
+      });
     }
 
     // 5. Save user + mark onboarded
@@ -150,21 +125,12 @@ async function complete() {
       @prev="prev"
     />
 
-    <SlotMappingStep
-      v-else-if="currentStep === 2"
-      v-model:slot-mapping="config.slotMapping"
-      :selected-models="config.selectedModels"
-      @next="next"
-      @prev="prev"
-    />
-
     <IdentityCompleteStep
-      v-else-if="currentStep === 3"
+      v-else-if="currentStep === 2"
       v-model:user-name="config.userName"
       :channel-type="config.channelType"
       :channel-name="config.channelName"
       :selected-models="config.selectedModels"
-      :slot-mapping="config.slotMapping"
       @complete="complete"
       @prev="prev"
     />

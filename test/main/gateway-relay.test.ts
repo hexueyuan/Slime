@@ -184,6 +184,7 @@ describe("relay", () => {
       name: "active",
       type: "openai",
       baseUrls: ["https://api2.openai.com"],
+      models: [],
       enabled: true,
       priority: 0,
       weight: 1,
