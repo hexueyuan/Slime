@@ -69,10 +69,10 @@ open "${currentAppPath}"
 
 ```typescript
 type ApplyProgress = {
-  step: 'committing' | 'packaging' | 'replacing'
-  message: string
-  error?: string
-}
+  step: "committing" | "packaging" | "replacing";
+  message: string;
+  error?: string;
+};
 ```
 
 渲染进程 `evolutionStore` 监听该事件，`EvolutionStatusBar` 在 applying 节点下方显示当前步骤文字。
@@ -138,10 +138,10 @@ type ApplyProgress = {
 
 ## 边界情况
 
-| 场景 | 处理 |
-|------|------|
-| 开发模式 | 跳过打包替换，reset + relaunch |
-| 打包超时（>10min） | 返回超时错误，用户可重试或跳过 |
-| dist/ 下找不到 .app | 报错，用户可重试或跳过 |
-| `app.isPackaged` 但 `resolveAppBundlePath()` 返回 null | 报错，用户可跳过 |
-| applying 阶段 crash | recovery 恢复后可重新打包或放弃 |
+| 场景                                                   | 处理                            |
+| ------------------------------------------------------ | ------------------------------- |
+| 开发模式                                               | 跳过打包替换，reset + relaunch  |
+| 打包超时（>10min）                                     | 返回超时错误，用户可重试或跳过  |
+| dist/ 下找不到 .app                                    | 报错，用户可重试或跳过          |
+| `app.isPackaged` 但 `resolveAppBundlePath()` 返回 null | 报错，用户可跳过                |
+| applying 阶段 crash                                    | recovery 恢复后可重新打包或放弃 |

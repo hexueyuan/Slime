@@ -13,6 +13,7 @@
 ### Task 1: Add `ApplyProgress` type and `APPLY_PROGRESS` event
 
 **Files:**
+
 - Modify: `src/shared/types/evolution.d.ts:60` (append)
 - Modify: `src/shared/events.ts:7` (add to `EVOLUTION_EVENTS`)
 
@@ -22,9 +23,9 @@ In `src/shared/types/evolution.d.ts`, append after the `EvolutionContext` interf
 
 ```typescript
 export interface ApplyProgress {
-  step: 'committing' | 'packaging' | 'replacing'
-  message: string
-  error?: string
+  step: "committing" | "packaging" | "replacing";
+  message: string;
+  error?: string;
 }
 ```
 
@@ -55,6 +56,7 @@ git commit -m "feat(evolution): add ApplyProgress type and APPLY_PROGRESS event"
 ### Task 2: Add `applyEvolution`, `retryPackage`, `skipPackage` to `IEvolutionPresenter`
 
 **Files:**
+
 - Modify: `src/shared/types/presenters/evolution.presenter.d.ts:9-18`
 
 - [ ] **Step 1: Add three methods to interface**
@@ -105,6 +107,7 @@ git commit -m "feat(evolution): add applyEvolution/retryPackage/skipPackage to i
 ### Task 3: Implement `resolveAppBundlePath` and `findBuiltApp` private helpers
 
 **Files:**
+
 - Modify: `src/main/presenter/evolutionPresenter.ts`
 - Test: `test/main/evolutionPresenter.test.ts`
 
@@ -202,6 +205,7 @@ git commit -m "feat(evolution): add resolveAppBundlePath and findBuiltApp helper
 ### Task 4: Implement `runPackage` private method
 
 **Files:**
+
 - Modify: `src/main/presenter/evolutionPresenter.ts`
 - Test: `test/main/evolutionPresenter.test.ts`
 
@@ -323,6 +327,7 @@ git commit -m "feat(evolution): implement runPackage for electron-builder"
 ### Task 5: Implement `selfReplace` private method
 
 **Files:**
+
 - Modify: `src/main/presenter/evolutionPresenter.ts`
 - Test: `test/main/evolutionPresenter.test.ts`
 
@@ -343,7 +348,7 @@ describe("selfReplace", () => {
 
     const evo = new EvolutionPresenter(mockGit(), mockConfig());
     // Manually set state to test selfReplace in isolation
-    ;(evo as any).selfReplace("/Applications/Slime.app", "/tmp/dist/mac-arm64/Slime.app");
+    (evo as any).selfReplace("/Applications/Slime.app", "/tmp/dist/mac-arm64/Slime.app");
 
     expect(writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining("swap-update.sh"),
@@ -494,6 +499,7 @@ git commit -m "feat(evolution): implement selfReplace with detached shell script
 ### Task 6: Implement `applyEvolution`, `retryPackage`, `skipPackage` public methods
 
 **Files:**
+
 - Modify: `src/main/presenter/evolutionPresenter.ts`
 - Test: `test/main/evolutionPresenter.test.ts`
 
@@ -626,6 +632,7 @@ git commit -m "feat(evolution): implement applyEvolution, retryPackage, skipPack
 ### Task 7: Modify `finalizeEvolution` to not reset, and wire `applyEvolution` in `agentPresenter`
 
 **Files:**
+
 - Modify: `src/main/presenter/evolutionPresenter.ts:106-159` (finalizeEvolution)
 - Modify: `src/main/presenter/agentPresenter.ts:414` (caller site)
 
@@ -634,15 +641,15 @@ git commit -m "feat(evolution): implement applyEvolution, retryPackage, skipPack
 In `src/main/presenter/evolutionPresenter.ts`, change the success path of `finalizeEvolution()` from:
 
 ```typescript
-      this.reset();
-      eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, pending.tagName, pending.summary);
+this.reset();
+eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, pending.tagName, pending.summary);
 ```
 
 To:
 
 ```typescript
-      eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, pending.tagName, pending.summary);
-      // Don't reset — applyEvolution() will handle reset after package + replace
+eventBus.sendToRenderer(EVOLUTION_EVENTS.COMPLETED, pending.tagName, pending.summary);
+// Don't reset — applyEvolution() will handle reset after package + replace
 ```
 
 - [ ] **Step 2: Wire `applyEvolution` in `agentPresenter.ts`**
@@ -650,17 +657,18 @@ To:
 In `src/main/presenter/agentPresenter.ts`, after the `finalizeEvolution()` call (around line 414), add:
 
 ```typescript
-      // evolution_complete 只做了 prepare，loop 结束后统一 commit
-      // 确保 AI 在 complete 之后的 format/lint 修改也被收进去
-      const finalized = await this.evolutionPresenter.finalizeEvolution();
-      if (finalized) {
-        await this.evolutionPresenter.applyEvolution();
-      }
+// evolution_complete 只做了 prepare，loop 结束后统一 commit
+// 确保 AI 在 complete 之后的 format/lint 修改也被收进去
+const finalized = await this.evolutionPresenter.finalizeEvolution();
+if (finalized) {
+  await this.evolutionPresenter.applyEvolution();
+}
 ```
 
 Replace the existing single line:
+
 ```typescript
-      await this.evolutionPresenter.finalizeEvolution();
+await this.evolutionPresenter.finalizeEvolution();
 ```
 
 - [ ] **Step 3: Run all tests**
@@ -680,6 +688,7 @@ git commit -m "feat(evolution): wire applyEvolution after finalizeEvolution"
 ### Task 8: Register `evolution:retry-package` and `evolution:skip-package` IPC handlers
 
 **Files:**
+
 - Modify: `src/main/presenter/index.ts:227-260` (after recovery handlers)
 
 - [ ] **Step 1: Add IPC handlers**
@@ -714,6 +723,7 @@ git commit -m "feat(evolution): register retry-package and skip-package IPC hand
 ### Task 9: Add `applyProgress` to evolution store and IPC listener
 
 **Files:**
+
 - Modify: `src/renderer/src/stores/evolution.ts`
 
 - [ ] **Step 1: Add `applyProgress` ref and listener**
@@ -727,47 +737,47 @@ import type { EvolutionStage, ApplyProgress } from "@shared/types/evolution";
 Add inside the store function, after the existing refs:
 
 ```typescript
-  const applyProgress = ref<ApplyProgress | null>(null);
+const applyProgress = ref<ApplyProgress | null>(null);
 ```
 
 Add to the return:
 
 ```typescript
-  return {
-    stage,
-    completedTag,
-    completedSummary,
-    rollbackInProgress,
-    rollbackTag,
-    recoveryContext,
-    applyProgress,
-    setStage,
-    setCompleted,
-    setRecovery,
-    reset,
-  };
+return {
+  stage,
+  completedTag,
+  completedSummary,
+  rollbackInProgress,
+  rollbackTag,
+  recoveryContext,
+  applyProgress,
+  setStage,
+  setCompleted,
+  setRecovery,
+  reset,
+};
 ```
 
 Update the `reset` function to also clear `applyProgress`:
 
 ```typescript
-  function reset() {
-    stage.value = "idle";
-    completedTag.value = null;
-    completedSummary.value = null;
-    rollbackInProgress.value = false;
-    rollbackTag.value = null;
-    recoveryContext.value = null;
-    applyProgress.value = null;
-  }
+function reset() {
+  stage.value = "idle";
+  completedTag.value = null;
+  completedSummary.value = null;
+  rollbackInProgress.value = false;
+  rollbackTag.value = null;
+  recoveryContext.value = null;
+  applyProgress.value = null;
+}
 ```
 
 In `setupEvolutionIpc`, add listener:
 
 ```typescript
-  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.APPLY_PROGRESS, (...args: unknown[]) => {
-    store.applyProgress = args[0] as ApplyProgress;
-  });
+window.electron.ipcRenderer.on(EVOLUTION_EVENTS.APPLY_PROGRESS, (...args: unknown[]) => {
+  store.applyProgress = args[0] as ApplyProgress;
+});
 ```
 
 - [ ] **Step 2: Commit**
@@ -782,6 +792,7 @@ git commit -m "feat(renderer): add applyProgress to evolution store"
 ### Task 10: Update `EvolutionStatusBar` to show apply progress and error actions
 
 **Files:**
+
 - Modify: `src/renderer/src/components/evolution/EvolutionStatusBar.vue`
 
 - [ ] **Step 1: Add apply progress display and retry/skip buttons**
@@ -801,31 +812,31 @@ function handleSkipPackage() {
 In the `<template>`, after the `completedTag` block (after line 173) and before `<div class="flex-1" />`, add:
 
 ```html
-    <!-- Apply progress -->
-    <template v-if="evolutionStore.stage === 'applying' && evolutionStore.applyProgress">
-      <div class="ml-4 flex items-center gap-2">
-        <span
-          class="text-xs"
-          :class="evolutionStore.applyProgress.error ? 'text-red-500' : 'text-muted-foreground'"
-        >
-          {{ evolutionStore.applyProgress.message }}
-        </span>
-        <template v-if="evolutionStore.applyProgress.error">
-          <button
-            class="rounded border border-violet-500 px-2 py-0.5 text-xs text-violet-500 hover:bg-violet-500/10"
-            @click="handleRetryPackage"
-          >
-            重试打包
-          </button>
-          <button
-            class="rounded border border-muted-foreground px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
-            @click="handleSkipPackage"
-          >
-            跳过打包
-          </button>
-        </template>
-      </div>
+<!-- Apply progress -->
+<template v-if="evolutionStore.stage === 'applying' && evolutionStore.applyProgress">
+  <div class="ml-4 flex items-center gap-2">
+    <span
+      class="text-xs"
+      :class="evolutionStore.applyProgress.error ? 'text-red-500' : 'text-muted-foreground'"
+    >
+      {{ evolutionStore.applyProgress.message }}
+    </span>
+    <template v-if="evolutionStore.applyProgress.error">
+      <button
+        class="rounded border border-violet-500 px-2 py-0.5 text-xs text-violet-500 hover:bg-violet-500/10"
+        @click="handleRetryPackage"
+      >
+        重试打包
+      </button>
+      <button
+        class="rounded border border-muted-foreground px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
+        @click="handleSkipPackage"
+      >
+        跳过打包
+      </button>
     </template>
+  </div>
+</template>
 ```
 
 - [ ] **Step 2: Run typecheck**
