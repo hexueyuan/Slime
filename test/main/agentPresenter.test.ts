@@ -17,10 +17,12 @@ vi.mock("@/eventbus", () => ({
   },
 }));
 
-// Mock Vercel AI SDK streamText
+// Mock Vercel AI SDK streamText & generateText
 const mockStreamText = vi.fn();
+const mockGenerateText = vi.fn();
 vi.mock("ai", () => ({
   streamText: (...args: unknown[]) => mockStreamText(...args),
+  generateText: (...args: unknown[]) => mockGenerateText(...args),
 }));
 
 // Mock provider
@@ -66,6 +68,7 @@ describe("AgentPresenter", () => {
       mockContentPresenter as any,
     );
     mockSendToRenderer.mockClear();
+    mockGenerateText.mockClear();
     // Set env vars for getConfig()
     process.env.SLIME_AI_PROVIDER = "openai";
     process.env.SLIME_AI_API_KEY = "test-key";
@@ -132,5 +135,31 @@ describe("AgentPresenter", () => {
     await chatPromise;
     const endCall = mockSendToRenderer.mock.calls.find((c) => c[0] === "stream:end");
     expect(endCall).toBeDefined();
+  });
+
+  describe("verifyApiKey", () => {
+    it("should return success when API call succeeds", async () => {
+      mockGenerateText.mockResolvedValue({ text: "hi" });
+      const result = await agent.verifyApiKey("anthropic", "sk-test", "claude-sonnet-4-20250514");
+      expect(result).toEqual({
+        success: true,
+        modelName: "claude-sonnet-4-20250514",
+      });
+      expect(mockGenerateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messages: [{ role: "user", content: "hi" }],
+          maxTokens: 1,
+        }),
+      );
+    });
+
+    it("should return error when API call fails", async () => {
+      mockGenerateText.mockRejectedValue(new Error("Invalid API key"));
+      const result = await agent.verifyApiKey("openai", "bad-key", "gpt-4o");
+      expect(result).toEqual({
+        success: false,
+        error: "Invalid API key",
+      });
+    });
   });
 });

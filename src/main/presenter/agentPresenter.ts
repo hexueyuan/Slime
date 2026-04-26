@@ -1,4 +1,4 @@
-import { streamText } from "ai";
+import { streamText, generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import type { IAgentPresenter } from "@shared/types/presenters";
@@ -462,6 +462,27 @@ export class AgentPresenter implements IAgentPresenter {
     if (pending?.toolCallId === toolCallId) {
       pending.resolve(answer);
       this.pendingQuestions.delete(sessionId);
+    }
+  }
+
+  async verifyApiKey(
+    provider: string,
+    apiKey: string,
+    model: string,
+    baseUrl?: string,
+  ): Promise<{ success: boolean; error?: string; modelName?: string }> {
+    try {
+      const aiModel = this.createModel({ provider, apiKey, model, baseUrl });
+      await generateText({
+        model: aiModel,
+        messages: [{ role: "user", content: "hi" }],
+        maxTokens: 1,
+      });
+      return { success: true, modelName: model };
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      logger.warn("API key verification failed", { provider, error });
+      return { success: false, error };
     }
   }
 }
