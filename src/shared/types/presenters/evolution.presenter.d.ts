@@ -15,4 +15,7 @@ export interface IEvolutionPresenter {
   readArchive(tag: string): Promise<EvolutionArchive | null>;
   runBuildVerification(): Promise<{ success: boolean; error?: string }>;
   restoreState(): Promise<EvolutionContext | null>;
+  applyEvolution(): Promise<void>;
+  retryPackage(): Promise<void>;
+  skipPackage(): void;
 }
