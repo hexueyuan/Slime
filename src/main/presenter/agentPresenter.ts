@@ -293,11 +293,8 @@ export class AgentPresenter implements IAgentPresenter {
     const abortController = new AbortController();
     this.abortControllers.set(sessionId, abortController);
 
-    const slotModel = this.gatewayPresenter.resolveSlot({
-      category: "text",
-      tier: "reasoning",
-      level: "auto",
-    });
+    const selectResult = this.gatewayPresenter.select(["reasoning"]);
+    const slotModel = selectResult.matched.reasoning?.groupName;
     if (!slotModel) {
       this.abortControllers.delete(sessionId);
       eventBus.sendToRenderer(

@@ -53,7 +53,18 @@ describe("AgentPresenter", () => {
   const mockGatewayPresenter = {
     getPort: vi.fn(() => 8930),
     getInternalKey: vi.fn(() => "sk-slime-test"),
-    resolveSlot: vi.fn(() => "test-model"),
+    select: vi.fn(() => ({
+      matched: {
+        reasoning: {
+          groupName: "test-model",
+          modelName: "test-model",
+          modelId: 1,
+          channelId: 1,
+          capabilities: ["reasoning"],
+        },
+      },
+      missing: [],
+    })),
   };
 
   beforeEach(() => {
@@ -68,7 +79,18 @@ describe("AgentPresenter", () => {
       mockGatewayPresenter as any,
     );
     mockSendToRenderer.mockClear();
-    mockGatewayPresenter.resolveSlot.mockReturnValue("test-model");
+    mockGatewayPresenter.select.mockReturnValue({
+      matched: {
+        reasoning: {
+          groupName: "test-model",
+          modelName: "test-model",
+          modelId: 1,
+          channelId: 1,
+          capabilities: ["reasoning"],
+        },
+      },
+      missing: [],
+    });
   });
 
   afterEach(() => {
@@ -131,8 +153,11 @@ describe("AgentPresenter", () => {
   });
 
   describe("chat with no model configured", () => {
-    it("should emit error when resolveSlot returns undefined", async () => {
-      mockGatewayPresenter.resolveSlot.mockReturnValue(undefined);
+    it("should emit error when select returns no reasoning match", async () => {
+      mockGatewayPresenter.select.mockReturnValue({
+        matched: {},
+        missing: ["reasoning"],
+      });
       const session = await sessionPresenter.createSession("test");
       await agent.chat(session.id, { text: "hi", files: [] });
 
