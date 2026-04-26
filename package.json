@@ -7,7 +7,7 @@
   "main": "./out/main/index.js",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "dev": "electron-vite dev --watch",
+    "dev": "electron-builder install-app-deps && electron-vite dev --watch",
     "build": "pnpm run typecheck && electron-vite build",
     "build:unpack": "pnpm run build && electron-builder --dir",
     "build:mac": "pnpm run build && electron-builder --mac",
@@ -20,9 +20,9 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "vue-tsc --noEmit -p tsconfig.app.json",
     "typecheck": "pnpm run typecheck:node && pnpm run typecheck:web",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "test:watch": "vitest --watch",
+    "test": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest",
+    "test:coverage": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest --coverage",
+    "test:watch": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest --watch",
     "postinstall": "electron-builder install-app-deps && simple-git-hooks"
   },
   "dependencies": {
