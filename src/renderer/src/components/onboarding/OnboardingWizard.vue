@@ -5,6 +5,7 @@ import { usePresenter } from '@/composables/usePresenter'
 import WelcomeStep from './WelcomeStep.vue'
 import ProviderStep from './ProviderStep.vue'
 import VerifyStep from './VerifyStep.vue'
+import IdentityStep from './IdentityStep.vue'
 
 const emit = defineEmits<{ done: [] }>()
 const configStore = useConfigStore()
@@ -117,8 +118,12 @@ async function complete() {
       "
       @retry="runVerify()"
     />
-    <div v-else-if="currentStep === 3" data-testid="identity-step">
-    </div>
+    <IdentityStep
+      v-else-if="currentStep === 3"
+      v-model:user-name="config.userName"
+      @next="next"
+      @prev="prev"
+    />
     <div v-else-if="currentStep === 4" data-testid="complete-step">
     </div>
   </div>
