@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
-import type { EvolutionStage } from "@shared/types/evolution";
+import type { EvolutionStage, ApplyProgress } from "@shared/types/evolution";
 import { EVOLUTION_EVENTS } from "@shared/events";
 
 export const useEvolutionStore = defineStore("evolution", () => {
@@ -14,6 +14,7 @@ export const useEvolutionStore = defineStore("evolution", () => {
     description: string;
     sessionId: string;
   } | null>(null);
+  const applyProgress = ref<ApplyProgress | null>(null);
 
   function setStage(s: EvolutionStage) {
     stage.value = s;
@@ -39,6 +40,7 @@ export const useEvolutionStore = defineStore("evolution", () => {
     rollbackInProgress.value = false;
     rollbackTag.value = null;
     recoveryContext.value = null;
+    applyProgress.value = null;
   }
 
   return {
@@ -48,6 +50,7 @@ export const useEvolutionStore = defineStore("evolution", () => {
     rollbackInProgress,
     rollbackTag,
     recoveryContext,
+    applyProgress,
     setStage,
     setCompleted,
     setRecovery,
@@ -73,5 +76,8 @@ export function setupEvolutionIpc(store: ReturnType<typeof useEvolutionStore>) {
   window.electron.ipcRenderer.on(EVOLUTION_EVENTS.ROLLBACK_FAILED, () => {
     store.rollbackInProgress = false;
     store.rollbackTag = null;
+  });
+  window.electron.ipcRenderer.on(EVOLUTION_EVENTS.APPLY_PROGRESS, (...args: unknown[]) => {
+    store.applyProgress = args[0] as ApplyProgress;
   });
 }
