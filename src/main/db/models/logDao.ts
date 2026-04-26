@@ -16,6 +16,8 @@ interface LogRow {
   duration_ms: number;
   status: string;
   error: string | null;
+  request_body: string | null;
+  response_body: string | null;
   created_at: string;
 }
 
@@ -35,6 +37,8 @@ function rowToLog(row: LogRow): RelayLog {
     durationMs: row.duration_ms,
     status: row.status as RelayLog["status"],
     error: row.error ?? undefined,
+    requestBody: row.request_body ?? undefined,
+    responseBody: row.response_body ?? undefined,
     createdAt: row.created_at,
   };
 }
@@ -47,8 +51,8 @@ export function insertLogs(
     INSERT INTO relay_logs
       (api_key_id, group_name, channel_id, channel_name, model_name,
        input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
-       cost, duration_ms, status, error)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       cost, duration_ms, status, error, request_body, response_body)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const tx = db.transaction(() => {
     for (const log of logs) {
@@ -66,6 +70,8 @@ export function insertLogs(
         log.durationMs,
         log.status,
         log.error ?? null,
+        log.requestBody ?? null,
+        log.responseBody ?? null,
       );
     }
   });
@@ -78,9 +84,19 @@ export function getRecentLogs(
   offset: number,
 ): RelayLog[] {
   const rows = db
-    .prepare("SELECT * FROM relay_logs ORDER BY id DESC LIMIT ? OFFSET ?")
+    .prepare(
+      `SELECT id, api_key_id, group_name, channel_id, channel_name, model_name,
+              input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
+              cost, duration_ms, status, error, created_at
+       FROM relay_logs ORDER BY id DESC LIMIT ? OFFSET ?`,
+    )
     .all(limit, offset) as LogRow[];
   return rows.map(rowToLog);
+}
+
+export function getLogDetail(db: BetterSqlite3.Database, id: number): RelayLog | undefined {
+  const row = db.prepare("SELECT * FROM relay_logs WHERE id = ?").get(id) as LogRow | undefined;
+  return row ? rowToLog(row) : undefined;
 }
 
 export function getLogsByDateRange(
