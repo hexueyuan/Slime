@@ -58,3 +58,9 @@ export interface EvolutionContext {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ApplyProgress {
+  step: "committing" | "packaging" | "replacing";
+  message: string;
+  error?: string;
+}
