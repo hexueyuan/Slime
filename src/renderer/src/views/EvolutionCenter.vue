@@ -4,6 +4,7 @@ import AppSidebar from "../components/AppSidebar.vue";
 import ChatPanel from "../components/chat/ChatPanel.vue";
 import FunctionPanel from "../components/function/FunctionPanel.vue";
 import WorkspaceSetup from "../components/workspace/WorkspaceSetup.vue";
+import OnboardingWizard from "../components/onboarding/OnboardingWizard.vue";
 import EvolutionStatusBar from "../components/evolution/EvolutionStatusBar.vue";
 import CyberClock from "../components/clock/CyberClock.vue";
 import { useSplitPane } from "../composables/useSplitPane";
@@ -17,13 +18,24 @@ import type { AssistantMessageBlock } from "@shared/types/chat";
 // Sidebar active view
 const activeView = ref<"evolution" | "clock">("evolution");
 
-// Workspace init check
+// Onboarding + workspace init check
+const configPresenter = usePresenter("configPresenter");
 const workspacePresenter = usePresenter("workspacePresenter");
+const needsOnboarding = ref<boolean | null>(null);
 const needsWorkspaceInit = ref<boolean | null>(null);
 
 onMounted(async () => {
-  needsWorkspaceInit.value = await workspacePresenter.needsInit();
+  const onboarded = await configPresenter.get("app.onboarded");
+  needsOnboarding.value = !onboarded;
+  if (!needsOnboarding.value) {
+    needsWorkspaceInit.value = await workspacePresenter.needsInit();
+  }
 });
+
+async function onOnboardingDone() {
+  needsOnboarding.value = false;
+  needsWorkspaceInit.value = await workspacePresenter.needsInit();
+}
 
 function onWorkspaceReady() {
   needsWorkspaceInit.value = false;
@@ -119,11 +131,14 @@ function onSelectToolCall(id: string | null) {
 <template>
   <!-- Loading -->
   <div
-    v-if="needsWorkspaceInit === null"
+    v-if="needsOnboarding === null"
     class="flex h-full items-center justify-center bg-background"
   >
     <div class="text-muted-foreground">加载中...</div>
   </div>
+
+  <!-- Onboarding -->
+  <OnboardingWizard v-else-if="needsOnboarding" @done="onOnboardingDone" />
 
   <!-- Workspace setup -->
   <WorkspaceSetup v-else-if="needsWorkspaceInit" @ready="onWorkspaceReady" />
