@@ -18,7 +18,7 @@ loading (null) → onboarding (未完成) → WorkspaceSetup (true) → main lay
 
 | # | 步骤名 | 组件 | 收集内容 | 逻辑 |
 |---|--------|------|---------|------|
-| 1 | 欢迎 | WelcomeStep | 无 | 介绍 Slime，"开始孵化"按钮 |
+| 1 | 欢迎 | WelcomeStep | 无 | 介绍 Slime，"初始化配置"按钮 |
 | 2 | AI 配置 | ProviderStep | provider, apiKey, model, baseUrl | 表单输入，复用 ProviderSettings 字段逻辑 |
 | 3 | 验证 | VerifyStep | 无（自动） | 调用 verifyApiKey IPC 验证连通性 |
 | 4 | 用户标识 | IdentityStep | evolution.user | 输入用户名，实时预览版本号格式 |
