@@ -169,6 +169,41 @@ describe("relay", () => {
     expect((statsCalls[1] as { status: string }).status).toBe("success");
   });
 
+  it("statsCallback 包含 requestBody 和 responseBody", async () => {
+    setup();
+    const send = vi.fn().mockResolvedValue(baseResponse);
+    mockGetAdapter.mockReturnValue({ send, sendStream: vi.fn() });
+
+    const relay = createRelay(createDeps());
+    const statsCalls: unknown[] = [];
+    relay.onStats((data) => statsCalls.push(data));
+
+    await relay.relay(baseRequest);
+
+    expect(statsCalls).toHaveLength(1);
+    const call = statsCalls[0] as { requestBody?: string; responseBody?: string };
+    expect(call.requestBody).toBeDefined();
+    expect(JSON.parse(call.requestBody!).model).toBe("gpt-4o");
+    expect(call.responseBody).toBeDefined();
+    expect(JSON.parse(call.responseBody!).content).toEqual(baseResponse.content);
+  });
+
+  it("statsCallback 失败时 responseBody 为 undefined", async () => {
+    setup();
+    const send = vi.fn().mockRejectedValue(new Error("fail"));
+    mockGetAdapter.mockReturnValue({ send, sendStream: vi.fn() });
+
+    const relay = createRelay(createDeps());
+    const statsCalls: unknown[] = [];
+    relay.onStats((data) => statsCalls.push(data));
+
+    await relay.relay(baseRequest).catch(() => {});
+
+    for (const call of statsCalls) {
+      expect((call as { responseBody?: string }).responseBody).toBeUndefined();
+    }
+  });
+
   it("跳过 disabled channel", async () => {
     const ch = channelDao.createChannel(db, {
       name: "disabled",
@@ -279,5 +314,43 @@ describe("relayStream", () => {
 
     const relay = createRelay(createDeps());
     await expect(relay.relayStream(baseRequest)).rejects.toThrow("fail");
+  });
+
+  it("statsCallback 包含流式累积的 responseBody", async () => {
+    setup();
+    const events: StreamEvent[] = [
+      { type: "content_delta", delta: { type: "text", text: "hello " } },
+      { type: "content_delta", delta: { type: "text", text: "world" } },
+      { type: "usage", usage: { inputTokens: 10, outputTokens: 5 } },
+      { type: "stop", stopReason: "end_turn", model: "gpt-4o-2024" },
+    ];
+
+    async function* fakeStream(): AsyncIterable<StreamEvent> {
+      for (const e of events) yield e;
+    }
+
+    mockGetAdapter.mockReturnValue({
+      send: vi.fn(),
+      sendStream: vi.fn().mockReturnValue(fakeStream()),
+    });
+
+    const relay = createRelay(createDeps());
+    const statsCalls: unknown[] = [];
+    relay.onStats((data) => statsCalls.push(data));
+
+    const result = await relay.relayStream(baseRequest);
+    // 消费流触发 stats
+    for await (const _ of result.stream) {
+      /* drain */
+    }
+
+    expect(statsCalls).toHaveLength(1);
+    const call = statsCalls[0] as { requestBody?: string; responseBody?: string };
+    expect(call.requestBody).toBeDefined();
+    expect(JSON.parse(call.requestBody!).model).toBe("gpt-4o");
+    expect(call.responseBody).toBeDefined();
+    const respBody = JSON.parse(call.responseBody!);
+    expect(respBody.content).toEqual([{ type: "text", text: "hello world" }]);
+    expect(respBody.usage.inputTokens).toBe(10);
   });
 });

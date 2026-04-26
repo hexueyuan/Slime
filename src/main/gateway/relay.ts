@@ -43,12 +43,33 @@ export type StatsCallback = (data: {
   durationMs: number;
   status: "success" | "error";
   error?: string;
+  requestBody?: string;
+  responseBody?: string;
 }) => void;
 
 export interface Relay {
   relay(request: InternalRequest): Promise<RelayResult>;
   relayStream(request: InternalRequest): Promise<RelayStreamResult>;
   onStats(callback: StatsCallback): void;
+}
+
+function filterForLog(request: InternalRequest): string {
+  const filtered = {
+    ...request,
+    messages: request.messages.map((msg) => ({
+      ...msg,
+      content: msg.content.map((c) => {
+        if (c.type === "image") {
+          return {
+            type: "image" as const,
+            source: { type: "url" as const, url: "[image data omitted]" },
+          };
+        }
+        return c;
+      }),
+    })),
+  };
+  return JSON.stringify(filtered);
 }
 
 export function createRelay(deps: RelayDeps): Relay {
@@ -108,6 +129,8 @@ export function createRelay(deps: RelayDeps): Relay {
             usage: response.usage,
             durationMs,
             status: "success",
+            requestBody: filterForLog(request),
+            responseBody: JSON.stringify(response),
           });
           return {
             response,
@@ -134,6 +157,7 @@ export function createRelay(deps: RelayDeps): Relay {
             durationMs,
             status: "error",
             error: lastError.message,
+            requestBody: filterForLog(request),
           });
         }
       }
@@ -175,13 +199,73 @@ export function createRelay(deps: RelayDeps): Relay {
 
           deps.circuitBreaker.recordSuccess(item.channelId, selectedKey.id, item.modelName);
 
-          // 包装：先 yield first，再 yield 剩余
+          // 包装：先 yield first，再 yield 剩余；流结束后上报 stats
+          const groupName = group.name;
+          const chId = channel.id;
+          const chName = channel.name;
+          const keyId = selectedKey.id;
+          const modelName = item.modelName;
+
           async function* wrappedStream(): AsyncIterable<StreamEvent> {
-            if (!first.done) yield first.value;
-            while (true) {
-              const next = await iterator.next();
-              if (next.done) break;
-              yield next.value;
+            let usage: InternalResponse["usage"] = { inputTokens: 0, outputTokens: 0 };
+            let contentText = "";
+            let stopReason = "";
+            let responseModel = modelName;
+
+            function accumulate(evt: StreamEvent) {
+              if (evt.type === "usage") usage = evt.usage;
+              if (evt.type === "content_delta" && evt.delta.type === "text") {
+                contentText += evt.delta.text;
+              }
+              if (evt.type === "stop") {
+                stopReason = evt.stopReason;
+                responseModel = evt.model;
+              }
+            }
+
+            try {
+              if (!first.done) {
+                accumulate(first.value);
+                yield first.value;
+              }
+              while (true) {
+                const next = await iterator.next();
+                if (next.done) break;
+                accumulate(next.value);
+                yield next.value;
+              }
+              const responseBody = JSON.stringify({
+                content: [{ type: "text", text: contentText }],
+                usage,
+                model: responseModel,
+                stopReason,
+              });
+              statsCallback?.({
+                groupName,
+                channelId: chId,
+                channelName: chName,
+                modelName,
+                apiKeyId: keyId,
+                usage,
+                durationMs: Date.now() - startTime,
+                status: "success",
+                requestBody: filterForLog(request),
+                responseBody,
+              });
+            } catch (streamErr) {
+              statsCallback?.({
+                groupName,
+                channelId: chId,
+                channelName: chName,
+                modelName,
+                apiKeyId: keyId,
+                usage: { inputTokens: 0, outputTokens: 0 },
+                durationMs: Date.now() - startTime,
+                status: "error",
+                error: streamErr instanceof Error ? streamErr.message : String(streamErr),
+                requestBody: filterForLog(request),
+              });
+              throw streamErr;
             }
           }
 
@@ -209,6 +293,7 @@ export function createRelay(deps: RelayDeps): Relay {
             durationMs: Date.now() - startTime,
             status: "error",
             error: lastError.message,
+            requestBody: filterForLog(request),
           });
         }
       }
