@@ -258,3 +258,17 @@ ipcMain.handle("recovery:abandon", async () => {
   await p.evolutionPresenter.cancel();
   return { success: true };
 });
+
+// --- Package retry/skip IPC handlers ---
+
+ipcMain.handle("evolution:retry-package", async () => {
+  const p = Presenter.getInstance();
+  await p.evolutionPresenter.retryPackage();
+  return { success: true };
+});
+
+ipcMain.handle("evolution:skip-package", () => {
+  const p = Presenter.getInstance();
+  p.evolutionPresenter.skipPackage();
+  return { success: true };
+});
