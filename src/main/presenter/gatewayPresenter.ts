@@ -44,6 +44,8 @@ import type { GatewayServer } from "@/gateway/server";
 import type { StatsCollector } from "@/gateway/stats";
 import type { ScheduledTasks } from "@/gateway/tasks";
 import type { CapabilitySelector } from "@/gateway/selector";
+import { eventBus } from "@/eventbus";
+import { GATEWAY_EVENTS } from "@shared/events";
 import { logger } from "@/utils";
 
 function randomHex(n: number): string {
@@ -92,7 +94,11 @@ export class GatewayPresenter implements IGatewayPresenter {
         durationMs: data.durationMs,
         status: data.status,
         error: data.error,
+        requestBody: data.requestBody,
+        responseBody: data.responseBody,
       });
+      this.statsCollector.flush();
+      eventBus.sendToRenderer(GATEWAY_EVENTS.LOG_ADDED);
     });
 
     this.scheduledTasks = createScheduledTasks(db);
@@ -341,6 +347,10 @@ export class GatewayPresenter implements IGatewayPresenter {
 
   getRecentLogs(limit: number, offset: number): RelayLog[] {
     return logDao.getRecentLogs(getDb(), limit, offset);
+  }
+
+  getLogDetail(id: number): RelayLog | undefined {
+    return logDao.getLogDetail(getDb(), id);
   }
 
   // --- Prices ---
