@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
-import type { Channel, ChannelType } from "@shared/types/gateway";
+import type { Channel, ChannelType, Capability, Model } from "@shared/types/gateway";
 import { Icon } from "@iconify/vue";
 
 const gw = usePresenter("gatewayPresenter");
@@ -188,6 +188,50 @@ async function testChannel(id: number) {
     });
   }
 }
+
+// --- Model capability management ---
+const ALL_CAPS: { key: Capability; label: string }[] = [
+  { key: "reasoning", label: "reasoning" },
+  { key: "chat", label: "chat" },
+  { key: "vision", label: "vision" },
+  { key: "image_gen", label: "image_gen" },
+];
+
+const selectedChannelId = ref<number | null>(null);
+
+async function selectChannel(ch: Channel) {
+  selectedChannelId.value = ch.id;
+  await store.loadModelsByChannel(ch.id);
+}
+
+const channelModels = computed(() =>
+  selectedChannelId.value ? (store.models.get(selectedChannelId.value) ?? []) : [],
+);
+
+async function toggleModelCap(model: Model, cap: Capability) {
+  const caps = model.capabilities.includes(cap)
+    ? model.capabilities.filter((c) => c !== cap)
+    : [...model.capabilities, cap];
+  await gw.updateModel(model.id, { capabilities: caps });
+  if (selectedChannelId.value) await store.loadModelsByChannel(selectedChannelId.value);
+}
+
+async function toggleModelEnabled(model: Model) {
+  await gw.updateModel(model.id, { enabled: !model.enabled });
+  if (selectedChannelId.value) await store.loadModelsByChannel(selectedChannelId.value);
+}
+
+async function addModelToChannel(channelId: number, modelName: string) {
+  await gw.createModel({ channelId, modelName, capabilities: [], priority: 0, enabled: true });
+  await store.loadModelsByChannel(channelId);
+}
+
+async function removeModelFromChannel(modelId: number) {
+  await gw.deleteModel(modelId);
+  if (selectedChannelId.value) await store.loadModelsByChannel(selectedChannelId.value);
+}
+
+const newCapModelName = ref("");
 </script>
 
 <template>
@@ -208,7 +252,13 @@ async function testChannel(id: number) {
       <div
         v-for="ch in store.channels"
         :key="ch.id"
-        class="flex items-center justify-between rounded-lg bg-muted/30 p-3"
+        class="flex cursor-pointer items-center justify-between rounded-lg p-3 transition-colors"
+        :class="
+          selectedChannelId === ch.id
+            ? 'bg-violet-500/10 ring-1 ring-violet-500/30'
+            : 'bg-muted/30 hover:bg-muted/50'
+        "
+        @click="selectChannel(ch)"
       >
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
@@ -256,6 +306,86 @@ async function testChannel(id: number) {
             <Icon icon="lucide:trash-2" class="h-3.5 w-3.5" />
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Model capability management -->
+    <div v-if="selectedChannelId" class="mt-4 rounded-lg border border-border p-3">
+      <div class="mb-2 flex items-center justify-between">
+        <h4 class="text-xs font-medium text-muted-foreground">模型能力管理</h4>
+      </div>
+      <div v-if="channelModels.length" class="space-y-2">
+        <div
+          v-for="model in channelModels"
+          :key="model.id"
+          class="flex items-center gap-2 rounded bg-muted/20 p-2"
+        >
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm">{{ model.modelName }}</span>
+              <span
+                :class="[
+                  'inline-block h-1.5 w-1.5 rounded-full',
+                  model.enabled ? 'bg-green-500' : 'bg-neutral-500',
+                ]"
+              />
+            </div>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <button
+                v-for="cap in ALL_CAPS"
+                :key="cap.key"
+                class="rounded border px-2 py-0.5 text-[10px] transition-colors"
+                :class="
+                  model.capabilities.includes(cap.key)
+                    ? 'border-violet-500 bg-violet-500/20 text-violet-300'
+                    : 'border-muted text-muted-foreground'
+                "
+                @click.stop="toggleModelCap(model, cap.key)"
+              >
+                {{ cap.label }}
+              </button>
+            </div>
+          </div>
+          <button
+            class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+            :title="model.enabled ? '禁用' : '启用'"
+            @click.stop="toggleModelEnabled(model)"
+          >
+            <Icon :icon="model.enabled ? 'lucide:eye' : 'lucide:eye-off'" class="h-3.5 w-3.5" />
+          </button>
+          <button
+            class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-400"
+            title="删除"
+            @click.stop="removeModelFromChannel(model.id)"
+          >
+            <Icon icon="lucide:trash-2" class="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+      <div v-else class="py-4 text-center text-xs text-muted-foreground">暂无模型</div>
+      <div class="mt-2 flex gap-1.5">
+        <input
+          v-model="newCapModelName"
+          class="min-w-0 flex-1 rounded border border-input-border bg-input px-2 py-1 text-xs text-foreground outline-none focus:border-violet-500"
+          placeholder="添加模型名"
+          @keydown.enter.prevent="
+            if (newCapModelName.trim() && selectedChannelId) {
+              addModelToChannel(selectedChannelId, newCapModelName.trim());
+              newCapModelName = '';
+            }
+          "
+        />
+        <button
+          class="rounded px-2 py-1 text-xs text-violet-500 hover:bg-muted"
+          @click="
+            if (newCapModelName.trim() && selectedChannelId) {
+              addModelToChannel(selectedChannelId, newCapModelName.trim());
+              newCapModelName = '';
+            }
+          "
+        >
+          + 添加
+        </button>
       </div>
     </div>
 

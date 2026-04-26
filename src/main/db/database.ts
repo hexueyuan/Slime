@@ -37,9 +37,6 @@ CREATE TABLE IF NOT EXISTS groups_ (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
   balance_mode TEXT NOT NULL DEFAULT 'round_robin',
-  slot_category TEXT,
-  slot_tier TEXT,
-  slot_level TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

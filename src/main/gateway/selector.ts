@@ -18,7 +18,7 @@ export interface CapabilitySelector {
 
 export function createCapabilitySelector(
   db: BetterSqlite3.Database,
-  circuit: CircuitBreaker,
+  _circuit: CircuitBreaker,
 ): CapabilitySelector {
   function getEnabledModels(): Model[] {
     return modelDao.listModels(db).filter((m) => m.enabled);

@@ -8,6 +8,7 @@ import type {
   GatewayApiKey,
   DailyStats,
   RelayLog,
+  Model,
 } from "@shared/types/gateway";
 
 export const useGatewayStore = defineStore("gateway", () => {
@@ -26,6 +27,7 @@ export const useGatewayStore = defineStore("gateway", () => {
     cost: 0,
   });
   const recentLogs = ref<RelayLog[]>([]);
+  const models = ref<Map<number, Model[]>>(new Map());
   const activeTab = ref<"channels" | "groups" | "apikeys" | "logs">("channels");
   const statsRange = ref<"today" | "7d" | "30d">("today");
 
@@ -61,6 +63,11 @@ export const useGatewayStore = defineStore("gateway", () => {
     recentLogs.value = await gw.getRecentLogs(50, 0);
   }
 
+  async function loadModelsByChannel(channelId: number) {
+    const list = await gw.listModelsByChannel(channelId);
+    models.value = new Map(models.value).set(channelId, list);
+  }
+
   async function loadAll() {
     await Promise.all([loadChannels(), loadGroups(), loadApiKeys(), loadStats()]);
   }
@@ -72,6 +79,7 @@ export const useGatewayStore = defineStore("gateway", () => {
     apiKeys,
     stats,
     recentLogs,
+    models,
     activeTab,
     statsRange,
     cacheRate,
@@ -81,6 +89,7 @@ export const useGatewayStore = defineStore("gateway", () => {
     loadApiKeys,
     loadStats,
     loadRecentLogs,
+    loadModelsByChannel,
     loadAll,
   };
 });

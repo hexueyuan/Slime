@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
-import type { ChannelType } from "@shared/types/gateway";
+import type { ChannelType, Capability } from "@shared/types/gateway";
 import WelcomeStep from "./WelcomeStep.vue";
 import AddChannelStep from "./AddChannelStep.vue";
+import CapabilityTagStep from "./CapabilityTagStep.vue";
 import IdentityCompleteStep from "./IdentityCompleteStep.vue";
 
 const emit = defineEmits<{ done: [] }>();
 
 const currentStep = ref(0);
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 const config = reactive({
   channelType: "anthropic" as ChannelType,
@@ -16,6 +17,7 @@ const config = reactive({
   baseUrl: "https://api.anthropic.com",
   apiKey: "",
   selectedModels: [] as string[],
+  modelCapabilities: {} as Record<string, Capability[]>,
   userName: "",
 });
 
@@ -68,12 +70,13 @@ async function complete() {
       groupMap.set(model, group.id);
     }
 
-    // 4. Register models with default capabilities
+    // 4. Register models with user-tagged capabilities
     for (const model of config.selectedModels) {
+      const caps = config.modelCapabilities[model] || [];
       await gw("createModel", {
         channelId: channel.id,
         modelName: model,
-        capabilities: ["reasoning", "chat"],
+        capabilities: caps,
         priority: 0,
         enabled: true,
       });
@@ -125,8 +128,16 @@ async function complete() {
       @prev="prev"
     />
 
-    <IdentityCompleteStep
+    <CapabilityTagStep
       v-else-if="currentStep === 2"
+      v-model:model-capabilities="config.modelCapabilities"
+      :selected-models="config.selectedModels"
+      @next="next"
+      @prev="prev"
+    />
+
+    <IdentityCompleteStep
+      v-else-if="currentStep === 3"
       v-model:user-name="config.userName"
       :channel-type="config.channelType"
       :channel-name="config.channelName"
