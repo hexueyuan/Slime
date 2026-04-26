@@ -1,16 +1,16 @@
 <script setup lang="ts">
 defineProps<{
-  verifying: boolean
-  result: { success: boolean; error?: string; modelName?: string } | null
-  skipped: boolean
-}>()
+  verifying: boolean;
+  result: { success: boolean; error?: string; modelName?: string } | null;
+  skipped: boolean;
+}>();
 
 defineEmits<{
-  next: []
-  prev: []
-  skip: []
-  retry: []
-}>()
+  next: [];
+  prev: [];
+  skip: [];
+  retry: [];
+}>();
 </script>
 
 <template>

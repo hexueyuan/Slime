@@ -13,6 +13,7 @@
 ### Task 1: Add `verifyApiKey` to AgentPresenter (backend)
 
 **Files:**
+
 - Modify: `src/shared/types/presenters/agent.presenter.d.ts`
 - Modify: `src/main/presenter/agentPresenter.ts`
 - Test: `test/main/agentPresenter.test.ts`
@@ -142,6 +143,7 @@ git commit -m "feat(agent): add verifyApiKey for onboarding API validation"
 ### Task 2: OnboardingWizard container + WelcomeStep
 
 **Files:**
+
 - Create: `src/renderer/src/components/onboarding/OnboardingWizard.vue`
 - Create: `src/renderer/src/components/onboarding/WelcomeStep.vue`
 - Test: `test/renderer/components/OnboardingWizard.test.ts`
@@ -157,7 +159,7 @@ import { setActivePinia, createPinia } from "pinia";
 
 const mockInvoke = vi.fn(async () => null);
 
-;(window as any).electron = {
+(window as any).electron = {
   ipcRenderer: {
     invoke: mockInvoke,
     on: vi.fn(() => vi.fn()),
@@ -389,6 +391,7 @@ git commit -m "feat(onboarding): add OnboardingWizard container and WelcomeStep"
 ### Task 3: ProviderStep
 
 **Files:**
+
 - Create: `src/renderer/src/components/onboarding/ProviderStep.vue`
 - Modify: `src/renderer/src/components/onboarding/OnboardingWizard.vue` (replace placeholder)
 
@@ -520,7 +523,10 @@ Replace the `currentStep === 1` placeholder div with:
   v-model:api-key="config.apiKey"
   v-model:model="config.model"
   v-model:base-url="config.baseUrl"
-  @next="currentStep = 2; runVerify()"
+  @next="
+    currentStep = 2;
+    runVerify();
+  "
   @prev="prev"
 />
 ```
@@ -543,6 +549,7 @@ git commit -m "feat(onboarding): add ProviderStep with AI config form"
 ### Task 4: VerifyStep
 
 **Files:**
+
 - Create: `src/renderer/src/components/onboarding/VerifyStep.vue`
 - Modify: `src/renderer/src/components/onboarding/OnboardingWizard.vue` (replace placeholder)
 - Test: `test/renderer/components/VerifyStep.test.ts`
@@ -556,7 +563,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import { setActivePinia, createPinia } from "pinia";
 
-;(window as any).electron = {
+(window as any).electron = {
   ipcRenderer: {
     invoke: vi.fn(async () => null),
     on: vi.fn(() => vi.fn()),
@@ -730,8 +737,14 @@ Replace the `currentStep === 2` placeholder div with:
   :result="verifyResult"
   :skipped="skippedVerify"
   @next="next"
-  @prev="prev(); verifyResult = null"
-  @skip="skippedVerify = true; next()"
+  @prev="
+    prev();
+    verifyResult = null;
+  "
+  @skip="
+    skippedVerify = true;
+    next();
+  "
   @retry="runVerify()"
 />
 ```
@@ -754,6 +767,7 @@ git commit -m "feat(onboarding): add VerifyStep with loading/success/error state
 ### Task 5: IdentityStep
 
 **Files:**
+
 - Create: `src/renderer/src/components/onboarding/IdentityStep.vue`
 - Modify: `src/renderer/src/components/onboarding/OnboardingWizard.vue` (replace placeholder)
 - Test: `test/renderer/components/IdentityStep.test.ts`
@@ -767,7 +781,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import { setActivePinia, createPinia } from "pinia";
 
-;(window as any).electron = {
+(window as any).electron = {
   ipcRenderer: {
     invoke: vi.fn(async () => null),
     on: vi.fn(() => vi.fn()),
@@ -936,6 +950,7 @@ git commit -m "feat(onboarding): add IdentityStep with username validation"
 ### Task 6: CompleteStep
 
 **Files:**
+
 - Create: `src/renderer/src/components/onboarding/CompleteStep.vue`
 - Modify: `src/renderer/src/components/onboarding/OnboardingWizard.vue` (replace placeholder)
 
@@ -994,9 +1009,7 @@ defineEmits<{ complete: [] }>();
       </div>
       <div class="flex items-center justify-between py-2.5">
         <span class="text-sm text-slate-500">版本号格式</span>
-        <span class="text-sm font-medium text-slate-200"
-          >egg-v0.1-{{ userName || "dev" }}.N</span
-        >
+        <span class="text-sm font-medium text-slate-200">egg-v0.1-{{ userName || "dev" }}.N</span>
       </div>
     </div>
 
@@ -1051,6 +1064,7 @@ git commit -m "feat(onboarding): add CompleteStep with config summary"
 ### Task 7: Integrate OnboardingWizard into EvolutionCenter
 
 **Files:**
+
 - Modify: `src/renderer/src/views/EvolutionCenter.vue`
 - Test: `test/renderer/views/EvolutionCenter.test.ts`
 
@@ -1065,7 +1079,7 @@ import { setActivePinia, createPinia } from "pinia";
 
 const mockInvoke = vi.fn();
 
-;(window as any).electron = {
+(window as any).electron = {
   ipcRenderer: {
     invoke: mockInvoke,
     on: vi.fn(() => vi.fn()),
@@ -1099,7 +1113,11 @@ describe("EvolutionCenter", () => {
       if (channel === "presenter:call" && args[0] === "configPresenter" && args[1] === "get") {
         if (args[2] === "app.onboarded") return true;
       }
-      if (channel === "presenter:call" && args[0] === "workspacePresenter" && args[1] === "needsInit") {
+      if (
+        channel === "presenter:call" &&
+        args[0] === "workspacePresenter" &&
+        args[1] === "needsInit"
+      ) {
         return false;
       }
       if (channel === "recovery:check") return null;
@@ -1205,6 +1223,7 @@ git commit -m "feat(onboarding): integrate wizard into EvolutionCenter render ch
 ### Task 8: Format, lint, typecheck, build
 
 **Files:**
+
 - All modified files
 
 - [ ] **Step 1: Run formatter**
@@ -1222,6 +1241,7 @@ Fix any issues.
 Run: `pnpm run typecheck`
 
 Fix any type errors. Watch for:
+
 - `IAgentPresenter` interface — ensure `verifyApiKey` matches implementation
 - `usePresenter("agentPresenter")` proxy — `verifyApiKey` args must match interface
 
@@ -1249,6 +1269,7 @@ git commit -m "style: format and lint onboarding components"
 ### Task 9: Update documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 - [ ] **Step 1: Add Onboarding Wizard to architecture docs**

@@ -16,13 +16,13 @@ loading (null) → onboarding (未完成) → WorkspaceSetup (true) → main lay
 
 ## 向导步骤
 
-| # | 步骤名 | 组件 | 收集内容 | 逻辑 |
-|---|--------|------|---------|------|
-| 1 | 欢迎 | WelcomeStep | 无 | 介绍 Slime，"初始化配置"按钮 |
-| 2 | AI 配置 | ProviderStep | provider, apiKey, model, baseUrl | 表单输入，复用 ProviderSettings 字段逻辑 |
-| 3 | 验证 | VerifyStep | 无（自动） | 调用 verifyApiKey IPC 验证连通性 |
-| 4 | 用户标识 | IdentityStep | evolution.user | 输入用户名，实时预览版本号格式 |
-| 5 | 完成 | CompleteStep | 无 | 配置摘要确认，"进入 Slime"按钮 |
+| #   | 步骤名   | 组件         | 收集内容                         | 逻辑                                     |
+| --- | -------- | ------------ | -------------------------------- | ---------------------------------------- |
+| 1   | 欢迎     | WelcomeStep  | 无                               | 介绍 Slime，"初始化配置"按钮             |
+| 2   | AI 配置  | ProviderStep | provider, apiKey, model, baseUrl | 表单输入，复用 ProviderSettings 字段逻辑 |
+| 3   | 验证     | VerifyStep   | 无（自动）                       | 调用 verifyApiKey IPC 验证连通性         |
+| 4   | 用户标识 | IdentityStep | evolution.user                   | 输入用户名，实时预览版本号格式           |
+| 5   | 完成     | CompleteStep | 无                               | 配置摘要确认，"进入 Slime"按钮           |
 
 ## 视觉风格
 
@@ -59,11 +59,11 @@ src/renderer/src/components/onboarding/
 
 ```typescript
 interface OnboardingConfig {
-  provider: 'anthropic' | 'openai'
-  apiKey: string
-  model: string
-  baseUrl: string
-  userName: string
+  provider: "anthropic" | "openai";
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  userName: string;
 }
 ```
 
@@ -141,13 +141,13 @@ async verifyApiKey(
 
 ## 错误处理
 
-| 场景 | 处理 |
-|------|------|
-| API Key 为空 | 按钮 disabled，提示"请输入 API Key" |
-| 用户标识为空 | 按钮 disabled，提示"请输入用户标识" |
-| API 验证失败 | VerifyStep 显示错误信息 + "返回修改"按钮，不阻断流程 |
-| API 验证超时 | 显示超时错误，允许重试或跳过 |
-| 用户标识含特殊字符 | 前端校验，只允许 `[a-zA-Z0-9_-]`，实时反馈 |
+| 场景               | 处理                                                 |
+| ------------------ | ---------------------------------------------------- |
+| API Key 为空       | 按钮 disabled，提示"请输入 API Key"                  |
+| 用户标识为空       | 按钮 disabled，提示"请输入用户标识"                  |
+| API 验证失败       | VerifyStep 显示错误信息 + "返回修改"按钮，不阻断流程 |
+| API 验证超时       | 显示超时错误，允许重试或跳过                         |
+| 用户标识含特殊字符 | 前端校验，只允许 `[a-zA-Z0-9_-]`，实时反馈           |
 
 ## 验证步骤失败态
 

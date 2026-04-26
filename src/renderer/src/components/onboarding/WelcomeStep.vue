@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineEmits<{ next: [] }>()
+defineEmits<{ next: [] }>();
 </script>
 
 <template>

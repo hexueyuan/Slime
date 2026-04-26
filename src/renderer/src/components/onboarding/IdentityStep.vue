@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch } from "vue";
 
 const props = defineProps<{
-  userName: string
-}>()
+  userName: string;
+}>();
 
 const emit = defineEmits<{
-  'update:userName': [value: string]
-  next: []
-  prev: []
-}>()
+  "update:userName": [value: string];
+  next: [];
+  prev: [];
+}>();
 
-const localName = ref(props.userName)
-const VALID_PATTERN = /^[a-zA-Z0-9_-]+$/
+const localName = ref(props.userName);
+const VALID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 const validationError = computed(() => {
-  if (!localName.value) return null
-  if (!VALID_PATTERN.test(localName.value)) return '只允许字母、数字、下划线和连字符'
-  return null
-})
+  if (!localName.value) return null;
+  if (!VALID_PATTERN.test(localName.value)) return "只允许字母、数字、下划线和连字符";
+  return null;
+});
 
-const canNext = computed(() => localName.value.trim().length > 0 && !validationError.value)
+const canNext = computed(() => localName.value.trim().length > 0 && !validationError.value);
 
-watch(localName, (val) => emit('update:userName', val))
+watch(localName, (val) => emit("update:userName", val));
 </script>
 
 <template>

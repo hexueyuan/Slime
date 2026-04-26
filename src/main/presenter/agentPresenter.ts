@@ -476,7 +476,7 @@ export class AgentPresenter implements IAgentPresenter {
       await generateText({
         model: aiModel,
         messages: [{ role: "user", content: "hi" }],
-        maxTokens: 1,
+        maxOutputTokens: 1,
       });
       return { success: true, modelName: model };
     } catch (err) {

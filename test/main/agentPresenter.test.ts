@@ -148,7 +148,7 @@ describe("AgentPresenter", () => {
       expect(mockGenerateText).toHaveBeenCalledWith(
         expect.objectContaining({
           messages: [{ role: "user", content: "hi" }],
-          maxTokens: 1,
+          maxOutputTokens: 1,
         }),
       );
     });

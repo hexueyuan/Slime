@@ -1,69 +1,69 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useConfigStore } from '@/stores/config'
-import { usePresenter } from '@/composables/usePresenter'
-import WelcomeStep from './WelcomeStep.vue'
-import ProviderStep from './ProviderStep.vue'
-import VerifyStep from './VerifyStep.vue'
-import IdentityStep from './IdentityStep.vue'
-import CompleteStep from './CompleteStep.vue'
+import { ref, reactive } from "vue";
+import { useConfigStore } from "@/stores/config";
+import { usePresenter } from "@/composables/usePresenter";
+import WelcomeStep from "./WelcomeStep.vue";
+import ProviderStep from "./ProviderStep.vue";
+import VerifyStep from "./VerifyStep.vue";
+import IdentityStep from "./IdentityStep.vue";
+import CompleteStep from "./CompleteStep.vue";
 
-const emit = defineEmits<{ done: [] }>()
-const configStore = useConfigStore()
-const agentPresenter = usePresenter('agentPresenter')
+const emit = defineEmits<{ done: [] }>();
+const configStore = useConfigStore();
+const agentPresenter = usePresenter("agentPresenter");
 
-const currentStep = ref(0)
-const TOTAL_STEPS = 5
+const currentStep = ref(0);
+const TOTAL_STEPS = 5;
 
 const config = reactive({
-  provider: 'anthropic' as 'anthropic' | 'openai',
-  apiKey: '',
-  model: '',
-  baseUrl: '',
-  userName: '',
-})
+  provider: "anthropic" as "anthropic" | "openai",
+  apiKey: "",
+  model: "",
+  baseUrl: "",
+  userName: "",
+});
 
-const verifyResult = ref<{ success: boolean; error?: string; modelName?: string } | null>(null)
-const verifying = ref(false)
-const skippedVerify = ref(false)
+const verifyResult = ref<{ success: boolean; error?: string; modelName?: string } | null>(null);
+const verifying = ref(false);
+const skippedVerify = ref(false);
 
 function next() {
-  if (currentStep.value < TOTAL_STEPS - 1) currentStep.value++
+  if (currentStep.value < TOTAL_STEPS - 1) currentStep.value++;
 }
 
 function prev() {
-  if (currentStep.value > 0) currentStep.value--
+  if (currentStep.value > 0) currentStep.value--;
 }
 
 async function runVerify() {
-  verifying.value = true
-  verifyResult.value = null
+  verifying.value = true;
+  verifyResult.value = null;
   try {
     const result = (await agentPresenter.verifyApiKey(
       config.provider,
       config.apiKey,
       config.model || defaultModel(),
       config.baseUrl || undefined,
-    )) as { success: boolean; error?: string; modelName?: string }
-    verifyResult.value = result
+    )) as { success: boolean; error?: string; modelName?: string };
+    verifyResult.value = result;
   } catch {
-    verifyResult.value = { success: false, error: '验证请求失败' }
+    verifyResult.value = { success: false, error: "验证请求失败" };
   }
-  verifying.value = false
+  verifying.value = false;
 }
 
 function defaultModel(): string {
-  return config.provider === 'anthropic' ? 'claude-sonnet-4-20250514' : 'gpt-4o-mini'
+  return config.provider === "anthropic" ? "claude-sonnet-4-20250514" : "gpt-4o-mini";
 }
 
 async function complete() {
-  await configStore.set('ai.provider', config.provider)
-  await configStore.set('ai.apiKey', config.apiKey)
-  await configStore.set('ai.model', config.model || defaultModel())
-  if (config.baseUrl) await configStore.set('ai.baseUrl', config.baseUrl)
-  await configStore.set('evolution.user', config.userName || 'dev')
-  await configStore.set('app.onboarded', true)
-  emit('done')
+  await configStore.set("ai.provider", config.provider);
+  await configStore.set("ai.apiKey", config.apiKey);
+  await configStore.set("ai.model", config.model || defaultModel());
+  if (config.baseUrl) await configStore.set("ai.baseUrl", config.baseUrl);
+  await configStore.set("evolution.user", config.userName || "dev");
+  await configStore.set("app.onboarded", true);
+  emit("done");
 }
 </script>
 

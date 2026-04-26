@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps<{
-  provider: 'anthropic' | 'openai'
-  apiKey: string
-  model: string
-  baseUrl: string
-}>()
+  provider: "anthropic" | "openai";
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+}>();
 
 const emit = defineEmits<{
-  'update:provider': [value: 'anthropic' | 'openai']
-  'update:apiKey': [value: string]
-  'update:model': [value: string]
-  'update:baseUrl': [value: string]
-  next: []
-  prev: []
-}>()
+  "update:provider": [value: "anthropic" | "openai"];
+  "update:apiKey": [value: string];
+  "update:model": [value: string];
+  "update:baseUrl": [value: string];
+  next: [];
+  prev: [];
+}>();
 
-const canNext = computed(() => props.apiKey.trim().length > 0)
+const canNext = computed(() => props.apiKey.trim().length > 0);
 </script>
 
 <template>

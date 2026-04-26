@@ -1,12 +1,12 @@
 <script setup lang="ts">
 defineProps<{
-  provider: string
-  model: string
-  userName: string
-  skippedVerify: boolean
-}>()
+  provider: string;
+  model: string;
+  userName: string;
+  skippedVerify: boolean;
+}>();
 
-defineEmits<{ complete: [] }>()
+defineEmits<{ complete: [] }>();
 </script>
 
 <template>
@@ -35,20 +35,20 @@ defineEmits<{ complete: [] }>()
       <div class="flex items-center justify-between border-b border-violet-500/10 py-2.5">
         <span class="text-sm text-slate-500">AI Provider</span>
         <span class="text-sm font-medium text-slate-200">{{
-          provider === 'anthropic' ? 'Anthropic' : 'OpenAI'
+          provider === "anthropic" ? "Anthropic" : "OpenAI"
         }}</span>
       </div>
       <div class="flex items-center justify-between border-b border-violet-500/10 py-2.5">
         <span class="text-sm text-slate-500">Model</span>
-        <span class="text-sm font-medium text-slate-200">{{ model || '(默认)' }}</span>
+        <span class="text-sm font-medium text-slate-200">{{ model || "(默认)" }}</span>
       </div>
       <div class="flex items-center justify-between border-b border-violet-500/10 py-2.5">
         <span class="text-sm text-slate-500">用户标识</span>
-        <span class="text-sm font-medium text-violet-400">{{ userName || 'dev' }}</span>
+        <span class="text-sm font-medium text-violet-400">{{ userName || "dev" }}</span>
       </div>
       <div class="flex items-center justify-between py-2.5">
         <span class="text-sm text-slate-500">版本号格式</span>
-        <span class="text-sm font-medium text-slate-200">egg-v0.1-{{ userName || 'dev' }}.N</span>
+        <span class="text-sm font-medium text-slate-200">egg-v0.1-{{ userName || "dev" }}.N</span>
       </div>
     </div>
 
