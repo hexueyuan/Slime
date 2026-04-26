@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue'
 import { useConfigStore } from '@/stores/config'
 import { usePresenter } from '@/composables/usePresenter'
 import WelcomeStep from './WelcomeStep.vue'
+import ProviderStep from './ProviderStep.vue'
 
 const emit = defineEmits<{ done: [] }>()
 const configStore = useConfigStore()
@@ -87,9 +88,18 @@ async function complete() {
     <!-- Step content -->
     <WelcomeStep v-if="currentStep === 0" @next="next" />
 
-    <!-- Placeholder divs for steps 1-4, will be replaced as components are added -->
-    <div v-else-if="currentStep === 1" data-testid="provider-step">
-    </div>
+    <ProviderStep
+      v-else-if="currentStep === 1"
+      v-model:provider="config.provider"
+      v-model:api-key="config.apiKey"
+      v-model:model="config.model"
+      v-model:base-url="config.baseUrl"
+      @next="
+        currentStep = 2;
+        runVerify();
+      "
+      @prev="prev"
+    />
     <div v-else-if="currentStep === 2" data-testid="verify-step">
     </div>
     <div v-else-if="currentStep === 3" data-testid="identity-step">
