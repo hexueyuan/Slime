@@ -13,6 +13,7 @@
 ### Task 1: Add `EvolutionContext` type and `sessionId` field
 
 **Files:**
+
 - Modify: `src/shared/types/evolution.d.ts`
 - Modify: `src/shared/types/presenters/evolution.presenter.d.ts`
 - Modify: `src/main/presenter/evolutionPresenter.ts`
@@ -24,13 +25,13 @@ In `src/shared/types/evolution.d.ts`, add at the end of the file:
 
 ```typescript
 export interface EvolutionContext {
-  stage: EvolutionStage
-  description: string
-  plan?: EvolutionPlan
-  startCommit: string
-  sessionId: string
-  createdAt: string
-  updatedAt: string
+  stage: EvolutionStage;
+  description: string;
+  plan?: EvolutionPlan;
+  startCommit: string;
+  sessionId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
@@ -145,11 +146,11 @@ In `src/main/presenter/toolPresenter.ts`, update the `evolution_start` tool's ex
 In `test/main/evolutionPresenter.test.ts`, add:
 
 ```typescript
-  it("startEvolution stores sessionId", async () => {
-    const result = await evo.startEvolution("test", "session-123");
-    expect(result).toBe(true);
-    expect(evo.getStatus().sessionId).toBe("session-123");
-  });
+it("startEvolution stores sessionId", async () => {
+  const result = await evo.startEvolution("test", "session-123");
+  expect(result).toBe(true);
+  expect(evo.getStatus().sessionId).toBe("session-123");
+});
 ```
 
 - [ ] **Step 6: Run tests**
@@ -169,6 +170,7 @@ git commit -m "feat(evolution): add EvolutionContext type and sessionId field"
 ### Task 2: Implement `saveState`, `loadState`, `clearState`
 
 **Files:**
+
 - Modify: `src/main/presenter/evolutionPresenter.ts`
 - Test: `test/main/evolutionPresenter.test.ts`
 
@@ -204,73 +206,73 @@ import { readFile, writeFile, readdir, unlink } from "fs/promises";
 Add tests:
 
 ```typescript
-  // --- State persistence tests ---
+// --- State persistence tests ---
 
-  it("saveState writes context.json after startEvolution", async () => {
-    vi.mocked(writeFile).mockResolvedValue(undefined);
-    await evo.startEvolution("test change", "sess-1");
+it("saveState writes context.json after startEvolution", async () => {
+  vi.mocked(writeFile).mockResolvedValue(undefined);
+  await evo.startEvolution("test change", "sess-1");
 
-    // setStage("discuss") triggers saveState
-    const writeCalls = vi.mocked(writeFile).mock.calls;
-    const contextCall = writeCalls.find((c) => (c[0] as string).includes("context.json"));
-    expect(contextCall).toBeDefined();
-    const saved = JSON.parse(contextCall![1] as string);
-    expect(saved.stage).toBe("discuss");
-    expect(saved.description).toBe("test change");
-    expect(saved.sessionId).toBe("sess-1");
-  });
+  // setStage("discuss") triggers saveState
+  const writeCalls = vi.mocked(writeFile).mock.calls;
+  const contextCall = writeCalls.find((c) => (c[0] as string).includes("context.json"));
+  expect(contextCall).toBeDefined();
+  const saved = JSON.parse(contextCall![1] as string);
+  expect(saved.stage).toBe("discuss");
+  expect(saved.description).toBe("test change");
+  expect(saved.sessionId).toBe("sess-1");
+});
 
-  it("saveState updates context.json after submitPlan", async () => {
-    vi.mocked(writeFile).mockResolvedValue(undefined);
-    await evo.startEvolution("test", "sess-1");
-    vi.mocked(writeFile).mockClear();
+it("saveState updates context.json after submitPlan", async () => {
+  vi.mocked(writeFile).mockResolvedValue(undefined);
+  await evo.startEvolution("test", "sess-1");
+  vi.mocked(writeFile).mockClear();
 
-    evo.submitPlan({ scope: ["a.ts"], changes: ["modify a"] });
+  evo.submitPlan({ scope: ["a.ts"], changes: ["modify a"] });
 
-    const writeCalls = vi.mocked(writeFile).mock.calls;
-    const contextCall = writeCalls.find((c) => (c[0] as string).includes("context.json"));
-    expect(contextCall).toBeDefined();
-    const saved = JSON.parse(contextCall![1] as string);
-    expect(saved.stage).toBe("coding");
-    expect(saved.plan).toEqual({ scope: ["a.ts"], changes: ["modify a"] });
-  });
+  const writeCalls = vi.mocked(writeFile).mock.calls;
+  const contextCall = writeCalls.find((c) => (c[0] as string).includes("context.json"));
+  expect(contextCall).toBeDefined();
+  const saved = JSON.parse(contextCall![1] as string);
+  expect(saved.stage).toBe("coding");
+  expect(saved.plan).toEqual({ scope: ["a.ts"], changes: ["modify a"] });
+});
 
-  it("clearState deletes context.json on reset", async () => {
-    vi.mocked(writeFile).mockResolvedValue(undefined);
-    vi.mocked(unlink).mockResolvedValue(undefined);
-    await evo.startEvolution("test", "sess-1");
-    await evo.cancel();
+it("clearState deletes context.json on reset", async () => {
+  vi.mocked(writeFile).mockResolvedValue(undefined);
+  vi.mocked(unlink).mockResolvedValue(undefined);
+  await evo.startEvolution("test", "sess-1");
+  await evo.cancel();
 
-    expect(unlink).toHaveBeenCalledWith("/tmp/test-state/context.json");
-  });
+  expect(unlink).toHaveBeenCalledWith("/tmp/test-state/context.json");
+});
 
-  it("loadState returns parsed context when file exists", async () => {
-    const context = {
-      stage: "coding",
-      description: "test",
-      startCommit: "abc123",
-      sessionId: "sess-1",
-      createdAt: "2026-04-26T00:00:00.000Z",
-      updatedAt: "2026-04-26T00:00:00.000Z",
-    };
-    vi.mocked(readFile).mockResolvedValue(JSON.stringify(context));
+it("loadState returns parsed context when file exists", async () => {
+  const context = {
+    stage: "coding",
+    description: "test",
+    startCommit: "abc123",
+    sessionId: "sess-1",
+    createdAt: "2026-04-26T00:00:00.000Z",
+    updatedAt: "2026-04-26T00:00:00.000Z",
+  };
+  vi.mocked(readFile).mockResolvedValue(JSON.stringify(context));
 
-    const result = await evo.restoreState();
-    expect(result).not.toBeNull();
-    expect(result!.stage).toBe("coding");
-    expect(result!.sessionId).toBe("sess-1");
-    expect(evo.getStatus().stage).toBe("coding");
-  });
+  const result = await evo.restoreState();
+  expect(result).not.toBeNull();
+  expect(result!.stage).toBe("coding");
+  expect(result!.sessionId).toBe("sess-1");
+  expect(evo.getStatus().stage).toBe("coding");
+});
 
-  it("loadState returns null and cleans up when file is corrupted", async () => {
-    vi.mocked(readFile).mockResolvedValue("not valid json{{{");
-    vi.mocked(unlink).mockResolvedValue(undefined);
+it("loadState returns null and cleans up when file is corrupted", async () => {
+  vi.mocked(readFile).mockResolvedValue("not valid json{{{");
+  vi.mocked(unlink).mockResolvedValue(undefined);
 
-    const result = await evo.restoreState();
-    expect(result).toBeNull();
-    expect(unlink).toHaveBeenCalledWith("/tmp/test-state/context.json");
-    expect(evo.getStatus().stage).toBe("idle");
-  });
+  const result = await evo.restoreState();
+  expect(result).toBeNull();
+  expect(unlink).toHaveBeenCalledWith("/tmp/test-state/context.json");
+  expect(evo.getStatus().stage).toBe("idle");
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -436,6 +438,7 @@ git commit -m "feat(evolution): implement state persistence saveState/loadState/
 ### Task 3: Implement startup recovery in Presenter.init()
 
 **Files:**
+
 - Modify: `src/main/presenter/index.ts`
 - Modify: `src/main/index.ts`
 - Modify: `src/shared/events.ts`
@@ -629,7 +632,7 @@ In `src/main/presenter/index.ts`, change `init`:
 In `src/main/index.ts`, await init:
 
 ```typescript
-  await presenter.init();
+await presenter.init();
 ```
 
 (It's already in an async function `bootstrap()`, so this is safe.)
@@ -669,7 +672,10 @@ ipcMain.handle("recovery:continue", async (_event, sessionId: string) => {
     // Auto-trigger agent to continue coding
     await p.agentPresenter.chat(
       sessionId,
-      { text: "Evolution task interrupted by app restart. Check current code state and continue completing the evolution task.", files: [] },
+      {
+        text: "Evolution task interrupted by app restart. Check current code state and continue completing the evolution task.",
+        files: [],
+      },
       { hidden: true },
     );
   }
@@ -702,6 +708,7 @@ git commit -m "feat(evolution): add startup recovery logic with IPC handlers"
 ### Task 4: Renderer recovery UI
 
 **Files:**
+
 - Modify: `src/renderer/src/views/EvolutionCenter.vue`
 - Modify: `src/renderer/src/stores/evolution.ts`
 - Modify: `src/renderer/src/stores/session.ts`
@@ -743,45 +750,45 @@ export const useSessionStore = defineStore("session", () => {
 In `src/renderer/src/stores/evolution.ts`, add:
 
 ```typescript
-  const recoveryContext = ref<{
-    stage: string
-    description: string
-    sessionId: string
-  } | null>(null);
+const recoveryContext = ref<{
+  stage: string;
+  description: string;
+  sessionId: string;
+} | null>(null);
 
-  function setRecovery(ctx: { stage: string; description: string; sessionId: string } | null) {
-    recoveryContext.value = ctx;
-  }
+function setRecovery(ctx: { stage: string; description: string; sessionId: string } | null) {
+  recoveryContext.value = ctx;
+}
 ```
 
 Update the return:
 
 ```typescript
-  return {
-    stage,
-    completedTag,
-    completedSummary,
-    rollbackInProgress,
-    rollbackTag,
-    recoveryContext,
-    setStage,
-    setCompleted,
-    setRecovery,
-    reset,
-  };
+return {
+  stage,
+  completedTag,
+  completedSummary,
+  rollbackInProgress,
+  rollbackTag,
+  recoveryContext,
+  setStage,
+  setCompleted,
+  setRecovery,
+  reset,
+};
 ```
 
 Update `reset()` to also clear recovery:
 
 ```typescript
-  function reset() {
-    stage.value = "idle";
-    completedTag.value = null;
-    completedSummary.value = null;
-    rollbackInProgress.value = false;
-    rollbackTag.value = null;
-    recoveryContext.value = null;
-  }
+function reset() {
+  stage.value = "idle";
+  completedTag.value = null;
+  completedSummary.value = null;
+  rollbackInProgress.value = false;
+  rollbackTag.value = null;
+  recoveryContext.value = null;
+}
 ```
 
 - [ ] **Step 3: Add recovery check in EvolutionCenter and render recovery banner**
@@ -802,9 +809,9 @@ const sessionStore = useSessionStore();
 // Check for pending recovery
 onMounted(async () => {
   const recovery = (await window.electron.ipcRenderer.invoke("recovery:check")) as {
-    stage: string
-    description: string
-    sessionId: string
+    stage: string;
+    description: string;
+    sessionId: string;
   } | null;
   if (recovery && recovery.stage !== "idle") {
     evolutionStore.setRecovery(recovery);
@@ -830,32 +837,32 @@ async function onRecoveryAbandon() {
 In `<template>`, add the recovery banner inside the evolution view, right after `<EvolutionStatusBar />`:
 
 ```html
-          <EvolutionStatusBar />
-          <!-- Recovery banner -->
-          <div
-            v-if="evolutionStore.recoveryContext"
-            class="mx-4 mt-2 flex items-center justify-between rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3"
-          >
-            <div class="text-sm">
-              <span class="text-violet-400">检测到未完成的进化任务：</span>
-              <span class="text-foreground">「{{ evolutionStore.recoveryContext.description }}」</span>
-              <span class="ml-2 text-muted-foreground">({{ evolutionStore.recoveryContext.stage }})</span>
-            </div>
-            <div class="flex gap-2">
-              <button
-                class="rounded px-3 py-1 text-xs bg-violet-600 text-white hover:bg-violet-500 transition-colors"
-                @click="onRecoveryContinue"
-              >
-                继续进化
-              </button>
-              <button
-                class="rounded px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                @click="onRecoveryAbandon"
-              >
-                放弃并回滚
-              </button>
-            </div>
-          </div>
+<EvolutionStatusBar />
+<!-- Recovery banner -->
+<div
+  v-if="evolutionStore.recoveryContext"
+  class="mx-4 mt-2 flex items-center justify-between rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3"
+>
+  <div class="text-sm">
+    <span class="text-violet-400">检测到未完成的进化任务：</span>
+    <span class="text-foreground">「{{ evolutionStore.recoveryContext.description }}」</span>
+    <span class="ml-2 text-muted-foreground">({{ evolutionStore.recoveryContext.stage }})</span>
+  </div>
+  <div class="flex gap-2">
+    <button
+      class="rounded px-3 py-1 text-xs bg-violet-600 text-white hover:bg-violet-500 transition-colors"
+      @click="onRecoveryContinue"
+    >
+      继续进化
+    </button>
+    <button
+      class="rounded px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      @click="onRecoveryAbandon"
+    >
+      放弃并回滚
+    </button>
+  </div>
+</div>
 ```
 
 - [ ] **Step 4: Run typecheck**
@@ -875,6 +882,7 @@ git commit -m "feat(renderer): add recovery banner UI and session switching"
 ### Task 5: Integration test and format/lint
 
 **Files:**
+
 - Modify: `test/main/evolutionRecovery.test.ts`
 
 - [ ] **Step 1: Add integration-style recovery test**
@@ -882,40 +890,40 @@ git commit -m "feat(renderer): add recovery banner UI and session switching"
 In `test/main/evolutionRecovery.test.ts`, add:
 
 ```typescript
-  it("full persistence round-trip: start → save → restore → cancel", async () => {
-    const writeFile = (await import("fs/promises")).writeFile;
-    const readFileMock = vi.mocked(readFile);
+it("full persistence round-trip: start → save → restore → cancel", async () => {
+  const writeFile = (await import("fs/promises")).writeFile;
+  const readFileMock = vi.mocked(readFile);
 
-    // Start evolution → triggers saveState
-    vi.mocked(writeFile).mockResolvedValue(undefined);
-    await evo.startEvolution("add feature", "sess-99");
-    evo.submitPlan({ scope: ["x.ts"], changes: ["add x"] });
-    expect(evo.getStatus().stage).toBe("coding");
+  // Start evolution → triggers saveState
+  vi.mocked(writeFile).mockResolvedValue(undefined);
+  await evo.startEvolution("add feature", "sess-99");
+  evo.submitPlan({ scope: ["x.ts"], changes: ["add x"] });
+  expect(evo.getStatus().stage).toBe("coding");
 
-    // Simulate restart: create new EvolutionPresenter and restore
-    const evo2 = new EvolutionPresenter(git, mockConfig());
-    const savedContext = {
-      stage: "coding",
-      description: "add feature",
-      plan: { scope: ["x.ts"], changes: ["add x"] },
-      startCommit: "abc123",
-      sessionId: "sess-99",
-      createdAt: "2026-04-26T00:00:00.000Z",
-      updatedAt: "2026-04-26T00:00:00.000Z",
-    };
-    readFileMock.mockResolvedValue(JSON.stringify(savedContext));
+  // Simulate restart: create new EvolutionPresenter and restore
+  const evo2 = new EvolutionPresenter(git, mockConfig());
+  const savedContext = {
+    stage: "coding",
+    description: "add feature",
+    plan: { scope: ["x.ts"], changes: ["add x"] },
+    startCommit: "abc123",
+    sessionId: "sess-99",
+    createdAt: "2026-04-26T00:00:00.000Z",
+    updatedAt: "2026-04-26T00:00:00.000Z",
+  };
+  readFileMock.mockResolvedValue(JSON.stringify(savedContext));
 
-    const restored = await evo2.restoreState();
-    expect(restored).not.toBeNull();
-    expect(evo2.getStatus().stage).toBe("coding");
-    expect(evo2.getStatus().description).toBe("add feature");
-    expect(evo2.getStatus().sessionId).toBe("sess-99");
+  const restored = await evo2.restoreState();
+  expect(restored).not.toBeNull();
+  expect(evo2.getStatus().stage).toBe("coding");
+  expect(evo2.getStatus().description).toBe("add feature");
+  expect(evo2.getStatus().sessionId).toBe("sess-99");
 
-    // User chooses abandon
-    await evo2.cancel();
-    expect(evo2.getStatus().stage).toBe("idle");
-    expect(git.rollbackToRef).toHaveBeenCalledWith("abc123");
-  });
+  // User chooses abandon
+  await evo2.cancel();
+  expect(evo2.getStatus().stage).toBe("idle");
+  expect(git.rollbackToRef).toHaveBeenCalledWith("abc123");
+});
 ```
 
 - [ ] **Step 2: Run all tests**
@@ -945,6 +953,7 @@ git commit -m "test(evolution): add persistence round-trip integration test"
 ### Task 6: Update AGENTS.md and Obsidian task tracker
 
 **Files:**
+
 - Modify: `docs/AGENTS.md` (the project CLAUDE.md references this as the architecture doc)
 
 - [ ] **Step 1: Update AGENTS.md with state persistence info**
@@ -953,6 +962,7 @@ In `docs/AGENTS.md`, under the `### Evolution Workflow` section, add:
 
 ```markdown
 ### State Persistence & Recovery
+
 - `context.json` at `paths.contextFile` (`{userData}/.slime/state/context.json`) stores active evolution state
 - Saved on every `setStage()` (non-idle) and `submitPlan()`; cleared on `reset()`
 - `restoreState()` called in `Presenter.init()` — restores EvolutionPresenter fields without emitting events

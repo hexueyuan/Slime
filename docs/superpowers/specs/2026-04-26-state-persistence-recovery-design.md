@@ -8,13 +8,13 @@ Persist EvolutionPresenter's core state to `context.json` so that interrupted ev
 
 ```typescript
 interface EvolutionContext {
-  stage: EvolutionStage          // current phase (discuss|coding|applying)
-  description: string            // user's evolution request
-  plan?: EvolutionPlan           // from discuss phase (coding+ only)
-  startCommit: string            // git commit hash at evolution start
-  sessionId: string              // associated chat session ID
-  createdAt: string              // ISO timestamp
-  updatedAt: string              // ISO timestamp
+  stage: EvolutionStage; // current phase (discuss|coding|applying)
+  description: string; // user's evolution request
+  plan?: EvolutionPlan; // from discuss phase (coding+ only)
+  startCommit: string; // git commit hash at evolution start
+  sessionId: string; // associated chat session ID
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
 }
 ```
 
@@ -32,11 +32,11 @@ interface EvolutionContext {
 
 ### Trigger points
 
-| Event | Action |
-|-------|--------|
-| `setStage(stage)` where stage != idle | `saveState()` |
-| `submitPlan(plan)` | `saveState()` |
-| `reset()` | `clearState()` |
+| Event                                 | Action         |
+| ------------------------------------- | -------------- |
+| `setStage(stage)` where stage != idle | `saveState()`  |
+| `submitPlan(plan)`                    | `saveState()`  |
+| `reset()`                             | `clearState()` |
 
 ### API changes
 
@@ -50,12 +50,14 @@ interface EvolutionContext {
 ### Two-phase recovery
 
 **Phase 1 — Main process** (`Presenter.init()`):
+
 - Call `evolutionPresenter.restoreState()`
 - Restores internal fields (stage, description, plan, startCommit, sessionId)
 - Does NOT emit STAGE_CHANGED event (renderer not ready yet)
 - Stores result in `this.pendingRecovery`
 
 **Phase 2 — Renderer request**:
+
 - `EvolutionCenter.vue` onMounted calls `evolutionPresenter.getStatus()`
 - If stage != idle, main process pushes recovery InteractionContent via contentPresenter
 - Reuses existing ask_user interaction panel (no new component)
@@ -74,11 +76,11 @@ Options:
 
 ### Per-stage recovery strategy
 
-| Stage at recovery | Strategy |
-|-------------------|----------|
-| **discuss** | Restore state + switch to saved sessionId. User continues conversation normally. |
-| **coding** | Restore state + switch to sessionId + auto-trigger `agentPresenter.chat(sessionId, resumePrompt, { hidden: true })` |
-| **applying** | Same as coding (applying is very brief, almost never interrupted) |
+| Stage at recovery | Strategy                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **discuss**       | Restore state + switch to saved sessionId. User continues conversation normally.                                    |
+| **coding**        | Restore state + switch to sessionId + auto-trigger `agentPresenter.chat(sessionId, resumePrompt, { hidden: true })` |
+| **applying**      | Same as coding (applying is very brief, almost never interrupted)                                                   |
 
 Resume prompt for coding: `"Evolution task interrupted by app restart. Check current code state and continue completing the evolution task."`
 
@@ -90,13 +92,13 @@ Resume prompt for coding: `"Evolution task interrupted by app restart. Check cur
 
 ## Edge Cases
 
-| Scenario | Handling |
-|----------|----------|
-| context.json corrupted | `loadState()` catches, deletes file, normal startup |
+| Scenario                     | Handling                                                |
+| ---------------------------- | ------------------------------------------------------- |
+| context.json corrupted       | `loadState()` catches, deletes file, normal startup     |
 | startCommit no longer exists | Validate with `git cat-file -t`, force clear if invalid |
-| sessionId's session deleted | Check existence, create new session if missing |
-| applying phase interrupted | Treat as coding, agent checks state |
-| rollbackInProgress crash | Not persisted, user re-decides after restart |
+| sessionId's session deleted  | Check existence, create new session if missing          |
+| applying phase interrupted   | Treat as coding, agent checks state                     |
+| rollbackInProgress crash     | Not persisted, user re-decides after restart            |
 
 ## Test Plan
 
