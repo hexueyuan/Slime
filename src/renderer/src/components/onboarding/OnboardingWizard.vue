@@ -4,6 +4,7 @@ import { useConfigStore } from '@/stores/config'
 import { usePresenter } from '@/composables/usePresenter'
 import WelcomeStep from './WelcomeStep.vue'
 import ProviderStep from './ProviderStep.vue'
+import VerifyStep from './VerifyStep.vue'
 
 const emit = defineEmits<{ done: [] }>()
 const configStore = useConfigStore()
@@ -100,8 +101,22 @@ async function complete() {
       "
       @prev="prev"
     />
-    <div v-else-if="currentStep === 2" data-testid="verify-step">
-    </div>
+    <VerifyStep
+      v-else-if="currentStep === 2"
+      :verifying="verifying"
+      :result="verifyResult"
+      :skipped="skippedVerify"
+      @next="next"
+      @prev="
+        prev();
+        verifyResult = null;
+      "
+      @skip="
+        skippedVerify = true;
+        next();
+      "
+      @retry="runVerify()"
+    />
     <div v-else-if="currentStep === 3" data-testid="identity-step">
     </div>
     <div v-else-if="currentStep === 4" data-testid="complete-step">
