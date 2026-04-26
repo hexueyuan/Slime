@@ -524,4 +524,36 @@ describe("EvolutionPresenter", () => {
       expect(result).toContain("Slime.app");
     });
   });
+
+  describe("runPackage", () => {
+    it("executes pnpm run build:mac and returns success", async () => {
+      (execFile as any).mockImplementation(
+        (_cmd: string, _args: string[], _opts: any, cb: Function) => {
+          cb(null, "build output", "");
+        },
+      );
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      const result = await (evo as any).runPackage();
+      expect(result.success).toBe(true);
+      expect(execFile).toHaveBeenCalledWith(
+        "pnpm",
+        ["run", "build:mac"],
+        expect.objectContaining({ timeout: 600_000 }),
+        expect.any(Function),
+      );
+    });
+
+    it("returns error on build failure", async () => {
+      (execFile as any).mockImplementation(
+        (_cmd: string, _args: string[], _opts: any, cb: Function) => {
+          const err = Object.assign(new Error("build failed"), { code: 1, stderr: "error output" });
+          cb(err, "", "error output");
+        },
+      );
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      const result = await (evo as any).runPackage();
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("error output");
+    });
+  });
 });

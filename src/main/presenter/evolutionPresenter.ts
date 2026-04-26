@@ -278,29 +278,46 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     return null;
   }
 
+  private async runPackage(): Promise<{ success: boolean; error?: string }> {
+    const cwd = paths.effectiveProjectRoot;
+    const MAX_OUTPUT = 2000;
+
+    logger.info("Running electron-builder package");
+    eventBus.sendToRenderer(EVOLUTION_EVENTS.APPLY_PROGRESS, {
+      step: "packaging",
+      message: "正在打包应用...",
+    });
+
+    const result = await this.execCommand("pnpm", ["run", "build:mac"], cwd, 600_000);
+    if (result.exitCode !== 0) {
+      const output = (result.stderr || result.stdout).slice(-MAX_OUTPUT);
+      logger.warn("Package build failed", { exitCode: result.exitCode });
+      return { success: false, error: `build:mac failed:\n${output}` };
+    }
+
+    logger.info("Package build completed");
+    return { success: true };
+  }
+
   private execCommand(
     cmd: string,
     args: string[],
     cwd: string,
+    timeout = 300_000,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     return new Promise((resolve) => {
-      execFile(
-        cmd,
-        args,
-        { cwd, timeout: 300_000, maxBuffer: 2 * 1024 * 1024 },
-        (err, stdout, stderr) => {
-          if (err) {
-            const e = err as any;
-            resolve({
-              stdout: (stdout as string) || e.stdout || "",
-              stderr: (stderr as string) || e.stderr || "",
-              exitCode: e.code ?? 1,
-            });
-          } else {
-            resolve({ stdout: stdout as string, stderr: stderr as string, exitCode: 0 });
-          }
-        },
-      );
+      execFile(cmd, args, { cwd, timeout, maxBuffer: 2 * 1024 * 1024 }, (err, stdout, stderr) => {
+        if (err) {
+          const e = err as any;
+          resolve({
+            stdout: (stdout as string) || e.stdout || "",
+            stderr: (stderr as string) || e.stderr || "",
+            exitCode: e.code ?? 1,
+          });
+        } else {
+          resolve({ stdout: stdout as string, stderr: stderr as string, exitCode: 0 });
+        }
+      });
     });
   }
 
