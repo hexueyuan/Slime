@@ -111,6 +111,7 @@ watch(
 );
 
 async function save() {
+  if (!form.value.name.trim()) return;
   const items = selectedItems.value.map((item, i) => ({
     channelId: item.channelId,
     modelName: item.modelName,
@@ -118,22 +119,25 @@ async function save() {
     weight: 1,
   }));
 
-  if (props.group) {
-    await gw.updateGroup(props.group.id, {
-      name: form.value.name,
-      balanceMode: form.value.balanceMode,
-    });
-    await gw.setGroupItems(props.group.id, items);
-  } else {
-    const g = await gw.createGroup({
-      name: form.value.name,
-      balanceMode: form.value.balanceMode,
-    });
-    await gw.setGroupItems(g.id, items);
+  try {
+    if (props.group) {
+      await gw.updateGroup(props.group.id, {
+        name: form.value.name,
+        balanceMode: form.value.balanceMode,
+      });
+      await gw.setGroupItems(props.group.id, items);
+    } else {
+      const g = await gw.createGroup({
+        name: form.value.name,
+        balanceMode: form.value.balanceMode,
+      });
+      await gw.setGroupItems(g.id, items);
+    }
+    emit("saved");
+    emit("update:open", false);
+  } catch {
+    // keep dialog open on failure
   }
-
-  emit("saved");
-  emit("update:open", false);
 }
 
 function close() {
