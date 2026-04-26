@@ -126,10 +126,12 @@ async function save() {
   const baseUrls = form.value.baseUrl ? [form.value.baseUrl] : [defaultUrlForType.value];
   const nonEmptyKeys = form.value.keys.filter((k) => k.trim());
 
+  let channelId: number;
+
   if (editingChannel.value) {
     // Update
-    const id = editingChannel.value.id;
-    await gw.updateChannel(id, {
+    channelId = editingChannel.value.id;
+    await gw.updateChannel(channelId, {
       name: form.value.name,
       type: form.value.type,
       baseUrls,
@@ -139,12 +141,12 @@ async function save() {
       weight: form.value.weight,
     });
     // Sync keys: remove all, re-add
-    const existing = store.channelKeys.get(id) ?? [];
+    const existing = store.channelKeys.get(channelId) ?? [];
     for (const ek of existing) {
       await gw.removeChannelKey(ek.id);
     }
     for (const k of nonEmptyKeys) {
-      await gw.addChannelKey(id, k);
+      await gw.addChannelKey(channelId, k);
     }
   } else {
     // Create
@@ -157,13 +159,32 @@ async function save() {
       priority: form.value.priority,
       weight: form.value.weight,
     });
+    channelId = ch.id;
     for (const k of nonEmptyKeys) {
       await gw.addChannelKey(ch.id, k);
     }
   }
 
+  // Sync models table: ensure each model in the list has a record
+  const existingModels = await gw.listModelsByChannel(channelId);
+  const existingNames = new Set(existingModels.map((m: any) => m.modelName));
+  for (const modelName of form.value.models) {
+    if (!existingNames.has(modelName)) {
+      await gw.createModel({
+        channelId,
+        modelName,
+        capabilities: [],
+        priority: 0,
+        enabled: true,
+      });
+    }
+  }
+
   showEditor.value = false;
   await store.loadChannels();
+  if (selectedChannelId.value === channelId) {
+    await store.loadModelsByChannel(channelId);
+  }
 }
 
 async function deleteChannel(id: number) {
