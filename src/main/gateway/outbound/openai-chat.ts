@@ -137,7 +137,8 @@ export function createOpenAIChatOutbound(): OutboundAdapter {
   return {
     async send(request, config) {
       const body = toOpenAIRequest({ ...request, stream: false });
-      const url = `${config.baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
+      const base = config.baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+      const url = `${base}/v1/chat/completions`;
       const res = await httpRequest(url, {
         method: "POST",
         headers: {
@@ -157,7 +158,8 @@ export function createOpenAIChatOutbound(): OutboundAdapter {
 
     async *sendStream(request, config) {
       const body = toOpenAIRequest({ ...request, stream: true });
-      const url = `${config.baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
+      const base = config.baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+      const url = `${base}/v1/chat/completions`;
       const res = await httpRequest(url, {
         method: "POST",
         headers: {

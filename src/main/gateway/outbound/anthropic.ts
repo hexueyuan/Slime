@@ -98,7 +98,8 @@ export function createAnthropicOutbound(): OutboundAdapter {
   return {
     async send(request, config) {
       const body = toAnthropicRequest({ ...request, stream: false });
-      const url = `${config.baseUrl.replace(/\/$/, "")}/v1/messages`;
+      const base = config.baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+      const url = `${base}/v1/messages`;
       const res = await httpRequest(url, {
         method: "POST",
         headers: {
@@ -119,7 +120,8 @@ export function createAnthropicOutbound(): OutboundAdapter {
 
     async *sendStream(request, config) {
       const body = toAnthropicRequest({ ...request, stream: true });
-      const url = `${config.baseUrl.replace(/\/$/, "")}/v1/messages`;
+      const base = config.baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+      const url = `${base}/v1/messages`;
       const res = await httpRequest(url, {
         method: "POST",
         headers: {
