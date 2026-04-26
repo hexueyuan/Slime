@@ -24,6 +24,7 @@ ALTER TABLE relay_logs ADD COLUMN response_body TEXT;
 **类型**：`RelayLog` 接口新增 `requestBody?: string` / `responseBody?: string`。
 
 **DAO**：
+
 - `getRecentLogs()` SELECT 显式列举字段，排除 body
 - 新增 `getLogDetail(db, id): RelayLog | undefined` 按 ID 查完整日志（含 body）
 - `insertLogs()` 写入新字段
@@ -33,10 +34,12 @@ ALTER TABLE relay_logs ADD COLUMN response_body TEXT;
 **StatsCallback** 扩展 `requestBody?: string` / `responseBody?: string`。
 
 **非流式 `relay()`**：
+
 - 请求：函数入口持有 InternalRequest，直接序列化
 - 响应：成功时持有 InternalResponse，序列化传入 callback；失败时 undefined
 
 **流式 `relayStream()`**：
+
 - 请求：同上
 - 响应：wrappedStream 中额外累积文本 content（从 chunk delta 拼接），流结束后构造简化 InternalResponse 序列化
 - 流失败时 undefined
@@ -48,10 +51,12 @@ ALTER TABLE relay_logs ADD COLUMN response_body TEXT;
 ### UI 层
 
 **LogTab 改造**：
+
 - 点击日志行打开右侧 Sheet 抽屉（shadcn/vue `Sheet`, `side="right"`, 宽 ~50vw）
 - 移除现有 toggleExpand 内嵌面板
 
 **抽屉布局**：
+
 - 顶部：元数据摘要（模型、渠道、tokens、费用、耗时、状态）
 - 错误区：仅 error 时显示红色错误块
 - 内容区：请求/响应 tab 切换
@@ -67,13 +72,13 @@ ALTER TABLE relay_logs ADD COLUMN response_body TEXT;
 
 ## 改动文件清单
 
-| 文件 | 变更 |
-|------|------|
-| `src/main/db/database.ts` | DDL 新增 request_body / response_body 列 |
-| `src/main/db/models/logDao.ts` | getRecentLogs 排除 body、新增 getLogDetail、insertLogs 写入 body |
-| `src/shared/types/gateway.d.ts` | RelayLog 新增 requestBody / responseBody |
-| `src/shared/types/presenters/gateway.presenter.d.ts` | 新增 getLogDetail 方法 |
-| `src/main/gateway/relay.ts` | StatsCallback 扩展、relay/relayStream 采集 body、过滤逻辑 |
-| `src/main/gateway/stats.ts` | StatsCollector.record 接收 body 字段 |
-| `src/main/presenter/gatewayPresenter.ts` | onStats 透传 body、暴露 getLogDetail |
-| `src/renderer/src/components/gateway/LogTab.vue` | 移除 expand、新增 Sheet 抽屉 + 详情加载 |
+| 文件                                                 | 变更                                                             |
+| ---------------------------------------------------- | ---------------------------------------------------------------- |
+| `src/main/db/database.ts`                            | DDL 新增 request_body / response_body 列                         |
+| `src/main/db/models/logDao.ts`                       | getRecentLogs 排除 body、新增 getLogDetail、insertLogs 写入 body |
+| `src/shared/types/gateway.d.ts`                      | RelayLog 新增 requestBody / responseBody                         |
+| `src/shared/types/presenters/gateway.presenter.d.ts` | 新增 getLogDetail 方法                                           |
+| `src/main/gateway/relay.ts`                          | StatsCallback 扩展、relay/relayStream 采集 body、过滤逻辑        |
+| `src/main/gateway/stats.ts`                          | StatsCollector.record 接收 body 字段                             |
+| `src/main/presenter/gatewayPresenter.ts`             | onStats 透传 body、暴露 getLogDetail                             |
+| `src/renderer/src/components/gateway/LogTab.vue`     | 移除 expand、新增 Sheet 抽屉 + 详情加载                          |
