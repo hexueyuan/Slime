@@ -10,7 +10,14 @@ vi.mock("@/utils", () => ({
 }));
 
 vi.mock("electron", () => ({
-  app: { isPackaged: false },
+  app: {
+    isPackaged: false,
+    getAppPath: vi.fn().mockReturnValue("/tmp/test"),
+    getPath: vi.fn().mockReturnValue("/tmp"),
+    exit: vi.fn(),
+    relaunch: vi.fn(),
+    quit: vi.fn(),
+  },
 }));
 
 vi.mock("fs/promises", () => ({
@@ -24,12 +31,20 @@ vi.mock("fs/promises", () => ({
 vi.mock("child_process", () => ({
   exec: vi.fn(),
   execFile: vi.fn(),
+  spawn: vi.fn().mockReturnValue({ unref: vi.fn() }),
+}));
+
+vi.mock("fs", () => ({
+  mkdirSync: vi.fn(),
+  writeFileSync: vi.fn(),
 }));
 
 import { EvolutionPresenter } from "../../src/main/presenter/evolutionPresenter";
 import { eventBus } from "@/eventbus";
 import { readFile, writeFile, readdir, unlink } from "fs/promises";
-import { execFile } from "child_process";
+import { execFile, spawn } from "child_process";
+import { mkdirSync, writeFileSync } from "fs";
+import { app } from "electron";
 
 function mockGit() {
   return {
@@ -554,6 +569,28 @@ describe("EvolutionPresenter", () => {
       const result = await (evo as any).runPackage();
       expect(result.success).toBe(false);
       expect(result.error).toContain("error output");
+    });
+  });
+
+  describe("selfReplace", () => {
+    it("writes swap script and spawns detached bash", () => {
+      vi.mocked(app.getPath).mockReturnValue("/tmp");
+      vi.mocked(spawn).mockReturnValue({ unref: vi.fn() } as any);
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      (evo as any).selfReplace("/Applications/Slime.app", "/tmp/dist/mac-arm64/Slime.app");
+
+      expect(mkdirSync).toHaveBeenCalled();
+      expect(writeFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("swap-update.sh"),
+        expect.stringContaining("rm -rf"),
+        expect.objectContaining({ mode: 0o755 }),
+      );
+      expect(spawn).toHaveBeenCalledWith(
+        "/bin/bash",
+        [expect.stringContaining("swap-update.sh")],
+        expect.objectContaining({ detached: true, stdio: "ignore" }),
+      );
+      expect(app.exit).toHaveBeenCalledWith(0);
     });
   });
 });

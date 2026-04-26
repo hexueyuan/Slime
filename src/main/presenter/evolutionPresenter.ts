@@ -299,6 +299,35 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     return { success: true };
   }
 
+  private selfReplace(currentAppPath: string, newAppPath: string): void {
+    const tempDir = join(app.getPath("temp"), `slime-update-${Date.now()}`);
+    const scriptPath = join(tempDir, "swap-update.sh");
+    const pid = process.pid;
+
+    const script = [
+      "#!/bin/bash",
+      `while kill -0 ${pid} 2>/dev/null; do sleep 0.5; done`,
+      `rm -rf "${currentAppPath}"`,
+      `cp -R "${newAppPath}" "${currentAppPath}"`,
+      `open "${currentAppPath}"`,
+    ].join("\n");
+
+    mkdirSync(tempDir, { recursive: true });
+    writeFileSync(scriptPath, script, { mode: 0o755 });
+
+    eventBus.sendToRenderer(EVOLUTION_EVENTS.APPLY_PROGRESS, {
+      step: "replacing",
+      message: "正在替换应用...",
+    });
+
+    const child = spawn("/bin/bash", [scriptPath], {
+      detached: true,
+      stdio: "ignore",
+    });
+    child.unref();
+    app.exit(0);
+  }
+
   private execCommand(
     cmd: string,
     args: string[],
