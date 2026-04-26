@@ -199,6 +199,68 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     app.quit();
   }
 
+  async applyEvolution(): Promise<void> {
+    if (this.stage !== "applying") return;
+
+    eventBus.sendToRenderer(EVOLUTION_EVENTS.APPLY_PROGRESS, {
+      step: "committing",
+      message: "正在提交变更...",
+    });
+
+    if (!app.isPackaged) {
+      logger.info("Dev mode: skipping package + replace, resetting");
+      this.reset();
+      eventBus.sendToRenderer(EVOLUTION_EVENTS.APPLY_PROGRESS, {
+        step: "committing",
+        message: "开发模式：进化已完成，代码变更已提交",
+      });
+      return;
+    }
+
+    const packageResult = await this.runPackage();
+    if (!packageResult.success) {
+      eventBus.sendToRenderer(EVOLUTION_EVENTS.APPLY_PROGRESS, {
+        step: "packaging",
+        error: packageResult.error,
+        message: "打包失败",
+      });
+      return;
+    }
+
+    const newApp = await this.findBuiltApp();
+    if (!newApp) {
+      eventBus.sendToRenderer(EVOLUTION_EVENTS.APPLY_PROGRESS, {
+        step: "packaging",
+        error: "未找到打包产物 (.app)",
+        message: "打包产物缺失",
+      });
+      return;
+    }
+
+    const currentApp = this.resolveAppBundlePath();
+    if (!currentApp) {
+      eventBus.sendToRenderer(EVOLUTION_EVENTS.APPLY_PROGRESS, {
+        step: "replacing",
+        error: "无法定位当前应用路径",
+        message: "替换失败",
+      });
+      return;
+    }
+
+    this.selfReplace(currentApp, newApp);
+  }
+
+  async retryPackage(): Promise<void> {
+    if (this.stage !== "applying") return;
+    await this.applyEvolution();
+  }
+
+  skipPackage(): void {
+    if (this.stage !== "applying") return;
+    logger.info("User skipped packaging, resetting");
+    this.reset();
+  }
+
   async runBuildVerification(): Promise<{ success: boolean; error?: string }> {
     const cwd = paths.effectiveProjectRoot;
     const MAX_OUTPUT = 2000;

@@ -40,6 +40,7 @@ vi.mock("fs", () => ({
 }));
 
 import { EvolutionPresenter } from "../../src/main/presenter/evolutionPresenter";
+import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { readFile, writeFile, readdir, unlink } from "fs/promises";
 import { execFile, spawn } from "child_process";
@@ -591,6 +592,58 @@ describe("EvolutionPresenter", () => {
         expect.objectContaining({ detached: true, stdio: "ignore" }),
       );
       expect(app.exit).toHaveBeenCalledWith(0);
+    });
+  });
+
+  describe("applyEvolution", () => {
+    it("in dev mode: resets to idle", async () => {
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      await evo.startEvolution("test", "s1");
+      evo.submitPlan({ scope: [], changes: [] });
+      await evo.completeEvolution("summary");
+      expect(evo.getStatus().stage).toBe("applying");
+
+      await evo.applyEvolution();
+
+      expect(evo.getStatus().stage).toBe("idle");
+      expect(eventBus.sendToRenderer).toHaveBeenCalledWith(
+        EVOLUTION_EVENTS.APPLY_PROGRESS,
+        expect.objectContaining({ step: "committing" }),
+      );
+    });
+
+    it("does nothing when not in applying stage", async () => {
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      await evo.applyEvolution();
+      // Should not throw, just return
+      expect(evo.getStatus().stage).toBe("idle");
+    });
+  });
+
+  describe("skipPackage", () => {
+    it("resets evolution to idle", async () => {
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      await evo.startEvolution("test");
+      evo.submitPlan({ scope: [], changes: [] });
+      await evo.completeEvolution("summary");
+      expect(evo.getStatus().stage).toBe("applying");
+
+      evo.skipPackage();
+      expect(evo.getStatus().stage).toBe("idle");
+    });
+
+    it("does nothing when not in applying stage", () => {
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      evo.skipPackage();
+      expect(evo.getStatus().stage).toBe("idle");
+    });
+  });
+
+  describe("retryPackage", () => {
+    it("does nothing when not in applying stage", async () => {
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      await evo.retryPackage();
+      expect(evo.getStatus().stage).toBe("idle");
     });
   });
 });
