@@ -495,4 +495,33 @@ describe("EvolutionPresenter", () => {
     expect(unlink).toHaveBeenCalledWith("/tmp/test-state/context.json");
     expect(evo.getStatus().stage).toBe("idle");
   });
+
+  // --- resolveAppBundlePath & findBuiltApp tests ---
+
+  describe("resolveAppBundlePath", () => {
+    it("returns null when app is not packaged", () => {
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      expect((evo as any).resolveAppBundlePath()).toBeNull();
+    });
+  });
+
+  describe("findBuiltApp", () => {
+    it("returns null when no .app found in dist", async () => {
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      const result = await (evo as any).findBuiltApp();
+      expect(result).toBeNull();
+    });
+
+    it("finds .app in mac-arm64 directory", async () => {
+      const { readdir } = await import("fs/promises");
+      (readdir as any).mockImplementation(async (dir: string) => {
+        if (dir.includes("mac-arm64")) return ["Slime.app"];
+        return [];
+      });
+      const evo = new EvolutionPresenter(mockGit(), mockConfig());
+      const result = await (evo as any).findBuiltApp();
+      expect(result).toContain("mac-arm64");
+      expect(result).toContain("Slime.app");
+    });
+  });
 });

@@ -16,7 +16,8 @@ import { logger, paths } from "@/utils";
 import { readFile, writeFile, mkdir, readdir, unlink } from "fs/promises";
 import { join } from "path";
 import { app } from "electron";
-import { execFile } from "child_process";
+import { execFile, spawn } from "child_process";
+import { mkdirSync, writeFileSync } from "fs";
 
 const CHANGELOG_FILE = "CHANGELOG.slime.md";
 
@@ -249,6 +250,32 @@ export class EvolutionPresenter implements IEvolutionPresenter {
       await this.clearState();
       return null;
     }
+  }
+
+  private resolveAppBundlePath(): string | null {
+    if (!app.isPackaged) return null;
+    let current = app.getAppPath();
+    while (current !== "/") {
+      if (current.endsWith(".app")) return current;
+      current = join(current, "..");
+    }
+    return null;
+  }
+
+  private async findBuiltApp(): Promise<string | null> {
+    const distDir = join(paths.effectiveProjectRoot, "dist");
+    const candidates = ["mac-arm64", "mac"];
+    for (const sub of candidates) {
+      const dir = join(distDir, sub);
+      try {
+        const entries = await readdir(dir);
+        const appEntry = entries.find((e) => e.endsWith(".app"));
+        if (appEntry) return join(dir, appEntry);
+      } catch {
+        // directory doesn't exist, try next
+      }
+    }
+    return null;
   }
 
   private execCommand(
