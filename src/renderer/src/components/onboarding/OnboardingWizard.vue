@@ -6,6 +6,7 @@ import WelcomeStep from './WelcomeStep.vue'
 import ProviderStep from './ProviderStep.vue'
 import VerifyStep from './VerifyStep.vue'
 import IdentityStep from './IdentityStep.vue'
+import CompleteStep from './CompleteStep.vue'
 
 const emit = defineEmits<{ done: [] }>()
 const configStore = useConfigStore()
@@ -124,7 +125,13 @@ async function complete() {
       @next="next"
       @prev="prev"
     />
-    <div v-else-if="currentStep === 4" data-testid="complete-step">
-    </div>
+    <CompleteStep
+      v-else-if="currentStep === 4"
+      :provider="config.provider"
+      :model="config.model"
+      :user-name="config.userName"
+      :skipped-verify="skippedVerify"
+      @complete="complete"
+    />
   </div>
 </template>
