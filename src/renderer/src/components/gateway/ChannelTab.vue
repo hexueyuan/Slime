@@ -190,6 +190,9 @@ async function save() {
 async function deleteChannel(id: number) {
   await gw.deleteChannel(id);
   await store.loadChannels();
+  if (selectedChannelId.value === id) {
+    selectedChannelId.value = null;
+  }
 }
 
 async function testChannel(id: number) {
@@ -242,6 +245,8 @@ const showAddModel = ref(false);
 const selectedChannelId = ref<number | null>(null);
 
 async function selectChannel(ch: Channel) {
+  showAddModel.value = false;
+  newCapModelName.value = "";
   selectedChannelId.value = ch.id;
   await store.loadModelsByChannel(ch.id);
 }
@@ -335,7 +340,7 @@ const newCapModelName = ref("");
             <div class="mt-1 text-[11px] text-muted-foreground">
               {{ ch.type }}
               <span class="ml-1">·</span>
-              <span class="ml-1">{{ (store.models.get(ch.id) ?? []).length }} 模型</span>
+              <span class="ml-1">{{ (ch.models ?? []).length }} 模型</span>
             </div>
           </div>
         </template>
@@ -502,6 +507,12 @@ const newCapModelName = ref("");
         class="flex min-w-0 flex-1 items-center justify-center text-sm text-muted-foreground"
       >
         暂无渠道
+      </div>
+      <div
+        v-else
+        class="flex min-w-0 flex-1 items-center justify-center text-sm text-muted-foreground"
+      >
+        选择一个渠道
       </div>
     </div>
 
