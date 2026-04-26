@@ -176,13 +176,24 @@ export function registerAnthropicInbound(
 
     let blockIndex = -1;
     let outputTokens = 0;
+    let activeBlockType: string | undefined;
+    let currentToolUseId: string | undefined;
+
+    function closeCurrentBlock() {
+      if (blockIndex >= 0 && activeBlockType) {
+        write("content_block_stop", { type: "content_block_stop", index: blockIndex });
+        activeBlockType = undefined;
+      }
+    }
 
     for await (const event of result.stream) {
       switch (event.type) {
         case "content_delta": {
           if (event.delta.type === "text") {
-            if (blockIndex < 0) {
-              blockIndex = 0;
+            if (activeBlockType !== "text") {
+              closeCurrentBlock();
+              blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
+              activeBlockType = "text";
               write("content_block_start", {
                 type: "content_block_start",
                 index: blockIndex,
@@ -195,21 +206,29 @@ export function registerAnthropicInbound(
               delta: { type: "text_delta", text: event.delta.text },
             });
           } else if (event.delta.type === "tool_use") {
-            blockIndex++;
-            write("content_block_start", {
-              type: "content_block_start",
-              index: blockIndex,
-              content_block: {
-                type: "tool_use",
-                id: event.delta.id,
-                name: event.delta.name,
-              },
-            });
-            write("content_block_delta", {
-              type: "content_block_delta",
-              index: blockIndex,
-              delta: { type: "input_json_delta", partial_json: event.delta.input_json_delta },
-            });
+            if (event.delta.id !== currentToolUseId) {
+              closeCurrentBlock();
+              blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
+              activeBlockType = "tool_use";
+              currentToolUseId = event.delta.id;
+              write("content_block_start", {
+                type: "content_block_start",
+                index: blockIndex,
+                content_block: {
+                  type: "tool_use",
+                  id: event.delta.id,
+                  name: event.delta.name,
+                  input: {},
+                },
+              });
+            }
+            if (event.delta.input_json_delta) {
+              write("content_block_delta", {
+                type: "content_block_delta",
+                index: blockIndex,
+                delta: { type: "input_json_delta", partial_json: event.delta.input_json_delta },
+              });
+            }
           }
           break;
         }
@@ -217,6 +236,7 @@ export function registerAnthropicInbound(
           outputTokens = event.usage.outputTokens;
           break;
         case "stop":
+          closeCurrentBlock();
           write("message_delta", {
             type: "message_delta",
             delta: { stop_reason: event.stopReason },
