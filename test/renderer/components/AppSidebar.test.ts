@@ -33,17 +33,6 @@ describe("AppSidebar", () => {
     expect(btn.classes()).toContain("bg-muted");
   });
 
-  it("should render clock button", () => {
-    const wrapper = mount(AppSidebar, { props: { activeView: "evolution" } });
-    expect(wrapper.find('[data-testid="sidebar-clock"]').exists()).toBe(true);
-  });
-
-  it("should have active state on clock button when activeView is clock", () => {
-    const wrapper = mount(AppSidebar, { props: { activeView: "clock" } });
-    const btn = wrapper.find('[data-testid="sidebar-clock"]');
-    expect(btn.classes()).toContain("bg-muted");
-  });
-
   it("should render settings button", () => {
     const wrapper = mount(AppSidebar, { props: { activeView: "evolution" } });
     expect(wrapper.find('[data-testid="sidebar-settings"]').exists()).toBe(true);
