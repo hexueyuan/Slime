@@ -7,7 +7,7 @@
   "main": "./out/main/index.js",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "dev": "electron-builder install-app-deps && electron-vite dev --watch",
+    "dev": "electron-rebuild -f -w better-sqlite3 && electron-vite dev --watch",
     "build": "pnpm run typecheck && electron-vite build",
     "build:unpack": "pnpm run build && electron-builder --dir",
     "build:mac": "pnpm run build && electron-builder --mac",
@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@electron/rebuild": "^4.0.4",
     "@iconify-json/lucide": "^1.2.99",
     "@iconify/vue": "^5.0.0",
     "@tailwindcss/vite": "^4.2.2",

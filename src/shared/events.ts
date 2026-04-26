@@ -44,3 +44,7 @@ export const CONTENT_EVENTS = {
   UPDATED: "content:updated",
   CLEARED: "content:cleared",
 } as const;
+
+export const GATEWAY_EVENTS = {
+  LOG_ADDED: "gateway:log-added",
+} as const;

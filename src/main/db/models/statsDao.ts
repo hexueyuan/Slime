@@ -68,10 +68,15 @@ export function getStatsRange(db: BetterSqlite3.Database, from: string, to: stri
       COALESCE(SUM(cache_read_tokens), 0) AS cache_read_tokens,
       COALESCE(SUM(cache_write_tokens), 0) AS cache_write_tokens,
       COALESCE(SUM(cost), 0) AS cost
-    FROM stats_daily
-    WHERE date >= ? AND date < ?
+    FROM (
+      SELECT requests, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost
+      FROM stats_daily WHERE date >= ? AND date < ?
+      UNION ALL
+      SELECT 1, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost
+      FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
+    )
   `)
-    .get(from, to) as Record<string, number>;
+    .get(from, to, from, to) as Record<string, number>;
 
   return {
     requests: row.requests,

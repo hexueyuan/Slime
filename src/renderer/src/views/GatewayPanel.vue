@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, watch } from "vue";
+import { onMounted, onUnmounted, watch } from "vue";
 import { useGatewayStore } from "@/stores/gateway";
+import { GATEWAY_EVENTS } from "@shared/events";
 import ChannelTab from "@/components/gateway/ChannelTab.vue";
 import GroupTab from "@/components/gateway/GroupTab.vue";
 import ApiKeyTab from "@/components/gateway/ApiKeyTab.vue";
@@ -13,6 +14,11 @@ watch(
   () => store.statsRange,
   () => store.loadStats(),
 );
+
+const cleanup = window.electron.ipcRenderer.on(GATEWAY_EVENTS.LOG_ADDED, () => {
+  store.loadStats();
+});
+onUnmounted(() => cleanup?.());
 
 const tabs = [
   { key: "channels" as const, label: "渠道" },
