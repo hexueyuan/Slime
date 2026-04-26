@@ -17,8 +17,8 @@ defineEmits<{ next: [] }>();
     <h1 class="text-xl font-semibold text-slate-200">欢迎来到 Slime</h1>
     <p class="max-w-[320px] text-center text-sm leading-relaxed text-slate-400">
       我是一个能够自我进化的软件生命体。<br />
-      通过 AI Agent，我可以理解你的需求，<br />
-      修改自己的代码，然后重生为更好的版本。
+      内置 LLM 网关统一管理多家 AI 服务，<br />
+      让我理解你的需求，自主迭代进化。
     </p>
     <button
       data-testid="next-btn"
@@ -26,7 +26,7 @@ defineEmits<{ next: [] }>();
       style="background: linear-gradient(135deg, #7c3aed, #a855f7)"
       @click="$emit('next')"
     >
-      初始化配置 →
+      配置网关 &rarr;
     </button>
   </div>
 </template>

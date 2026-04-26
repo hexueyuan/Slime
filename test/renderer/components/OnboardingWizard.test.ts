@@ -27,9 +27,9 @@ describe("OnboardingWizard", () => {
     expect(wrapper.find('[data-testid="welcome-step"]').exists()).toBe(true);
   });
 
-  it("navigates to ProviderStep when clicking next on WelcomeStep", async () => {
+  it("navigates to AddChannelStep when clicking next on WelcomeStep", async () => {
     const wrapper = mount(OnboardingWizard);
     await wrapper.find('[data-testid="next-btn"]').trigger("click");
-    expect(wrapper.find('[data-testid="provider-step"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="add-channel-step"]').exists()).toBe(true);
   });
 });

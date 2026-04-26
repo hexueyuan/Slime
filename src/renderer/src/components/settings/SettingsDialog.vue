@@ -9,7 +9,7 @@
       />
       <!-- Dialog -->
       <div
-        class="relative flex h-[400px] w-[600px] overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+        class="relative flex h-[480px] w-[640px] overflow-hidden rounded-lg border border-border bg-card shadow-xl"
       >
         <!-- Left nav -->
         <div class="flex w-48 shrink-0 flex-col border-r border-border bg-sidebar p-3">
@@ -19,12 +19,12 @@
             设置
           </h2>
           <button class="rounded-md bg-muted px-3 py-1.5 text-left text-sm text-foreground">
-            LLM Provider
+            网关
           </button>
         </div>
         <!-- Right content -->
         <div class="flex flex-1 flex-col overflow-y-auto p-5">
-          <ProviderSettings />
+          <GatewaySettings />
         </div>
       </div>
     </div>
@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from "vue";
-import ProviderSettings from "./ProviderSettings.vue";
+import GatewaySettings from "./GatewaySettings.vue";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();

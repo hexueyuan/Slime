@@ -17,19 +17,13 @@ vi.mock("@/eventbus", () => ({
   },
 }));
 
-// Mock Vercel AI SDK streamText & generateText
+// Mock Vercel AI SDK streamText
 const mockStreamText = vi.fn();
-const mockGenerateText = vi.fn();
 vi.mock("ai", () => ({
   streamText: (...args: unknown[]) => mockStreamText(...args),
-  generateText: (...args: unknown[]) => mockGenerateText(...args),
 }));
 
 // Mock provider
-vi.mock("@ai-sdk/openai", () => ({
-  createOpenAI: vi.fn(() => vi.fn(() => "mock-model")),
-}));
-
 vi.mock("@ai-sdk/anthropic", () => ({
   createAnthropic: vi.fn(() => vi.fn(() => "mock-model")),
 }));
@@ -56,6 +50,11 @@ describe("AgentPresenter", () => {
     clearContent: vi.fn(),
     getContent: vi.fn(),
   };
+  const mockGatewayPresenter = {
+    getPort: vi.fn(() => 8930),
+    getInternalKey: vi.fn(() => "sk-slime-test"),
+    resolveSlot: vi.fn(() => "test-model"),
+  };
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });
@@ -66,19 +65,13 @@ describe("AgentPresenter", () => {
       mockToolPresenter as any,
       mockEvolutionPresenter as any,
       mockContentPresenter as any,
+      mockGatewayPresenter as any,
     );
     mockSendToRenderer.mockClear();
-    mockGenerateText.mockClear();
-    // Set env vars for getConfig()
-    process.env.SLIME_AI_PROVIDER = "openai";
-    process.env.SLIME_AI_API_KEY = "test-key";
-    process.env.SLIME_AI_MODEL = "gpt-4o";
+    mockGatewayPresenter.resolveSlot.mockReturnValue("test-model");
   });
 
   afterEach(() => {
-    delete process.env.SLIME_AI_PROVIDER;
-    delete process.env.SLIME_AI_API_KEY;
-    delete process.env.SLIME_AI_MODEL;
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
@@ -137,29 +130,15 @@ describe("AgentPresenter", () => {
     expect(endCall).toBeDefined();
   });
 
-  describe("verifyApiKey", () => {
-    it("should return success when API call succeeds", async () => {
-      mockGenerateText.mockResolvedValue({ text: "hi" });
-      const result = await agent.verifyApiKey("anthropic", "sk-test", "claude-sonnet-4-20250514");
-      expect(result).toEqual({
-        success: true,
-        modelName: "claude-sonnet-4-20250514",
-      });
-      expect(mockGenerateText).toHaveBeenCalledWith(
-        expect.objectContaining({
-          messages: [{ role: "user", content: "hi" }],
-          maxOutputTokens: 1,
-        }),
-      );
-    });
+  describe("chat with no model configured", () => {
+    it("should emit error when resolveSlot returns undefined", async () => {
+      mockGatewayPresenter.resolveSlot.mockReturnValue(undefined);
+      const session = await sessionPresenter.createSession("test");
+      await agent.chat(session.id, { text: "hi", files: [] });
 
-    it("should return error when API call fails", async () => {
-      mockGenerateText.mockRejectedValue(new Error("Invalid API key"));
-      const result = await agent.verifyApiKey("openai", "bad-key", "gpt-4o");
-      expect(result).toEqual({
-        success: false,
-        error: "Invalid API key",
-      });
+      const errorCall = mockSendToRenderer.mock.calls.find((c) => c[0] === "stream:error");
+      expect(errorCall).toBeDefined();
+      expect(errorCall![2]).toContain("No model configured");
     });
   });
 });

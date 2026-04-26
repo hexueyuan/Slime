@@ -1,69 +1,117 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
-import { useConfigStore } from "@/stores/config";
-import { usePresenter } from "@/composables/usePresenter";
+import { ref, reactive, watch } from "vue";
+import type { ChannelType, ModelSlot } from "@shared/types/gateway";
 import WelcomeStep from "./WelcomeStep.vue";
-import ProviderStep from "./ProviderStep.vue";
-import VerifyStep from "./VerifyStep.vue";
-import IdentityStep from "./IdentityStep.vue";
-import CompleteStep from "./CompleteStep.vue";
+import AddChannelStep from "./AddChannelStep.vue";
+import SlotMappingStep from "./SlotMappingStep.vue";
+import IdentityCompleteStep from "./IdentityCompleteStep.vue";
 
 const emit = defineEmits<{ done: [] }>();
-const configStore = useConfigStore();
-const agentPresenter = usePresenter("agentPresenter");
 
 const currentStep = ref(0);
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 4;
 
 const config = reactive({
-  provider: "anthropic" as "anthropic" | "openai",
+  channelType: "anthropic" as ChannelType,
+  channelName: "Anthropic",
+  baseUrl: "https://api.anthropic.com",
   apiKey: "",
-  model: "",
-  baseUrl: "",
+  selectedModels: [] as string[],
+  slotMapping: {} as Record<string, string>,
   userName: "",
 });
 
-const verifyResult = ref<{ success: boolean; error?: string; modelName?: string } | null>(null);
-const verifying = ref(false);
-const skippedVerify = ref(false);
+// When only 1 model selected, auto-fill all slots
+watch(
+  () => config.selectedModels,
+  (models) => {
+    if (models.length === 1) {
+      config.slotMapping = {
+        reasoning_auto: models[0],
+        reasoning_lite: models[0],
+        reasoning_pro: models[0],
+        reasoning_max: models[0],
+        chat: models[0],
+      };
+    }
+  },
+);
 
 function next() {
   if (currentStep.value < TOTAL_STEPS - 1) currentStep.value++;
 }
-
 function prev() {
   if (currentStep.value > 0) currentStep.value--;
 }
 
-async function runVerify() {
-  verifying.value = true;
-  verifyResult.value = null;
-  try {
-    const result = (await agentPresenter.verifyApiKey(
-      config.provider,
-      config.apiKey,
-      config.model || defaultModel(),
-      config.baseUrl || undefined,
-    )) as { success: boolean; error?: string; modelName?: string };
-    verifyResult.value = result;
-  } catch {
-    verifyResult.value = { success: false, error: "验证请求失败" };
-  }
-  verifying.value = false;
-}
+const SLOT_MAP: Record<string, ModelSlot> = {
+  reasoning_auto: { category: "text", tier: "reasoning", level: "auto" },
+  reasoning_lite: { category: "text", tier: "reasoning", level: "lite" },
+  reasoning_pro: { category: "text", tier: "reasoning", level: "pro" },
+  reasoning_max: { category: "text", tier: "reasoning", level: "max" },
+  chat: { category: "text", tier: "chat" },
+};
 
-function defaultModel(): string {
-  return config.provider === "anthropic" ? "claude-sonnet-4-20250514" : "gpt-4o-mini";
-}
+const completing = ref(false);
 
 async function complete() {
-  await configStore.set("ai.provider", config.provider);
-  await configStore.set("ai.apiKey", config.apiKey);
-  await configStore.set("ai.model", config.model || defaultModel());
-  if (config.baseUrl) await configStore.set("ai.baseUrl", config.baseUrl);
-  await configStore.set("evolution.user", config.userName || "dev");
-  await configStore.set("app.onboarded", true);
-  emit("done");
+  completing.value = true;
+  try {
+    const invoke = window.electron.ipcRenderer.invoke;
+    const gw = (method: string, ...args: unknown[]) =>
+      invoke("presenter:call", "gatewayPresenter", method, ...args);
+    const cfg = (method: string, ...args: unknown[]) =>
+      invoke("presenter:call", "configPresenter", method, ...args);
+
+    // 1. Create channel
+    const channel = (await gw("createChannel", {
+      name: config.channelName,
+      type: config.channelType,
+      baseUrls: [config.baseUrl],
+      enabled: true,
+      priority: 0,
+      weight: 1,
+    })) as { id: number };
+
+    // 2. Add key
+    await gw("addChannelKey", channel.id, config.apiKey);
+
+    // 3. Create groups for selected models
+    const groupMap = new Map<string, number>();
+    for (const model of config.selectedModels) {
+      const group = (await gw("createGroup", {
+        name: model,
+        balanceMode: "failover",
+      })) as { id: number };
+      await gw("setGroupItems", group.id, [
+        {
+          channelId: channel.id,
+          modelName: model,
+          priority: 0,
+          weight: 1,
+        },
+      ]);
+      groupMap.set(model, group.id);
+    }
+
+    // 4. Assign slots
+    for (const [slotKey, modelName] of Object.entries(config.slotMapping)) {
+      if (!modelName) continue;
+      const groupId = groupMap.get(modelName);
+      const slot = SLOT_MAP[slotKey];
+      if (groupId && slot) {
+        await gw("updateGroup", groupId, { slot });
+      }
+    }
+
+    // 5. Save user + mark onboarded
+    await cfg("set", "evolution.user", config.userName || "dev");
+    await cfg("set", "app.onboarded", true);
+
+    emit("done");
+  } finally {
+    completing.value = false;
+  }
 }
 </script>
 
@@ -91,47 +139,34 @@ async function complete() {
     <!-- Step content -->
     <WelcomeStep v-if="currentStep === 0" @next="next" />
 
-    <ProviderStep
+    <AddChannelStep
       v-else-if="currentStep === 1"
-      v-model:provider="config.provider"
-      v-model:api-key="config.apiKey"
-      v-model:model="config.model"
+      v-model:channel-type="config.channelType"
+      v-model:channel-name="config.channelName"
       v-model:base-url="config.baseUrl"
-      @next="
-        currentStep = 2;
-        runVerify();
-      "
+      v-model:api-key="config.apiKey"
+      v-model:selected-models="config.selectedModels"
+      @next="next"
       @prev="prev"
     />
-    <VerifyStep
+
+    <SlotMappingStep
       v-else-if="currentStep === 2"
-      :verifying="verifying"
-      :result="verifyResult"
-      :skipped="skippedVerify"
+      v-model:slot-mapping="config.slotMapping"
+      :selected-models="config.selectedModels"
       @next="next"
-      @prev="
-        prev();
-        verifyResult = null;
-      "
-      @skip="
-        skippedVerify = true;
-        next();
-      "
-      @retry="runVerify()"
+      @prev="prev"
     />
-    <IdentityStep
+
+    <IdentityCompleteStep
       v-else-if="currentStep === 3"
       v-model:user-name="config.userName"
-      @next="next"
-      @prev="prev"
-    />
-    <CompleteStep
-      v-else-if="currentStep === 4"
-      :provider="config.provider"
-      :model="config.model"
-      :user-name="config.userName"
-      :skipped-verify="skippedVerify"
+      :channel-type="config.channelType"
+      :channel-name="config.channelName"
+      :selected-models="config.selectedModels"
+      :slot-mapping="config.slotMapping"
       @complete="complete"
+      @prev="prev"
     />
   </div>
 </template>

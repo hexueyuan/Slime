@@ -10,6 +10,7 @@ import { ToolPresenter } from "./toolPresenter";
 import { EvolutionPresenter } from "./evolutionPresenter";
 import { WorkspacePresenter } from "./workspacePresenter";
 import { ContentPresenter } from "./contentPresenter";
+import { GatewayPresenter } from "./gatewayPresenter";
 import { buildRollbackPrompt } from "./rollbackPrompt";
 import type { EvolutionContext } from "@shared/types/evolution";
 import { EVOLUTION_EVENTS } from "@shared/events";
@@ -27,6 +28,7 @@ export class Presenter implements IPresenter {
   gitPresenter: GitPresenter;
   contentPresenter: ContentPresenter;
   workspacePresenter: WorkspacePresenter;
+  gatewayPresenter: GatewayPresenter;
 
   evolutionPresenter: EvolutionPresenter;
 
@@ -49,12 +51,14 @@ export class Presenter implements IPresenter {
       this.contentPresenter,
       this.evolutionPresenter,
     );
+    this.gatewayPresenter = new GatewayPresenter();
     this.agentPresenter = new AgentPresenter(
       this.sessionPresenter,
       this.configPresenter,
       this.toolPresenter,
       this.evolutionPresenter,
       this.contentPresenter,
+      this.gatewayPresenter,
     );
   }
 
@@ -80,6 +84,7 @@ export class Presenter implements IPresenter {
     "contentPresenter",
     "workspacePresenter",
     "evolutionPresenter",
+    "gatewayPresenter",
   ]);
 
   async init(): Promise<void> {
@@ -87,6 +92,8 @@ export class Presenter implements IPresenter {
     if (this.pendingRecovery) {
       logger.info("Pending evolution recovery", { stage: this.pendingRecovery.stage });
     }
+    const port = (await this.configPresenter.get("gateway.port")) as number | null;
+    await this.gatewayPresenter.init(port ?? undefined);
     logger.info("Presenter initialized");
   }
 
@@ -105,11 +112,13 @@ export class Presenter implements IPresenter {
       this.toolPresenter,
       this.evolutionPresenter,
       this.contentPresenter,
+      this.gatewayPresenter,
     );
     logger.info("AgentPresenter reset");
   }
 
   async destroy(): Promise<void> {
+    await this.gatewayPresenter.destroy();
     logger.info("Presenter destroyed");
   }
 }

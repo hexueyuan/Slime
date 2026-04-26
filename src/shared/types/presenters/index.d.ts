@@ -7,6 +7,7 @@ import type { IGitPresenter } from "./git.presenter";
 import type { IWorkspacePresenter } from "./workspace.presenter";
 import type { IContentPresenter } from "./content.presenter";
 import type { IEvolutionPresenter } from "./evolution.presenter";
+import type { IGatewayPresenter } from "./gateway.presenter";
 
 export type { IAppPresenter } from "./app.presenter";
 export type { IConfigPresenter } from "./config.presenter";
@@ -17,6 +18,7 @@ export type { IGitPresenter } from "./git.presenter";
 export type { IWorkspacePresenter, WorkspaceStatus, InitProgress } from "./workspace.presenter";
 export type { IContentPresenter } from "./content.presenter";
 export type { IEvolutionPresenter } from "./evolution.presenter";
+export type { IGatewayPresenter } from "./gateway.presenter";
 export type { EvolutionStatus, EvolutionNode, EvolutionStage, EvolutionPlan } from "../evolution";
 
 export interface IPresenter {
@@ -29,6 +31,7 @@ export interface IPresenter {
   workspacePresenter: IWorkspacePresenter;
   contentPresenter: IContentPresenter;
   evolutionPresenter: IEvolutionPresenter;
+  gatewayPresenter: IGatewayPresenter;
   init(): void | Promise<void>;
   destroy(): Promise<void>;
 }

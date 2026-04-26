@@ -37,6 +37,20 @@
       </svg>
     </button>
 
+    <button
+      data-testid="sidebar-gateway"
+      :class="[
+        'mt-1 flex h-8 w-8 items-center justify-center rounded-md',
+        activeView === 'gateway'
+          ? 'bg-muted text-foreground'
+          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+      ]"
+      title="LLM 网关"
+      @click="$emit('update:activeView', 'gateway')"
+    >
+      <Icon icon="lucide:network" class="h-5 w-5" />
+    </button>
+
     <div class="flex-1" />
 
     <button
@@ -59,14 +73,15 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { Icon } from "@iconify/vue";
 import SettingsDialog from "./settings/SettingsDialog.vue";
 
 defineProps<{
-  activeView: "evolution";
+  activeView: "evolution" | "gateway";
 }>();
 
 defineEmits<{
-  "update:activeView": [view: "evolution"];
+  "update:activeView": [view: "evolution" | "gateway"];
 }>();
 
 const showSettings = ref(false);

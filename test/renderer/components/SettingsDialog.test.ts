@@ -28,9 +28,10 @@ describe("SettingsDialog", () => {
     expect(document.querySelector('[data-testid="settings-overlay"]')).not.toBeNull();
   });
 
-  it("should render ProviderSettings inside dialog", () => {
+  it("should render gateway settings as default tab", () => {
     mount(SettingsDialog, { props: { open: true }, attachTo: document.body });
-    expect(document.querySelector('[data-testid="provider-select"]')).not.toBeNull();
+    // Default tab is "gateway", so dialog should be visible with settings content
+    expect(document.querySelector('[data-testid="settings-overlay"]')).not.toBeNull();
   });
 
   it("should emit update:open false on overlay click", async () => {

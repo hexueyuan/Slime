@@ -6,6 +6,7 @@ import FunctionPanel from "../components/function/FunctionPanel.vue";
 import WorkspaceSetup from "../components/workspace/WorkspaceSetup.vue";
 import OnboardingWizard from "../components/onboarding/OnboardingWizard.vue";
 import EvolutionStatusBar from "../components/evolution/EvolutionStatusBar.vue";
+import GatewayPanel from "./GatewayPanel.vue";
 import { useSplitPane } from "../composables/useSplitPane";
 import { usePresenter } from "@/composables/usePresenter";
 import { useMessageStore } from "@/stores/chat";
@@ -15,7 +16,7 @@ import { useSessionStore } from "@/stores/session";
 import type { AssistantMessageBlock } from "@shared/types/chat";
 
 // Sidebar active view
-const activeView = ref<"evolution">("evolution");
+const activeView = ref<"evolution" | "gateway">("evolution");
 
 // Onboarding + workspace init check
 const configPresenter = usePresenter("configPresenter");
@@ -151,60 +152,66 @@ function onSelectToolCall(id: string | null) {
         ref="mainRef"
         class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
       >
-        <EvolutionStatusBar />
-        <!-- Recovery banner -->
-        <div
-          v-if="evolutionStore.recoveryContext"
-          class="mx-4 mt-2 flex items-center justify-between rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3"
-        >
-          <div class="text-sm">
-            <span class="text-violet-400">检测到未完成的进化任务：</span>
-            <span class="text-foreground"
-              >「{{ evolutionStore.recoveryContext.description }}」</span
-            >
-            <span class="ml-2 text-muted-foreground"
-              >({{ evolutionStore.recoveryContext.stage }})</span
-            >
-          </div>
-          <div class="flex gap-2">
-            <button
-              class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
-              @click="onRecoveryContinue"
-            >
-              继续进化
-            </button>
-            <button
-              class="rounded px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              @click="onRecoveryAbandon"
-            >
-              放弃并回滚
-            </button>
-          </div>
-        </div>
-        <div class="flex min-h-0 flex-1 overflow-hidden">
-          <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
-            <ChatPanel
-              :selected-tool-call-id="selectedToolCallId"
-              @select-tool-call="onSelectToolCall"
-            />
-          </div>
+        <!-- Evolution view -->
+        <template v-if="activeView === 'evolution'">
+          <EvolutionStatusBar />
+          <!-- Recovery banner -->
           <div
-            class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
-            @mousedown="onMouseDown"
-            @dblclick="resetToDefault"
+            v-if="evolutionStore.recoveryContext"
+            class="mx-4 mt-2 flex items-center justify-between rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3"
           >
-            <div class="absolute inset-y-0 -left-1 -right-1" />
+            <div class="text-sm">
+              <span class="text-violet-400">检测到未完成的进化任务：</span>
+              <span class="text-foreground"
+                >「{{ evolutionStore.recoveryContext.description }}」</span
+              >
+              <span class="ml-2 text-muted-foreground"
+                >({{ evolutionStore.recoveryContext.stage }})</span
+              >
+            </div>
+            <div class="flex gap-2">
+              <button
+                class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
+                @click="onRecoveryContinue"
+              >
+                继续进化
+              </button>
+              <button
+                class="rounded px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                @click="onRecoveryAbandon"
+              >
+                放弃并回滚
+              </button>
+            </div>
           </div>
-          <div class="min-w-[320px] flex-1 overflow-hidden">
-            <FunctionPanel
-              :active-tab="activeTab"
-              :tool-call-blocks="toolCallBlocks"
-              :selected-tool-call-id="selectedToolCallId"
-              @update:active-tab="activeTab = $event"
-              @select-tool-call="onSelectToolCall"
-            />
+          <div class="flex min-h-0 flex-1 overflow-hidden">
+            <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
+              <ChatPanel
+                :selected-tool-call-id="selectedToolCallId"
+                @select-tool-call="onSelectToolCall"
+              />
+            </div>
+            <div
+              class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
+              @mousedown="onMouseDown"
+              @dblclick="resetToDefault"
+            >
+              <div class="absolute inset-y-0 -left-1 -right-1" />
+            </div>
+            <div class="min-w-[320px] flex-1 overflow-hidden">
+              <FunctionPanel
+                :active-tab="activeTab"
+                :tool-call-blocks="toolCallBlocks"
+                :selected-tool-call-id="selectedToolCallId"
+                @update:active-tab="activeTab = $event"
+                @select-tool-call="onSelectToolCall"
+              />
+            </div>
           </div>
-        </div>
+        </template>
+
+        <!-- Gateway view -->
+        <GatewayPanel v-else-if="activeView === 'gateway'" />
       </div>
     </div>
   </div>

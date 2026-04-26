@@ -1,6 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ipcMain } from "electron";
 
+vi.mock("@/presenter/gatewayPresenter", () => ({
+  GatewayPresenter: vi.fn(() => ({
+    init: vi.fn(),
+    destroy: vi.fn(),
+    getPort: vi.fn(() => 8930),
+    getInternalKey: vi.fn(() => "sk-slime-mock"),
+    listChannels: vi.fn(() => []),
+    listGroups: vi.fn(() => []),
+    listApiKeys: vi.fn(() => []),
+    listPrices: vi.fn(() => []),
+  })),
+}));
+
 const mockHandle = vi.mocked(ipcMain.handle);
 
 function findHandler(channel: string) {

@@ -1,5 +1,4 @@
-import { streamText, generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { streamText } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import type { IAgentPresenter } from "@shared/types/presenters";
 import type {
@@ -15,6 +14,7 @@ import type { ConfigPresenter } from "./configPresenter";
 import type { ToolPresenter } from "./toolPresenter";
 import type { EvolutionPresenter } from "./evolutionPresenter";
 import type { ContentPresenter } from "./contentPresenter";
+import type { GatewayPresenter } from "./gatewayPresenter";
 import { buildSystemPrompt } from "./systemPrompt";
 
 interface ToolCall {
@@ -34,51 +34,19 @@ export class AgentPresenter implements IAgentPresenter {
 
   constructor(
     private sessionPresenter: SessionPresenter,
-    private configPresenter: ConfigPresenter,
+    _configPresenter: ConfigPresenter,
     private toolPresenter: ToolPresenter,
     private evolutionPresenter: EvolutionPresenter,
     private contentPresenter: ContentPresenter,
+    private gatewayPresenter: GatewayPresenter,
   ) {}
 
-  private async getConfig() {
-    return {
-      provider:
-        ((await this.configPresenter.get("ai.provider")) as string) ||
-        process.env.SLIME_AI_PROVIDER ||
-        "anthropic",
-      apiKey:
-        ((await this.configPresenter.get("ai.apiKey")) as string) ||
-        process.env.SLIME_AI_API_KEY ||
-        "",
-      model:
-        ((await this.configPresenter.get("ai.model")) as string) ||
-        process.env.SLIME_AI_MODEL ||
-        "claude-sonnet-4-20250514",
-      baseUrl:
-        ((await this.configPresenter.get("ai.baseUrl")) as string) ||
-        process.env.SLIME_AI_BASE_URL ||
-        undefined,
-    };
-  }
-
-  private createModel(config: {
-    provider: string;
-    apiKey: string;
-    model: string;
-    baseUrl?: string;
-  }) {
-    if (config.provider === "anthropic") {
-      const provider = createAnthropic({
-        apiKey: config.apiKey,
-        baseURL: config.baseUrl,
-      });
-      return provider(config.model);
-    }
-    const provider = createOpenAI({
-      apiKey: config.apiKey,
-      baseURL: config.baseUrl,
+  private createModel(modelName: string) {
+    const provider = createAnthropic({
+      apiKey: this.gatewayPresenter.getInternalKey(),
+      baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}/`,
     });
-    return provider(config.model);
+    return provider(modelName);
   }
 
   /**
@@ -325,10 +293,18 @@ export class AgentPresenter implements IAgentPresenter {
     const abortController = new AbortController();
     this.abortControllers.set(sessionId, abortController);
 
-    const config = await this.getConfig();
-    if (!config.apiKey) {
+    const slotModel = this.gatewayPresenter.resolveSlot({
+      category: "text",
+      tier: "reasoning",
+      level: "auto",
+    });
+    if (!slotModel) {
       this.abortControllers.delete(sessionId);
-      eventBus.sendToRenderer(STREAM_EVENTS.ERROR, sessionId, "API key not configured");
+      eventBus.sendToRenderer(
+        STREAM_EVENTS.ERROR,
+        sessionId,
+        "No model configured. Please add a channel in Gateway settings.",
+      );
       return;
     }
 
@@ -345,7 +321,7 @@ export class AgentPresenter implements IAgentPresenter {
     await this.sessionPresenter.saveMessage(userMessage);
 
     const messages = await this.buildMessages(sessionId);
-    const model = this.createModel(config);
+    const model = this.createModel(slotModel);
     const tools = this.toolPresenter.getToolSet(sessionId);
 
     const blocks: AssistantMessageBlock[] = [];
@@ -465,27 +441,6 @@ export class AgentPresenter implements IAgentPresenter {
     if (pending?.toolCallId === toolCallId) {
       pending.resolve(answer);
       this.pendingQuestions.delete(sessionId);
-    }
-  }
-
-  async verifyApiKey(
-    provider: string,
-    apiKey: string,
-    model: string,
-    baseUrl?: string,
-  ): Promise<{ success: boolean; error?: string; modelName?: string }> {
-    try {
-      const aiModel = this.createModel({ provider, apiKey, model, baseUrl });
-      await generateText({
-        model: aiModel,
-        messages: [{ role: "user", content: "hi" }],
-        maxOutputTokens: 1,
-      });
-      return { success: true, modelName: model };
-    } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      logger.warn("API key verification failed", { provider, error });
-      return { success: false, error };
     }
   }
 }

@@ -3,20 +3,21 @@
 ## 概述
 
 替换现有 Slot 系统，引入能力标签（Capability Tags）+ 动态选择引擎，实现：
+
 - 模型按能力标签分类（reasoning, chat, vision, image_gen）
 - 组件按所需能力声明需求，选择引擎自动匹配最优模型
 - 功能组件根据可用能力自动解锁/锁定
 
 ## 设计决策
 
-| 决策点 | 结论 |
-|--------|------|
-| 消费模式 | 组件直接按能力消费，不做自动调度 |
-| 架构方案 | 能力标签 + 动态选择引擎（非预定义分组） |
-| 需求语法 | 平铺 = 独立模式，嵌套 = 统一模式 |
-| 能力来源 | 手动配置，后续扩展自动探测 |
-| Slot 系统 | 完整替代移除 |
-| 质量分级 | 不分级，纯标签 + priority 排序 |
+| 决策点    | 结论                                    |
+| --------- | --------------------------------------- |
+| 消费模式  | 组件直接按能力消费，不做自动调度        |
+| 架构方案  | 能力标签 + 动态选择引擎（非预定义分组） |
+| 需求语法  | 平铺 = 独立模式，嵌套 = 统一模式        |
+| 能力来源  | 手动配置，后续扩展自动探测              |
+| Slot 系统 | 完整替代移除                            |
+| 质量分级  | 不分级，纯标签 + priority 排序          |
 
 ## §1 数据模型
 
@@ -38,35 +39,35 @@ CREATE TABLE models (
 
 ### 初始能力标签集
 
-| 标签 | 含义 | 示例模型 |
-|------|------|----------|
-| `reasoning` | 推理/思考链 | Claude Sonnet, DeepSeek R1, o1 |
-| `chat` | 文本生成/对话 | GPT-4o-mini, Haiku |
-| `vision` | 图像理解 | Claude Sonnet, GPT-4o, Qwen-VL |
-| `image_gen` | 图片生成 | DALL-E, Midjourney |
+| 标签        | 含义          | 示例模型                       |
+| ----------- | ------------- | ------------------------------ |
+| `reasoning` | 推理/思考链   | Claude Sonnet, DeepSeek R1, o1 |
+| `chat`      | 文本生成/对话 | GPT-4o-mini, Haiku             |
+| `vision`    | 图像理解      | Claude Sonnet, GPT-4o, Qwen-VL |
+| `image_gen` | 图片生成      | DALL-E, Midjourney             |
 
 标签集可扩展，仅需在 capabilities JSON 数组中添加新字符串。
 
 ### 类型定义
 
 ```typescript
-type Capability = "reasoning" | "chat" | "vision" | "image_gen"
+type Capability = "reasoning" | "chat" | "vision" | "image_gen";
 
 interface Model {
-  id: number
-  channelId: number
-  modelName: string
-  capabilities: Capability[]
-  priority: number
-  enabled: boolean
-  createdAt: string
-  updatedAt: string
+  id: number;
+  channelId: number;
+  modelName: string;
+  capabilities: Capability[];
+  priority: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
 ### 移除内容
 
-- groups_ 表的 `slot_category` / `slot_tier` / `slot_level` 字段
+- groups\_ 表的 `slot_category` / `slot_tier` / `slot_level` 字段
 - `ModelSlot` / `ModelCategory` / `TextModelTier` / `ReasoningLevel` 类型
 - `resolveSlot()` / `getGroupsWithSlot()` 方法
 - `SlotMappingStep` 引导页步骤
@@ -81,38 +82,38 @@ interface Model {
 ### API
 
 ```typescript
-type CapabilityRequirement = (Capability | Capability[])[]
+type CapabilityRequirement = (Capability | Capability[])[];
 
 interface ModelMatch {
-  modelId: number
-  modelName: string
-  channelId: number
-  groupName: string      // 对应的 Group name，用于 Gateway 路由
-  capabilities: Capability[]
+  modelId: number;
+  modelName: string;
+  channelId: number;
+  groupName: string; // 对应的 Group name，用于 Gateway 路由
+  capabilities: Capability[];
 }
 
 interface SelectResult {
-  matched: Record<string, ModelMatch>  // key = 能力名或 "a+b"
-  missing: string[]                     // 未满足的能力/组合
+  matched: Record<string, ModelMatch>; // key = 能力名或 "a+b"
+  missing: string[]; // 未满足的能力/组合
 }
 
-function select(requirements: CapabilityRequirement): SelectResult
+function select(requirements: CapabilityRequirement): SelectResult;
 ```
 
 ### 需求语法
 
 ```typescript
 // 独立模式 — 各能力分别找最优模型（可以是不同模型）
-select(["reasoning", "vision"])
+select(["reasoning", "vision"]);
 // → { matched: { reasoning: ..., vision: ... }, missing: [] }
 
 // 统一模式 — 必须同一模型满足全部
-select([["reasoning", "vision"]])
+select([["reasoning", "vision"]]);
 // → { matched: { "reasoning+vision": ... }, missing: [] }
 // 或 { matched: {}, missing: ["reasoning+vision"] }
 
 // 混合 — 统一子组 + 独立项
-select([["reasoning", "vision"], "image_gen"])
+select([["reasoning", "vision"], "image_gen"]);
 // → matched 中有 "reasoning+vision" 和 "image_gen" 两个 key
 ```
 
@@ -174,7 +175,7 @@ interface ComponentMeta {
 
 ```typescript
 // src/renderer/src/composables/useCapability.ts
-const { available, missing } = useCapabilityCheck(["reasoning", "vision"])
+const { available, missing } = useCapabilityCheck(["reasoning", "vision"]);
 // available: Ref<boolean>
 // missing: Ref<string[]>
 // 内部通过 IPC 调 GatewayPresenter.select()
@@ -185,12 +186,12 @@ const { available, missing } = useCapabilityCheck(["reasoning", "vision"])
 
 ### 流程变更
 
-| 步骤 | 旧（Slot） | 新（Capability） |
-|------|-----------|-----------------|
-| ① | Welcome | Welcome（不变） |
-| ② | AddChannel | AddChannel（不变） |
-| ③ | SlotMappingStep | **CapabilityTagStep** |
-| ④ | IdentityComplete | IdentityComplete（不变） |
+| 步骤 | 旧（Slot）       | 新（Capability）         |
+| ---- | ---------------- | ------------------------ |
+| ①    | Welcome          | Welcome（不变）          |
+| ②    | AddChannel       | AddChannel（不变）       |
+| ③    | SlotMappingStep  | **CapabilityTagStep**    |
+| ④    | IdentityComplete | IdentityComplete（不变） |
 
 ### CapabilityTagStep 交互
 
@@ -221,12 +222,14 @@ const { available, missing } = useCapabilityCheck(["reasoning", "vision"])
 ```typescript
 // 旧
 const slotModel = this.gatewayPresenter.resolveSlot({
-  category: "text", tier: "reasoning", level: "auto"
-})
+  category: "text",
+  tier: "reasoning",
+  level: "auto",
+});
 
 // 新
-const result = selector.select(["reasoning"])
-const model = result.matched.reasoning
+const result = selector.select(["reasoning"]);
+const model = result.matched.reasoning;
 // model.groupName 用于 createModel()，后续流程不变
 ```
 
