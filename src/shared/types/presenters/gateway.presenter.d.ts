@@ -6,7 +6,10 @@ import type {
   GroupItem,
   GatewayApiKey,
   ModelPrice,
-  ModelSlot,
+  Model,
+  Capability,
+  CapabilityRequirement,
+  SelectResult,
   DailyStats,
   ModelStats,
   ChannelStats,
@@ -53,8 +56,17 @@ export interface IGatewayPresenter {
   updateApiKey(id: number, data: Partial<GatewayApiKey>): void;
   deleteApiKey(id: number): void;
 
-  // Slot
-  resolveSlot(slot: ModelSlot): string | undefined;
+  // Models
+  listModels(): Model[];
+  listModelsByChannel(channelId: number): Model[];
+  createModel(data: Omit<Model, "id" | "createdAt" | "updatedAt">): Model;
+  updateModel(id: number, data: Partial<Model>): void;
+  deleteModel(id: number): void;
+
+  // Capability Selection
+  select(requirements: CapabilityRequirement): SelectResult;
+  hasCapability(cap: Capability): boolean;
+  availableCapabilities(): Capability[];
 
   // Stats
   getStatsRange(from: string, to: string): DailyStats;

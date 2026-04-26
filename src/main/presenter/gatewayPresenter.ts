@@ -8,7 +8,10 @@ import type {
   GroupItem,
   GatewayApiKey,
   ModelPrice,
-  ModelSlot,
+  Model,
+  Capability,
+  CapabilityRequirement,
+  SelectResult,
   DailyStats,
   ModelStats,
   ChannelStats,
@@ -21,6 +24,7 @@ import * as apiKeyDao from "@/db/models/apiKeyDao";
 import * as priceDao from "@/db/models/priceDao";
 import * as logDao from "@/db/models/logDao";
 import * as statsDao from "@/db/models/statsDao";
+import * as modelDao from "@/db/models/modelDao";
 import {
   createRouter,
   createBalancer,
@@ -30,8 +34,8 @@ import {
   createServer,
   createStatsCollector,
   createScheduledTasks,
+  createCapabilitySelector,
   initAdapters,
-  resolveSlot,
   calculateCost,
 } from "@/gateway";
 import type { Router } from "@/gateway/router";
@@ -39,6 +43,7 @@ import type { Relay } from "@/gateway/relay";
 import type { GatewayServer } from "@/gateway/server";
 import type { StatsCollector } from "@/gateway/stats";
 import type { ScheduledTasks } from "@/gateway/tasks";
+import type { CapabilitySelector } from "@/gateway/selector";
 import { logger } from "@/utils";
 
 function randomHex(n: number): string {
@@ -53,6 +58,7 @@ export class GatewayPresenter implements IGatewayPresenter {
   private server: GatewayServer;
   private statsCollector: StatsCollector;
   private scheduledTasks: ScheduledTasks;
+  private selector: CapabilitySelector;
 
   constructor(dbPath?: string) {
     initDb(dbPath);
@@ -65,6 +71,7 @@ export class GatewayPresenter implements IGatewayPresenter {
     const balancer = createBalancer();
     const circuitBreaker = createCircuitBreaker();
     const keyPool = createKeyPool();
+    this.selector = createCapabilitySelector(db, circuitBreaker);
 
     this.relay = createRelay({ db, router: this.router, balancer, circuitBreaker, keyPool });
 
@@ -282,10 +289,40 @@ export class GatewayPresenter implements IGatewayPresenter {
     apiKeyDao.deleteApiKey(getDb(), id);
   }
 
-  // --- Slot ---
+  // --- Models ---
 
-  resolveSlot(slot: ModelSlot): string | undefined {
-    return resolveSlot(this.router, slot);
+  listModels(): Model[] {
+    return modelDao.listModels(getDb());
+  }
+
+  listModelsByChannel(channelId: number): Model[] {
+    return modelDao.listModelsByChannel(getDb(), channelId);
+  }
+
+  createModel(data: Omit<Model, "id" | "createdAt" | "updatedAt">): Model {
+    return modelDao.createModel(getDb(), data);
+  }
+
+  updateModel(id: number, data: Partial<Model>): void {
+    modelDao.updateModel(getDb(), id, data);
+  }
+
+  deleteModel(id: number): void {
+    modelDao.deleteModel(getDb(), id);
+  }
+
+  // --- Capability Selection ---
+
+  select(requirements: CapabilityRequirement): SelectResult {
+    return this.selector.select(requirements);
+  }
+
+  hasCapability(cap: Capability): boolean {
+    return this.selector.hasCapability(cap);
+  }
+
+  availableCapabilities(): Capability[] {
+    return this.selector.availableCapabilities();
   }
 
   // --- Stats ---

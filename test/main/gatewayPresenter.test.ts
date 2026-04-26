@@ -168,3 +168,85 @@ describe("Prices", () => {
     expect(found!.outputPrice).toBe(2);
   });
 });
+
+describe("Model CRUD", () => {
+  it("创建/列表/更新/删除", () => {
+    const ch = gw.createChannel({
+      name: "ch",
+      type: "openai",
+      baseUrls: ["https://api.openai.com"],
+      models: [],
+      enabled: true,
+      priority: 0,
+      weight: 1,
+    });
+
+    const model = gw.createModel({
+      channelId: ch.id,
+      modelName: "gpt-4o",
+      capabilities: ["reasoning", "chat", "vision"],
+      priority: 10,
+      enabled: true,
+    });
+    expect(model.id).toBeGreaterThan(0);
+    expect(model.capabilities).toEqual(["reasoning", "chat", "vision"]);
+
+    expect(gw.listModels()).toHaveLength(1);
+    expect(gw.listModelsByChannel(ch.id)).toHaveLength(1);
+
+    gw.updateModel(model.id, { priority: 20 });
+    expect(gw.listModels()[0].priority).toBe(20);
+
+    gw.deleteModel(model.id);
+    expect(gw.listModels()).toHaveLength(0);
+  });
+});
+
+describe("CapabilitySelector via presenter", () => {
+  it("select returns matched model", () => {
+    const ch = gw.createChannel({
+      name: "ch",
+      type: "openai",
+      baseUrls: ["https://api.openai.com"],
+      models: [],
+      enabled: true,
+      priority: 0,
+      weight: 1,
+    });
+    gw.createGroup({ name: "gpt-4o", balanceMode: "failover" });
+    gw.createModel({
+      channelId: ch.id,
+      modelName: "gpt-4o",
+      capabilities: ["reasoning", "chat"],
+      priority: 10,
+      enabled: true,
+    });
+
+    const result = gw.select(["reasoning"]);
+    expect(result.matched.reasoning.modelName).toBe("gpt-4o");
+    expect(result.missing).toEqual([]);
+  });
+
+  it("hasCapability / availableCapabilities", () => {
+    const ch = gw.createChannel({
+      name: "ch",
+      type: "openai",
+      baseUrls: ["https://api.openai.com"],
+      models: [],
+      enabled: true,
+      priority: 0,
+      weight: 1,
+    });
+    gw.createModel({
+      channelId: ch.id,
+      modelName: "m",
+      capabilities: ["reasoning", "vision"],
+      priority: 0,
+      enabled: true,
+    });
+
+    expect(gw.hasCapability("reasoning")).toBe(true);
+    expect(gw.hasCapability("image_gen")).toBe(false);
+    expect(gw.availableCapabilities().sort()).toEqual(["reasoning", "vision"]);
+  });
+});
