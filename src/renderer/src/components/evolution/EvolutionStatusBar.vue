@@ -65,6 +65,14 @@ async function handleConfirmReset() {
 function handleRestart() {
   evolutionPresenter.restart();
 }
+
+async function handleRetryPackage() {
+  await window.electron.ipcRenderer.invoke("evolution:retry-package");
+}
+
+function handleSkipPackage() {
+  window.electron.ipcRenderer.invoke("evolution:skip-package");
+}
 </script>
 
 <template>
@@ -170,6 +178,32 @@ function handleRestart() {
       <span class="ml-2 font-mono text-xs text-green-500/70">{{
         evolutionStore.completedTag
       }}</span>
+    </template>
+
+    <!-- Apply progress -->
+    <template v-if="evolutionStore.stage === 'applying' && evolutionStore.applyProgress">
+      <div class="ml-4 flex items-center gap-2">
+        <span
+          class="text-xs"
+          :class="evolutionStore.applyProgress.error ? 'text-red-500' : 'text-muted-foreground'"
+        >
+          {{ evolutionStore.applyProgress.message }}
+        </span>
+        <template v-if="evolutionStore.applyProgress.error">
+          <button
+            class="rounded border border-violet-500 px-2 py-0.5 text-xs text-violet-500 hover:bg-violet-500/10"
+            @click="handleRetryPackage"
+          >
+            重试打包
+          </button>
+          <button
+            class="rounded border border-muted-foreground px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
+            @click="handleSkipPackage"
+          >
+            跳过打包
+          </button>
+        </template>
+      </div>
     </template>
 
     <div class="flex-1" />
