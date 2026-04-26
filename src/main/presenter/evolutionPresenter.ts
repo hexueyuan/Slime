@@ -14,7 +14,7 @@ import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
 import { readFile, writeFile, mkdir, readdir, unlink } from "fs/promises";
-import { join } from "path";
+import { join, dirname } from "path";
 import { app } from "electron";
 import { execFile, spawn } from "child_process";
 import { mkdirSync, writeFileSync } from "fs";
@@ -209,10 +209,6 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     if (!app.isPackaged) {
       logger.info("Dev mode: skipping package + replace, resetting");
       this.reset();
-      eventBus.sendToRenderer(EVOLUTION_EVENTS.APPLY_PROGRESS, {
-        step: "committing",
-        message: "开发模式：进化已完成，代码变更已提交",
-      });
       return;
     }
 
@@ -318,7 +314,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
     let current = app.getAppPath();
     while (current !== "/") {
       if (current.endsWith(".app")) return current;
-      current = join(current, "..");
+      current = dirname(current);
     }
     return null;
   }
