@@ -244,6 +244,23 @@ function createDb(dbPath: string): BetterSqlite3.Database {
   } catch {
     // column already exists
   }
+  // Migration: add model_type column to models
+  try {
+    instance.exec("ALTER TABLE models ADD COLUMN model_type TEXT NOT NULL DEFAULT 'chat'");
+    // Data migration: remove "chat" from capabilities (no longer a capability)
+    const rows = instance.prepare("SELECT id, capabilities FROM models").all() as {
+      id: number;
+      capabilities: string;
+    }[];
+    const update = instance.prepare("UPDATE models SET capabilities = ? WHERE id = ?");
+    for (const row of rows) {
+      const caps: string[] = JSON.parse(row.capabilities);
+      const migrated = caps.filter((c) => c !== "chat");
+      update.run(JSON.stringify(migrated), row.id);
+    }
+  } catch {
+    // column already exists
+  }
   return instance;
 }
 

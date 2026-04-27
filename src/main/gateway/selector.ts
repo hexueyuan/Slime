@@ -60,7 +60,10 @@ export function createCapabilitySelector(
       for (const req of requirements) {
         if (typeof req === "string") {
           const groupName = req;
-          const candidates = modelsWithAllCaps(models, [req as Capability]);
+          const candidates =
+            (req as string) === "chat"
+              ? models.filter((m) => m.type === "chat")
+              : modelsWithAllCaps(models, [req as Capability]);
           if (candidates.length > 0) {
             matched[groupName] = toMatch(candidates[0], groupName);
           } else {

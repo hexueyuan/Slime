@@ -33,7 +33,7 @@ export class AgentChatPresenterAdapter {
     const agentConfig = agent?.config;
     configDao.createConfig(db, {
       id,
-      capabilityRequirements: agentConfig?.capabilityRequirements ?? ["chat"],
+      capabilityRequirements: agentConfig?.capabilityRequirements ?? ["reasoning"],
       systemPrompt: agentConfig?.systemPrompt ?? null,
       temperature: agentConfig?.temperature ?? null,
       contextLength: agentConfig?.contextLength ?? null,

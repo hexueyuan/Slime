@@ -4,9 +4,9 @@ import type { Capability } from "@shared/types/gateway";
 
 const ALL_CAPS: { key: Capability; label: string; icon: string }[] = [
   { key: "reasoning", label: "reasoning", icon: "🧠" },
-  { key: "chat", label: "chat", icon: "💬" },
   { key: "vision", label: "vision", icon: "👁" },
   { key: "image_gen", label: "image_gen", icon: "🎨" },
+  { key: "tool_call", label: "tool_call", icon: "🔧" },
 ];
 
 const props = defineProps<{
@@ -42,7 +42,7 @@ const hasReasoning = computed(() =>
   >
     <h2 class="text-[17px] font-semibold text-slate-200">标注模型能力</h2>
     <p class="text-sm text-slate-400">
-      为每个模型标注其支持的能力，Slime 会据此解锁对应的功能组件。
+      所有模型默认为 chat 类型，此处标注额外能力，Slime 会据此解锁对应的功能组件。
     </p>
 
     <div class="flex w-full flex-col gap-3">

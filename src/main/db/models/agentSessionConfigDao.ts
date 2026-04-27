@@ -44,7 +44,7 @@ export function createConfig(
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     data.id,
-    JSON.stringify(data.capabilityRequirements ?? ["chat"]),
+    JSON.stringify(data.capabilityRequirements ?? ["reasoning"]),
     data.systemPrompt ?? null,
     data.temperature ?? null,
     data.contextLength ?? null,

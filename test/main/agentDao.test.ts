@@ -128,7 +128,7 @@ describe("agentDao", () => {
     expect(hal.name).toBe("HalAI");
     expect(hal.type).toBe("builtin");
     expect(hal.protected).toBe(true);
-    expect(hal.config).toEqual({ capabilityRequirements: ["chat"], subagentEnabled: false });
+    expect(hal.config).toEqual({ capabilityRequirements: ["reasoning"], subagentEnabled: false });
   });
 
   it("config_json and avatar_json serialization roundtrip", () => {

@@ -197,10 +197,10 @@ export class AgentChatPresenter {
     const agent = agentDao.getAgentById(db, session.agentId);
 
     const capReqs: CapabilityRequirement = (config?.capabilityRequirements ??
-      agent?.config?.capabilityRequirements ?? ["chat"]) as CapabilityRequirement;
+      agent?.config?.capabilityRequirements ?? ["reasoning"]) as CapabilityRequirement;
     const selectResult = this.gatewayPresenter.select(capReqs);
     const firstCap = capReqs[0];
-    const capKey = Array.isArray(firstCap) ? firstCap[0] : (firstCap ?? "chat");
+    const capKey = Array.isArray(firstCap) ? firstCap[0] : (firstCap ?? "reasoning");
     const groupName = selectResult.matched[capKey]?.groupName;
     if (!groupName) {
       this.sessionStates.set(sessionId, "error");

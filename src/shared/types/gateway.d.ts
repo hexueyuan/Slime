@@ -23,12 +23,15 @@ export interface ChannelKey {
   createdAt: string;
 }
 
-export type Capability = "reasoning" | "chat" | "vision" | "image_gen";
+export type ModelType = "chat";
+
+export type Capability = "reasoning" | "vision" | "image_gen" | "tool_call";
 
 export interface Model {
   id: number;
   channelId: number;
   modelName: string;
+  type: ModelType;
   capabilities: Capability[];
   priority: number;
   enabled: boolean;

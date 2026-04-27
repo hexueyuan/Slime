@@ -1,10 +1,11 @@
 import type BetterSqlite3 from "better-sqlite3";
-import type { Model, Capability } from "@shared/types/gateway";
+import type { Model, Capability, ModelType } from "@shared/types/gateway";
 
 interface ModelRow {
   id: number;
   channel_id: number;
   model_name: string;
+  model_type: string;
   capabilities: string;
   priority: number;
   enabled: number;
@@ -17,6 +18,7 @@ function rowToModel(row: ModelRow): Model {
     id: row.id,
     channelId: row.channel_id,
     modelName: row.model_name,
+    type: (row.model_type as ModelType) ?? "chat",
     capabilities: JSON.parse(row.capabilities) as Capability[],
     priority: row.priority,
     enabled: !!row.enabled,
@@ -44,15 +46,16 @@ export function getModel(db: BetterSqlite3.Database, id: number): Model | undefi
 
 export function createModel(
   db: BetterSqlite3.Database,
-  data: Omit<Model, "id" | "createdAt" | "updatedAt">,
+  data: Omit<Model, "id" | "type" | "createdAt" | "updatedAt"> & { type?: ModelType },
 ): Model {
   const result = db
     .prepare(
-      "INSERT INTO models (channel_id, model_name, capabilities, priority, enabled) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO models (channel_id, model_name, model_type, capabilities, priority, enabled) VALUES (?, ?, ?, ?, ?, ?)",
     )
     .run(
       data.channelId,
       data.modelName,
+      data.type ?? "chat",
       JSON.stringify(data.capabilities),
       data.priority,
       data.enabled ? 1 : 0,
@@ -71,6 +74,10 @@ export function updateModel(
   if (data.modelName !== undefined) {
     sets.push("model_name = ?");
     values.push(data.modelName);
+  }
+  if (data.type !== undefined) {
+    sets.push("model_type = ?");
+    values.push(data.type);
   }
   if (data.capabilities !== undefined) {
     sets.push("capabilities = ?");

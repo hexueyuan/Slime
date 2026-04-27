@@ -33,7 +33,7 @@ export class SubagentPresenter {
     const parentConfig = configDao.getConfigById(db, parentSessionId);
     configDao.createConfig(db, {
       id: childSessionId,
-      capabilityRequirements: parentConfig?.capabilityRequirements ?? ["chat"],
+      capabilityRequirements: parentConfig?.capabilityRequirements ?? ["reasoning"],
       systemPrompt: parentConfig?.systemPrompt ?? null,
       temperature: parentConfig?.temperature ?? null,
       contextLength: parentConfig?.contextLength ?? null,

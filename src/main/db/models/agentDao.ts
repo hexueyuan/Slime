@@ -130,8 +130,13 @@ export function ensureBuiltin(db: BetterSqlite3.Database): void {
     "builtin",
     1,
     1,
-    JSON.stringify({ capabilityRequirements: ["chat"], subagentEnabled: false }),
+    JSON.stringify({ capabilityRequirements: ["reasoning"], subagentEnabled: false }),
     now,
     now,
   );
+  // Migrate existing hal-ai from ["chat"] to ["reasoning"]
+  db.prepare(
+    `UPDATE agents SET config_json = json_set(config_json, '$.capabilityRequirements', json('["reasoning"]'))
+     WHERE id = 'hal-ai' AND json_extract(config_json, '$.capabilityRequirements[0]') = 'chat'`,
+  ).run();
 }

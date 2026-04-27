@@ -173,6 +173,7 @@ async function save() {
       await gw.createModel({
         channelId,
         modelName,
+        type: "chat",
         capabilities: [],
         priority: 0,
         enabled: true,
@@ -214,20 +215,16 @@ async function testChannel(id: number) {
 }
 
 // --- Model capability management ---
-const ALL_CAPS: { key: Capability; label: string }[] = [
-  { key: "reasoning", label: "reasoning" },
-  { key: "chat", label: "chat" },
-  { key: "vision", label: "vision" },
-  { key: "image_gen", label: "image_gen" },
+const ALL_CAPS: { key: Capability; label: string; icon: string }[] = [
+  { key: "reasoning", label: "reasoning", icon: "🧠" },
+  { key: "vision", label: "vision", icon: "👁" },
+  { key: "image_gen", label: "image_gen", icon: "🎨" },
+  { key: "tool_call", label: "tool_call", icon: "🔧" },
 ];
 
 const CAP_COLORS: Record<Capability, { active: string; inactive: string }> = {
   reasoning: {
     active: "bg-violet-400/20 text-violet-400 border-violet-400/30",
-    inactive: "border-border text-muted-foreground/50",
-  },
-  chat: {
-    active: "bg-blue-400/20 text-blue-400 border-blue-400/30",
     inactive: "border-border text-muted-foreground/50",
   },
   vision: {
@@ -236,6 +233,10 @@ const CAP_COLORS: Record<Capability, { active: string; inactive: string }> = {
   },
   image_gen: {
     active: "bg-amber-400/20 text-amber-400 border-amber-400/30",
+    inactive: "border-border text-muted-foreground/50",
+  },
+  tool_call: {
+    active: "bg-blue-400/20 text-blue-400 border-blue-400/30",
     inactive: "border-border text-muted-foreground/50",
   },
 };
@@ -284,7 +285,14 @@ async function toggleModelEnabled(model: Model) {
 }
 
 async function addModelToChannel(channelId: number, modelName: string) {
-  await gw.createModel({ channelId, modelName, capabilities: [], priority: 0, enabled: true });
+  await gw.createModel({
+    channelId,
+    modelName,
+    type: "chat",
+    capabilities: [],
+    priority: 0,
+    enabled: true,
+  });
   await store.loadModelsByChannel(channelId);
 }
 
@@ -436,6 +444,7 @@ const newCapModelName = ref("");
               <button
                 v-for="cap in ALL_CAPS"
                 :key="cap.key"
+                :title="cap.label"
                 class="rounded border px-2 py-0.5 text-[10px] transition-colors"
                 :class="
                   model.capabilities.includes(cap.key)
@@ -444,7 +453,7 @@ const newCapModelName = ref("");
                 "
                 @click.stop="toggleModelCap(model, cap.key)"
               >
-                {{ cap.label }}
+                {{ cap.icon }}
               </button>
               <button
                 class="ml-1 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-foreground"

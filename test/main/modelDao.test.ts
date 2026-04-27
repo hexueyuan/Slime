@@ -32,13 +32,15 @@ describe("modelDao", () => {
     const m = modelDao.createModel(db, {
       channelId: ch.id,
       modelName: "gpt-4o",
-      capabilities: ["reasoning", "chat", "vision"],
+      type: "chat",
+      capabilities: ["reasoning", "vision"],
       priority: 10,
       enabled: true,
     });
     expect(m.id).toBeGreaterThan(0);
     expect(m.modelName).toBe("gpt-4o");
-    expect(m.capabilities).toEqual(["reasoning", "chat", "vision"]);
+    expect(m.type).toBe("chat");
+    expect(m.capabilities).toEqual(["reasoning", "vision"]);
     expect(m.priority).toBe(10);
     expect(m.enabled).toBe(true);
   });
@@ -48,14 +50,14 @@ describe("modelDao", () => {
     modelDao.createModel(db, {
       channelId: ch.id,
       modelName: "low",
-      capabilities: ["chat"],
+      capabilities: ["reasoning"],
       priority: 1,
       enabled: true,
     });
     modelDao.createModel(db, {
       channelId: ch.id,
       modelName: "high",
-      capabilities: ["chat"],
+      capabilities: ["reasoning"],
       priority: 10,
       enabled: true,
     });
@@ -79,14 +81,14 @@ describe("modelDao", () => {
     modelDao.createModel(db, {
       channelId: ch1.id,
       modelName: "a",
-      capabilities: ["chat"],
+      capabilities: ["reasoning"],
       priority: 0,
       enabled: true,
     });
     modelDao.createModel(db, {
       channelId: ch2.id,
       modelName: "b",
-      capabilities: ["chat"],
+      capabilities: ["reasoning"],
       priority: 0,
       enabled: true,
     });
@@ -99,7 +101,7 @@ describe("modelDao", () => {
     const m = modelDao.createModel(db, {
       channelId: ch.id,
       modelName: "x",
-      capabilities: ["chat"],
+      capabilities: ["reasoning"],
       priority: 0,
       enabled: true,
     });

@@ -2,7 +2,7 @@ import type BetterSqlite3 from "better-sqlite3";
 import type { Group, GroupItem, Capability } from "@shared/types/gateway";
 import * as modelDao from "./modelDao";
 
-export const BUILTIN_CAPABILITIES: Capability[] = ["chat", "reasoning", "vision", "image_gen"];
+export const BUILTIN_CAPABILITIES: Capability[] = ["reasoning", "vision", "image_gen", "tool_call"];
 
 interface GroupRow {
   id: number;
@@ -125,14 +125,15 @@ export function setGroupItems(
 }
 
 export function ensureBuiltinGroups(db: BetterSqlite3.Database): void {
-  for (const cap of BUILTIN_CAPABILITIES) {
+  const allGroups = [...BUILTIN_CAPABILITIES, "chat" as string];
+  for (const name of allGroups) {
     const existing = db
       .prepare("SELECT id FROM groups_ WHERE name = ? AND is_builtin = 1")
-      .get(cap) as { id: number } | undefined;
+      .get(name) as { id: number } | undefined;
     if (!existing) {
       db.prepare(
         `INSERT OR IGNORE INTO groups_ (name, balance_mode, is_builtin) VALUES (?, 'failover', 1)`,
-      ).run(cap);
+      ).run(name);
     }
   }
 }
@@ -140,13 +141,17 @@ export function ensureBuiltinGroups(db: BetterSqlite3.Database): void {
 export function syncBuiltinGroupItems(db: BetterSqlite3.Database): void {
   const models = modelDao.listModels(db).filter((m) => m.enabled);
 
-  for (const cap of BUILTIN_CAPABILITIES) {
-    const group = db.prepare("SELECT id FROM groups_ WHERE name = ? AND is_builtin = 1").get(cap) as
-      | { id: number }
-      | undefined;
+  const allGroups = [...BUILTIN_CAPABILITIES, "chat" as string];
+  for (const groupName of allGroups) {
+    const group = db
+      .prepare("SELECT id FROM groups_ WHERE name = ? AND is_builtin = 1")
+      .get(groupName) as { id: number } | undefined;
     if (!group) continue;
 
-    const matched = models.filter((m) => m.capabilities.includes(cap));
+    const matched =
+      groupName === "chat"
+        ? models.filter((m) => m.type === "chat")
+        : models.filter((m) => m.capabilities.includes(groupName as Capability));
 
     db.prepare("DELETE FROM group_items WHERE group_id = ?").run(group.id);
     const insert = db.prepare(

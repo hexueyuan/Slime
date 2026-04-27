@@ -28,7 +28,7 @@ const avatarColor = ref("#a855f7");
 const avatarText = ref("");
 const avatarBgColor = ref("#7c3aed");
 const systemPrompt = ref("");
-const capabilities = ref<string[]>(["chat"]);
+const capabilities = ref<string[]>(["reasoning"]);
 const temperature = ref(0.7);
 const contextLength = ref<number | undefined>(undefined);
 const maxTokens = ref<number | undefined>(undefined);
@@ -50,7 +50,7 @@ const PRESET_ICONS = [
 
 const PRESET_COLORS = ["#a855f7", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
 
-const CAPABILITIES = ["reasoning", "chat", "vision", "image_gen"];
+const CAPABILITIES = ["reasoning", "vision", "image_gen", "tool_call"];
 
 const TOOLS = [
   { key: "read_file", label: "读取文件" },
@@ -89,7 +89,7 @@ watch(
         }
         const cfg = agent.config;
         systemPrompt.value = cfg?.systemPrompt ?? "";
-        capabilities.value = cfg?.capabilityRequirements ?? ["chat"];
+        capabilities.value = cfg?.capabilityRequirements ?? ["reasoning"];
         temperature.value = cfg?.temperature ?? 0.7;
         contextLength.value = cfg?.contextLength;
         maxTokens.value = cfg?.maxTokens;
@@ -109,7 +109,7 @@ watch(
       avatarText.value = "";
       avatarBgColor.value = "#7c3aed";
       systemPrompt.value = "";
-      capabilities.value = ["chat"];
+      capabilities.value = ["reasoning"];
       temperature.value = 0.7;
       contextLength.value = undefined;
       maxTokens.value = undefined;

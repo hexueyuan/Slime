@@ -48,8 +48,8 @@ function setup() {
 describe("CapabilitySelector", () => {
   it("select independent mode — returns best model per capability", () => {
     const { addModel } = setup();
-    addModel("claude-sonnet", ["reasoning", "chat", "vision"], 10);
-    addModel("deepseek-r1", ["reasoning", "chat"], 5);
+    addModel("claude-sonnet", ["reasoning", "vision"], 10);
+    addModel("deepseek-r1", ["reasoning"], 5);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select(["reasoning", "vision"]);
@@ -140,7 +140,7 @@ describe("CapabilitySelector", () => {
 
   it("hasCapability returns true/false", () => {
     const { addModel } = setup();
-    addModel("m", ["reasoning", "chat"], 1);
+    addModel("m", ["reasoning", "vision"], 1);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     expect(selector.hasCapability("reasoning")).toBe(true);
@@ -149,12 +149,12 @@ describe("CapabilitySelector", () => {
 
   it("availableCapabilities returns deduplicated list", () => {
     const { addModel } = setup();
-    addModel("a", ["reasoning", "chat"], 1);
+    addModel("a", ["reasoning"], 1);
     addModel("b", ["reasoning", "vision"], 2);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const caps = selector.availableCapabilities();
-    expect(caps.sort()).toEqual(["chat", "reasoning", "vision"]);
+    expect(caps.sort()).toEqual(["reasoning", "vision"]);
   });
 
   it("modelsWithCapability returns matching models sorted by priority", () => {

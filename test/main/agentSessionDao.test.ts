@@ -166,7 +166,7 @@ describe("agentSessionConfigDao", () => {
   it("createConfig with defaults", () => {
     const c = configDao.createConfig(db, { id: "c1" });
     expect(c.id).toBe("c1");
-    expect(c.capabilityRequirements).toEqual(["chat"]);
+    expect(c.capabilityRequirements).toEqual(["reasoning"]);
     expect(c.systemPrompt).toBeNull();
     expect(c.temperature).toBeNull();
     expect(c.summaryCursorSeq).toBe(0);
