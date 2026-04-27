@@ -158,7 +158,7 @@ function close() {
       >
         <!-- Header -->
         <div class="shrink-0 p-5 pb-0">
-          <h3 class="mb-4 text-sm font-medium">
+          <h3 class="mb-4 text-sm font-medium text-foreground">
             {{ group ? "编辑分组" : "新增分组" }}
           </h3>
 
@@ -213,7 +213,7 @@ function close() {
                       "
                       class="h-3 w-3 shrink-0 text-muted-foreground"
                     />
-                    <span class="text-xs font-medium">{{ ch.name }}</span>
+                    <span class="text-xs font-medium text-foreground">{{ ch.name }}</span>
                     <span class="ml-auto text-[10px] text-muted-foreground">{{
                       ch.models.length
                     }}</span>
