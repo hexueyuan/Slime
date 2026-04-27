@@ -4,6 +4,11 @@ export type AgentAvatar =
   | { kind: "lucide"; icon: string; color?: string }
   | { kind: "monogram"; text: string; backgroundColor?: string };
 
+export type UserProfile = {
+  name?: string;
+  avatar?: AgentAvatar;
+};
+
 export interface AgentConfig {
   capabilityRequirements?: string[];
   systemPrompt?: string;
@@ -38,6 +43,7 @@ export interface SessionRecord {
   sessionKind: "regular" | "subagent";
   parentSessionId?: string | null;
   subagentMeta?: SubagentMeta | null;
+  metadata?: SessionMetadata | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -46,6 +52,11 @@ export interface SubagentMeta {
   mode: "inherit" | "new";
   prompt: string;
   parentSessionId: string;
+}
+
+export interface SessionMetadata {
+  titleGeneratedCount?: number;
+  titleManuallyEdited?: boolean;
 }
 
 export interface SessionConfig {

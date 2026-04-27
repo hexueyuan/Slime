@@ -1,5 +1,5 @@
 import type BetterSqlite3 from "better-sqlite3";
-import type { SessionRecord, SubagentMeta } from "@shared/types/agent";
+import type { SessionRecord, SubagentMeta, SessionMetadata } from "@shared/types/agent";
 
 interface SessionRow {
   id: string;
@@ -9,6 +9,7 @@ interface SessionRow {
   session_kind: string;
   parent_session_id: string | null;
   subagent_meta_json: string | null;
+  metadata_json: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -24,6 +25,7 @@ function rowToSession(row: SessionRow): SessionRecord {
     subagentMeta: row.subagent_meta_json
       ? (JSON.parse(row.subagent_meta_json) as SubagentMeta)
       : null,
+    metadata: row.metadata_json ? (JSON.parse(row.metadata_json) as SessionMetadata) : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -117,4 +119,16 @@ export function deleteByAgent(db: BetterSqlite3.Database, agentId: string): void
     db.prepare("DELETE FROM agent_sessions WHERE agent_id = ?").run(agentId);
   });
   del();
+}
+
+export function updateMetadata(
+  db: BetterSqlite3.Database,
+  id: string,
+  metadata: SessionMetadata,
+): void {
+  db.prepare("UPDATE agent_sessions SET metadata_json = ?, updated_at = ? WHERE id = ?").run(
+    JSON.stringify(metadata),
+    Date.now(),
+    id,
+  );
 }

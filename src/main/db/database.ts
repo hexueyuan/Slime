@@ -239,6 +239,11 @@ function createDb(dbPath: string): BetterSqlite3.Database {
   } catch {
     // column already exists
   }
+  try {
+    instance.exec("ALTER TABLE agent_sessions ADD COLUMN metadata_json TEXT");
+  } catch {
+    // column already exists
+  }
   return instance;
 }
 

@@ -138,6 +138,28 @@ describe("agentSessionDao", () => {
     sessionDao.createSession(db, { id: "s2", agentId: "a2", title: "two" });
     expect(sessionDao.listSessions(db)).toHaveLength(2);
   });
+
+  it("getSessionById returns metadata null when not set", () => {
+    sessionDao.createSession(db, { id: "s1", agentId: "a1", title: "test" });
+    const s = sessionDao.getSessionById(db, "s1")!;
+    expect(s.metadata).toBeNull();
+  });
+
+  it("updateMetadata writes and reads back", () => {
+    sessionDao.createSession(db, { id: "s1", agentId: "a1", title: "test" });
+    const meta = { titleGeneratedCount: 2, titleManuallyEdited: true };
+    sessionDao.updateMetadata(db, "s1", meta);
+    const s = sessionDao.getSessionById(db, "s1")!;
+    expect(s.metadata).toEqual(meta);
+  });
+
+  it("updateMetadata updates updated_at", () => {
+    sessionDao.createSession(db, { id: "s1", agentId: "a1", title: "test" });
+    const oldUpdatedAt = sessionDao.getSessionById(db, "s1")!.updatedAt;
+    sessionDao.updateMetadata(db, "s1", { titleGeneratedCount: 1 });
+    const s = sessionDao.getSessionById(db, "s1")!;
+    expect(s.updatedAt).toBeGreaterThanOrEqual(oldUpdatedAt);
+  });
 });
 
 describe("agentSessionConfigDao", () => {
