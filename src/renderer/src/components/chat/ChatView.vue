@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { Icon } from "@iconify/vue";
 import ChatMessageList from "./ChatMessageList.vue";
 import ChatInput from "./ChatInput.vue";
@@ -15,6 +15,10 @@ const emit = defineEmits<{
 const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
 const chatStore = useAgentChatStore();
+
+onMounted(() => {
+  chatStore.fetchUserProfile();
+});
 
 const session = computed(() => sessionStore.activeSession);
 const agent = computed(() => {
