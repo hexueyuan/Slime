@@ -5,6 +5,7 @@ import { useGatewayStore } from "@/stores/gateway";
 import type { Channel, ChannelType, Capability, Model } from "@shared/types/gateway";
 import { Icon } from "@iconify/vue";
 import ModelIcon from "@/components/ModelIcon.vue";
+import ChannelStabilityChart from "@/components/gateway/ChannelStabilityChart.vue";
 
 const gw = usePresenter("gatewayPresenter");
 const store = useGatewayStore();
@@ -21,15 +22,8 @@ const form = ref({
   type: "openai" as ChannelType,
   baseUrl: "",
   enabled: true,
-  priority: 0,
-  weight: 1,
   keys: [] as string[],
-  models: [] as string[],
 });
-
-const newModelInput = ref("");
-const fetchingModels = ref(false);
-const fetchModelsError = ref("");
 
 const typeOptions: { value: ChannelType; label: string; defaultUrl: string }[] = [
   { value: "anthropic", label: "Anthropic", defaultUrl: "https://api.anthropic.com" },
@@ -51,12 +45,8 @@ function openCreate() {
     type: "openai",
     baseUrl: "",
     enabled: true,
-    priority: 0,
-    weight: 1,
     keys: [""],
-    models: [],
   };
-  newModelInput.value = "";
   showEditor.value = true;
 }
 
@@ -69,12 +59,8 @@ async function openEdit(ch: Channel) {
     type: ch.type,
     baseUrl: ch.baseUrls[0] ?? "",
     enabled: ch.enabled,
-    priority: ch.priority,
-    weight: ch.weight,
     keys: existingKeys.length ? existingKeys.map((k) => k.key) : [""],
-    models: ch.models ?? [],
   };
-  newModelInput.value = "";
   showEditor.value = true;
 }
 
@@ -86,43 +72,6 @@ function removeKeySlot(idx: number) {
   form.value.keys.splice(idx, 1);
 }
 
-function addModel() {
-  const name = newModelInput.value.trim();
-  if (name && !form.value.models.includes(name)) {
-    form.value.models.push(name);
-  }
-  newModelInput.value = "";
-}
-
-function removeModel(idx: number) {
-  form.value.models.splice(idx, 1);
-}
-
-async function fetchModelsForForm() {
-  fetchingModels.value = true;
-  fetchModelsError.value = "";
-  try {
-    let models: string[];
-    if (editingChannel.value) {
-      models = await gw.fetchModels(editingChannel.value.id);
-    } else {
-      const baseUrl = form.value.baseUrl || defaultUrlForType.value;
-      const apiKey = form.value.keys.find((k) => k.trim()) ?? "";
-      if (!apiKey) {
-        fetchModelsError.value = "请先填写 API Key";
-        return;
-      }
-      models = await gw.fetchModelsByConfig(form.value.type, baseUrl, apiKey);
-    }
-    const merged = new Set([...form.value.models, ...models]);
-    form.value.models = [...merged].sort();
-  } catch (e: any) {
-    fetchModelsError.value = e?.message ?? String(e);
-  } finally {
-    fetchingModels.value = false;
-  }
-}
-
 async function save() {
   const baseUrls = form.value.baseUrl ? [form.value.baseUrl] : [defaultUrlForType.value];
   const nonEmptyKeys = form.value.keys.filter((k) => k.trim());
@@ -130,18 +79,16 @@ async function save() {
   let channelId: number;
 
   if (editingChannel.value) {
-    // Update
     channelId = editingChannel.value.id;
     await gw.updateChannel(channelId, {
       name: form.value.name,
       type: form.value.type,
       baseUrls,
-      models: form.value.models,
+      models: [],
       enabled: form.value.enabled,
-      priority: form.value.priority,
-      weight: form.value.weight,
+      priority: 0,
+      weight: 1,
     });
-    // Sync keys: remove all, re-add
     const existing = store.channelKeys.get(channelId) ?? [];
     for (const ek of existing) {
       await gw.removeChannelKey(ek.id);
@@ -150,35 +97,18 @@ async function save() {
       await gw.addChannelKey(channelId, k);
     }
   } else {
-    // Create
     const ch = await gw.createChannel({
       name: form.value.name,
       type: form.value.type,
       baseUrls,
-      models: form.value.models,
+      models: [],
       enabled: form.value.enabled,
-      priority: form.value.priority,
-      weight: form.value.weight,
+      priority: 0,
+      weight: 1,
     });
     channelId = ch.id;
     for (const k of nonEmptyKeys) {
       await gw.addChannelKey(ch.id, k);
-    }
-  }
-
-  // Sync models table: ensure each model in the list has a record
-  const existingModels = await gw.listModelsByChannel(channelId);
-  const existingNames = new Set(existingModels.map((m: any) => m.modelName));
-  for (const modelName of form.value.models) {
-    if (!existingNames.has(modelName)) {
-      await gw.createModel({
-        channelId,
-        modelName,
-        type: "chat",
-        capabilities: [],
-        priority: 0,
-        enabled: true,
-      });
     }
   }
 
@@ -251,15 +181,18 @@ async function selectChannel(ch: Channel) {
   newCapModelName.value = "";
   selectedChannelId.value = ch.id;
   await store.loadModelsByChannel(ch.id);
+  store.loadChannelStability(ch.id);
 }
 
-// Auto-select first channel
+// Auto-select first channel, preload all model counts
 watch(
   () => store.channels,
   (channels) => {
-    if (channels.length && !selectedChannelId.value) {
-      selectChannel(channels[0]);
+    if (!channels.length) return;
+    for (const ch of channels) {
+      if (!store.models.has(ch.id)) store.loadModelsByChannel(ch.id);
     }
+    if (!selectedChannelId.value) selectChannel(channels[0]);
   },
   { immediate: true },
 );
@@ -267,6 +200,11 @@ watch(
 const selectedChannel = computed(
   () => store.channels.find((ch) => ch.id === selectedChannelId.value) ?? null,
 );
+
+const selectedStabilityPoints = computed(() => {
+  if (!selectedChannelId.value) return [];
+  return store.channelStability.get(selectedChannelId.value) ?? [];
+});
 
 const channelModels = computed(() =>
   selectedChannelId.value ? (store.models.get(selectedChannelId.value) ?? []) : [],
@@ -303,6 +241,36 @@ async function removeModelFromChannel(modelId: number) {
 }
 
 const newCapModelName = ref("");
+const refreshingModels = ref(false);
+const refreshModelsError = ref("");
+
+async function refreshModels() {
+  if (!selectedChannelId.value) return;
+  refreshingModels.value = true;
+  refreshModelsError.value = "";
+  try {
+    const fetched: string[] = await gw.fetchModels(selectedChannelId.value);
+    const existing = store.models.get(selectedChannelId.value) ?? [];
+    const existingNames = new Set(existing.map((m) => m.modelName));
+    for (const name of fetched) {
+      if (!existingNames.has(name)) {
+        await gw.createModel({
+          channelId: selectedChannelId.value,
+          modelName: name,
+          type: "chat",
+          capabilities: [],
+          priority: 0,
+          enabled: true,
+        });
+      }
+    }
+    await store.loadModelsByChannel(selectedChannelId.value);
+  } catch (e: any) {
+    refreshModelsError.value = e?.message ?? String(e);
+  } finally {
+    refreshingModels.value = false;
+  }
+}
 </script>
 
 <template>
@@ -349,7 +317,7 @@ const newCapModelName = ref("");
             <div class="mt-1 text-[11px] text-muted-foreground">
               {{ ch.type }}
               <span class="ml-1">·</span>
-              <span class="ml-1">{{ (ch.models ?? []).length }} 模型</span>
+              <span class="ml-1">{{ (store.models.get(ch.id) ?? []).length }} 模型</span>
             </div>
           </div>
         </template>
@@ -413,16 +381,40 @@ const newCapModelName = ref("");
           </div>
         </div>
 
+        <!-- Stability chart -->
+        <ChannelStabilityChart
+          v-if="selectedChannel"
+          :points="selectedStabilityPoints"
+          class="mb-4"
+        />
+
         <!-- Model management title -->
         <div class="mb-3 flex items-center justify-between">
           <span class="text-[13px] text-muted-foreground">模型管理</span>
-          <button
-            class="flex h-6 w-6 items-center justify-center rounded border border-border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title="添加模型"
-            @click="showAddModel = !showAddModel"
-          >
-            +
-          </button>
+          <div class="flex items-center gap-1">
+            <button
+              class="flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+              title="从渠道拉取模型列表"
+              :disabled="refreshingModels"
+              @click="refreshModels"
+            >
+              <Icon
+                icon="lucide:refresh-cw"
+                class="h-3.5 w-3.5"
+                :class="refreshingModels && 'animate-spin'"
+              />
+            </button>
+            <button
+              class="flex h-6 w-6 items-center justify-center rounded border border-border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              title="添加模型"
+              @click="showAddModel = !showAddModel"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div v-if="refreshModelsError" class="mb-2 text-xs text-red-400">
+          {{ refreshModelsError }}
         </div>
 
         <!-- Model list -->
@@ -432,9 +424,11 @@ const newCapModelName = ref("");
             :key="model.id"
             class="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2"
           >
-            <div class="flex items-center gap-2">
-              <ModelIcon :model-name="model.modelName" :size="18" />
-              <span class="text-[13px]">{{ model.modelName }}</span>
+            <div class="flex items-center gap-2 min-w-0">
+              <ModelIcon :model-name="model.modelName" :size="18" class="shrink-0" />
+              <span class="truncate text-[13px]" :title="model.modelName">{{
+                model.modelName
+              }}</span>
               <span
                 :class="[
                   'inline-block h-1.5 w-1.5 rounded-full',
@@ -458,11 +452,23 @@ const newCapModelName = ref("");
                 {{ cap.icon }}
               </button>
               <button
-                class="ml-1 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+                class="ml-1 shrink-0 rounded-full transition-colors"
                 :title="model.enabled ? '禁用' : '启用'"
                 @click.stop="toggleModelEnabled(model)"
               >
-                <Icon :icon="model.enabled ? 'lucide:eye' : 'lucide:eye-off'" class="h-3.5 w-3.5" />
+                <span
+                  :class="[
+                    'flex h-4 w-7 items-center rounded-full px-0.5 transition-colors',
+                    model.enabled ? 'bg-violet-500' : 'bg-muted-foreground/30',
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'h-3 w-3 rounded-full bg-white shadow transition-transform',
+                      model.enabled ? 'translate-x-3' : 'translate-x-0',
+                    ]"
+                  />
+                </span>
               </button>
               <button
                 class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-400"
@@ -594,69 +600,6 @@ const newCapModelName = ref("");
                 <Icon icon="lucide:x" class="h-3.5 w-3.5" />
               </button>
             </div>
-          </div>
-
-          <!-- Models -->
-          <div class="mb-3">
-            <div class="mb-1 flex items-center justify-between">
-              <span class="text-xs text-muted-foreground">模型列表</span>
-              <button
-                class="text-xs text-violet-500 hover:text-violet-400 disabled:opacity-50"
-                :disabled="fetchingModels"
-                @click="fetchModelsForForm"
-              >
-                {{ fetchingModels ? "获取中..." : "获取模型" }}
-              </button>
-            </div>
-            <div v-if="fetchModelsError" class="mb-1.5 text-xs text-red-400">
-              {{ fetchModelsError }}
-            </div>
-            <div v-if="form.models.length" class="mb-1.5 flex flex-wrap gap-1">
-              <span
-                v-for="(m, idx) in form.models"
-                :key="m"
-                class="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-xs text-foreground"
-              >
-                {{ m }}
-                <button class="text-muted-foreground hover:text-red-400" @click="removeModel(idx)">
-                  <Icon icon="lucide:x" class="h-3 w-3" />
-                </button>
-              </span>
-            </div>
-            <div class="flex gap-1.5">
-              <input
-                v-model="newModelInput"
-                class="min-w-0 flex-1 rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-                placeholder="输入模型 ID"
-                @keydown.enter.prevent="addModel"
-              />
-              <button
-                class="rounded px-2 py-1.5 text-xs text-violet-500 hover:bg-muted hover:text-violet-400"
-                @click="addModel"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <!-- Priority & Weight -->
-          <div class="mb-4 grid grid-cols-2 gap-3">
-            <label class="block">
-              <span class="mb-1 block text-xs text-muted-foreground">Priority</span>
-              <input
-                v-model.number="form.priority"
-                type="number"
-                class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-              />
-            </label>
-            <label class="block">
-              <span class="mb-1 block text-xs text-muted-foreground">Weight</span>
-              <input
-                v-model.number="form.weight"
-                type="number"
-                class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-              />
-            </label>
           </div>
 
           <!-- Actions -->
