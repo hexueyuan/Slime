@@ -18,13 +18,33 @@
           >
             设置
           </h2>
-          <button class="rounded-md bg-muted px-3 py-1.5 text-left text-sm text-foreground">
+          <button
+            :class="[
+              'rounded-md px-3 py-1.5 text-left text-sm',
+              activeTab === 'profile'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/50',
+            ]"
+            @click="activeTab = 'profile'"
+          >
+            个人资料
+          </button>
+          <button
+            :class="[
+              'rounded-md px-3 py-1.5 text-left text-sm',
+              activeTab === 'gateway'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/50',
+            ]"
+            @click="activeTab = 'gateway'"
+          >
             网关
           </button>
         </div>
         <!-- Right content -->
         <div class="flex flex-1 flex-col overflow-y-auto p-5">
-          <GatewaySettings />
+          <ProfileSettings v-if="activeTab === 'profile'" />
+          <GatewaySettings v-else-if="activeTab === 'gateway'" />
         </div>
       </div>
     </div>
@@ -32,11 +52,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import GatewaySettings from "./GatewaySettings.vue";
+import ProfileSettings from "./ProfileSettings.vue";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();
+
+const activeTab = ref<"profile" | "gateway">("profile");
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") emit("update:open", false);
