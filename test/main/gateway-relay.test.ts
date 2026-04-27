@@ -36,22 +36,18 @@ function setup() {
   const ch1 = channelDao.createChannel(db, {
     name: "ch1",
     type: "openai",
-    baseUrls: ["https://api.openai.com"],
+    baseUrl: "https://api.openai.com",
     models: [],
     enabled: true,
-    priority: 0,
-    weight: 1,
   });
   channelDao.addChannelKey(db, ch1.id, "sk-1");
 
   const ch2 = channelDao.createChannel(db, {
     name: "ch2",
     type: "openai",
-    baseUrls: ["https://api2.openai.com"],
+    baseUrl: "https://api2.openai.com",
     models: [],
     enabled: true,
-    priority: 0,
-    weight: 1,
   });
   channelDao.addChannelKey(db, ch2.id, "sk-2");
 
@@ -208,21 +204,17 @@ describe("relay", () => {
     const ch = channelDao.createChannel(db, {
       name: "disabled",
       type: "openai",
-      baseUrls: ["https://api.openai.com"],
+      baseUrl: "https://api.openai.com",
       models: [],
       enabled: false,
-      priority: 0,
-      weight: 1,
     });
     channelDao.addChannelKey(db, ch.id, "sk-d");
     const ch2 = channelDao.createChannel(db, {
       name: "active",
       type: "openai",
-      baseUrls: ["https://api2.openai.com"],
+      baseUrl: "https://api2.openai.com",
       models: [],
       enabled: true,
-      priority: 0,
-      weight: 1,
     });
     channelDao.addChannelKey(db, ch2.id, "sk-a");
 

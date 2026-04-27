@@ -7,6 +7,7 @@ export interface InternalRequest {
   tools?: InternalTool[];
   systemPrompt?: string;
   rawHeaders?: Record<string, string>;
+  apiKeyId?: number;
 }
 
 export interface InternalMessage {
@@ -60,6 +61,5 @@ export interface OutboundAdapter {
 export interface OutboundConfig {
   baseUrl: string;
   apiKey: string;
-  proxy?: string;
   timeout?: number;
 }
