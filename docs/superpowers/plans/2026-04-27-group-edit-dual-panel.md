@@ -12,18 +12,19 @@
 
 ## 文件结构
 
-| 文件 | 操作 | 职责 |
-|------|------|------|
+| 文件                                                      | 操作 | 职责                                                |
+| --------------------------------------------------------- | ---- | --------------------------------------------------- |
 | `src/renderer/src/components/gateway/GroupEditDialog.vue` | 新建 | 双面板编辑对话框（左面板可选模型 + 右面板拖拽排序） |
-| `src/renderer/src/components/gateway/GroupTab.vue` | 修改 | 移除内联编辑器，引用 GroupEditDialog |
-| `test/renderer/components/GroupEditDialog.test.ts` | 新建 | GroupEditDialog 单元测试 |
-| `test/renderer/components/GroupTab.test.ts` | 新建 | GroupTab 集成 GroupEditDialog 测试 |
+| `src/renderer/src/components/gateway/GroupTab.vue`        | 修改 | 移除内联编辑器，引用 GroupEditDialog                |
+| `test/renderer/components/GroupEditDialog.test.ts`        | 新建 | GroupEditDialog 单元测试                            |
+| `test/renderer/components/GroupTab.test.ts`               | 新建 | GroupTab 集成 GroupEditDialog 测试                  |
 
 ---
 
 ### Task 1: 安装 vue-draggable-plus
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: 安装依赖**
@@ -47,6 +48,7 @@ git commit -m "chore: add vue-draggable-plus dependency"
 ### Task 2: 创建 GroupEditDialog.vue
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/GroupEditDialog.vue`
 - Test: `test/renderer/components/GroupEditDialog.test.ts`
 
@@ -55,63 +57,62 @@ git commit -m "chore: add vue-draggable-plus dependency"
 Create `test/renderer/components/GroupEditDialog.test.ts`:
 
 ```ts
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
-import { nextTick } from 'vue'
-
-;(window as any).electron = {
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { mount } from "@vue/test-utils";
+import { setActivePinia, createPinia } from "pinia";
+import { nextTick } from "vue";
+(window as any).electron = {
   ipcRenderer: {
     invoke: vi.fn(async () => null),
     on: vi.fn(() => vi.fn()),
     removeAllListeners: vi.fn(),
   },
-}
+};
 
-import GroupEditDialog from '@/components/gateway/GroupEditDialog.vue'
-import { useGatewayStore } from '@/stores/gateway'
+import GroupEditDialog from "@/components/gateway/GroupEditDialog.vue";
+import { useGatewayStore } from "@/stores/gateway";
 
-describe('GroupEditDialog', () => {
+describe("GroupEditDialog", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    document.body.innerHTML = ''
-  })
+    setActivePinia(createPinia());
+    document.body.innerHTML = "";
+  });
 
-  it('should not render when open=false', () => {
+  it("should not render when open=false", () => {
     mount(GroupEditDialog, {
       props: { open: false, group: null },
       attachTo: document.body,
-    })
-    expect(document.querySelector('[data-testid="group-edit-overlay"]')).toBeNull()
-  })
+    });
+    expect(document.querySelector('[data-testid="group-edit-overlay"]')).toBeNull();
+  });
 
-  it('should render dialog when open=true', () => {
+  it("should render dialog when open=true", () => {
     mount(GroupEditDialog, {
       props: { open: true, group: null },
       attachTo: document.body,
-    })
-    expect(document.querySelector('[data-testid="group-edit-overlay"]')).not.toBeNull()
-  })
+    });
+    expect(document.querySelector('[data-testid="group-edit-overlay"]')).not.toBeNull();
+  });
 
   it('should show "新增分组" title when group is null', () => {
     mount(GroupEditDialog, {
       props: { open: true, group: null },
       attachTo: document.body,
-    })
-    expect(document.body.textContent).toContain('新增分组')
-  })
+    });
+    expect(document.body.textContent).toContain("新增分组");
+  });
 
   it('should show "编辑分组" title when group is provided', () => {
     mount(GroupEditDialog, {
       props: {
         open: true,
-        group: { id: 1, name: 'test', balanceMode: 'failover', createdAt: '', updatedAt: '' },
+        group: { id: 1, name: "test", balanceMode: "failover", createdAt: "", updatedAt: "" },
       },
       attachTo: document.body,
-    })
-    expect(document.body.textContent).toContain('编辑分组')
-  })
-})
+    });
+    expect(document.body.textContent).toContain("编辑分组");
+  });
+});
 ```
 
 - [ ] **Step 2: 运行测试确认失败**
@@ -125,111 +126,115 @@ Create `src/renderer/src/components/gateway/GroupEditDialog.vue`:
 
 ```vue
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { VueDraggable } from 'vue-draggable-plus'
-import { usePresenter } from '@/composables/usePresenter'
-import { useGatewayStore } from '@/stores/gateway'
-import type { Group, GroupItem } from '@shared/types/gateway'
-import { Icon } from '@iconify/vue'
+import { ref, computed, watch } from "vue";
+import { VueDraggable } from "vue-draggable-plus";
+import { usePresenter } from "@/composables/usePresenter";
+import { useGatewayStore } from "@/stores/gateway";
+import type { Group, GroupItem } from "@shared/types/gateway";
+import { Icon } from "@iconify/vue";
 
 interface SelectedItem {
-  channelId: number
-  channelName: string
-  modelName: string
+  channelId: number;
+  channelName: string;
+  modelName: string;
 }
 
 const props = defineProps<{
-  open: boolean
-  group?: Group | null
-}>()
+  open: boolean;
+  group?: Group | null;
+}>();
 
 const emit = defineEmits<{
-  'update:open': [value: boolean]
-  saved: []
-}>()
+  "update:open": [value: boolean];
+  saved: [];
+}>();
 
-const gw = usePresenter('gatewayPresenter')
-const store = useGatewayStore()
+const gw = usePresenter("gatewayPresenter");
+const store = useGatewayStore();
 
 const form = ref({
-  name: '',
-  balanceMode: 'round_robin' as Group['balanceMode'],
-})
+  name: "",
+  balanceMode: "round_robin" as Group["balanceMode"],
+});
 
-const selectedItems = ref<SelectedItem[]>([])
-const searchQuery = ref('')
-const expandedChannels = ref<Set<number>>(new Set())
+const selectedItems = ref<SelectedItem[]>([]);
+const searchQuery = ref("");
+const expandedChannels = ref<Set<number>>(new Set());
 
 const balanceModeOptions = [
-  { value: 'round_robin', label: 'Round Robin' },
-  { value: 'random', label: 'Random' },
-  { value: 'failover', label: 'Failover' },
-  { value: 'weighted', label: 'Weighted' },
-]
+  { value: "round_robin", label: "Round Robin" },
+  { value: "random", label: "Random" },
+  { value: "failover", label: "Failover" },
+  { value: "weighted", label: "Weighted" },
+];
 
 const selectedKeys = computed(
   () => new Set(selectedItems.value.map((i) => `${i.channelId}-${i.modelName}`)),
-)
+);
 
 const filteredChannels = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return store.channels
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return store.channels;
   return store.channels
     .map((ch) => {
-      if (ch.name.toLowerCase().includes(q)) return ch
-      const filtered = ch.models.filter((m) => m.toLowerCase().includes(q))
-      if (filtered.length === 0) return null
-      return { ...ch, models: filtered }
+      if (ch.name.toLowerCase().includes(q)) return ch;
+      const filtered = ch.models.filter((m) => m.toLowerCase().includes(q));
+      if (filtered.length === 0) return null;
+      return { ...ch, models: filtered };
     })
-    .filter(Boolean) as typeof store.channels
-})
+    .filter(Boolean) as typeof store.channels;
+});
 
 function toggleChannel(id: number) {
-  const next = new Set(expandedChannels.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  expandedChannels.value = next
+  const next = new Set(expandedChannels.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  expandedChannels.value = next;
 }
 
 function addItem(channelId: number, channelName: string, modelName: string) {
-  const key = `${channelId}-${modelName}`
-  if (selectedKeys.value.has(key)) return
-  selectedItems.value.push({ channelId, channelName, modelName })
+  const key = `${channelId}-${modelName}`;
+  if (selectedKeys.value.has(key)) return;
+  selectedItems.value.push({ channelId, channelName, modelName });
 }
 
 function removeItem(index: number) {
-  selectedItems.value.splice(index, 1)
+  selectedItems.value.splice(index, 1);
 }
 
 function clearAll() {
-  selectedItems.value = []
+  selectedItems.value = [];
 }
 
 async function loadEditData() {
   if (!props.group) {
-    form.value = { name: '', balanceMode: 'round_robin' }
-    selectedItems.value = []
-    return
+    form.value = { name: "", balanceMode: "round_robin" };
+    selectedItems.value = [];
+    return;
   }
-  form.value = { name: props.group.name, balanceMode: props.group.balanceMode }
-  const items: GroupItem[] = await gw.listGroupItems(props.group.id)
-  const sorted = [...items].sort((a, b) => b.priority - a.priority)
+  form.value = { name: props.group.name, balanceMode: props.group.balanceMode };
+  const items: GroupItem[] = await gw.listGroupItems(props.group.id);
+  const sorted = [...items].sort((a, b) => b.priority - a.priority);
   selectedItems.value = sorted.map((i) => {
-    const ch = store.channels.find((c) => c.id === i.channelId)
-    return { channelId: i.channelId, channelName: ch?.name ?? `#${i.channelId}`, modelName: i.modelName }
-  })
+    const ch = store.channels.find((c) => c.id === i.channelId);
+    return {
+      channelId: i.channelId,
+      channelName: ch?.name ?? `#${i.channelId}`,
+      modelName: i.modelName,
+    };
+  });
 }
 
 watch(
   () => props.open,
   (val) => {
     if (val) {
-      searchQuery.value = ''
-      expandedChannels.value = new Set(store.channels.map((c) => c.id))
-      loadEditData()
+      searchQuery.value = "";
+      expandedChannels.value = new Set(store.channels.map((c) => c.id));
+      loadEditData();
     }
   },
-)
+);
 
 async function save() {
   const items = selectedItems.value.map((item, i) => ({
@@ -237,28 +242,28 @@ async function save() {
     modelName: item.modelName,
     priority: selectedItems.value.length - 1 - i,
     weight: 1,
-  }))
+  }));
 
   if (props.group) {
     await gw.updateGroup(props.group.id, {
       name: form.value.name,
       balanceMode: form.value.balanceMode,
-    })
-    await gw.setGroupItems(props.group.id, items)
+    });
+    await gw.setGroupItems(props.group.id, items);
   } else {
     const g = await gw.createGroup({
       name: form.value.name,
       balanceMode: form.value.balanceMode,
-    })
-    await gw.setGroupItems(g.id, items)
+    });
+    await gw.setGroupItems(g.id, items);
   }
 
-  emit('saved')
-  emit('update:open', false)
+  emit("saved");
+  emit("update:open", false);
 }
 
 function close() {
-  emit('update:open', false)
+  emit("update:open", false);
 }
 </script>
 
@@ -276,7 +281,7 @@ function close() {
         <!-- Header -->
         <div class="shrink-0 p-5 pb-0">
           <h3 class="mb-4 text-sm font-medium">
-            {{ group ? '编辑分组' : '新增分组' }}
+            {{ group ? "编辑分组" : "新增分组" }}
           </h3>
 
           <!-- Name + Balance Mode -->
@@ -308,7 +313,9 @@ function close() {
           <div class="grid grid-cols-2 gap-3 h-[400px]">
             <!-- Left Panel: Available Models -->
             <div class="flex flex-col rounded-lg border border-border bg-muted/20 overflow-hidden">
-              <div class="shrink-0 flex items-center justify-between border-b border-border px-3 py-2">
+              <div
+                class="shrink-0 flex items-center justify-between border-b border-border px-3 py-2"
+              >
                 <span class="text-xs text-muted-foreground">可选模型</span>
                 <input
                   v-model="searchQuery"
@@ -323,11 +330,15 @@ function close() {
                     @click="toggleChannel(ch.id)"
                   >
                     <Icon
-                      :icon="expandedChannels.has(ch.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
+                      :icon="
+                        expandedChannels.has(ch.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'
+                      "
                       class="h-3 w-3 shrink-0 text-muted-foreground"
                     />
                     <span class="text-xs font-medium">{{ ch.name }}</span>
-                    <span class="ml-auto text-[10px] text-muted-foreground">{{ ch.models.length }}</span>
+                    <span class="ml-auto text-[10px] text-muted-foreground">{{
+                      ch.models.length
+                    }}</span>
                   </button>
                   <div v-if="expandedChannels.has(ch.id)">
                     <button
@@ -363,7 +374,9 @@ function close() {
 
             <!-- Right Panel: Selected Models -->
             <div class="flex flex-col rounded-lg border border-border bg-muted/20 overflow-hidden">
-              <div class="shrink-0 flex items-center justify-between border-b border-border px-3 py-2">
+              <div
+                class="shrink-0 flex items-center justify-between border-b border-border px-3 py-2"
+              >
                 <span class="text-xs text-muted-foreground">
                   已选模型
                   <span
@@ -467,6 +480,7 @@ git commit -m "feat(gateway): group edit dual-panel dialog with drag-to-sort"
 ### Task 3: 测试 — 左面板交互（添加 + 搜索 + 已选标记）
 
 **Files:**
+
 - Modify: `test/renderer/components/GroupEditDialog.test.ts`
 
 - [ ] **Step 1: 写测试 — 左面板渠道折叠展示 + 点击添加 + 已选禁用 + 搜索**
@@ -474,81 +488,83 @@ git commit -m "feat(gateway): group edit dual-panel dialog with drag-to-sort"
 Append to `test/renderer/components/GroupEditDialog.test.ts`:
 
 ```ts
-describe('Left panel interactions', () => {
+describe("Left panel interactions", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    document.body.innerHTML = ''
-    const store = useGatewayStore()
+    setActivePinia(createPinia());
+    document.body.innerHTML = "";
+    const store = useGatewayStore();
     store.channels = [
       {
         id: 1,
-        name: 'TestChannel',
-        type: 'openai',
+        name: "TestChannel",
+        type: "openai",
         baseUrls: [],
-        models: ['gpt-4o', 'gpt-3.5'],
+        models: ["gpt-4o", "gpt-3.5"],
         enabled: true,
         priority: 0,
         weight: 1,
-        createdAt: '',
-        updatedAt: '',
+        createdAt: "",
+        updatedAt: "",
       },
       {
         id: 2,
-        name: 'AnotherChannel',
-        type: 'anthropic',
+        name: "AnotherChannel",
+        type: "anthropic",
         baseUrls: [],
-        models: ['claude-opus'],
+        models: ["claude-opus"],
         enabled: true,
         priority: 0,
         weight: 1,
-        createdAt: '',
-        updatedAt: '',
+        createdAt: "",
+        updatedAt: "",
       },
-    ]
-  })
+    ];
+  });
 
-  it('should display channels with model count', () => {
+  it("should display channels with model count", () => {
     mount(GroupEditDialog, {
       props: { open: true, group: null },
       attachTo: document.body,
-    })
-    expect(document.body.textContent).toContain('TestChannel')
-    expect(document.body.textContent).toContain('AnotherChannel')
-  })
+    });
+    expect(document.body.textContent).toContain("TestChannel");
+    expect(document.body.textContent).toContain("AnotherChannel");
+  });
 
-  it('should add model to selected list on click', async () => {
+  it("should add model to selected list on click", async () => {
     const wrapper = mount(GroupEditDialog, {
       props: { open: true, group: null },
       attachTo: document.body,
-    })
+    });
     // Find the gpt-4o button in the left panel and click it
-    const modelButtons = document.querySelectorAll('button')
+    const modelButtons = document.querySelectorAll("button");
     const gpt4oBtn = Array.from(modelButtons).find(
-      (b) => b.textContent?.includes('gpt-4o') && !b.textContent?.includes('gpt-3.5'),
-    )
-    expect(gpt4oBtn).toBeTruthy()
-    gpt4oBtn!.click()
-    await nextTick()
+      (b) => b.textContent?.includes("gpt-4o") && !b.textContent?.includes("gpt-3.5"),
+    );
+    expect(gpt4oBtn).toBeTruthy();
+    gpt4oBtn!.click();
+    await nextTick();
     // Should appear in right panel
-    const rightPanel = document.body.textContent
-    expect(rightPanel).toContain('#1')
-  })
+    const rightPanel = document.body.textContent;
+    expect(rightPanel).toContain("#1");
+  });
 
-  it('should filter models by search query', async () => {
+  it("should filter models by search query", async () => {
     const wrapper = mount(GroupEditDialog, {
       props: { open: true, group: null },
       attachTo: document.body,
-    })
-    const searchInput = document.querySelector('input[placeholder="搜索模型..."]') as HTMLInputElement
-    expect(searchInput).toBeTruthy()
-    searchInput.value = 'claude'
-    searchInput.dispatchEvent(new Event('input'))
-    await nextTick()
+    });
+    const searchInput = document.querySelector(
+      'input[placeholder="搜索模型..."]',
+    ) as HTMLInputElement;
+    expect(searchInput).toBeTruthy();
+    searchInput.value = "claude";
+    searchInput.dispatchEvent(new Event("input"));
+    await nextTick();
     // TestChannel should be hidden, AnotherChannel visible
-    expect(document.body.textContent).toContain('claude-opus')
-    expect(document.body.textContent).not.toContain('gpt-4o')
-  })
-})
+    expect(document.body.textContent).toContain("claude-opus");
+    expect(document.body.textContent).not.toContain("gpt-4o");
+  });
+});
 ```
 
 - [ ] **Step 2: 运行测试确认通过**
@@ -568,6 +584,7 @@ git commit -m "test(gateway): left panel add/search/selected-mark tests"
 ### Task 4: 测试 — 右面板交互（移除 + 清空 + 排序序号）
 
 **Files:**
+
 - Modify: `test/renderer/components/GroupEditDialog.test.ts`
 
 - [ ] **Step 1: 写测试 — 移除 + 清空 + 序号更新**
@@ -575,75 +592,75 @@ git commit -m "test(gateway): left panel add/search/selected-mark tests"
 Append to `test/renderer/components/GroupEditDialog.test.ts`:
 
 ```ts
-describe('Right panel interactions', () => {
+describe("Right panel interactions", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    document.body.innerHTML = ''
-    const store = useGatewayStore()
+    setActivePinia(createPinia());
+    document.body.innerHTML = "";
+    const store = useGatewayStore();
     store.channels = [
       {
         id: 1,
-        name: 'Ch1',
-        type: 'openai',
+        name: "Ch1",
+        type: "openai",
         baseUrls: [],
-        models: ['model-a', 'model-b', 'model-c'],
+        models: ["model-a", "model-b", "model-c"],
         enabled: true,
         priority: 0,
         weight: 1,
-        createdAt: '',
-        updatedAt: '',
+        createdAt: "",
+        updatedAt: "",
       },
-    ]
-  })
+    ];
+  });
 
-  it('should remove item and update sequence numbers', async () => {
+  it("should remove item and update sequence numbers", async () => {
     const wrapper = mount(GroupEditDialog, {
       props: { open: true, group: null },
       attachTo: document.body,
-    })
+    });
     // Add two models
     const btns = () =>
-      Array.from(document.querySelectorAll('button')).filter((b) =>
-        b.textContent?.includes('model-'),
-      )
-    btns()[0]?.click()
-    await nextTick()
-    btns()[1]?.click()
-    await nextTick()
-    expect(document.body.textContent).toContain('#1')
-    expect(document.body.textContent).toContain('#2')
+      Array.from(document.querySelectorAll("button")).filter((b) =>
+        b.textContent?.includes("model-"),
+      );
+    btns()[0]?.click();
+    await nextTick();
+    btns()[1]?.click();
+    await nextTick();
+    expect(document.body.textContent).toContain("#1");
+    expect(document.body.textContent).toContain("#2");
 
     // Remove first item via ✕ button
-    const xBtns = document.querySelectorAll('[data-testid="group-edit-overlay"] button')
+    const xBtns = document.querySelectorAll('[data-testid="group-edit-overlay"] button');
     const removeBtn = Array.from(xBtns).find(
-      (b) => b.querySelector('.iconify') || b.textContent?.trim() === '',
-    )
+      (b) => b.querySelector(".iconify") || b.textContent?.trim() === "",
+    );
     // Just verify items count changed after remove
-  })
+  });
 
-  it('should clear all items', async () => {
+  it("should clear all items", async () => {
     const wrapper = mount(GroupEditDialog, {
       props: { open: true, group: null },
       attachTo: document.body,
-    })
+    });
     // Add a model
-    const btns = Array.from(document.querySelectorAll('button')).filter((b) =>
-      b.textContent?.includes('model-a'),
-    )
-    btns[0]?.click()
-    await nextTick()
-    expect(document.body.textContent).toContain('#1')
+    const btns = Array.from(document.querySelectorAll("button")).filter((b) =>
+      b.textContent?.includes("model-a"),
+    );
+    btns[0]?.click();
+    await nextTick();
+    expect(document.body.textContent).toContain("#1");
 
     // Click clear button
-    const clearBtn = Array.from(document.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('清空'),
-    )
-    expect(clearBtn).toBeTruthy()
-    clearBtn!.click()
-    await nextTick()
-    expect(document.body.textContent).toContain('点击左侧模型添加')
-  })
-})
+    const clearBtn = Array.from(document.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("清空"),
+    );
+    expect(clearBtn).toBeTruthy();
+    clearBtn!.click();
+    await nextTick();
+    expect(document.body.textContent).toContain("点击左侧模型添加");
+  });
+});
 ```
 
 - [ ] **Step 2: 运行测试确认通过**
@@ -663,6 +680,7 @@ git commit -m "test(gateway): right panel remove/clear tests"
 ### Task 5: 测试 — 保存逻辑（新建 + 编辑）
 
 **Files:**
+
 - Modify: `test/renderer/components/GroupEditDialog.test.ts`
 
 - [ ] **Step 1: 写测试 — 保存时 priority 映射 + IPC 调用**
@@ -670,81 +688,89 @@ git commit -m "test(gateway): right panel remove/clear tests"
 Append to `test/renderer/components/GroupEditDialog.test.ts`:
 
 ```ts
-describe('Save logic', () => {
-  let invokeResults: Record<string, any>
+describe("Save logic", () => {
+  let invokeResults: Record<string, any>;
 
   beforeEach(() => {
-    setActivePinia(createPinia())
-    document.body.innerHTML = ''
-    const store = useGatewayStore()
+    setActivePinia(createPinia());
+    document.body.innerHTML = "";
+    const store = useGatewayStore();
     store.channels = [
       {
         id: 1,
-        name: 'Ch1',
-        type: 'openai',
+        name: "Ch1",
+        type: "openai",
         baseUrls: [],
-        models: ['model-a', 'model-b'],
+        models: ["model-a", "model-b"],
         enabled: true,
         priority: 0,
         weight: 1,
-        createdAt: '',
-        updatedAt: '',
+        createdAt: "",
+        updatedAt: "",
       },
-    ]
+    ];
 
-    invokeResults = {}
-    ;(window as any).electron.ipcRenderer.invoke = vi.fn(async (_channel: string, _name: string, method: string, args: any[]) => {
-      if (method === 'createGroup') {
-        return { id: 99, name: args[0].name, balanceMode: args[0].balanceMode, createdAt: '', updatedAt: '' }
-      }
-      if (method === 'setGroupItems') {
-        invokeResults.setGroupItemsArgs = args
-        return true
-      }
-      if (method === 'listGroups') return []
-      return null
-    })
-  })
+    invokeResults = {};
+    (window as any).electron.ipcRenderer.invoke = vi.fn(
+      async (_channel: string, _name: string, method: string, args: any[]) => {
+        if (method === "createGroup") {
+          return {
+            id: 99,
+            name: args[0].name,
+            balanceMode: args[0].balanceMode,
+            createdAt: "",
+            updatedAt: "",
+          };
+        }
+        if (method === "setGroupItems") {
+          invokeResults.setGroupItemsArgs = args;
+          return true;
+        }
+        if (method === "listGroups") return [];
+        return null;
+      },
+    );
+  });
 
-  it('should call createGroup + setGroupItems with correct priority mapping on save', async () => {
+  it("should call createGroup + setGroupItems with correct priority mapping on save", async () => {
     const wrapper = mount(GroupEditDialog, {
       props: { open: true, group: null },
       attachTo: document.body,
-    })
+    });
 
     // Set name
-    const nameInput = document.querySelector('input[placeholder="gpt-4o"]') as HTMLInputElement
-    nameInput.value = 'test-group'
-    nameInput.dispatchEvent(new Event('input'))
-    await nextTick()
+    const nameInput = document.querySelector('input[placeholder="gpt-4o"]') as HTMLInputElement;
+    nameInput.value = "test-group";
+    nameInput.dispatchEvent(new Event("input"));
+    await nextTick();
 
     // Add two models
-    const modelBtns = Array.from(document.querySelectorAll('button')).filter((b) =>
-      b.textContent?.includes('model-'),
-    )
-    modelBtns[0]?.click()
-    await nextTick()
-    modelBtns[1]?.click()
-    await nextTick()
+    const modelBtns = Array.from(document.querySelectorAll("button")).filter((b) =>
+      b.textContent?.includes("model-"),
+    );
+    modelBtns[0]?.click();
+    await nextTick();
+    modelBtns[1]?.click();
+    await nextTick();
 
     // Click save
-    const saveBtn = Array.from(document.querySelectorAll('button')).find((b) =>
-      b.textContent?.trim() === '保存',
-    )
-    saveBtn!.click()
-    await nextTick()
+    const saveBtn = Array.from(document.querySelectorAll("button")).find(
+      (b) => b.textContent?.trim() === "保存",
+    );
+    saveBtn!.click();
+    await nextTick();
     // Wait for async save
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 10));
 
-    expect(invokeResults.setGroupItemsArgs).toBeTruthy()
-    const [_groupId, items] = invokeResults.setGroupItemsArgs
+    expect(invokeResults.setGroupItemsArgs).toBeTruthy();
+    const [_groupId, items] = invokeResults.setGroupItemsArgs;
     // First item (index 0) gets highest priority
-    expect(items[0].priority).toBe(1)
-    expect(items[1].priority).toBe(0)
-    expect(items[0].weight).toBe(1)
-    expect(items[1].weight).toBe(1)
-  })
-})
+    expect(items[0].priority).toBe(1);
+    expect(items[1].priority).toBe(0);
+    expect(items[0].weight).toBe(1);
+    expect(items[1].weight).toBe(1);
+  });
+});
 ```
 
 - [ ] **Step 2: 运行测试确认通过**
@@ -764,6 +790,7 @@ git commit -m "test(gateway): save logic priority mapping tests"
 ### Task 6: 改造 GroupTab.vue 集成 GroupEditDialog
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/GroupTab.vue`
 - Test: `test/renderer/components/GroupTab.test.ts`
 
@@ -772,53 +799,52 @@ git commit -m "test(gateway): save logic priority mapping tests"
 Create `test/renderer/components/GroupTab.test.ts`:
 
 ```ts
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
-import { nextTick } from 'vue'
-
-;(window as any).electron = {
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { mount } from "@vue/test-utils";
+import { setActivePinia, createPinia } from "pinia";
+import { nextTick } from "vue";
+(window as any).electron = {
   ipcRenderer: {
     invoke: vi.fn(async () => null),
     on: vi.fn(() => vi.fn()),
     removeAllListeners: vi.fn(),
   },
-}
+};
 
-import GroupTab from '@/components/gateway/GroupTab.vue'
-import { useGatewayStore } from '@/stores/gateway'
+import GroupTab from "@/components/gateway/GroupTab.vue";
+import { useGatewayStore } from "@/stores/gateway";
 
-describe('GroupTab', () => {
+describe("GroupTab", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    document.body.innerHTML = ''
-  })
+    setActivePinia(createPinia());
+    document.body.innerHTML = "";
+  });
 
-  it('should show empty state when no groups', () => {
-    mount(GroupTab, { attachTo: document.body })
-    expect(document.body.textContent).toContain('暂无分组')
-  })
+  it("should show empty state when no groups", () => {
+    mount(GroupTab, { attachTo: document.body });
+    expect(document.body.textContent).toContain("暂无分组");
+  });
 
-  it('should list existing groups', () => {
-    const store = useGatewayStore()
+  it("should list existing groups", () => {
+    const store = useGatewayStore();
     store.groups = [
-      { id: 1, name: 'cc-auto', balanceMode: 'failover', createdAt: '', updatedAt: '' },
-    ]
-    mount(GroupTab, { attachTo: document.body })
-    expect(document.body.textContent).toContain('cc-auto')
-    expect(document.body.textContent).toContain('failover')
-  })
+      { id: 1, name: "cc-auto", balanceMode: "failover", createdAt: "", updatedAt: "" },
+    ];
+    mount(GroupTab, { attachTo: document.body });
+    expect(document.body.textContent).toContain("cc-auto");
+    expect(document.body.textContent).toContain("failover");
+  });
 
   it('should open GroupEditDialog on "+ 新增分组" click', async () => {
-    mount(GroupTab, { attachTo: document.body })
-    const btn = Array.from(document.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('新增分组'),
-    )
-    btn!.click()
-    await nextTick()
-    expect(document.querySelector('[data-testid="group-edit-overlay"]')).not.toBeNull()
-  })
-})
+    mount(GroupTab, { attachTo: document.body });
+    const btn = Array.from(document.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("新增分组"),
+    );
+    btn!.click();
+    await nextTick();
+    expect(document.querySelector('[data-testid="group-edit-overlay"]')).not.toBeNull();
+  });
+});
 ```
 
 - [ ] **Step 2: 运行测试确认失败**
@@ -832,36 +858,36 @@ Replace the full content of `src/renderer/src/components/gateway/GroupTab.vue`:
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue'
-import { usePresenter } from '@/composables/usePresenter'
-import { useGatewayStore } from '@/stores/gateway'
-import type { Group } from '@shared/types/gateway'
-import { Icon } from '@iconify/vue'
-import GroupEditDialog from './GroupEditDialog.vue'
+import { ref } from "vue";
+import { usePresenter } from "@/composables/usePresenter";
+import { useGatewayStore } from "@/stores/gateway";
+import type { Group } from "@shared/types/gateway";
+import { Icon } from "@iconify/vue";
+import GroupEditDialog from "./GroupEditDialog.vue";
 
-const gw = usePresenter('gatewayPresenter')
-const store = useGatewayStore()
+const gw = usePresenter("gatewayPresenter");
+const store = useGatewayStore();
 
-const showEditor = ref(false)
-const editingGroup = ref<Group | null>(null)
+const showEditor = ref(false);
+const editingGroup = ref<Group | null>(null);
 
 function openCreate() {
-  editingGroup.value = null
-  showEditor.value = true
+  editingGroup.value = null;
+  showEditor.value = true;
 }
 
 function openEdit(g: Group) {
-  editingGroup.value = g
-  showEditor.value = true
+  editingGroup.value = g;
+  showEditor.value = true;
 }
 
 async function onSaved() {
-  await store.loadGroups()
+  await store.loadGroups();
 }
 
 async function deleteGroup(id: number) {
-  await gw.deleteGroup(id)
-  await store.loadGroups()
+  await gw.deleteGroup(id);
+  await store.loadGroups();
 }
 </script>
 
@@ -943,6 +969,7 @@ git commit -m "refactor(gateway): replace inline group editor with GroupEditDial
 ### Task 7: 格式化 + Lint + 最终验证
 
 **Files:**
+
 - All changed files
 
 - [ ] **Step 1: 格式化**

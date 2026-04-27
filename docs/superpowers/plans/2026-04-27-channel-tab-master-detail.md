@@ -15,6 +15,7 @@
 ### Task 1: 重构外层布局为左右分栏
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/ChannelTab.vue:258-270`
 
 将渠道列表和模型管理面板从纵向堆叠改为水平 flex 分栏。
@@ -65,6 +66,7 @@ git commit -m "refactor(gateway): channel tab outer layout to flex column"
 ### Task 2: 左侧渠道列表面板
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/ChannelTab.vue:272-331`
 
 将渠道列表包裹在左侧固定宽度面板中，简化卡片内容（移除操作按钮，只显示名称+类型+模型数量）。
@@ -74,7 +76,7 @@ git commit -m "refactor(gateway): channel tab outer layout to flex column"
 在 `<script setup>` 中（`selectChannel` 函数之后，约 227 行），添加 watch 自动选中第一个渠道：
 
 ```typescript
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch } from "vue";
 // ... existing code ...
 
 // Auto-select first channel
@@ -82,11 +84,11 @@ watch(
   () => store.channels,
   (channels) => {
     if (channels.length && !selectedChannelId.value) {
-      selectChannel(channels[0])
+      selectChannel(channels[0]);
     }
   },
   { immediate: true },
-)
+);
 ```
 
 注意：import 行需要把 `watch` 加到现有的 `import { ref, computed } from 'vue'` 中。
@@ -150,6 +152,7 @@ git commit -m "refactor(gateway): left channel list panel with auto-select"
 ### Task 3: 右侧模型管理面板 + 渠道详情头
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/ChannelTab.vue:334-414`
 
 右侧面板包含渠道详情头（名称/URL/操作按钮）和模型列表。
@@ -159,9 +162,9 @@ git commit -m "refactor(gateway): left channel list panel with auto-select"
 在 `<script setup>` 中添加（`channelModels` computed 附近）：
 
 ```typescript
-const selectedChannel = computed(() =>
-  store.channels.find((ch) => ch.id === selectedChannelId.value) ?? null,
-)
+const selectedChannel = computed(
+  () => store.channels.find((ch) => ch.id === selectedChannelId.value) ?? null,
+);
 ```
 
 - [ ] **Step 2: 写右侧面板 template**
@@ -172,9 +175,7 @@ const selectedChannel = computed(() =>
 <!-- Right: model management -->
 <div v-if="selectedChannel" class="min-w-0 flex-1 overflow-y-auto p-4">
   <!-- Channel detail header -->
-  <div
-    class="mb-4 flex items-center justify-between border-b border-border pb-3"
-  >
+  <div class="mb-4 flex items-center justify-between border-b border-border pb-3">
     <div class="min-w-0">
       <div class="flex items-center gap-2">
         <span class="text-[15px] font-semibold">{{ selectedChannel.name }}</span>
@@ -193,17 +194,13 @@ const selectedChannel = computed(() =>
       </div>
       <!-- Test result -->
       <div v-if="testResults.get(selectedChannel.id)" class="mt-1 text-xs">
-        <span
-          v-if="testResults.get(selectedChannel.id)!.loading"
-          class="text-muted-foreground"
-        >测试中...</span>
-        <span
-          v-else-if="testResults.get(selectedChannel.id)!.success"
-          class="text-green-500"
-        >连接成功</span>
-        <span v-else class="text-red-400">{{
-          testResults.get(selectedChannel.id)!.error
-        }}</span>
+        <span v-if="testResults.get(selectedChannel.id)!.loading" class="text-muted-foreground"
+          >测试中...</span
+        >
+        <span v-else-if="testResults.get(selectedChannel.id)!.success" class="text-green-500"
+          >连接成功</span
+        >
+        <span v-else class="text-red-400">{{ testResults.get(selectedChannel.id)!.error }}</span>
       </div>
     </div>
     <div class="flex shrink-0 items-center gap-2">
@@ -261,6 +258,7 @@ git commit -m "refactor(gateway): right panel with channel detail header"
 ### Task 4: 模型列表 + 能力标签配色 + "+" 添加交互
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/ChannelTab.vue`
 
 实现模型列表区域，包含新的能力标签配色和 "+" 按钮触发的内联输入。
@@ -272,24 +270,24 @@ git commit -m "refactor(gateway): right panel with channel detail header"
 ```typescript
 const CAP_COLORS: Record<Capability, { active: string; inactive: string }> = {
   reasoning: {
-    active: 'bg-violet-400/20 text-violet-400 border-violet-400/30',
-    inactive: 'border-border text-muted-foreground/50',
+    active: "bg-violet-400/20 text-violet-400 border-violet-400/30",
+    inactive: "border-border text-muted-foreground/50",
   },
   chat: {
-    active: 'bg-blue-400/20 text-blue-400 border-blue-400/30',
-    inactive: 'border-border text-muted-foreground/50',
+    active: "bg-blue-400/20 text-blue-400 border-blue-400/30",
+    inactive: "border-border text-muted-foreground/50",
   },
   vision: {
-    active: 'bg-emerald-400/20 text-emerald-400 border-emerald-400/30',
-    inactive: 'border-border text-muted-foreground/50',
+    active: "bg-emerald-400/20 text-emerald-400 border-emerald-400/30",
+    inactive: "border-border text-muted-foreground/50",
   },
   image_gen: {
-    active: 'bg-amber-400/20 text-amber-400 border-amber-400/30',
-    inactive: 'border-border text-muted-foreground/50',
+    active: "bg-amber-400/20 text-amber-400 border-amber-400/30",
+    inactive: "border-border text-muted-foreground/50",
   },
-}
+};
 
-const showAddModel = ref(false)
+const showAddModel = ref(false);
 ```
 
 - [ ] **Step 2: 写模型管理标题行 + 模型列表 + 内联添加**
@@ -344,10 +342,7 @@ const showAddModel = ref(false)
         :title="model.enabled ? '禁用' : '启用'"
         @click.stop="toggleModelEnabled(model)"
       >
-        <Icon
-          :icon="model.enabled ? 'lucide:eye' : 'lucide:eye-off'"
-          class="h-3.5 w-3.5"
-        />
+        <Icon :icon="model.enabled ? 'lucide:eye' : 'lucide:eye-off'" class="h-3.5 w-3.5" />
       </button>
       <button
         class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-400"
@@ -415,6 +410,7 @@ git commit -m "refactor(gateway): model list with colored cap tags and inline ad
 ### Task 5: 收尾验证
 
 **Files:**
+
 - 无新增修改，仅验证
 
 - [ ] **Step 1: 运行完整 typecheck + lint + format check**

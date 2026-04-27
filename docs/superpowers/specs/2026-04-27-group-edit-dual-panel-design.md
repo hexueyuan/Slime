@@ -48,8 +48,8 @@
 
 ```ts
 interface Props {
-  open: boolean           // v-model:open
-  group?: Group | null    // null = 新建, 非 null = 编辑
+  open: boolean; // v-model:open
+  group?: Group | null; // null = 新建, 非 null = 编辑
 }
 ```
 
@@ -57,8 +57,8 @@ interface Props {
 
 ```ts
 interface Emits {
-  'update:open': [value: boolean]
-  'saved': []             // 保存成功后通知父组件刷新
+  "update:open": [value: boolean];
+  saved: []; // 保存成功后通知父组件刷新
 }
 ```
 
@@ -66,18 +66,18 @@ interface Emits {
 
 ```ts
 const form = ref({
-  name: '',
-  balanceMode: 'round_robin' as Group['balanceMode'],
-})
+  name: "",
+  balanceMode: "round_robin" as Group["balanceMode"],
+});
 
 interface SelectedItem {
-  channelId: number
-  channelName: string
-  modelName: string
+  channelId: number;
+  channelName: string;
+  modelName: string;
 }
 
-const selectedItems = ref<SelectedItem[]>([])
-const searchQuery = ref('')
+const selectedItems = ref<SelectedItem[]>([]);
+const searchQuery = ref("");
 ```
 
 ### 修改文件
@@ -93,9 +93,9 @@ const searchQuery = ref('')
 ### 已选判定
 
 ```ts
-const selectedKeys = computed(() =>
-  new Set(selectedItems.value.map(i => `${i.channelId}-${i.modelName}`))
-)
+const selectedKeys = computed(
+  () => new Set(selectedItems.value.map((i) => `${i.channelId}-${i.modelName}`)),
+);
 ```
 
 左面板每个模型用 `selectedKeys.has(key)` 判断是否已选。
@@ -107,6 +107,7 @@ const selectedKeys = computed(() =>
 ### 保存
 
 selectedItems 数组的 index 反向映射为 priority：
+
 - index 0 → priority = len - 1（最高优先级）
 - index N → priority = len - 1 - N
 
@@ -118,7 +119,7 @@ const items = selectedItems.value.map((item, i) => ({
   modelName: item.modelName,
   priority: selectedItems.value.length - 1 - i,
   weight: 1,
-}))
+}));
 ```
 
 调用现有 `gw.createGroup()` / `gw.updateGroup()` + `gw.setGroupItems()`。DAO 层无需改动。

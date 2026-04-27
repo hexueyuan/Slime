@@ -58,14 +58,15 @@
 
 每种能力使用不同颜色，启用态为彩色半透明背景+同色文字+同色边框，未启用态为灰色边框+暗灰文字：
 
-| 能力 | 颜色 | 启用背景 |
-|------|------|----------|
-| reasoning | 紫色 `#a78bfa` | `rgba(167,139,250,0.2)` |
-| chat | 蓝色 `#60a5fa` | `rgba(96,165,250,0.2)` |
-| vision | 绿色 `#34d399` | `rgba(52,211,153,0.2)` |
-| image_gen | 琥珀色 `#fbbf24` | `rgba(251,191,36,0.2)` |
+| 能力      | 颜色             | 启用背景                |
+| --------- | ---------------- | ----------------------- |
+| reasoning | 紫色 `#a78bfa`   | `rgba(167,139,250,0.2)` |
+| chat      | 蓝色 `#60a5fa`   | `rgba(96,165,250,0.2)`  |
+| vision    | 绿色 `#34d399`   | `rgba(52,211,153,0.2)`  |
+| image_gen | 琥珀色 `#fbbf24` | `rgba(251,191,36,0.2)`  |
 
 Tailwind 等价类：
+
 - reasoning 启用: `bg-violet-400/20 text-violet-400 border-violet-400/30`
 - chat 启用: `bg-blue-400/20 text-blue-400 border-blue-400/30`
 - vision 启用: `bg-emerald-400/20 text-emerald-400 border-emerald-400/30`
