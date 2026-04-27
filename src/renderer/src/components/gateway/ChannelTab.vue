@@ -328,22 +328,17 @@ async function refreshModels() {
       <!-- Right: model management -->
       <div v-if="selectedChannel" class="min-w-0 flex-1 overflow-y-auto p-4">
         <!-- Channel detail header -->
-        <div class="mb-4 flex items-center justify-between border-b border-border pb-3">
+        <div class="mb-3 flex items-center justify-between border-b border-border pb-2">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <span class="text-[15px] font-semibold">{{ selectedChannel.name }}</span>
+              <span class="text-[14px] font-semibold">{{ selectedChannel.name }}</span>
               <span
                 :class="[
                   'inline-block h-1.5 w-1.5 rounded-full',
                   selectedChannel.enabled ? 'bg-green-500' : 'bg-neutral-500',
                 ]"
               />
-            </div>
-            <div class="mt-1 truncate text-xs text-muted-foreground">
-              {{ selectedChannel.type }}
-              <span v-if="selectedChannel.baseUrls.length" class="ml-1">
-                · {{ selectedChannel.baseUrls[0] }}
-              </span>
+              <span class="text-xs text-muted-foreground">{{ selectedChannel.type }}</span>
             </div>
             <!-- Test result -->
             <div v-if="testResults.get(selectedChannel.id)" class="mt-1 text-xs">
@@ -419,65 +414,69 @@ async function refreshModels() {
         </div>
 
         <!-- Model list -->
-        <div v-if="channelModels.length" class="space-y-2">
-          <div
-            v-for="model in channelModels"
-            :key="model.id"
-            class="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2"
-          >
-            <div class="flex items-center gap-2 min-w-0">
-              <ModelIcon :model-name="model.modelName" :size="18" class="shrink-0" />
-              <span class="truncate text-[13px]" :title="model.modelName">{{
-                model.modelName
-              }}</span>
-              <span
-                :class="[
-                  'inline-block h-1.5 w-1.5 rounded-full',
-                  model.enabled ? 'bg-green-500' : 'bg-neutral-500',
-                ]"
-              />
-            </div>
-            <div class="flex items-center gap-1">
-              <button
-                v-for="cap in ALL_CAPS"
-                :key="cap.key"
-                :title="cap.label"
-                class="rounded border px-2 py-0.5 text-[10px] transition-colors"
-                :class="
-                  model.capabilities.includes(cap.key)
-                    ? CAP_COLORS[cap.key].active
-                    : CAP_COLORS[cap.key].inactive
-                "
-                @click.stop="toggleModelCap(model, cap.key)"
-              >
-                {{ cap.icon }}
-              </button>
-              <button
-                class="ml-1 shrink-0 rounded-full transition-colors"
-                :title="model.enabled ? '禁用' : '启用'"
-                @click.stop="toggleModelEnabled(model)"
-              >
+        <div v-if="channelModels.length" class="h-[220px] overflow-y-auto">
+          <div class="grid grid-cols-2 gap-2">
+            <div
+              v-for="model in channelModels"
+              :key="model.id"
+              class="flex flex-col gap-1.5 rounded-lg bg-muted/20 px-3 py-2"
+            >
+              <!-- top: icon + name + status dot -->
+              <div class="flex items-center gap-1.5 min-w-0">
+                <ModelIcon :model-name="model.modelName" :size="16" class="shrink-0" />
+                <span class="truncate text-[12px] font-medium min-w-0" :title="model.modelName">{{
+                  model.modelName
+                }}</span>
                 <span
                   :class="[
-                    'flex h-4 w-7 items-center rounded-full px-0.5 transition-colors',
-                    model.enabled ? 'bg-violet-500' : 'bg-muted-foreground/30',
+                    'shrink-0 inline-block h-1.5 w-1.5 rounded-full',
+                    model.enabled ? 'bg-green-500' : 'bg-neutral-500',
                   ]"
+                />
+              </div>
+              <!-- bottom: cap badges + toggle + delete -->
+              <div class="flex items-center gap-1">
+                <button
+                  v-for="cap in ALL_CAPS"
+                  :key="cap.key"
+                  :title="cap.label"
+                  class="rounded border px-1.5 py-0.5 text-[10px] transition-colors"
+                  :class="
+                    model.capabilities.includes(cap.key)
+                      ? CAP_COLORS[cap.key].active
+                      : CAP_COLORS[cap.key].inactive
+                  "
+                  @click.stop="toggleModelCap(model, cap.key)"
+                >
+                  {{ cap.icon }}
+                </button>
+                <button
+                  class="ml-auto shrink-0 rounded-full transition-colors"
+                  :title="model.enabled ? '禁用' : '启用'"
+                  @click.stop="toggleModelEnabled(model)"
                 >
                   <span
                     :class="[
-                      'h-3 w-3 rounded-full bg-white shadow transition-transform',
-                      model.enabled ? 'translate-x-3' : 'translate-x-0',
+                      'flex h-4 w-7 items-center rounded-full px-0.5 transition-colors',
+                      model.enabled ? 'bg-violet-500' : 'bg-muted-foreground/30',
                     ]"
-                  />
-                </span>
-              </button>
-              <button
-                class="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-400"
-                title="删除"
-                @click.stop="removeModelFromChannel(model.id)"
-              >
-                <Icon icon="lucide:trash-2" class="h-3.5 w-3.5" />
-              </button>
+                  >
+                    <span
+                      :class="[
+                        'h-3 w-3 rounded-full bg-white shadow transition-transform',
+                        model.enabled ? 'translate-x-3' : 'translate-x-0',
+                      ]"
+                    />
+                  </span>
+                </button>
+                <button
+                  class="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-red-400"
+                  title="删除"
+                  @click.stop="removeModelFromChannel(model.id)"
+                >
+                  <Icon icon="lucide:trash-2" class="h-3 w-3" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

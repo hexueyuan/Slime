@@ -186,7 +186,7 @@ const metricOptions: { key: MetricKey; label: string }[] = [
     </div>
 
     <!-- Tab content -->
-    <div class="min-h-0 flex-1 overflow-auto">
+    <div class="min-h-0 flex-1 overflow-hidden">
       <ChannelTab v-if="store.activeTab === 'channels'" />
       <GroupTab v-else-if="store.activeTab === 'groups'" />
       <ApiKeyTab v-else-if="store.activeTab === 'apikeys'" />
