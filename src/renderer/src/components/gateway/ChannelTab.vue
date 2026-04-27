@@ -192,7 +192,8 @@ watch(
     for (const ch of channels) {
       if (!store.models.has(ch.id)) store.loadModelsByChannel(ch.id);
     }
-    if (!selectedChannelId.value) selectChannel(channels[0]);
+    if (!selectedChannelId.value || !channels.some((ch) => ch.id === selectedChannelId.value))
+      selectChannel(channels[0]);
   },
   { immediate: true },
 );
