@@ -98,7 +98,6 @@ export function togglePin(db: BetterSqlite3.Database, id: string): void {
 export function deleteSession(db: BetterSqlite3.Database, id: string): void {
   const del = db.transaction(() => {
     db.prepare("DELETE FROM agent_session_configs WHERE id = ?").run(id);
-    db.prepare("DELETE FROM agent_usage_stats WHERE session_id = ?").run(id);
     db.prepare("DELETE FROM agent_messages WHERE session_id = ?").run(id);
     db.prepare("DELETE FROM agent_sessions WHERE id = ?").run(id);
   });
@@ -113,7 +112,6 @@ export function deleteByAgent(db: BetterSqlite3.Database, agentId: string): void
   const del = db.transaction(() => {
     for (const { id } of sessionIds) {
       db.prepare("DELETE FROM agent_session_configs WHERE id = ?").run(id);
-      db.prepare("DELETE FROM agent_usage_stats WHERE session_id = ?").run(id);
       db.prepare("DELETE FROM agent_messages WHERE session_id = ?").run(id);
     }
     db.prepare("DELETE FROM agent_sessions WHERE agent_id = ?").run(agentId);

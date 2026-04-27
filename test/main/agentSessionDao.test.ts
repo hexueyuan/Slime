@@ -3,7 +3,6 @@ import { initDb, closeDb } from "@/db";
 import * as sessionDao from "@/db/models/agentSessionDao";
 import * as configDao from "@/db/models/agentSessionConfigDao";
 import * as messageDao from "@/db/models/agentMessageDao";
-import * as usageDao from "@/db/models/agentUsageStatsDao";
 import type BetterSqlite3 from "better-sqlite3";
 
 let db: BetterSqlite3.Database;
@@ -17,7 +16,7 @@ afterEach(() => {
 });
 
 describe("agent session tables", () => {
-  it("all four tables created", () => {
+  it("all three tables created", () => {
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
       .all() as { name: string }[];
@@ -25,7 +24,6 @@ describe("agent session tables", () => {
     expect(names).toContain("agent_sessions");
     expect(names).toContain("agent_session_configs");
     expect(names).toContain("agent_messages");
-    expect(names).toContain("agent_usage_stats");
   });
 });
 
@@ -71,7 +69,7 @@ describe("agentSessionDao", () => {
     expect(sessionDao.getSessionById(db, "s1")!.isPinned).toBe(false);
   });
 
-  it("deleteSession cascades to config + messages + usage_stats", () => {
+  it("deleteSession cascades to config + messages", () => {
     sessionDao.createSession(db, { id: "s1", agentId: "a1", title: "test" });
     configDao.createConfig(db, { id: "s1" });
     messageDao.createMessage(db, {
@@ -81,20 +79,11 @@ describe("agentSessionDao", () => {
       role: "user",
       content: "hello",
     });
-    usageDao.createUsageStats(db, {
-      messageId: "m1",
-      sessionId: "s1",
-      inputTokens: 10,
-      outputTokens: 20,
-      totalTokens: 30,
-      cachedInputTokens: 0,
-    });
 
     sessionDao.deleteSession(db, "s1");
     expect(sessionDao.getSessionById(db, "s1")).toBeUndefined();
     expect(configDao.getConfigById(db, "s1")).toBeUndefined();
     expect(messageDao.listBySession(db, "s1")).toHaveLength(0);
-    expect(usageDao.getBySession(db, "s1")).toHaveLength(0);
   });
 
   it("deleteByAgent removes all sessions for agent", () => {

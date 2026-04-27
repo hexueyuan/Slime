@@ -107,15 +107,3 @@ export interface MessageMetadata {
   generationTime?: number;
   model?: string;
 }
-
-export interface UsageStatsRecord {
-  messageId: string;
-  sessionId: string;
-  model?: string | null;
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  cachedInputTokens: number;
-  estimatedCostUsd?: number | null;
-  createdAt: number;
-}

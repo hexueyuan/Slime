@@ -9,4 +9,3 @@ export * from "./models/agentDao";
 export * from "./models/agentSessionDao";
 export * from "./models/agentSessionConfigDao";
 export * from "./models/agentMessageDao";
-export * from "./models/agentUsageStatsDao";
