@@ -9,6 +9,11 @@ import type {
   DailyStats,
   RelayLog,
   Model,
+  ChannelRankItem,
+  ModelRankItem,
+  LatencyPercentiles,
+  StabilityPoint,
+  TrendPoint,
 } from "@shared/types/gateway";
 
 export const useGatewayStore = defineStore("gateway", () => {
@@ -30,6 +35,11 @@ export const useGatewayStore = defineStore("gateway", () => {
   const models = ref<Map<number, Model[]>>(new Map());
   const activeTab = ref<"channels" | "groups" | "apikeys" | "logs">("channels");
   const statsRange = ref<"today" | "7d" | "30d">("today");
+  const channelRanking = ref<ChannelRankItem[]>([]);
+  const modelRanking = ref<ModelRankItem[]>([]);
+  const latencyPercentiles = ref<LatencyPercentiles>({ p50: 0, p95: 0, ttftP50: null });
+  const channelStability = ref<Map<number, StabilityPoint[]>>(new Map());
+  const statsTrend = ref<TrendPoint[]>([]);
 
   const cacheRate = computed(() => {
     const input = stats.value.inputTokens;
@@ -72,6 +82,46 @@ export const useGatewayStore = defineStore("gateway", () => {
     await Promise.all([loadChannels(), loadGroups(), loadApiKeys(), loadStats()]);
   }
 
+  async function loadRanking() {
+    const { from, to } = getDateRange(statsRange.value);
+    const [ch, mo] = await Promise.all([
+      gw.getChannelRanking(from, to),
+      gw.getModelRanking(from, to),
+    ]);
+    channelRanking.value = ch;
+    modelRanking.value = mo;
+  }
+
+  async function loadLatencyPercentiles() {
+    if (statsRange.value === "30d") {
+      latencyPercentiles.value = { p50: 0, p95: 0, ttftP50: null };
+      return;
+    }
+    const { from, to } = getDateRange(statsRange.value);
+    latencyPercentiles.value = await gw.getLatencyPercentiles(from, to);
+  }
+
+  async function loadChannelStability(channelId: number) {
+    const now = new Date();
+    const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1))
+      .toISOString()
+      .slice(0, 10);
+    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1))
+      .toISOString()
+      .slice(0, 10);
+    const points = await gw.getChannelStability(channelId, from, to);
+    channelStability.value = new Map(channelStability.value).set(channelId, points);
+  }
+
+  async function loadStatsTrend() {
+    const { from, to } = getDateRange(statsRange.value);
+    if (statsRange.value === "today") {
+      statsTrend.value = await gw.getStatsHourlyTrend(from, to);
+    } else {
+      statsTrend.value = await gw.getStatsDailyTrend(from, to);
+    }
+  }
+
   return {
     channels,
     channelKeys,
@@ -83,6 +133,11 @@ export const useGatewayStore = defineStore("gateway", () => {
     activeTab,
     statsRange,
     cacheRate,
+    channelRanking,
+    modelRanking,
+    latencyPercentiles,
+    channelStability,
+    statsTrend,
     loadChannels,
     loadChannelKeys,
     loadGroups,
@@ -91,25 +146,31 @@ export const useGatewayStore = defineStore("gateway", () => {
     loadRecentLogs,
     loadModelsByChannel,
     loadAll,
+    loadRanking,
+    loadLatencyPercentiles,
+    loadChannelStability,
+    loadStatsTrend,
   };
 });
 
 function getDateRange(range: "today" | "7d" | "30d") {
   const now = new Date();
-  const to = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+  // Use UTC dates to match relay_logs.created_at which uses datetime('now') (UTC)
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1))
     .toISOString()
     .slice(0, 10);
   let from: string;
   if (range === "today") {
-    from = now.toISOString().slice(0, 10);
+    from = todayUtc.toISOString().slice(0, 10);
   } else if (range === "7d") {
-    const d = new Date(now);
-    d.setDate(d.getDate() - 7);
-    from = d.toISOString().slice(0, 10);
+    from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 7))
+      .toISOString()
+      .slice(0, 10);
   } else {
-    const d = new Date(now);
-    d.setDate(d.getDate() - 30);
-    from = d.toISOString().slice(0, 10);
+    from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30))
+      .toISOString()
+      .slice(0, 10);
   }
   return { from, to };
 }
