@@ -7,7 +7,7 @@ import * as messageDao from "@/db/models/agentMessageDao";
 import * as agentDao from "@/db/models/agentDao";
 import { eventBus } from "@/eventbus";
 import { SESSION_EVENTS } from "@shared/events";
-import type { SessionRecord, ChatMessageRecord } from "@shared/types/agent";
+import type { SessionRecord, ChatMessageRecord, SessionMetadata } from "@shared/types/agent";
 import type { AgentChatPresenter } from "./agentChat/agentChatPresenter";
 import type { GatewayPresenter } from "./gatewayPresenter";
 
@@ -67,6 +67,11 @@ export class AgentChatPresenterAdapter {
     const db = getDb();
     sessionDao.updateTitle(db, sessionId, title);
     eventBus.sendToRenderer(SESSION_EVENTS.LIST_UPDATED, null);
+  }
+
+  async updateSessionMetadata(sessionId: string, metadata: Record<string, unknown>): Promise<void> {
+    const db = getDb();
+    sessionDao.updateMetadata(db, sessionId, metadata as SessionMetadata);
   }
 
   async togglePin(sessionId: string): Promise<void> {

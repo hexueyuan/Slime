@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { Icon } from "@iconify/vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
+import { usePresenter } from "@/composables/usePresenter";
 
 const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
@@ -83,6 +84,8 @@ function onRename() {
 async function onRenameConfirm() {
   if (renaming.value && renameInput.value.trim()) {
     await sessionStore.updateTitle(renaming.value, renameInput.value.trim());
+    const chatPresenter = usePresenter("agentChatPresenter");
+    await chatPresenter.updateSessionMetadata(renaming.value, { titleManuallyEdited: true });
   }
   renaming.value = null;
 }

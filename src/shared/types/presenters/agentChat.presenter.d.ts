@@ -6,6 +6,7 @@ export interface IAgentChatPresenter {
   getSession(sessionId: string): Promise<SessionRecord | null>;
   deleteSession(sessionId: string): Promise<void>;
   updateSessionTitle(sessionId: string, title: string): Promise<void>;
+  updateSessionMetadata(sessionId: string, metadata: Record<string, unknown>): Promise<void>;
   togglePin(sessionId: string): Promise<void>;
 
   getMessages(sessionId: string): Promise<ChatMessageRecord[]>;
