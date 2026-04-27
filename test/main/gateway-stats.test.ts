@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type BetterSqlite3 from "better-sqlite3";
 import { initDb, closeDb } from "@/db";
-import { insertLogs } from "@/db/models/logDao";
+import { insertLogs, getRecentLogs } from "@/db/models/logDao";
 import { upsertPrice } from "@/db/models/priceDao";
 import { createStatsCollector } from "@/gateway/stats";
 import { createScheduledTasks } from "@/gateway/tasks";
@@ -30,9 +30,30 @@ function makeLog(overrides?: Partial<Record<string, unknown>>) {
     cost: 0.001,
     durationMs: 200,
     status: "success" as const,
+    ttftMs: null as number | null,
     ...overrides,
   };
 }
+
+describe("logDao ttft_ms", () => {
+  it("insertLogs 写入 ttft_ms 数值", () => {
+    insertLogs(db, [makeLog({ ttftMs: 300 })]);
+    const row = db.prepare("SELECT ttft_ms FROM relay_logs").get() as { ttft_ms: number };
+    expect(row.ttft_ms).toBe(300);
+  });
+
+  it("insertLogs 写入 ttft_ms 为 null（非流式）", () => {
+    insertLogs(db, [makeLog({ ttftMs: null })]);
+    const row = db.prepare("SELECT ttft_ms FROM relay_logs").get() as { ttft_ms: null };
+    expect(row.ttft_ms).toBeNull();
+  });
+
+  it("getRecentLogs 返回 ttftMs 字段", () => {
+    insertLogs(db, [makeLog({ ttftMs: 250 })]);
+    const logs = getRecentLogs(db, 10, 0);
+    expect(logs[0].ttftMs).toBe(250);
+  });
+});
 
 describe("StatsCollector", () => {
   it("record 推入 buffer，flush 写入数据库", () => {
