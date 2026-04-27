@@ -13,11 +13,13 @@
 ## 文件索引
 
 ### 新建
+
 - `src/renderer/src/components/gateway/StatsChart.vue` — ECharts 趋势 Area Chart
 - `src/renderer/src/components/gateway/RankBoard.vue` — 渠道/模型排行榜
 - `src/renderer/src/components/gateway/ChannelStabilityChart.vue` — 渠道可用率+延迟双图
 
 ### 修改
+
 - `src/main/db/database.ts` — 新增 7 列 migration
 - `src/shared/types/gateway.d.ts` — 新增类型 + RelayLog.ttftMs + DailyStats.avgLatencyMs + TrendPoint
 - `src/shared/types/presenters/gateway.presenter.d.ts` — 新增 6 个 IPC 方法签名
@@ -37,6 +39,7 @@
 ## Task 1: DB Schema Migration + 类型定义
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 - Modify: `src/shared/types/gateway.d.ts`
 - Modify: `test/main/gateway-stats.test.ts`
@@ -81,36 +84,32 @@ pnpm test test/main/gateway-stats.test.ts
 - [ ] **Step 3: 在 `database.ts` 的 `createDb` 函数末尾（`return instance` 之前）添加 migration**
 
 ```ts
-  // Migration: add ttft_ms to relay_logs
-  try {
-    instance.exec("ALTER TABLE relay_logs ADD COLUMN ttft_ms INTEGER");
-  } catch {
-    // column already exists
-  }
-  // Migration: add stability columns to stats_hourly
-  try {
-    instance.exec(
-      "ALTER TABLE stats_hourly ADD COLUMN success_count INTEGER NOT NULL DEFAULT 0",
-    );
-  } catch {}
-  try {
-    instance.exec("ALTER TABLE stats_hourly ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
-  } catch {}
-  try {
-    instance.exec("ALTER TABLE stats_hourly ADD COLUMN avg_latency_ms REAL NOT NULL DEFAULT 0");
-  } catch {}
-  // Migration: add stability columns to stats_daily
-  try {
-    instance.exec(
-      "ALTER TABLE stats_daily ADD COLUMN success_count INTEGER NOT NULL DEFAULT 0",
-    );
-  } catch {}
-  try {
-    instance.exec("ALTER TABLE stats_daily ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
-  } catch {}
-  try {
-    instance.exec("ALTER TABLE stats_daily ADD COLUMN avg_latency_ms REAL NOT NULL DEFAULT 0");
-  } catch {}
+// Migration: add ttft_ms to relay_logs
+try {
+  instance.exec("ALTER TABLE relay_logs ADD COLUMN ttft_ms INTEGER");
+} catch {
+  // column already exists
+}
+// Migration: add stability columns to stats_hourly
+try {
+  instance.exec("ALTER TABLE stats_hourly ADD COLUMN success_count INTEGER NOT NULL DEFAULT 0");
+} catch {}
+try {
+  instance.exec("ALTER TABLE stats_hourly ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
+} catch {}
+try {
+  instance.exec("ALTER TABLE stats_hourly ADD COLUMN avg_latency_ms REAL NOT NULL DEFAULT 0");
+} catch {}
+// Migration: add stability columns to stats_daily
+try {
+  instance.exec("ALTER TABLE stats_daily ADD COLUMN success_count INTEGER NOT NULL DEFAULT 0");
+} catch {}
+try {
+  instance.exec("ALTER TABLE stats_daily ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
+} catch {}
+try {
+  instance.exec("ALTER TABLE stats_daily ADD COLUMN avg_latency_ms REAL NOT NULL DEFAULT 0");
+} catch {}
 ```
 
 - [ ] **Step 4: 在 `src/shared/types/gateway.d.ts` 添加新类型**
@@ -189,6 +188,7 @@ git commit -m "feat(gateway): add ttft_ms and stability columns migration, new t
 ## Task 2: logDao 支持 ttft_ms
 
 **Files:**
+
 - Modify: `src/main/db/models/logDao.ts`
 - Modify: `test/main/gateway-stats.test.ts`
 
@@ -234,7 +234,7 @@ function makeLog(overrides?: Partial<Record<string, unknown>>) {
     cost: 0.001,
     durationMs: 200,
     status: "success" as const,
-    ttftMs: null as number | null,  // 新增
+    ttftMs: null as number | null, // 新增
     ...overrides,
   };
 }
@@ -288,7 +288,7 @@ log.ttftMs ?? null,
         l.cost, l.duration_ms, l.ttft_ms, l.status, l.error, l.created_at
  FROM relay_logs l
  LEFT JOIN api_keys ak ON ak.id = l.api_key_id
- ORDER BY l.id DESC LIMIT ? OFFSET ?`
+ ORDER BY l.id DESC LIMIT ? OFFSET ?`;
 ```
 
 - [ ] **Step 4: 运行测试，确认通过**
@@ -309,6 +309,7 @@ git commit -m "feat(gateway): add ttft_ms to relay_logs insert and read"
 ## Task 3: relay.ts TTFT 采集 + StatsCallback 扩展
 
 **Files:**
+
 - Modify: `src/main/gateway/relay.ts`
 - Modify: `src/main/presenter/gatewayPresenter.ts`
 
@@ -374,6 +375,7 @@ git commit -m "feat(gateway): capture TTFT in stream relay, pass to stats callba
 ## Task 4: statsDao 聚合更新 + 新查询函数
 
 **Files:**
+
 - Modify: `src/main/db/models/statsDao.ts`
 - Modify: `test/main/gateway-stats.test.ts`
 
@@ -384,12 +386,14 @@ git commit -m "feat(gateway): capture TTFT in stream relay, pass to stats callba
 ```ts
 describe("statsDao 稳定性查询", () => {
   function insertLog(date: string, status: "success" | "error", durationMs = 200) {
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO relay_logs
         (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
          cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
       VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, ?, ?, ?)
-    `).run(durationMs, status, date);
+    `,
+    ).run(durationMs, status, date);
   }
 
   it("aggregateToHourly 写入 success_count/fail_count/avg_latency_ms", () => {
@@ -673,7 +677,9 @@ export function getLatencyPercentiles(
   if (channelId !== undefined) params.push(channelId);
 
   const { cnt } = db
-    .prepare(`SELECT COUNT(*) AS cnt FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra}`)
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra}`,
+    )
     .get(...params) as { cnt: number };
 
   if (cnt === 0) return { p50: 0, p95: 0, ttftP50: null };
@@ -686,14 +692,18 @@ export function getLatencyPercentiles(
   const p95Row = db.prepare(durationSql).get(...params, p95Offset) as { duration_ms: number };
 
   const { cnt: ttftCnt } = db
-    .prepare(`SELECT COUNT(*) AS cnt FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra} AND ttft_ms IS NOT NULL`)
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra} AND ttft_ms IS NOT NULL`,
+    )
     .get(...params) as { cnt: number };
 
   let ttftP50: number | null = null;
   if (ttftCnt > 0) {
     const ttftOffset = Math.max(0, Math.floor(ttftCnt * 0.5) - 1);
     const ttftRow = db
-      .prepare(`SELECT ttft_ms FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra} AND ttft_ms IS NOT NULL ORDER BY ttft_ms LIMIT 1 OFFSET ?`)
+      .prepare(
+        `SELECT ttft_ms FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra} AND ttft_ms IS NOT NULL ORDER BY ttft_ms LIMIT 1 OFFSET ?`,
+      )
       .get(...params, ttftOffset) as { ttft_ms: number };
     ttftP50 = ttftRow.ttft_ms;
   }
@@ -827,6 +837,7 @@ git commit -m "feat(gateway): update aggregation queries, add ranking/percentile
 ## Task 5: GatewayPresenter + IGatewayPresenter 新增方法
 
 **Files:**
+
 - Modify: `src/shared/types/presenters/gateway.presenter.d.ts`
 - Modify: `src/main/presenter/gatewayPresenter.ts`
 
@@ -919,6 +930,7 @@ git commit -m "feat(gateway): expose ranking, percentiles, stability, trend via 
 ## Task 6: 安装 ECharts + 扩展 gateway store
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `src/renderer/src/stores/gateway.ts`
 
@@ -1035,6 +1047,7 @@ git commit -m "feat(gateway): install echarts, extend store with ranking/stabili
 ## Task 7: StatsChart.vue 趋势图
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/StatsChart.vue`
 
 - [ ] **Step 1: 创建 `src/renderer/src/components/gateway/StatsChart.vue`**
@@ -1045,11 +1058,7 @@ import { computed } from "vue";
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { LineChart } from "echarts/charts";
-import {
-  GridComponent,
-  TooltipComponent,
-  LegendComponent,
-} from "echarts/components";
+import { GridComponent, TooltipComponent, LegendComponent } from "echarts/components";
 import VChart from "vue-echarts";
 import type { TrendPoint } from "@shared/types/gateway";
 
@@ -1063,9 +1072,7 @@ const props = defineProps<{
 
 const xLabels = computed(() =>
   props.points.map((p) =>
-    props.granularity === "hourly"
-      ? `${String(p.hour ?? 0).padStart(2, "0")}:00`
-      : p.date.slice(5),
+    props.granularity === "hourly" ? `${String(p.hour ?? 0).padStart(2, "0")}:00` : p.date.slice(5),
   ),
 );
 
@@ -1141,6 +1148,7 @@ git commit -m "feat(gateway): add StatsChart ECharts area chart component"
 ## Task 8: RankBoard.vue 排行榜
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/RankBoard.vue`
 
 - [ ] **Step 1: 创建 `src/renderer/src/components/gateway/RankBoard.vue`**
@@ -1218,7 +1226,7 @@ function formatNum(n: number): string {
     <div class="mb-2 flex items-center justify-between">
       <div class="flex gap-1">
         <button
-          v-for="tab in (['channels', 'models'] as Tab[])"
+          v-for="tab in ['channels', 'models'] as Tab[]"
           :key="tab"
           :class="[
             'rounded border px-2 py-0.5 text-xs',
@@ -1228,12 +1236,12 @@ function formatNum(n: number): string {
           ]"
           @click="activeTab = tab"
         >
-          {{ tab === 'channels' ? '渠道' : '模型' }}
+          {{ tab === "channels" ? "渠道" : "模型" }}
         </button>
       </div>
       <div class="flex gap-1">
         <button
-          v-for="key in (['requests', 'cost', 'tokens'] as SortKey[])"
+          v-for="key in ['requests', 'cost', 'tokens'] as SortKey[]"
           :key="key"
           :class="[
             'rounded px-2 py-0.5 text-xs',
@@ -1241,7 +1249,7 @@ function formatNum(n: number): string {
           ]"
           @click="sortKey = key"
         >
-          {{ key === 'requests' ? '请求' : key === 'cost' ? '费用' : 'Token' }}
+          {{ key === "requests" ? "请求" : key === "cost" ? "费用" : "Token" }}
         </button>
       </div>
     </div>
@@ -1253,13 +1261,20 @@ function formatNum(n: number): string {
         :key="item.channelId"
         class="mb-1.5 flex items-center gap-2"
       >
-        <span :class="['w-4 text-xs', idx === 0 ? 'font-bold text-amber-400' : 'text-muted-foreground/50']">
+        <span
+          :class="[
+            'w-4 text-xs',
+            idx === 0 ? 'font-bold text-amber-400' : 'text-muted-foreground/50',
+          ]"
+        >
           {{ idx + 1 }}
         </span>
         <div class="min-w-0 flex-1">
           <div class="mb-0.5 flex items-center justify-between gap-1">
             <span class="truncate text-xs text-foreground/80">{{ item.channelName }}</span>
-            <span class="shrink-0 text-xs text-muted-foreground">{{ formatNum(item.requests) }}</span>
+            <span class="shrink-0 text-xs text-muted-foreground">{{
+              formatNum(item.requests)
+            }}</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="h-1 flex-1 rounded-full bg-muted/50">
@@ -1272,7 +1287,10 @@ function formatNum(n: number): string {
           </div>
         </div>
       </div>
-      <div v-if="sortedChannels.length === 0" class="py-4 text-center text-xs text-muted-foreground">
+      <div
+        v-if="sortedChannels.length === 0"
+        class="py-4 text-center text-xs text-muted-foreground"
+      >
         暂无数据
       </div>
     </template>
@@ -1284,20 +1302,33 @@ function formatNum(n: number): string {
         :key="item.modelName"
         class="mb-1.5 flex items-center gap-2"
       >
-        <span :class="['w-4 text-xs', idx === 0 ? 'font-bold text-amber-400' : 'text-muted-foreground/50']">
+        <span
+          :class="[
+            'w-4 text-xs',
+            idx === 0 ? 'font-bold text-amber-400' : 'text-muted-foreground/50',
+          ]"
+        >
           {{ idx + 1 }}
         </span>
         <div class="min-w-0 flex-1">
           <div class="mb-0.5 flex items-center justify-between gap-1">
             <span class="truncate text-xs text-foreground/80">{{ item.modelName }}</span>
             <span class="shrink-0 text-xs text-muted-foreground">
-              {{ sortKey === 'cost' ? `$${item.cost.toFixed(3)}` : formatNum(sortKey === 'tokens' ? item.inputTokens + item.outputTokens : item.requests) }}
+              {{
+                sortKey === "cost"
+                  ? `$${item.cost.toFixed(3)}`
+                  : formatNum(
+                      sortKey === "tokens" ? item.inputTokens + item.outputTokens : item.requests,
+                    )
+              }}
             </span>
           </div>
           <div class="h-1 flex-1 rounded-full bg-muted/50">
             <div
               class="h-1 rounded-full bg-blue-500/60"
-              :style="{ width: `${((sortKey === 'cost' ? item.cost : sortKey === 'tokens' ? item.inputTokens + item.outputTokens : item.requests) / maxModelVal) * 100}%` }"
+              :style="{
+                width: `${((sortKey === 'cost' ? item.cost : sortKey === 'tokens' ? item.inputTokens + item.outputTokens : item.requests) / maxModelVal) * 100}%`,
+              }"
             />
           </div>
         </div>
@@ -1328,6 +1359,7 @@ git commit -m "feat(gateway): add RankBoard channel/model leaderboard component"
 ## Task 9: GatewayPanel.vue Dashboard 扩展
 
 **Files:**
+
 - Modify: `src/renderer/src/views/GatewayPanel.vue`
 
 - [ ] **Step 1: 修改 `src/renderer/src/views/GatewayPanel.vue`**
@@ -1400,12 +1432,16 @@ function formatLatency(ms: number): string {
   <div class="rounded-lg bg-muted/50 p-3">
     <div class="text-xs text-muted-foreground">Input Token</div>
     <div class="text-lg font-semibold">{{ formatNumber(store.stats.inputTokens) }}</div>
-    <div class="text-xs text-muted-foreground/60">缓存读 {{ formatNumber(store.stats.cacheReadTokens) }}</div>
+    <div class="text-xs text-muted-foreground/60">
+      缓存读 {{ formatNumber(store.stats.cacheReadTokens) }}
+    </div>
   </div>
   <div class="rounded-lg bg-muted/50 p-3">
     <div class="text-xs text-muted-foreground">Output Token</div>
     <div class="text-lg font-semibold">{{ formatNumber(store.stats.outputTokens) }}</div>
-    <div class="text-xs text-muted-foreground/60">缓存写 {{ formatNumber(store.stats.cacheWriteTokens) }}</div>
+    <div class="text-xs text-muted-foreground/60">
+      缓存写 {{ formatNumber(store.stats.cacheWriteTokens) }}
+    </div>
   </div>
   <div class="rounded-lg bg-muted/50 p-3">
     <div class="text-xs text-muted-foreground">缓存率</div>
@@ -1450,19 +1486,12 @@ function formatLatency(ms: number): string {
       </button>
     </div>
   </div>
-  <StatsChart
-    :points="store.statsTrend"
-    :metric="activeMetric"
-    :granularity="trendGranularity"
-  />
+  <StatsChart :points="store.statsTrend" :metric="activeMetric" :granularity="trendGranularity" />
 </div>
 
 <!-- Rank board -->
 <div class="mb-2">
-  <RankBoard
-    :channel-ranking="store.channelRanking"
-    :model-ranking="store.modelRanking"
-  />
+  <RankBoard :channel-ranking="store.channelRanking" :model-ranking="store.modelRanking" />
 </div>
 ```
 
@@ -1484,6 +1513,7 @@ git commit -m "feat(gateway): expand dashboard with 6 KPIs, trend chart, rank bo
 ## Task 10: ChannelStabilityChart.vue
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/ChannelStabilityChart.vue`
 
 - [ ] **Step 1: 创建 `src/renderer/src/components/gateway/ChannelStabilityChart.vue`**
@@ -1614,14 +1644,23 @@ const latencyOption = computed(() => ({
       <span class="text-xs font-medium text-muted-foreground">稳定性 · 24h</span>
       <div class="flex gap-4">
         <div class="text-center">
-          <div :class="['text-sm font-semibold', summaryAvailability !== null && Number(summaryAvailability) >= 95 ? 'text-emerald-400' : summaryAvailability !== null && Number(summaryAvailability) >= 80 ? 'text-amber-400' : 'text-red-400']">
-            {{ summaryAvailability !== null ? `${summaryAvailability}%` : '-' }}
+          <div
+            :class="[
+              'text-sm font-semibold',
+              summaryAvailability !== null && Number(summaryAvailability) >= 95
+                ? 'text-emerald-400'
+                : summaryAvailability !== null && Number(summaryAvailability) >= 80
+                  ? 'text-amber-400'
+                  : 'text-red-400',
+            ]"
+          >
+            {{ summaryAvailability !== null ? `${summaryAvailability}%` : "-" }}
           </div>
           <div class="text-xs text-muted-foreground/60">可用率</div>
         </div>
         <div class="text-center">
           <div class="text-sm font-semibold text-blue-400">
-            {{ summaryAvgLatency > 0 ? formatLatency(summaryAvgLatency) : '-' }}
+            {{ summaryAvgLatency > 0 ? formatLatency(summaryAvgLatency) : "-" }}
           </div>
           <div class="text-xs text-muted-foreground/60">平均延迟</div>
         </div>
@@ -1662,6 +1701,7 @@ git commit -m "feat(gateway): add ChannelStabilityChart availability and latency
 ## Task 11: ChannelTab.vue 插入稳定性图
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/ChannelTab.vue`
 
 - [ ] **Step 1: 在 `ChannelTab.vue` 的 `<script setup>` 中添加 import 和数据加载**
@@ -1680,7 +1720,7 @@ async function selectChannel(ch: Channel) {
   showAddModel.value = false;
   selectedChannelId.value = ch.id;
   await store.loadModelsByChannel(ch.id);
-  store.loadChannelStability(ch.id);  // 新增
+  store.loadChannelStability(ch.id); // 新增
 }
 ```
 
@@ -1699,11 +1739,7 @@ const selectedStabilityPoints = computed(() => {
 
 ```html
 <!-- Stability chart -->
-<ChannelStabilityChart
-  v-if="selectedChannel"
-  :points="selectedStabilityPoints"
-  class="mb-4"
-/>
+<ChannelStabilityChart v-if="selectedChannel" :points="selectedStabilityPoints" class="mb-4" />
 ```
 
 - [ ] **Step 3: 运行类型检查**
@@ -1724,6 +1760,7 @@ git commit -m "feat(gateway): add ChannelStabilityChart to channel detail panel"
 ## Task 12: LogTab.vue 新增 TTFT 列
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/LogTab.vue`
 
 - [ ] **Step 1: 在 `LogTab.vue` 列表中找到 TTFT 列的插入位置**
@@ -1739,9 +1776,7 @@ git commit -m "feat(gateway): add ChannelStabilityChart to channel detail panel"
 在表体行（含 `log.durationMs` 的 `<td>` 之前）插入：
 
 ```html
-<td class="...">
-  {{ log.ttftMs != null ? formatDuration(log.ttftMs) : '-' }}
-</td>
+<td class="...">{{ log.ttftMs != null ? formatDuration(log.ttftMs) : '-' }}</td>
 ```
 
 其中 `formatDuration` 是已有的格式化函数（复用现有 durationMs 格式化逻辑）。如无此函数，新增：
@@ -1784,6 +1819,7 @@ git commit -m "feat(gateway): add TTFT column to log list"
 ## 自查说明
 
 **Spec 覆盖检查：**
+
 - ✅ 缓存 token 分项（Input Token 卡片含缓存读/写）
 - ✅ Input/Output token 分离（6 卡片中独立展示）
 - ✅ TTFT 采集（Task 3 relay.ts）
@@ -1796,6 +1832,7 @@ git commit -m "feat(gateway): add TTFT column to log list"
 - ✅ Dashboard 整体布局（Task 9 GatewayPanel）
 
 **类型一致性：**
+
 - `StabilityPoint.hour` 格式为 `"2026-04-27T10"`（`date || 'T' || printf('%02d', hour)`），ChannelStabilityChart 取 `p.hour.slice(11)` 得到 `"10"`
 - `ChannelRankItem.successCount/failCount` 与 `RankBoard` 中 `successRateText` 计算一致
 - `TrendPoint` 在 statsDao、gateway.d.ts、StatsChart.vue props 中字段名一致

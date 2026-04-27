@@ -84,7 +84,6 @@ async function save() {
       name: form.value.name,
       type: form.value.type,
       baseUrl,
-      models: [],
       enabled: form.value.enabled,
     });
     const existing = store.channelKeys.get(channelId) ?? [];
@@ -99,7 +98,6 @@ async function save() {
       name: form.value.name,
       type: form.value.type,
       baseUrl,
-      models: [],
       enabled: form.value.enabled,
     });
     channelId = ch.id;

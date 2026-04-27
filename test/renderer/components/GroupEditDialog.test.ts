@@ -13,6 +13,32 @@ import { nextTick } from "vue";
 
 import GroupEditDialog from "@/components/gateway/GroupEditDialog.vue";
 import { useGatewayStore } from "@/stores/gateway";
+import type { Model } from "@shared/types/gateway";
+
+function makeChannel(id: number, name: string, type = "openai") {
+  return {
+    id,
+    name,
+    type: type as "openai",
+    baseUrl: "",
+    enabled: true,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+function makeModels(channelId: number, names: string[]): Model[] {
+  return names.map((n, i) => ({
+    id: i + 1,
+    channelId,
+    modelName: n,
+    type: "chat" as const,
+    capabilities: [],
+    enabled: true,
+    createdAt: "",
+    updatedAt: "",
+  }));
+}
 
 describe("GroupEditDialog", () => {
   beforeEach(() => {
@@ -61,32 +87,11 @@ describe("Left panel interactions", () => {
     setActivePinia(createPinia());
     document.body.innerHTML = "";
     const store = useGatewayStore();
-    store.channels = [
-      {
-        id: 1,
-        name: "TestChannel",
-        type: "openai",
-        baseUrls: [],
-        models: ["gpt-4o", "gpt-3.5"],
-        enabled: true,
-        priority: 0,
-        weight: 1,
-        createdAt: "",
-        updatedAt: "",
-      },
-      {
-        id: 2,
-        name: "AnotherChannel",
-        type: "anthropic",
-        baseUrls: [],
-        models: ["claude-opus"],
-        enabled: true,
-        priority: 0,
-        weight: 1,
-        createdAt: "",
-        updatedAt: "",
-      },
-    ];
+    store.channels = [makeChannel(1, "TestChannel"), makeChannel(2, "AnotherChannel", "anthropic")];
+    store.models = new Map([
+      [1, makeModels(1, ["gpt-4o", "gpt-3.5"])],
+      [2, makeModels(2, ["claude-opus"])],
+    ]);
   });
 
   it("should display channels with model count", () => {
@@ -139,20 +144,8 @@ describe("Right panel interactions", () => {
     setActivePinia(createPinia());
     document.body.innerHTML = "";
     const store = useGatewayStore();
-    store.channels = [
-      {
-        id: 1,
-        name: "Ch1",
-        type: "openai",
-        baseUrls: [],
-        models: ["model-a", "model-b", "model-c"],
-        enabled: true,
-        priority: 0,
-        weight: 1,
-        createdAt: "",
-        updatedAt: "",
-      },
-    ];
+    store.channels = [makeChannel(1, "Ch1")];
+    store.models = new Map([[1, makeModels(1, ["model-a", "model-b", "model-c"])]]);
   });
 
   it("should remove item and update sequence numbers", async () => {
@@ -204,20 +197,8 @@ describe("Save logic", () => {
     setActivePinia(createPinia());
     document.body.innerHTML = "";
     const store = useGatewayStore();
-    store.channels = [
-      {
-        id: 1,
-        name: "Ch1",
-        type: "openai",
-        baseUrls: [],
-        models: ["model-a", "model-b"],
-        enabled: true,
-        priority: 0,
-        weight: 1,
-        createdAt: "",
-        updatedAt: "",
-      },
-    ];
+    store.channels = [makeChannel(1, "Ch1")];
+    store.models = new Map([[1, makeModels(1, ["model-a", "model-b"])]]);
 
     invokeResults = {};
     (window as any).electron.ipcRenderer.invoke = vi.fn(

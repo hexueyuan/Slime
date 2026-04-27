@@ -7,6 +7,7 @@
 ## 目标
 
 改造 Gateway 统计功能，参考 octopus 实现，新增：
+
 - 缓存 token 分项展示、input/output token 分离统计
 - 请求级别首字时间（TTFT）采集
 - 趋势图（请求/费用/Token）
@@ -36,11 +37,11 @@ ALTER TABLE stats_daily  ADD COLUMN avg_latency_ms REAL   NOT NULL DEFAULT 0;
 
 ### 1.3 数据保留策略（现有，不变）
 
-| 表 | 保留时长 |
-|---|---|
-| relay_logs | 7 天 |
-| stats_hourly | 30 天 |
-| stats_daily | 90 天 |
+| 表           | 保留时长 |
+| ------------ | -------- |
+| relay_logs   | 7 天     |
+| stats_hourly | 30 天    |
+| stats_daily  | 90 天    |
 
 ## 二、可用率指标定义
 
@@ -59,12 +60,12 @@ ALTER TABLE stats_daily  ADD COLUMN avg_latency_ms REAL   NOT NULL DEFAULT 0;
 
 ## 三、延迟指标
 
-| 指标 | 来源 | 时间范围限制 |
-|------|------|------|
-| 平均延迟 | stats_hourly.avg_latency_ms | 无限制 |
-| P50 延迟 | relay_logs ORDER BY duration_ms | ≤ 7 天 |
-| P95 延迟 | relay_logs ORDER BY duration_ms | ≤ 7 天 |
-| TTFT P50 | relay_logs ORDER BY ttft_ms，过滤 NULL | ≤ 7 天 |
+| 指标     | 来源                                   | 时间范围限制 |
+| -------- | -------------------------------------- | ------------ |
+| 平均延迟 | stats_hourly.avg_latency_ms            | 无限制       |
+| P50 延迟 | relay_logs ORDER BY duration_ms        | ≤ 7 天       |
+| P95 延迟 | relay_logs ORDER BY duration_ms        | ≤ 7 天       |
+| TTFT P50 | relay_logs ORDER BY ttft_ms，过滤 NULL | ≤ 7 天       |
 
 P50/P95 直接从 relay_logs 排序取中位数，个人网关流量规模下性能可接受。
 
@@ -73,6 +74,7 @@ P50/P95 直接从 relay_logs 排序取中位数，个人网关流量规模下性
 ### 4.1 TTFT 采集（relay.ts）
 
 在 `wrappedStream()` generator 内：
+
 - 记录 `startTime = Date.now()`
 - 收到首个有效 chunk 时：`ttftMs = Date.now() - startTime`，之后不再更新
 - 非流式 relay 路径：`ttftMs = null`
@@ -83,8 +85,8 @@ P50/P95 直接从 relay_logs 排序取中位数，个人网关流量规模下性
 ```ts
 type StatsCallback = (data: {
   // ...现有字段...
-  ttftMs: number | null   // 新增
-}) => void
+  ttftMs: number | null; // 新增
+}) => void;
 ```
 
 `insertLogs` 写入时包含 `ttft_ms`。
@@ -92,6 +94,7 @@ type StatsCallback = (data: {
 ### 4.3 聚合更新（statsDao.ts）
 
 `aggregateToHourly` GROUP BY 查询补充：
+
 ```sql
 SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) AS success_count,
 SUM(CASE WHEN status='error'   THEN 1 ELSE 0 END) AS fail_count,
@@ -99,8 +102,12 @@ AVG(duration_ms) AS avg_latency_ms
 ```
 
 `aggregateToDaily` 同步从 stats_hourly 聚合新字段：
+
 ```sql
-SUM(success_count), SUM(fail_count), AVG(avg_latency_ms)
+SUM(success_count),
+SUM(fail_count),
+-- 加权平均，避免低流量时段拉偏均值
+SUM(avg_latency_ms * (success_count + fail_count)) / NULLIF(SUM(success_count + fail_count), 0) AS avg_latency_ms
 ```
 
 ### 4.4 新增查询方法（statsDao.ts）
@@ -150,10 +157,10 @@ vue-echarts
 
 ### 5.2 新增组件
 
-| 组件 | 路径 | 职责 |
-|------|------|------|
-| `StatsChart.vue` | `components/gateway/` | 趋势 Area Chart，可切换请求/费用/Token，使用 stats_hourly/daily 数据 |
-| `RankBoard.vue` | `components/gateway/` | 渠道榜 + 模型榜，各含进度条、成功率 badge、切换排序维度 |
+| 组件                        | 路径                  | 职责                                                                   |
+| --------------------------- | --------------------- | ---------------------------------------------------------------------- |
+| `StatsChart.vue`            | `components/gateway/` | 趋势 Area Chart，可切换请求/费用/Token，使用 stats_hourly/daily 数据   |
+| `RankBoard.vue`             | `components/gateway/` | 渠道榜 + 模型榜，各含进度条、成功率 badge、切换排序维度                |
 | `ChannelStabilityChart.vue` | `components/gateway/` | 渠道详情内双图：可用率折线 + 延迟折线（avg 实线/P95 虚线），含汇总 KPI |
 
 ### 5.3 GatewayPanel.vue 顶部 Dashboard 扩展
@@ -165,6 +172,7 @@ KPI 卡片从 4 个扩展为 6 个：
 ```
 
 Dashboard 区域新增：
+
 1. `StatsChart`（趋势图，默认请求，可切换费用/Token）
 2. `RankBoard`（渠道榜/模型榜，可切换请求/费用/Token 排序）
 
@@ -185,6 +193,7 @@ Dashboard 区域新增：
 ### 5.6 gateway store（gateway.ts）
 
 新增状态与 actions：
+
 ```ts
 channelRanking: ChannelRankItem[]
 modelRanking: ModelRankItem[]
@@ -200,6 +209,7 @@ loadChannelStability(channelId)
 设计稿 HTML 文件：`.superpowers/brainstorm/68124-1777292776/content/frontend-design.html`
 
 关键视觉决策：
+
 - 成功率 badge：≥95% 绿色，80-95% 黄色，<80% 红色
 - 可用率趋势：绿色折线，故障时段红点标注
 - 延迟趋势：avg 蓝色实线，P95 紫色虚线，双 y 轴

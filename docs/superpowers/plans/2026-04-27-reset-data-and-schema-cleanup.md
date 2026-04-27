@@ -12,46 +12,47 @@
 
 ## 文件变更地图
 
-| 文件 | 操作 | 涉及 Task |
-|---|---|---|
-| `src/main/db/database.ts` | 修改 DDL + 删除迁移块 | 1 |
-| `src/shared/types/gateway.d.ts` | 删字段：Channel(baseUrls→baseUrl, proxy, priority, weight), GatewayApiKey(maxCost), Model(priority) | 2, 5, 6 |
-| `src/main/db/models/channelDao.ts` | base_url 单值、去 proxy/priority/weight | 2 |
-| `src/main/gateway/outbound/types.ts` | 删 OutboundConfig.proxy | 3 |
-| `src/main/gateway/relay.ts` | baseUrls[0]→baseUrl, 去 proxy | 3 |
-| `src/main/presenter/gatewayPresenter.ts` | baseUrls[0]→baseUrl, 去 maxCost 入参 | 4 |
-| `src/main/db/models/apiKeyDao.ts` | 去 max_cost | 5 |
-| `src/main/db/models/modelDao.ts` | 去 priority | 6 |
-| `src/shared/types/agent.d.ts` | 删 SessionConfig.thinkingBudget, AgentConfig.thinkingBudget, ChatMessageRecord.isContextEdge/metadata, UsageStatsRecord | 7, 8, 9 |
-| `src/main/db/models/agentMessageDao.ts` | 去 is_context_edge, metadata | 7 |
-| `src/renderer/src/stores/agentChat.ts` | 去 isContextEdge, metadata 初始化 | 7 |
-| `src/main/db/models/agentSessionConfigDao.ts` | 去 thinking_budget | 8 |
-| `src/main/presenter/agentChatPresenterAdapter.ts` | 去 thinkingBudget | 8 |
-| `src/main/presenter/agentChat/subagentPresenter.ts` | 去 thinkingBudget | 8 |
-| `src/main/db/models/agentUsageStatsDao.ts` | **删除整个文件** | 9 |
-| `src/main/db/index.ts` | 删 agentUsageStatsDao re-export | 9 |
-| `src/main/db/models/agentSessionDao.ts` | 删 L101/L116 cascade DELETE | 9 |
-| `src/main/db/models/agentDao.ts` | 删 ensureBuiltin 两条迁移 UPDATE | 10 |
-| `src/renderer/src/components/gateway/ChannelTab.vue` | baseUrls→baseUrl, 去 priority/weight 硬编码 | 11 |
-| `src/renderer/src/components/gateway/ApiKeyTab.vue` | 去 maxCost UI | 11 |
-| `src/renderer/src/components/chat/AgentEditDialog.vue` | 去 thinkingBudget UI | 11 |
-| `src/main/presenter/appPresenter.ts` | 新增 resetAllData() | 12 |
-| `src/shared/types/presenters/app.presenter.d.ts` | 接口声明 resetAllData | 12 |
-| `src/renderer/src/components/settings/SettingsDialog.vue` | 新增「通用」tab | 13 |
-| `src/renderer/src/components/settings/GeneralSettings.vue` | **新建** | 13 |
-| `test/main/db.test.ts` | 更新 schema 断言 | 随各 Task |
-| `test/main/agentMessageDao.test.ts` | 删 isContextEdge/metadata 相关断言 | 7 |
-| `test/main/agentDao.test.ts` | 删迁移 UPDATE 断言 | 10 |
-| `test/main/gateway-relay.test.ts` | baseUrls→baseUrl, 去 proxy | 3 |
-| `test/main/gatewayPresenter.test.ts` | baseUrls→baseUrl, 去 maxCost | 4 |
-| `test/main/modelDao.test.ts` | 去 priority | 6 |
-| `test/renderer/components/SettingsDialog.test.ts` | 新增通用 tab 断言 | 13 |
+| 文件                                                       | 操作                                                                                                                    | 涉及 Task |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------- |
+| `src/main/db/database.ts`                                  | 修改 DDL + 删除迁移块                                                                                                   | 1         |
+| `src/shared/types/gateway.d.ts`                            | 删字段：Channel(baseUrls→baseUrl, proxy, priority, weight), GatewayApiKey(maxCost), Model(priority)                     | 2, 5, 6   |
+| `src/main/db/models/channelDao.ts`                         | base_url 单值、去 proxy/priority/weight                                                                                 | 2         |
+| `src/main/gateway/outbound/types.ts`                       | 删 OutboundConfig.proxy                                                                                                 | 3         |
+| `src/main/gateway/relay.ts`                                | baseUrls[0]→baseUrl, 去 proxy                                                                                           | 3         |
+| `src/main/presenter/gatewayPresenter.ts`                   | baseUrls[0]→baseUrl, 去 maxCost 入参                                                                                    | 4         |
+| `src/main/db/models/apiKeyDao.ts`                          | 去 max_cost                                                                                                             | 5         |
+| `src/main/db/models/modelDao.ts`                           | 去 priority                                                                                                             | 6         |
+| `src/shared/types/agent.d.ts`                              | 删 SessionConfig.thinkingBudget, AgentConfig.thinkingBudget, ChatMessageRecord.isContextEdge/metadata, UsageStatsRecord | 7, 8, 9   |
+| `src/main/db/models/agentMessageDao.ts`                    | 去 is_context_edge, metadata                                                                                            | 7         |
+| `src/renderer/src/stores/agentChat.ts`                     | 去 isContextEdge, metadata 初始化                                                                                       | 7         |
+| `src/main/db/models/agentSessionConfigDao.ts`              | 去 thinking_budget                                                                                                      | 8         |
+| `src/main/presenter/agentChatPresenterAdapter.ts`          | 去 thinkingBudget                                                                                                       | 8         |
+| `src/main/presenter/agentChat/subagentPresenter.ts`        | 去 thinkingBudget                                                                                                       | 8         |
+| `src/main/db/models/agentUsageStatsDao.ts`                 | **删除整个文件**                                                                                                        | 9         |
+| `src/main/db/index.ts`                                     | 删 agentUsageStatsDao re-export                                                                                         | 9         |
+| `src/main/db/models/agentSessionDao.ts`                    | 删 L101/L116 cascade DELETE                                                                                             | 9         |
+| `src/main/db/models/agentDao.ts`                           | 删 ensureBuiltin 两条迁移 UPDATE                                                                                        | 10        |
+| `src/renderer/src/components/gateway/ChannelTab.vue`       | baseUrls→baseUrl, 去 priority/weight 硬编码                                                                             | 11        |
+| `src/renderer/src/components/gateway/ApiKeyTab.vue`        | 去 maxCost UI                                                                                                           | 11        |
+| `src/renderer/src/components/chat/AgentEditDialog.vue`     | 去 thinkingBudget UI                                                                                                    | 11        |
+| `src/main/presenter/appPresenter.ts`                       | 新增 resetAllData()                                                                                                     | 12        |
+| `src/shared/types/presenters/app.presenter.d.ts`           | 接口声明 resetAllData                                                                                                   | 12        |
+| `src/renderer/src/components/settings/SettingsDialog.vue`  | 新增「通用」tab                                                                                                         | 13        |
+| `src/renderer/src/components/settings/GeneralSettings.vue` | **新建**                                                                                                                | 13        |
+| `test/main/db.test.ts`                                     | 更新 schema 断言                                                                                                        | 随各 Task |
+| `test/main/agentMessageDao.test.ts`                        | 删 isContextEdge/metadata 相关断言                                                                                      | 7         |
+| `test/main/agentDao.test.ts`                               | 删迁移 UPDATE 断言                                                                                                      | 10        |
+| `test/main/gateway-relay.test.ts`                          | baseUrls→baseUrl, 去 proxy                                                                                              | 3         |
+| `test/main/gatewayPresenter.test.ts`                       | baseUrls→baseUrl, 去 maxCost                                                                                            | 4         |
+| `test/main/modelDao.test.ts`                               | 去 priority                                                                                                             | 6         |
+| `test/renderer/components/SettingsDialog.test.ts`          | 新增通用 tab 断言                                                                                                       | 13        |
 
 ---
 
 ## Task 1: 更新 database.ts DDL + 删除迁移块
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 
 - [ ] **Step 1: 更新 DDL 常量**
@@ -71,6 +72,7 @@
 **agent_usage_stats 表**：整块 CREATE TABLE + 两条 CREATE INDEX 删掉
 
 最终 channels 建表语句：
+
 ```sql
 CREATE TABLE IF NOT EXISTS channels (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,6 +88,7 @@ CREATE TABLE IF NOT EXISTS channels (
 ```
 
 最终 agent_messages 建表语句：
+
 ```sql
 CREATE TABLE IF NOT EXISTS agent_messages (
   id TEXT PRIMARY KEY,
@@ -102,6 +105,7 @@ CREATE TABLE IF NOT EXISTS agent_messages (
 - [ ] **Step 2: 删除全部 ALTER TABLE 迁移块**
 
 删除 `createDb()` 函数内 L221~L289 的全部 try-catch 块（8个），只保留：
+
 ```typescript
 function createDb(dbPath: string): BetterSqlite3.Database {
   if (dbPath !== ":memory:") {
@@ -133,12 +137,14 @@ git commit -m "refactor(db): clean DDL - remove dead fields and migration blocks
 ## Task 2: channelDao + Channel 类型（base_url 单值 + 删 proxy/priority/weight）
 
 **Files:**
+
 - Modify: `src/shared/types/gateway.d.ts`
 - Modify: `src/main/db/models/channelDao.ts`
 
 - [ ] **Step 1: 更新 Channel interface**
 
 `src/shared/types/gateway.d.ts` 中 `Channel` 改为：
+
 ```typescript
 export interface Channel {
   id: number;
@@ -210,6 +216,7 @@ export function createChannel(
 ```
 
 `updateChannel` 中删除 `baseUrls`/`proxy`/`priority`/`weight` 的 if 块，添加 `baseUrl`：
+
 ```typescript
 if (data.baseUrl !== undefined) {
   sets.push("base_url = ?");
@@ -235,6 +242,7 @@ git commit -m "refactor(db): channel - base_url single value, drop proxy/priorit
 ## Task 3: OutboundConfig 删 proxy + relay.ts 修复
 
 **Files:**
+
 - Modify: `src/main/gateway/outbound/types.ts`
 - Modify: `src/main/gateway/relay.ts`
 - Modify: `test/main/gateway-relay.test.ts`
@@ -242,6 +250,7 @@ git commit -m "refactor(db): channel - base_url single value, drop proxy/priorit
 - [ ] **Step 1: 删除 OutboundConfig.proxy**
 
 `src/main/gateway/outbound/types.ts` 中 `OutboundConfig`：
+
 ```typescript
 export interface OutboundConfig {
   baseUrl: string;
@@ -253,6 +262,7 @@ export interface OutboundConfig {
 - [ ] **Step 2: 修复 relay.ts 两处 config 对象**
 
 L112~L117 改为：
+
 ```typescript
 const config = {
   baseUrl: channel.baseUrl,
@@ -262,6 +272,7 @@ const config = {
 ```
 
 L186~L192 同样改为：
+
 ```typescript
 const config = {
   baseUrl: channel.baseUrl,
@@ -279,6 +290,7 @@ const config = {
 ```bash
 pnpm test test/main/gateway-relay.test.ts
 ```
+
 预期：全部通过。
 
 - [ ] **Step 5: Commit**
@@ -293,6 +305,7 @@ git commit -m "refactor(gateway): drop proxy from OutboundConfig and relay"
 ## Task 4: gatewayPresenter 修复
 
 **Files:**
+
 - Modify: `src/main/presenter/gatewayPresenter.ts`
 - Modify: `test/main/gatewayPresenter.test.ts`
 
@@ -315,6 +328,7 @@ L213 中 `channel.baseUrls[0]` → `channel.baseUrl`。
 ```bash
 pnpm test test/main/gatewayPresenter.test.ts
 ```
+
 预期：全部通过。
 
 - [ ] **Step 5: Commit**
@@ -329,6 +343,7 @@ git commit -m "refactor(presenter): fix baseUrl and drop maxCost in gatewayPrese
 ## Task 5: apiKeyDao + GatewayApiKey 类型删 maxCost
 
 **Files:**
+
 - Modify: `src/shared/types/gateway.d.ts`
 - Modify: `src/main/db/models/apiKeyDao.ts`
 
@@ -343,10 +358,12 @@ git commit -m "refactor(presenter): fix baseUrl and drop maxCost in gatewayPrese
 `rowToApiKey` 删掉 `maxCost: row.max_cost ?? undefined`。
 
 `createApiKey` INSERT 语句：
+
 ```sql
 INSERT INTO api_keys (name, key, enabled, is_internal, expires_at, allowed_models)
 VALUES (?, ?, ?, ?, ?, ?)
 ```
+
 删掉 `max_cost` 占位符和对应参数 `data.maxCost ?? null`。
 
 `updateApiKey` 删掉 `maxCost` 的 if 块。
@@ -356,6 +373,7 @@ VALUES (?, ?, ?, ?, ?, ?)
 ```bash
 pnpm run typecheck 2>&1 | grep -i "maxCost\|max_cost"
 ```
+
 预期：无报错。
 
 - [ ] **Step 4: Commit**
@@ -370,6 +388,7 @@ git commit -m "refactor(db): drop maxCost from api_keys"
 ## Task 6: modelDao + Model 类型删 priority
 
 **Files:**
+
 - Modify: `src/shared/types/gateway.d.ts`
 - Modify: `src/main/db/models/modelDao.ts`
 - Modify: `test/main/modelDao.test.ts`
@@ -387,9 +406,11 @@ git commit -m "refactor(db): drop maxCost from api_keys"
 `listModels` 和 `listModelsByChannel` 的 SQL：`ORDER BY priority DESC, id` → `ORDER BY id`。
 
 `createModel` INSERT：
+
 ```sql
 INSERT INTO models (channel_id, model_name, model_type, capabilities, enabled) VALUES (?, ?, ?, ?, ?)
 ```
+
 删掉 `priority` 占位符和 `data.priority` 参数。同步更新 `createModel` 的 `data` 参数类型（删掉 `priority: number`）。
 
 `updateModel` 删掉 `priority` 的 if 块。
@@ -416,6 +437,7 @@ git commit -m "refactor(db): drop priority from models"
 ## Task 7: agentMessageDao + ChatMessageRecord 删 isContextEdge/metadata
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 - Modify: `src/main/db/models/agentMessageDao.ts`
 - Modify: `src/renderer/src/stores/agentChat.ts`
@@ -432,10 +454,12 @@ git commit -m "refactor(db): drop priority from models"
 `rowToMessage` 删掉 `isContextEdge: !!row.is_context_edge` 和 `metadata: row.metadata`。
 
 `createMessage` 参数类型删掉 `metadata?: string`，INSERT SQL 改为：
+
 ```sql
 INSERT INTO agent_messages (id, session_id, order_seq, role, content, status, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 ```
+
 删掉 `data.metadata ?? "{}"` 参数。
 
 `updateMessage` 参数类型删掉 `metadata?: string` 和 `isContextEdge?: boolean`，删掉对应 if 块。
@@ -466,6 +490,7 @@ git commit -m "refactor(db): drop isContextEdge and metadata from agent_messages
 ## Task 8: agentSessionConfigDao + SessionConfig 删 thinkingBudget
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 - Modify: `src/main/db/models/agentSessionConfigDao.ts`
 - Modify: `src/main/presenter/agentChatPresenterAdapter.ts`
@@ -474,6 +499,7 @@ git commit -m "refactor(db): drop isContextEdge and metadata from agent_messages
 - [ ] **Step 1: 删 thinkingBudget 类型**
 
 `src/shared/types/agent.d.ts` 中：
+
 - `AgentConfig` 删掉 `thinkingBudget?: number;`
 - `SessionConfig` 删掉 `thinkingBudget?: number | null;`
 
@@ -484,10 +510,12 @@ git commit -m "refactor(db): drop isContextEdge and metadata from agent_messages
 `rowToConfig` 删掉 `thinkingBudget: row.thinking_budget`。
 
 `createConfig` 参数删掉 `thinkingBudget?: number | null`，INSERT SQL 改为：
+
 ```sql
 INSERT INTO agent_session_configs (id, capability_requirements, system_prompt, temperature, context_length, max_tokens)
 VALUES (?, ?, ?, ?, ?, ?)
 ```
+
 删掉 `data.thinkingBudget ?? null` 参数。
 
 `updateConfig` 删掉 `thinkingBudget` 的 if 块。
@@ -505,6 +533,7 @@ VALUES (?, ?, ?, ?, ?, ?)
 ```bash
 pnpm run typecheck 2>&1 | grep -i "thinkingBudget\|thinking_budget"
 ```
+
 预期：无报错。
 
 - [ ] **Step 6: Commit**
@@ -519,6 +548,7 @@ git commit -m "refactor(db): drop thinking_budget from agent_session_configs"
 ## Task 9: 删除 agent_usage_stats 整张表
 
 **Files:**
+
 - Delete: `src/main/db/models/agentUsageStatsDao.ts`
 - Modify: `src/main/db/index.ts`
 - Modify: `src/shared/types/agent.d.ts`
@@ -533,6 +563,7 @@ rm src/main/db/models/agentUsageStatsDao.ts
 - [ ] **Step 2: 更新 db/index.ts**
 
 删掉这一行：
+
 ```typescript
 export * from "./models/agentUsageStatsDao";
 ```
@@ -544,10 +575,13 @@ export * from "./models/agentUsageStatsDao";
 - [ ] **Step 4: 删除 agentSessionDao.ts 中的级联 DELETE**
 
 `src/main/db/models/agentSessionDao.ts` L101 删掉：
+
 ```typescript
 db.prepare("DELETE FROM agent_usage_stats WHERE session_id = ?").run(id);
 ```
+
 L116 同样删掉：
+
 ```typescript
 db.prepare("DELETE FROM agent_usage_stats WHERE session_id = ?").run(id);
 ```
@@ -557,6 +591,7 @@ db.prepare("DELETE FROM agent_usage_stats WHERE session_id = ?").run(id);
 ```bash
 pnpm run typecheck 2>&1 | grep -i "usageStats\|usage_stats"
 ```
+
 预期：无报错。
 
 - [ ] **Step 6: 运行 session DAO 测试**
@@ -577,6 +612,7 @@ git commit -m "refactor(db): delete agent_usage_stats table and dead DAO"
 ## Task 10: 清理 agentDao ensureBuiltin 迁移代码
 
 **Files:**
+
 - Modify: `src/main/db/models/agentDao.ts`
 - Modify: `test/main/agentDao.test.ts`
 
@@ -633,6 +669,7 @@ git commit -m "refactor(db): remove hal-ai migration statements from ensureBuilt
 ## Task 11: 渲染进程组件清理
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/ChannelTab.vue`
 - Modify: `src/renderer/src/components/gateway/ApiKeyTab.vue`
 - Modify: `src/renderer/src/components/chat/AgentEditDialog.vue`
@@ -643,6 +680,7 @@ git commit -m "refactor(db): remove hal-ai migration statements from ensureBuilt
 - [ ] **Step 1: 修复 ChannelTab.vue**
 
 1. `openEdit` 中 `baseUrl: ch.baseUrls[0] ?? ""` 已经是正确的（只是 `ch.baseUrls[0]` → `ch.baseUrl`）：
+
    ```typescript
    baseUrl: ch.baseUrl ?? "",
    ```
@@ -698,19 +736,25 @@ git commit -m "refactor(db): remove hal-ai migration statements from ensureBuilt
 - [ ] **Step 4: 修复 onboarding 组件**
 
 `src/renderer/src/components/onboarding/AddChannelStep.vue` L72，将：
+
 ```typescript
 baseUrls: [props.baseUrl],
 ```
+
 改为：
+
 ```typescript
 baseUrl: props.baseUrl,
 ```
 
 `src/renderer/src/components/onboarding/OnboardingWizard.vue` L46，将：
+
 ```typescript
 baseUrls: [config.baseUrl],
 ```
+
 改为：
+
 ```typescript
 baseUrl: config.baseUrl,
 ```
@@ -720,6 +764,7 @@ baseUrl: config.baseUrl,
 ```bash
 pnpm run typecheck
 ```
+
 预期：通过（0 errors）。
 
 - [ ] **Step 6: 运行全量测试**
@@ -727,6 +772,7 @@ pnpm run typecheck
 ```bash
 pnpm test
 ```
+
 如有失败，按报错修复（主要是测试 fixtures 里的 Channel/Model 字段不匹配）。
 
 - [ ] **Step 6: Commit**
@@ -741,12 +787,14 @@ git commit -m "refactor(ui): sync components with cleaned schema"
 ## Task 12: AppPresenter.resetAllData()
 
 **Files:**
+
 - Modify: `src/main/presenter/appPresenter.ts`
 - Modify: `src/shared/types/presenters/app.presenter.d.ts`
 
 - [ ] **Step 1: 更新接口声明**
 
 `src/shared/types/presenters/app.presenter.d.ts`：
+
 ```typescript
 export interface IAppPresenter {
   getVersion(): string;
@@ -757,6 +805,7 @@ export interface IAppPresenter {
 - [ ] **Step 2: 实现 resetAllData()**
 
 `src/main/presenter/appPresenter.ts`：
+
 ```typescript
 import { app } from "electron";
 import { unlink } from "fs/promises";
@@ -770,10 +819,7 @@ export class AppPresenter implements IAppPresenter {
   }
 
   async resetAllData(): Promise<{ success: boolean; error?: string }> {
-    const targets = [
-      join(paths.slimeDir, "gateway.db"),
-      paths.configFile,
-    ];
+    const targets = [join(paths.slimeDir, "gateway.db"), paths.configFile];
     try {
       for (const p of targets) {
         await unlink(p).catch((e: NodeJS.ErrnoException) => {
@@ -806,6 +852,7 @@ git commit -m "feat(presenter): add resetAllData to AppPresenter"
 ## Task 13: Settings UI — 通用 Tab + GeneralSettings
 
 **Files:**
+
 - Modify: `src/renderer/src/components/settings/SettingsDialog.vue`
 - Create: `src/renderer/src/components/settings/GeneralSettings.vue`
 - Modify: `test/renderer/components/SettingsDialog.test.ts`
@@ -871,7 +918,9 @@ async function confirmReset() {
         <div class="absolute inset-0 bg-black/50" @click="cancelConfirm" />
         <div class="relative w-80 rounded-lg border border-border bg-card p-5 shadow-xl">
           <h4 class="mb-2 text-sm font-semibold text-foreground">确认重置？</h4>
-          <p class="mb-4 text-xs text-muted-foreground">此操作不可撤销，所有数据将被永久删除。重置后需手动重启应用。</p>
+          <p class="mb-4 text-xs text-muted-foreground">
+            此操作不可撤销，所有数据将被永久删除。重置后需手动重启应用。
+          </p>
           <div class="flex justify-end gap-2">
             <button
               class="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
@@ -896,16 +945,19 @@ async function confirmReset() {
 - [ ] **Step 2: 更新 SettingsDialog.vue**
 
 script 中 import GeneralSettings：
+
 ```typescript
 import GeneralSettings from "./GeneralSettings.vue";
 ```
 
 `activeTab` 类型扩展：
+
 ```typescript
 const activeTab = ref<"profile" | "gateway" | "general">("profile");
 ```
 
 左导航新增按钮（放在「网关」按钮之后）：
+
 ```html
 <button
   :class="[
@@ -921,6 +973,7 @@ const activeTab = ref<"profile" | "gateway" | "general">("profile");
 ```
 
 右侧内容区新增：
+
 ```html
 <GeneralSettings v-else-if="activeTab === 'general'" />
 ```
@@ -928,12 +981,13 @@ const activeTab = ref<"profile" | "gateway" | "general">("profile");
 - [ ] **Step 3: 更新 SettingsDialog 测试**
 
 `test/renderer/components/SettingsDialog.test.ts` 中新增「通用」tab 渲染断言：
+
 ```typescript
-it('renders 通用 tab button', async () => {
+it("renders 通用 tab button", async () => {
   // 找到 activeTab 为 general 的按钮存在
-  const buttons = wrapper.findAll('button')
-  expect(buttons.some(b => b.text() === '通用')).toBe(true)
-})
+  const buttons = wrapper.findAll("button");
+  expect(buttons.some((b) => b.text() === "通用")).toBe(true);
+});
 ```
 
 - [ ] **Step 4: 运行 SettingsDialog 测试**
@@ -947,6 +1001,7 @@ pnpm test test/renderer/components/SettingsDialog.test.ts
 ```bash
 pnpm run typecheck && pnpm test
 ```
+
 预期：typecheck 0 errors，测试全部通过（除已知 pre-existing statsDao 失败）。
 
 - [ ] **Step 6: 运行 format + lint**

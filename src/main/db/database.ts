@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS channels (
   base_url TEXT NOT NULL DEFAULT '',
   enabled INTEGER NOT NULL DEFAULT 1,
   timeout INTEGER,
-  models TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -87,8 +86,11 @@ CREATE TABLE IF NOT EXISTS relay_logs (
   cache_write_tokens INTEGER NOT NULL DEFAULT 0,
   cost REAL NOT NULL DEFAULT 0,
   duration_ms INTEGER NOT NULL DEFAULT 0,
+  ttft_ms INTEGER,
   status TEXT NOT NULL DEFAULT 'success',
   error TEXT,
+  request_body TEXT,
+  response_body TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -107,6 +109,9 @@ CREATE TABLE IF NOT EXISTS stats_hourly (
   cache_read_tokens INTEGER NOT NULL DEFAULT 0,
   cache_write_tokens INTEGER NOT NULL DEFAULT 0,
   cost REAL NOT NULL DEFAULT 0,
+  success_count INTEGER NOT NULL DEFAULT 0,
+  fail_count INTEGER NOT NULL DEFAULT 0,
+  avg_latency_ms REAL NOT NULL DEFAULT 0,
   PRIMARY KEY (date, hour, model_name, channel_id)
 );
 
@@ -120,6 +125,9 @@ CREATE TABLE IF NOT EXISTS stats_daily (
   cache_read_tokens INTEGER NOT NULL DEFAULT 0,
   cache_write_tokens INTEGER NOT NULL DEFAULT 0,
   cost REAL NOT NULL DEFAULT 0,
+  success_count INTEGER NOT NULL DEFAULT 0,
+  fail_count INTEGER NOT NULL DEFAULT 0,
+  avg_latency_ms REAL NOT NULL DEFAULT 0,
   PRIMARY KEY (date, model_name, channel_id)
 );
 

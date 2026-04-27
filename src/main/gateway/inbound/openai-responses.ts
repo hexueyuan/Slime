@@ -129,6 +129,7 @@ export function registerOpenAIResponsesInbound(
       temperature: body.temperature,
       tools: toInternalTools(body.tools),
       systemPrompt: body.instructions,
+      apiKeyId: request.apiKeyId,
     };
 
     if (!body.stream) {

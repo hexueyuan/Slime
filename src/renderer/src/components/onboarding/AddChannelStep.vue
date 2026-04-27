@@ -70,7 +70,6 @@ async function runTest() {
       name: "__onboarding_test__",
       type: props.channelType,
       baseUrl: props.baseUrl,
-      models: [],
       enabled: true,
     })) as { id: number };
 

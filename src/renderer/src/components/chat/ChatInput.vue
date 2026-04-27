@@ -6,7 +6,10 @@
       class="mb-2 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive"
     >
       <span>{{ error }}</span>
-      <button class="ml-2 shrink-0 underline" @click="$emit('dismiss-error')">关闭</button>
+      <div class="ml-2 flex shrink-0 gap-2">
+        <button class="underline" @click="$emit('retry')">重试</button>
+        <button class="underline" @click="$emit('dismiss-error')">关闭</button>
+      </div>
     </div>
     <!-- 问答卡片 -->
     <div
@@ -150,6 +153,7 @@ const emit = defineEmits<{
   "add-files": [files: File[]];
   "remove-file": [id: string];
   "dismiss-error": [];
+  retry: [];
   "answer-question": [answer: string];
 }>();
 

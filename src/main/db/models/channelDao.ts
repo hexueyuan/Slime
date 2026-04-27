@@ -6,7 +6,6 @@ interface ChannelRow {
   name: string;
   type: string;
   base_url: string;
-  models: string;
   enabled: number;
   timeout: number | null;
   created_at: string;
@@ -27,7 +26,6 @@ function rowToChannel(row: ChannelRow): Channel {
     name: row.name,
     type: row.type as Channel["type"],
     baseUrl: row.base_url,
-    models: JSON.parse(row.models),
     enabled: !!row.enabled,
     timeout: row.timeout ?? undefined,
     createdAt: row.created_at,
@@ -60,14 +58,13 @@ export function createChannel(
   data: Omit<Channel, "id" | "createdAt" | "updatedAt">,
 ): Channel {
   const stmt = db.prepare(`
-    INSERT INTO channels (name, type, base_url, models, enabled, timeout)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO channels (name, type, base_url, enabled, timeout)
+    VALUES (?, ?, ?, ?, ?)
   `);
   const result = stmt.run(
     data.name,
     data.type,
     data.baseUrl,
-    JSON.stringify(data.models),
     data.enabled ? 1 : 0,
     data.timeout ?? null,
   );
@@ -93,10 +90,6 @@ export function updateChannel(
   if (data.baseUrl !== undefined) {
     sets.push("base_url = ?");
     values.push(data.baseUrl);
-  }
-  if (data.models !== undefined) {
-    sets.push("models = ?");
-    values.push(JSON.stringify(data.models));
   }
   if (data.enabled !== undefined) {
     sets.push("enabled = ?");

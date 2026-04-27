@@ -119,9 +119,6 @@ async function complete() {
     <IdentityCompleteStep
       v-else-if="currentStep === 3"
       v-model:user-name="config.userName"
-      :channel-type="config.channelType"
-      :channel-name="config.channelName"
-      :selected-models="config.selectedModels"
       @complete="complete"
       @prev="prev"
     />

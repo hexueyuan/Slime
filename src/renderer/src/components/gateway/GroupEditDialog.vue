@@ -47,15 +47,15 @@ const selectedKeys = computed(
 
 const filteredChannels = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
-  if (!q) return store.channels;
   return store.channels
     .map((ch) => {
-      if (ch.name.toLowerCase().includes(q)) return ch;
-      const filtered = ch.models.filter((m) => m.toLowerCase().includes(q));
+      const allModels = (store.models.get(ch.id) ?? []).map((m) => m.modelName);
+      if (!q || ch.name.toLowerCase().includes(q)) return { ...ch, models: allModels };
+      const filtered = allModels.filter((m) => m.toLowerCase().includes(q));
       if (filtered.length === 0) return null;
       return { ...ch, models: filtered };
     })
-    .filter(Boolean) as typeof store.channels;
+    .filter(Boolean) as ((typeof store.channels)[0] & { models: string[] })[];
 });
 
 function toggleChannel(id: number) {

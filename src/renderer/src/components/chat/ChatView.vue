@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { Icon } from "@iconify/vue";
 import ChatMessageList from "./ChatMessageList.vue";
 import ChatInput from "./ChatInput.vue";
 import AgentAvatar from "./AgentAvatar.vue";
@@ -61,22 +60,14 @@ function onStop() {
     <!-- Message list -->
     <ChatMessageList ref="messageListRef" />
 
-    <!-- Error banner -->
-    <div
-      v-if="chatStore.error"
-      class="absolute left-4 right-4 bottom-20 z-10 flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400"
-    >
-      <Icon icon="lucide:alert-circle" class="h-3.5 w-3.5 shrink-0" />
-      <span class="flex-1">{{ chatStore.error }}</span>
-      <button
-        class="rounded px-2 py-0.5 text-xs hover:bg-red-500/20"
-        @click="chatStore.retryLast(session!.id)"
-      >
-        重试
-      </button>
-    </div>
-
     <!-- Input -->
-    <ChatInput :is-streaming="chatStore.isGenerating" @submit="onSend" @stop="onStop" />
+    <ChatInput
+      :is-streaming="chatStore.isGenerating"
+      :error="chatStore.error"
+      @submit="onSend"
+      @stop="onStop"
+      @dismiss-error="chatStore.clearError()"
+      @retry="chatStore.retryLast(session!.id)"
+    />
   </div>
 </template>

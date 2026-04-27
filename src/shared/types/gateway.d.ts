@@ -5,7 +5,6 @@ export interface Channel {
   name: string;
   type: ChannelType;
   baseUrl: string;
-  models: string[];
   enabled: boolean;
   timeout?: number;
   createdAt: string;

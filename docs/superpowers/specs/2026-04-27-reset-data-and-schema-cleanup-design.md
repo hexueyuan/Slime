@@ -9,9 +9,11 @@
 ## 一、重置数据功能
 
 ### 目标
+
 用户可在 Settings → 通用 中一键删除所有本地数据，恢复到全新状态，需手动重启应用。
 
 ### 删除范围
+
 - `{userData}/.slime/gateway.db`（SQLite 数据库）
 - `{userData}/.slime/config/slime.config.json`（用户配置）
 
@@ -34,6 +36,7 @@ IPC 路径：`presenter:call → appPresenter → resetAllData`（`appPresenter`
 ### 渲染进程：Settings UI
 
 **SettingsDialog**（`src/renderer/src/components/settings/SettingsDialog.vue`）：
+
 - 左导航新增「通用」tab
 - `activeTab` 类型扩展为 `"profile" | "gateway" | "general"`
 
@@ -57,6 +60,7 @@ IPC 路径：`presenter:call → appPresenter → resetAllData`（`appPresenter`
 ## 二、Schema 清理
 
 ### 原则
+
 - 删除完全未使用或无实际业务逻辑的字段
 - `channels.base_urls`（数组）简化为 `base_url`（单值），因为所有调用方始终只取 `[0]`
 - 同步删除对应 migration ALTER TABLE 块（database.ts）
@@ -65,37 +69,43 @@ IPC 路径：`presenter:call → appPresenter → resetAllData`（`appPresenter`
 ### 字段变更清单
 
 #### channels 表
-| 操作 | 字段 | 原因 |
-|---|---|---|
-| 删除 | `proxy` | OutboundConfig 传递但 httpRequest 不消费，代理从未生效 |
-| 删除 | `priority` | 仅影响 listChannels UI 排序，路由不用；与 group_items.priority 语义重复 |
-| 删除 | `weight` | balancer 用 group_items.weight，channel 层 weight 从未被路由读取 |
-| 改名+简化 | `base_urls TEXT`（JSON数组）→ `base_url TEXT`（单值） | 所有调用方只取 `[0]`，数组是过度设计 |
+
+| 操作      | 字段                                                  | 原因                                                                    |
+| --------- | ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| 删除      | `proxy`                                               | OutboundConfig 传递但 httpRequest 不消费，代理从未生效                  |
+| 删除      | `priority`                                            | 仅影响 listChannels UI 排序，路由不用；与 group_items.priority 语义重复 |
+| 删除      | `weight`                                              | balancer 用 group_items.weight，channel 层 weight 从未被路由读取        |
+| 改名+简化 | `base_urls TEXT`（JSON数组）→ `base_url TEXT`（单值） | 所有调用方只取 `[0]`，数组是过度设计                                    |
 
 #### api_keys 表
-| 操作 | 字段 | 原因 |
-|---|---|---|
+
+| 操作 | 字段       | 原因                                 |
+| ---- | ---------- | ------------------------------------ |
 | 删除 | `max_cost` | 只存储，relay 链路无费用限额校验逻辑 |
 
 #### models 表
-| 操作 | 字段 | 原因 |
-|---|---|---|
+
+| 操作 | 字段       | 原因                                              |
+| ---- | ---------- | ------------------------------------------------- |
 | 删除 | `priority` | 仅影响 listModels UI 排序，selector/balancer 不用 |
 
 #### agent_session_configs 表
-| 操作 | 字段 | 原因 |
-|---|---|---|
+
+| 操作 | 字段              | 原因                                                              |
+| ---- | ----------------- | ----------------------------------------------------------------- |
 | 删除 | `thinking_budget` | UI 可设置、DB 存储，但 agentChatPresenter.streamText 从未读取该值 |
 
 #### agent_messages 表
-| 操作 | 字段 | 原因 |
-|---|---|---|
+
+| 操作 | 字段              | 原因                                                   |
+| ---- | ----------------- | ------------------------------------------------------ |
 | 删除 | `is_context_edge` | 字段存在但 presenter/contextBuilder 无任何读取业务逻辑 |
-| 删除 | `metadata` | 只初始化为 `{}`，无任何业务代码读取内容 |
+| 删除 | `metadata`        | 只初始化为 `{}`，无任何业务代码读取内容                |
 
 #### agent_usage_stats 表
-| 操作 | 原因 |
-|---|---|
+
+| 操作       | 原因                                                             |
+| ---------- | ---------------------------------------------------------------- |
 | 删除整张表 | `createUsageStats` 从未被任何 Presenter 调用，零写入，整体死代码 |
 
 ### 迁移代码清理
@@ -103,12 +113,14 @@ IPC 路径：`presenter:call → appPresenter → resetAllData`（`appPresenter`
 删除 `database.ts` `createDb()` 中全部 8 个 try-catch ALTER TABLE 块（L221~L289）。
 
 删除 `agentDao.ts` `ensureBuiltin()` 中两条条件 UPDATE：
+
 - hal-ai capabilityRequirements `"chat"` → `"reasoning"` 迁移
 - hal-ai disabledTools 补填迁移
 
 ### 受影响的代码路径
 
 **channels.base_urls → base_url**：
+
 - `src/main/db/models/channelDao.ts`：类型 `baseUrls: string[]` → `baseUrl: string`，INSERT/UPDATE 参数，SELECT 反序列化（去掉 JSON.parse）
 - `src/main/gateway/relay.ts`：`channel.baseUrls[0]` → `channel.baseUrl`（2处）
 - `src/main/presenter/gatewayPresenter.ts`：`baseUrls[0]` → `baseUrl`
@@ -117,12 +129,14 @@ IPC 路径：`presenter:call → appPresenter → resetAllData`（`appPresenter`
 - 渲染进程表单组件（onboarding AddChannelStep、ApiKeyTab 等）：`baseUrls[0]` 读写改为 `baseUrl`
 
 **channels.proxy 删除**：
+
 - `channelDao.ts`：Channel 类型、INSERT/SELECT
 - `src/main/gateway/outbound/types.ts`：`OutboundConfig.proxy` 删除
 - `src/main/gateway/relay.ts`：传递 proxy 的代码
 - 渲染进程表单（如有 proxy 输入项）
 
 **agent_usage_stats 表删除**：
+
 - `src/main/db/models/agentUsageStatsDao.ts`：整个文件删除
 - `src/main/db/index.ts`：删除 re-export
 - `src/shared/types/agent.d.ts`：删除 `UsageStats` 类型

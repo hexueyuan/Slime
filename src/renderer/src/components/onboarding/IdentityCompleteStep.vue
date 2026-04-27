@@ -1,21 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import type { ChannelType } from "@shared/types/gateway";
-
-const CHANNEL_LABELS: Record<ChannelType, string> = {
-  anthropic: "Anthropic",
-  openai: "OpenAI",
-  gemini: "Google Gemini",
-  deepseek: "DeepSeek",
-  volcengine: "火山引擎",
-  custom: "Custom",
-};
 
 const props = defineProps<{
   userName: string;
-  channelType: ChannelType;
-  channelName: string;
-  selectedModels: string[];
 }>();
 
 const emit = defineEmits<{
@@ -69,20 +56,6 @@ watch(localName, (val) => emit("update:userName", val));
       <p v-else-if="localName" class="text-[11px] text-slate-500">
         完成后你可以开始和 HalAI 对话了
       </p>
-    </div>
-
-    <!-- Summary -->
-    <div class="w-full">
-      <div class="flex items-center justify-between border-b border-violet-500/10 py-2.5">
-        <span class="text-sm text-slate-500">渠道</span>
-        <span class="text-sm font-medium text-slate-200">
-          {{ channelName }} ({{ CHANNEL_LABELS[channelType] }})
-        </span>
-      </div>
-      <div class="flex items-center justify-between py-2.5">
-        <span class="text-sm text-slate-500">模型数量</span>
-        <span class="text-sm font-medium text-slate-200">{{ selectedModels.length }}</span>
-      </div>
     </div>
 
     <!-- Nav -->
