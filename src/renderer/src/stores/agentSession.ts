@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import { usePresenter } from "@/composables/usePresenter";
+import { useAgentChatStore } from "./agentChat";
 import type { SessionRecord } from "@shared/types/agent";
 
 export const useAgentSessionStore = defineStore("agentSession", () => {
@@ -40,6 +41,7 @@ export const useAgentSessionStore = defineStore("agentSession", () => {
     await chatPresenter.deleteSession(id);
     if (activeSessionId.value === id) {
       activeSessionId.value = null;
+      useAgentChatStore().clearMessages();
     }
     await fetchSessions();
   }

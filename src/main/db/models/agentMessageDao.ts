@@ -122,6 +122,10 @@ export function updateMessage(
   db.prepare(`UPDATE agent_messages SET ${sets.join(", ")} WHERE id = ?`).run(...values);
 }
 
+export function deleteMessage(db: BetterSqlite3.Database, id: string): void {
+  db.prepare("DELETE FROM agent_messages WHERE id = ?").run(id);
+}
+
 export function deleteBySession(db: BetterSqlite3.Database, sessionId: string): void {
   db.prepare("DELETE FROM agent_messages WHERE session_id = ?").run(sessionId);
 }

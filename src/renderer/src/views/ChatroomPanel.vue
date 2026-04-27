@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import SessionList from "../components/chat/SessionList.vue";
 import NewThread from "../components/chat/NewThread.vue";
 import ChatView from "../components/chat/ChatView.vue";
@@ -44,24 +44,19 @@ onMounted(async () => {
   await Promise.all([agentStore.fetchAgents(), sessionStore.fetchSessions()]);
 });
 
-// Load messages when active session changes
-watch(
-  () => sessionStore.activeSessionId,
-  async (id) => {
-    if (id) {
-      await chatStore.fetchMessages(id);
-    } else {
-      chatStore.clearMessages();
-    }
-  },
-);
+// Load messages when active session changes from SessionList click
+// (NOT via watcher — that overwrites optimistic messages from sendMessage)
+function onSessionSelect(id: string) {
+  sessionStore.setActiveSession(id);
+  chatStore.fetchMessages(id);
+}
 </script>
 
 <template>
   <div class="flex h-full">
     <!-- Left: Session list -->
     <div class="w-[220px] shrink-0 border-r border-border">
-      <SessionList />
+      <SessionList @select="onSessionSelect" />
     </div>
     <!-- Right: Content area -->
     <div class="flex min-w-0 flex-1 flex-col">

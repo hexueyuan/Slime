@@ -3,10 +3,15 @@ import { ref, computed } from "vue";
 import { Icon } from "@iconify/vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
+import { useAgentChatStore } from "@/stores/agentChat";
 import { usePresenter } from "@/composables/usePresenter";
 
 const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
+const chatStore = useAgentChatStore();
+const emit = defineEmits<{
+  select: [id: string];
+}>();
 const searchQuery = ref("");
 
 const filteredSessions = computed(() => {
@@ -36,6 +41,7 @@ function formatTime(timestamp: number): string {
 
 function onNewSession() {
   sessionStore.setActiveSession(null);
+  chatStore.clearMessages();
 }
 
 // Context menu
@@ -128,7 +134,7 @@ async function onRenameConfirm() {
             ? 'bg-muted text-foreground'
             : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
         ]"
-        @click="sessionStore.setActiveSession(session.id)"
+        @click="emit('select', session.id)"
         @contextmenu="onContextMenu($event, session.id)"
       >
         <!-- Renaming -->

@@ -358,7 +358,8 @@ export class AgentChatPresenter {
     const lastUser = [...allMsgs].reverse().find((m) => m.role === "user");
     if (!lastUser) return;
 
-    messageDao.updateMessage(db, lastAssistant.id, { status: "error" });
+    messageDao.deleteMessage(db, lastAssistant.id);
+    messageDao.deleteMessage(db, lastUser.id);
     await this.chat(sessionId, lastUser.content);
   }
 

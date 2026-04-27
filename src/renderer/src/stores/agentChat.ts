@@ -51,6 +51,12 @@ export const useAgentChatStore = defineStore("agentChat", () => {
   async function retryLast(sessionId: string) {
     isGenerating.value = true;
     error.value = null;
+    // Remove last assistant message from local state so it disappears immediately
+    const lastAssistantIdx = [...messages.value].reverse().findIndex((m) => m.role === "assistant");
+    if (lastAssistantIdx !== -1) {
+      const realIdx = messages.value.length - 1 - lastAssistantIdx;
+      messages.value = messages.value.filter((_, i) => i !== realIdx);
+    }
     try {
       await chatPresenter.retryLastMessage(sessionId);
     } catch (err) {
