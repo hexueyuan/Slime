@@ -261,6 +261,32 @@ function createDb(dbPath: string): BetterSqlite3.Database {
   } catch {
     // column already exists
   }
+  // Migration: add ttft_ms to relay_logs
+  try {
+    instance.exec("ALTER TABLE relay_logs ADD COLUMN ttft_ms INTEGER");
+  } catch {
+    // column already exists
+  }
+  // Migration: add stability columns to stats_hourly
+  try {
+    instance.exec("ALTER TABLE stats_hourly ADD COLUMN success_count INTEGER NOT NULL DEFAULT 0");
+  } catch {}
+  try {
+    instance.exec("ALTER TABLE stats_hourly ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
+  } catch {}
+  try {
+    instance.exec("ALTER TABLE stats_hourly ADD COLUMN avg_latency_ms REAL NOT NULL DEFAULT 0");
+  } catch {}
+  // Migration: add stability columns to stats_daily
+  try {
+    instance.exec("ALTER TABLE stats_daily ADD COLUMN success_count INTEGER NOT NULL DEFAULT 0");
+  } catch {}
+  try {
+    instance.exec("ALTER TABLE stats_daily ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
+  } catch {}
+  try {
+    instance.exec("ALTER TABLE stats_daily ADD COLUMN avg_latency_ms REAL NOT NULL DEFAULT 0");
+  } catch {}
   return instance;
 }
 

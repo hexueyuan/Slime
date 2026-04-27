@@ -260,3 +260,26 @@ describe("ScheduledTasks", () => {
     expect(() => tasks.stop()).not.toThrow();
   });
 });
+
+describe("DB Schema Migrations", () => {
+  it("relay_logs 包含 ttft_ms 列", () => {
+    const info = db.prepare("PRAGMA table_info(relay_logs)").all() as Array<{ name: string }>;
+    expect(info.map((c) => c.name)).toContain("ttft_ms");
+  });
+
+  it("stats_hourly 包含稳定性列", () => {
+    const info = db.prepare("PRAGMA table_info(stats_hourly)").all() as Array<{ name: string }>;
+    const cols = info.map((c) => c.name);
+    expect(cols).toContain("success_count");
+    expect(cols).toContain("fail_count");
+    expect(cols).toContain("avg_latency_ms");
+  });
+
+  it("stats_daily 包含稳定性列", () => {
+    const info = db.prepare("PRAGMA table_info(stats_daily)").all() as Array<{ name: string }>;
+    const cols = info.map((c) => c.name);
+    expect(cols).toContain("success_count");
+    expect(cols).toContain("fail_count");
+    expect(cols).toContain("avg_latency_ms");
+  });
+});

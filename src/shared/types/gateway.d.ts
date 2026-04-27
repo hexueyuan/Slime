@@ -98,6 +98,7 @@ export interface ModelPrice {
 export interface RelayLog {
   id: number;
   apiKeyId?: number;
+  apiKeyName?: string;
   groupName: string;
   channelId?: number;
   channelName?: string;
@@ -108,6 +109,7 @@ export interface RelayLog {
   cacheWriteTokens: number;
   cost: number;
   durationMs: number;
+  ttftMs?: number | null;
   status: "success" | "error";
   error?: string;
   requestBody?: string;
@@ -147,6 +149,7 @@ export interface DailyStats {
   cacheReadTokens: number;
   cacheWriteTokens: number;
   cost: number;
+  avgLatencyMs: number;
 }
 
 export interface ModelStats extends DailyStats {
@@ -156,4 +159,44 @@ export interface ModelStats extends DailyStats {
 export interface ChannelStats extends DailyStats {
   channelId: number;
   channelName: string;
+}
+
+export interface TrendPoint {
+  date: string;
+  hour?: number;
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number;
+}
+
+export interface StabilityPoint {
+  hour: string; // "2026-04-27T10"
+  successCount: number;
+  failCount: number;
+  avgLatencyMs: number;
+}
+
+export interface ChannelRankItem {
+  channelId: number;
+  channelName: string;
+  requests: number;
+  successCount: number;
+  failCount: number;
+  avgLatencyMs: number;
+  cost: number;
+}
+
+export interface ModelRankItem {
+  modelName: string;
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number;
+}
+
+export interface LatencyPercentiles {
+  p50: number;
+  p95: number;
+  ttftP50: number | null;
 }
