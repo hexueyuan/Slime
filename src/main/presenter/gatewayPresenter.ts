@@ -284,7 +284,6 @@ export class GatewayPresenter implements IGatewayPresenter {
   createApiKey(data: {
     name: string;
     expiresAt?: string;
-    maxCost?: number;
     allowedModels?: string[];
   }): GatewayApiKey {
     const key = `sk-gw-${randomHex(24)}`;
@@ -294,7 +293,6 @@ export class GatewayPresenter implements IGatewayPresenter {
       enabled: true,
       isInternal: false,
       expiresAt: data.expiresAt,
-      maxCost: data.maxCost,
       allowedModels: data.allowedModels,
     });
   }

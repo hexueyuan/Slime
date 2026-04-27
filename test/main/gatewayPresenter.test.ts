@@ -47,7 +47,7 @@ describe("Channel CRUD", () => {
     const ch = gw.createChannel({
       name: "test-ch",
       type: "openai",
-      baseUrls: ["https://api.openai.com"],
+      baseUrl: "https://api.openai.com",
       models: [],
       enabled: true,
       priority: 0,
@@ -72,7 +72,7 @@ describe("Channel Keys", () => {
     const ch = gw.createChannel({
       name: "ch",
       type: "openai",
-      baseUrls: ["https://api.openai.com"],
+      baseUrl: "https://api.openai.com",
       models: [],
       enabled: true,
       priority: 0,
@@ -93,7 +93,7 @@ describe("Group CRUD + router reload", () => {
     const ch = gw.createChannel({
       name: "ch",
       type: "openai",
-      baseUrls: ["https://api.openai.com"],
+      baseUrl: "https://api.openai.com",
       models: [],
       enabled: true,
       priority: 0,
@@ -174,7 +174,7 @@ describe("Model CRUD", () => {
     const ch = gw.createChannel({
       name: "ch",
       type: "openai",
-      baseUrls: ["https://api.openai.com"],
+      baseUrl: "https://api.openai.com",
       models: [],
       enabled: true,
       priority: 0,
@@ -207,7 +207,7 @@ describe("CapabilitySelector via presenter", () => {
     const ch = gw.createChannel({
       name: "ch",
       type: "openai",
-      baseUrls: ["https://api.openai.com"],
+      baseUrl: "https://api.openai.com",
       models: [],
       enabled: true,
       priority: 0,
@@ -231,7 +231,7 @@ describe("CapabilitySelector via presenter", () => {
     const ch = gw.createChannel({
       name: "ch",
       type: "openai",
-      baseUrls: ["https://api.openai.com"],
+      baseUrl: "https://api.openai.com",
       models: [],
       enabled: true,
       priority: 0,
