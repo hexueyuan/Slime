@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { Icon } from "@iconify/vue";
 import ChatMessageList from "./ChatMessageList.vue";
 import ChatInput from "./ChatInput.vue";
@@ -15,6 +15,7 @@ const emit = defineEmits<{
 const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
 const chatStore = useAgentChatStore();
+const messageListRef = ref<InstanceType<typeof ChatMessageList> | null>(null);
 
 onMounted(() => {
   chatStore.fetchUserProfile();
@@ -28,6 +29,7 @@ const agent = computed(() => {
 
 async function onSend(content: string) {
   if (!session.value) return;
+  messageListRef.value?.scrollToBottom(true);
   await chatStore.sendMessage(session.value.id, content);
 }
 
@@ -38,7 +40,7 @@ function onStop() {
 </script>
 
 <template>
-  <div v-if="session" class="flex h-full flex-col">
+  <div v-if="session" class="relative flex h-full flex-col">
     <!-- Top bar -->
     <div class="flex items-center gap-2 border-b border-border px-4 py-2">
       <AgentAvatar v-if="agent" :avatar="agent.avatar" size="sm" />
@@ -57,12 +59,12 @@ function onStop() {
     </div>
 
     <!-- Message list -->
-    <ChatMessageList />
+    <ChatMessageList ref="messageListRef" />
 
     <!-- Error banner -->
     <div
       v-if="chatStore.error"
-      class="mx-4 mb-2 flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400"
+      class="absolute left-4 right-4 bottom-20 z-10 flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400"
     >
       <Icon icon="lucide:alert-circle" class="h-3.5 w-3.5 shrink-0" />
       <span class="flex-1">{{ chatStore.error }}</span>
@@ -75,8 +77,6 @@ function onStop() {
     </div>
 
     <!-- Input -->
-    <div class="relative">
-      <ChatInput :is-streaming="chatStore.isGenerating" @submit="onSend" @stop="onStop" />
-    </div>
+    <ChatInput :is-streaming="chatStore.isGenerating" @submit="onSend" @stop="onStop" />
   </div>
 </template>
