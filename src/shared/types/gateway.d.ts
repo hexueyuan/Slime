@@ -30,7 +30,6 @@ export interface Model {
   modelName: string;
   type: ModelType;
   capabilities: Capability[];
-  priority: number;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -76,7 +75,6 @@ export interface GatewayApiKey {
   enabled: boolean;
   isInternal: boolean;
   expiresAt?: string;
-  maxCost?: number;
   allowedModels?: string[];
   createdAt: string;
 }

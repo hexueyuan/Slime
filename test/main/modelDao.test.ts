@@ -18,11 +18,9 @@ function makeChannel() {
   return channelDao.createChannel(db, {
     name: "test-ch",
     type: "openai",
-    baseUrls: ["https://api.openai.com"],
+    baseUrl: "https://api.openai.com",
     models: [],
     enabled: true,
-    priority: 0,
-    weight: 1,
   });
 }
 
@@ -32,39 +30,33 @@ describe("modelDao", () => {
     const m = modelDao.createModel(db, {
       channelId: ch.id,
       modelName: "gpt-4o",
-      type: "chat",
       capabilities: ["reasoning", "vision"],
-      priority: 10,
       enabled: true,
     });
     expect(m.id).toBeGreaterThan(0);
     expect(m.modelName).toBe("gpt-4o");
-    expect(m.type).toBe("chat");
     expect(m.capabilities).toEqual(["reasoning", "vision"]);
-    expect(m.priority).toBe(10);
     expect(m.enabled).toBe(true);
   });
 
-  it("listModels returns all sorted by priority DESC", () => {
+  it("listModels returns all sorted by id", () => {
     const ch = makeChannel();
     modelDao.createModel(db, {
       channelId: ch.id,
-      modelName: "low",
+      modelName: "first",
       capabilities: ["reasoning"],
-      priority: 1,
       enabled: true,
     });
     modelDao.createModel(db, {
       channelId: ch.id,
-      modelName: "high",
+      modelName: "second",
       capabilities: ["reasoning"],
-      priority: 10,
       enabled: true,
     });
     const list = modelDao.listModels(db);
     expect(list).toHaveLength(2);
-    expect(list[0].modelName).toBe("high");
-    expect(list[1].modelName).toBe("low");
+    expect(list[0].modelName).toBe("first");
+    expect(list[1].modelName).toBe("second");
   });
 
   it("listModelsByChannel filters by channel", () => {
@@ -72,24 +64,20 @@ describe("modelDao", () => {
     const ch2 = channelDao.createChannel(db, {
       name: "ch2",
       type: "anthropic",
-      baseUrls: ["https://api.anthropic.com"],
+      baseUrl: "https://api.anthropic.com",
       models: [],
       enabled: true,
-      priority: 0,
-      weight: 1,
     });
     modelDao.createModel(db, {
       channelId: ch1.id,
       modelName: "a",
       capabilities: ["reasoning"],
-      priority: 0,
       enabled: true,
     });
     modelDao.createModel(db, {
       channelId: ch2.id,
       modelName: "b",
       capabilities: ["reasoning"],
-      priority: 0,
       enabled: true,
     });
     expect(modelDao.listModelsByChannel(db, ch1.id)).toHaveLength(1);
@@ -102,13 +90,11 @@ describe("modelDao", () => {
       channelId: ch.id,
       modelName: "x",
       capabilities: ["reasoning"],
-      priority: 0,
       enabled: true,
     });
-    modelDao.updateModel(db, m.id, { capabilities: ["reasoning", "vision"], priority: 20 });
+    modelDao.updateModel(db, m.id, { capabilities: ["reasoning", "vision"] });
     const updated = modelDao.getModel(db, m.id)!;
     expect(updated.capabilities).toEqual(["reasoning", "vision"]);
-    expect(updated.priority).toBe(20);
     expect(updated.enabled).toBe(true);
   });
 
@@ -118,7 +104,6 @@ describe("modelDao", () => {
       channelId: ch.id,
       modelName: "x",
       capabilities: [],
-      priority: 0,
       enabled: true,
     });
     modelDao.deleteModel(db, m.id);
@@ -131,7 +116,6 @@ describe("modelDao", () => {
       channelId: ch.id,
       modelName: "dup",
       capabilities: [],
-      priority: 0,
       enabled: true,
     });
     expect(() =>
@@ -139,7 +123,6 @@ describe("modelDao", () => {
         channelId: ch.id,
         modelName: "dup",
         capabilities: [],
-        priority: 0,
         enabled: true,
       }),
     ).toThrow();
@@ -151,7 +134,6 @@ describe("modelDao", () => {
       channelId: ch.id,
       modelName: "x",
       capabilities: [],
-      priority: 0,
       enabled: true,
     });
     channelDao.deleteChannel(db, ch.id);

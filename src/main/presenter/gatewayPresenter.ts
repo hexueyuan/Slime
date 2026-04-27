@@ -315,13 +315,16 @@ export class GatewayPresenter implements IGatewayPresenter {
     return modelDao.listModelsByChannel(getDb(), channelId);
   }
 
-  createModel(data: Omit<Model, "id" | "createdAt" | "updatedAt">): Model {
+  createModel(data: Omit<Model, "id" | "type" | "createdAt" | "updatedAt">): Model {
     const result = modelDao.createModel(getDb(), data);
     this.syncAndReload();
     return result;
   }
 
-  updateModel(id: number, data: Partial<Model>): void {
+  updateModel(
+    id: number,
+    data: Partial<Omit<Model, "id" | "type" | "channelId" | "createdAt" | "updatedAt">>,
+  ): void {
     modelDao.updateModel(getDb(), id, data);
     this.syncAndReload();
   }

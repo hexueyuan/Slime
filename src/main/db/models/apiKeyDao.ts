@@ -8,7 +8,6 @@ interface ApiKeyRow {
   enabled: number;
   is_internal: number;
   expires_at: string | null;
-  max_cost: number | null;
   allowed_models: string | null;
   created_at: string;
 }
@@ -21,7 +20,6 @@ function rowToApiKey(row: ApiKeyRow): GatewayApiKey {
     enabled: !!row.enabled,
     isInternal: !!row.is_internal,
     expiresAt: row.expires_at ?? undefined,
-    maxCost: row.max_cost ?? undefined,
     allowedModels: row.allowed_models ? JSON.parse(row.allowed_models) : undefined,
     createdAt: row.created_at,
   };
@@ -42,8 +40,8 @@ export function createApiKey(
   data: Omit<GatewayApiKey, "id" | "createdAt">,
 ): GatewayApiKey {
   const stmt = db.prepare(`
-    INSERT INTO api_keys (name, key, enabled, is_internal, expires_at, max_cost, allowed_models)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO api_keys (name, key, enabled, is_internal, expires_at, allowed_models)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
   const result = stmt.run(
     data.name,
@@ -51,7 +49,6 @@ export function createApiKey(
     data.enabled ? 1 : 0,
     data.isInternal ? 1 : 0,
     data.expiresAt ?? null,
-    data.maxCost ?? null,
     data.allowedModels ? JSON.stringify(data.allowedModels) : null,
   );
   const row = db
@@ -87,10 +84,6 @@ export function updateApiKey(
   if (data.expiresAt !== undefined) {
     sets.push("expires_at = ?");
     values.push(data.expiresAt);
-  }
-  if (data.maxCost !== undefined) {
-    sets.push("max_cost = ?");
-    values.push(data.maxCost);
   }
   if (data.allowedModels !== undefined) {
     sets.push("allowed_models = ?");
