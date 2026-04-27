@@ -92,10 +92,12 @@ export function getStatsRange(db: BetterSqlite3.Database, from: string, to: stri
         UNION ALL
         SELECT 1, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost,
                duration_ms AS weighted, 1 AS cnt
-        FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
+        FROM relay_logs
+        WHERE date(created_at) >= ? AND date(created_at) < ?
+          AND date(created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )`,
     )
-    .get(from, to, from, to) as Record<string, number>;
+    .get(from, to, from, to, from, to) as Record<string, number>;
 
   return {
     requests: row.requests,
@@ -210,11 +212,12 @@ export function getChannelRanking(
                l.duration_ms, l.cost
         FROM relay_logs l LEFT JOIN channels c ON c.id = l.channel_id
         WHERE date(l.created_at) >= ? AND date(l.created_at) < ?
+          AND date(l.created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
       GROUP BY channel_id
       ORDER BY requests DESC`,
     )
-    .all(from, to, from, to) as Array<Record<string, unknown>>;
+    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     channelId: r.channel_id as number,
@@ -246,11 +249,12 @@ export function getModelRanking(
         UNION ALL
         SELECT model_name, 1, input_tokens, output_tokens, cost
         FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
+          AND date(created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
       GROUP BY model_name
       ORDER BY requests DESC`,
     )
-    .all(from, to, from, to) as Array<Record<string, unknown>>;
+    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     modelName: r.model_name as string,
@@ -351,10 +355,11 @@ export function getStatsDailyTrend(
         UNION ALL
         SELECT date(created_at) AS date, 1, input_tokens, output_tokens, cost
         FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
+          AND date(created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
       GROUP BY date ORDER BY date`,
     )
-    .all(from, to, from, to) as Array<Record<string, unknown>>;
+    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     date: r.date as string,
@@ -381,10 +386,12 @@ export function getStatsHourlyTrend(
         SELECT date(created_at), CAST(strftime('%H', created_at) AS INTEGER),
                1, input_tokens, output_tokens, cost
         FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
+          AND (date(created_at) || '_' || CAST(strftime('%H', created_at) AS INTEGER))
+            NOT IN (SELECT date || '_' || hour FROM stats_hourly WHERE date >= ? AND date < ?)
       )
       GROUP BY date, hour ORDER BY date, hour`,
     )
-    .all(from, to, from, to) as Array<Record<string, unknown>>;
+    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     date: r.date as string,
