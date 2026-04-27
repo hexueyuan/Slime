@@ -11,14 +11,11 @@ CREATE TABLE IF NOT EXISTS channels (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   type TEXT NOT NULL DEFAULT 'openai',
-  base_urls TEXT NOT NULL DEFAULT '[]',
+  base_url TEXT NOT NULL DEFAULT '',
   enabled INTEGER NOT NULL DEFAULT 1,
-  priority INTEGER NOT NULL DEFAULT 0,
-  weight INTEGER NOT NULL DEFAULT 1,
-  proxy TEXT,
   timeout INTEGER,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
   models TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -62,7 +59,6 @@ CREATE TABLE IF NOT EXISTS api_keys (
   enabled INTEGER NOT NULL DEFAULT 1,
   is_internal INTEGER NOT NULL DEFAULT 0,
   expires_at TEXT,
-  max_cost REAL,
   allowed_models TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -132,7 +128,6 @@ CREATE TABLE IF NOT EXISTS models (
   channel_id INTEGER NOT NULL,
   model_name TEXT NOT NULL,
   capabilities TEXT NOT NULL DEFAULT '[]',
-  priority INTEGER NOT NULL DEFAULT 0,
   enabled INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -177,7 +172,6 @@ CREATE TABLE IF NOT EXISTS agent_session_configs (
   temperature REAL,
   context_length INTEGER,
   max_tokens INTEGER,
-  thinking_budget INTEGER,
   summary_text TEXT,
   summary_cursor_seq INTEGER NOT NULL DEFAULT 0
 );
@@ -189,25 +183,10 @@ CREATE TABLE IF NOT EXISTS agent_messages (
   role TEXT NOT NULL,
   content TEXT NOT NULL,
   status TEXT DEFAULT 'pending',
-  is_context_edge INTEGER DEFAULT 0,
-  metadata TEXT DEFAULT '{}',
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_agent_messages_session ON agent_messages(session_id, order_seq);
-
-CREATE TABLE IF NOT EXISTS agent_usage_stats (
-  message_id TEXT PRIMARY KEY,
-  session_id TEXT NOT NULL,
-  model TEXT,
-  input_tokens INTEGER NOT NULL DEFAULT 0,
-  output_tokens INTEGER NOT NULL DEFAULT 0,
-  total_tokens INTEGER NOT NULL DEFAULT 0,
-  cached_input_tokens INTEGER NOT NULL DEFAULT 0,
-  estimated_cost_usd REAL,
-  created_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_agent_usage_session ON agent_usage_stats(session_id);
 `;
 
 function createDb(dbPath: string): BetterSqlite3.Database {
@@ -218,75 +197,6 @@ function createDb(dbPath: string): BetterSqlite3.Database {
   instance.pragma("journal_mode = WAL");
   instance.pragma("foreign_keys = ON");
   instance.exec(DDL);
-  // Migration: add models column to channels if missing
-  try {
-    instance.exec("ALTER TABLE channels ADD COLUMN models TEXT NOT NULL DEFAULT '[]'");
-  } catch {
-    // column already exists
-  }
-  try {
-    instance.exec("ALTER TABLE relay_logs ADD COLUMN request_body TEXT");
-  } catch {
-    // column already exists
-  }
-  try {
-    instance.exec("ALTER TABLE relay_logs ADD COLUMN response_body TEXT");
-  } catch {
-    // column already exists
-  }
-  try {
-    instance.exec("ALTER TABLE groups_ ADD COLUMN is_builtin INTEGER NOT NULL DEFAULT 0");
-  } catch {
-    // column already exists
-  }
-  try {
-    instance.exec("ALTER TABLE agent_sessions ADD COLUMN metadata_json TEXT");
-  } catch {
-    // column already exists
-  }
-  // Migration: add model_type column to models
-  try {
-    instance.exec("ALTER TABLE models ADD COLUMN model_type TEXT NOT NULL DEFAULT 'chat'");
-    // Data migration: remove "chat" from capabilities (no longer a capability)
-    const rows = instance.prepare("SELECT id, capabilities FROM models").all() as {
-      id: number;
-      capabilities: string;
-    }[];
-    const update = instance.prepare("UPDATE models SET capabilities = ? WHERE id = ?");
-    for (const row of rows) {
-      const caps: string[] = JSON.parse(row.capabilities);
-      const migrated = caps.filter((c) => c !== "chat");
-      update.run(JSON.stringify(migrated), row.id);
-    }
-  } catch {
-    // column already exists
-  }
-  // Migration: add ttft_ms to relay_logs
-  try {
-    instance.exec("ALTER TABLE relay_logs ADD COLUMN ttft_ms INTEGER");
-  } catch {
-    // column already exists
-  }
-  // Migration: add stability columns to stats_hourly
-  try {
-    instance.exec("ALTER TABLE stats_hourly ADD COLUMN success_count INTEGER NOT NULL DEFAULT 0");
-  } catch {}
-  try {
-    instance.exec("ALTER TABLE stats_hourly ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
-  } catch {}
-  try {
-    instance.exec("ALTER TABLE stats_hourly ADD COLUMN avg_latency_ms REAL NOT NULL DEFAULT 0");
-  } catch {}
-  // Migration: add stability columns to stats_daily
-  try {
-    instance.exec("ALTER TABLE stats_daily ADD COLUMN success_count INTEGER NOT NULL DEFAULT 0");
-  } catch {}
-  try {
-    instance.exec("ALTER TABLE stats_daily ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
-  } catch {}
-  try {
-    instance.exec("ALTER TABLE stats_daily ADD COLUMN avg_latency_ms REAL NOT NULL DEFAULT 0");
-  } catch {}
   return instance;
 }
 
