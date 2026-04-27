@@ -29,7 +29,7 @@ async function copyMessage() {
 </script>
 
 <template>
-  <div class="group mb-4 flex items-end justify-end gap-2">
+  <div class="group mb-4 flex items-start justify-end gap-2">
     <!-- Bubble column -->
     <div class="flex max-w-[75%] flex-col items-end">
       <!-- Name + time -->

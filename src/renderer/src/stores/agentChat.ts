@@ -22,6 +22,20 @@ export const useAgentChatStore = defineStore("agentChat", () => {
   async function sendMessage(sessionId: string, content: string) {
     isGenerating.value = true;
     error.value = null;
+    // Optimistically add user message so it renders immediately
+    const optimisticMsg: ChatMessageRecord = {
+      id: crypto.randomUUID(),
+      sessionId,
+      orderSeq: 0,
+      role: "user",
+      content,
+      status: "sent",
+      isContextEdge: false,
+      metadata: "{}",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    messages.value = [...messages.value, optimisticMsg];
     try {
       await chatPresenter.chat(sessionId, content);
     } catch (err) {
