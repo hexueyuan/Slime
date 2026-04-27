@@ -53,11 +53,10 @@ async function complete() {
     // 3. Register models with user-tagged capabilities
     // Built-in groups (chat/reasoning/vision/image_gen) are auto-maintained
     for (const model of config.selectedModels) {
-      const caps = config.modelCapabilities[model] || [];
       await gw("createModel", {
         channelId: channel.id,
         modelName: model,
-        capabilities: caps,
+        capabilities: [...(config.modelCapabilities[model] ?? [])],
         enabled: true,
       });
     }
