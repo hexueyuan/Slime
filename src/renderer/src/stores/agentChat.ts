@@ -1,16 +1,18 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
 import { usePresenter } from "@/composables/usePresenter";
-import type { ChatMessageRecord, AssistantMessageBlock } from "@shared/types/agent";
+import type { ChatMessageRecord, AssistantMessageBlock, UserProfile } from "@shared/types/agent";
 
 export const useAgentChatStore = defineStore("agentChat", () => {
   const chatPresenter = usePresenter("agentChatPresenter");
+  const configPresenter = usePresenter("configPresenter");
 
   const messages = ref<ChatMessageRecord[]>([]);
   const isGenerating = ref(false);
   const streamingMessageId = ref<string | null>(null);
   const streamingBlocks = ref<AssistantMessageBlock[]>([]);
   const error = ref<string | null>(null);
+  const userProfile = ref<UserProfile | null>(null);
 
   async function fetchMessages(sessionId: string) {
     messages.value = (await chatPresenter.getMessages(sessionId)) as ChatMessageRecord[];
@@ -70,12 +72,32 @@ export const useAgentChatStore = defineStore("agentChat", () => {
     isGenerating.value = false;
   }
 
+  async function fetchUserProfile() {
+    const raw = await configPresenter.get("app.userProfile");
+    if (raw && typeof raw === "object") {
+      userProfile.value = raw as UserProfile;
+    } else {
+      const userName = (await configPresenter.get("evolution.user")) as string | null;
+      const firstChar = userName?.charAt(0) || "U";
+      userProfile.value = {
+        name: userName || undefined,
+        avatar: { kind: "monogram", text: firstChar, backgroundColor: "#3b82f6" },
+      };
+    }
+  }
+
+  async function saveUserProfile(profile: UserProfile) {
+    await configPresenter.set("app.userProfile", profile);
+    userProfile.value = profile;
+  }
+
   return {
     messages,
     isGenerating,
     streamingMessageId,
     streamingBlocks,
     error,
+    userProfile,
     fetchMessages,
     sendMessage,
     stopGeneration,
@@ -85,5 +107,7 @@ export const useAgentChatStore = defineStore("agentChat", () => {
     clearStreamingState,
     setError,
     clearMessages,
+    fetchUserProfile,
+    saveUserProfile,
   };
 });
