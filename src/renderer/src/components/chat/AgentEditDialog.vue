@@ -32,7 +32,6 @@ const capabilities = ref<string[]>(["reasoning"]);
 const temperature = ref(0.7);
 const contextLength = ref<number | undefined>(undefined);
 const maxTokens = ref<number | undefined>(undefined);
-const thinkingBudget = ref<number | undefined>(undefined);
 const disabledTools = ref<string[]>([]);
 const subagentEnabled = ref(false);
 const enabled = ref(true);
@@ -93,7 +92,6 @@ watch(
         temperature.value = cfg?.temperature ?? 0.7;
         contextLength.value = cfg?.contextLength;
         maxTokens.value = cfg?.maxTokens;
-        thinkingBudget.value = cfg?.thinkingBudget;
         disabledTools.value = cfg?.disabledTools ?? [];
         subagentEnabled.value = cfg?.subagentEnabled ?? false;
         enabled.value = agent.enabled;
@@ -113,7 +111,6 @@ watch(
       temperature.value = 0.7;
       contextLength.value = undefined;
       maxTokens.value = undefined;
-      thinkingBudget.value = undefined;
       disabledTools.value = [];
       subagentEnabled.value = false;
       enabled.value = true;
@@ -156,7 +153,6 @@ async function onSave() {
     temperature: temperature.value,
     contextLength: contextLength.value,
     maxTokens: maxTokens.value,
-    thinkingBudget: thinkingBudget.value,
     disabledTools: disabledTools.value.length > 0 ? disabledTools.value : undefined,
     subagentEnabled: subagentEnabled.value,
   };
@@ -380,15 +376,6 @@ async function onSave() {
                 type="number"
                 class="w-full rounded-md border border-border bg-muted/50 px-2 py-1.5 text-sm text-foreground focus:border-violet-500 focus:outline-none"
                 placeholder="4096"
-              />
-            </div>
-            <div>
-              <label class="mb-1 block text-xs text-muted-foreground">思考预算</label>
-              <input
-                v-model.number="thinkingBudget"
-                type="number"
-                class="w-full rounded-md border border-border bg-muted/50 px-2 py-1.5 text-sm text-foreground focus:border-violet-500 focus:outline-none"
-                placeholder="1024"
               />
             </div>
           </div>

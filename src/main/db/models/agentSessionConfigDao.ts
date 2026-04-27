@@ -8,7 +8,6 @@ interface SessionConfigRow {
   temperature: number | null;
   context_length: number | null;
   max_tokens: number | null;
-  thinking_budget: number | null;
   summary_text: string | null;
   summary_cursor_seq: number;
 }
@@ -21,7 +20,6 @@ function rowToConfig(row: SessionConfigRow): SessionConfig {
     temperature: row.temperature,
     contextLength: row.context_length,
     maxTokens: row.max_tokens,
-    thinkingBudget: row.thinking_budget,
     summaryText: row.summary_text,
     summaryCursorSeq: row.summary_cursor_seq,
   };
@@ -36,12 +34,11 @@ export function createConfig(
     temperature?: number | null;
     contextLength?: number | null;
     maxTokens?: number | null;
-    thinkingBudget?: number | null;
   },
 ): SessionConfig {
   db.prepare(
-    `INSERT INTO agent_session_configs (id, capability_requirements, system_prompt, temperature, context_length, max_tokens, thinking_budget)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO agent_session_configs (id, capability_requirements, system_prompt, temperature, context_length, max_tokens)
+     VALUES (?, ?, ?, ?, ?, ?)`,
   ).run(
     data.id,
     JSON.stringify(data.capabilityRequirements ?? ["reasoning"]),
@@ -49,7 +46,6 @@ export function createConfig(
     data.temperature ?? null,
     data.contextLength ?? null,
     data.maxTokens ?? null,
-    data.thinkingBudget ?? null,
   );
   return getConfigById(db, data.id)!;
 }
@@ -88,10 +84,6 @@ export function updateConfig(
   if (partial.maxTokens !== undefined) {
     sets.push("max_tokens = ?");
     values.push(partial.maxTokens);
-  }
-  if (partial.thinkingBudget !== undefined) {
-    sets.push("thinking_budget = ?");
-    values.push(partial.thinkingBudget);
   }
   if (partial.summaryText !== undefined) {
     sets.push("summary_text = ?");

@@ -15,7 +15,6 @@ export interface AgentConfig {
   temperature?: number;
   contextLength?: number;
   maxTokens?: number;
-  thinkingBudget?: number;
   disabledTools?: string[];
   subagentEnabled?: boolean;
 }
@@ -66,7 +65,6 @@ export interface SessionConfig {
   temperature?: number | null;
   contextLength?: number | null;
   maxTokens?: number | null;
-  thinkingBudget?: number | null;
   summaryText?: string | null;
   summaryCursorSeq: number;
 }

@@ -38,7 +38,6 @@ export class SubagentPresenter {
       temperature: parentConfig?.temperature ?? null,
       contextLength: parentConfig?.contextLength ?? null,
       maxTokens: parentConfig?.maxTokens ?? null,
-      thinkingBudget: parentConfig?.thinkingBudget ?? null,
     });
 
     if (mode === "inherit" && parentConfig?.summaryText) {

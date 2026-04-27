@@ -38,7 +38,6 @@ export class AgentChatPresenterAdapter {
       temperature: agentConfig?.temperature ?? null,
       contextLength: agentConfig?.contextLength ?? null,
       maxTokens: agentConfig?.maxTokens ?? null,
-      thinkingBudget: agentConfig?.thinkingBudget ?? null,
     });
 
     const session = sessionDao.getSessionById(db, id)!;
