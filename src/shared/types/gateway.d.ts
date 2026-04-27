@@ -149,7 +149,7 @@ export interface DailyStats {
   cacheReadTokens: number;
   cacheWriteTokens: number;
   cost: number;
-  avgLatencyMs: number;
+  avgLatencyMs?: number;
 }
 
 export interface ModelStats extends DailyStats {
