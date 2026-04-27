@@ -159,6 +159,7 @@ CREATE TABLE IF NOT EXISTS agent_sessions (
   session_kind TEXT NOT NULL DEFAULT 'regular',
   parent_session_id TEXT,
   subagent_meta_json TEXT,
+  metadata_json TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
