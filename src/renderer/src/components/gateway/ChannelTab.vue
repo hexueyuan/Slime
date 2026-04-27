@@ -57,7 +57,7 @@ async function openEdit(ch: Channel) {
   form.value = {
     name: ch.name,
     type: ch.type,
-    baseUrl: ch.baseUrls[0] ?? "",
+    baseUrl: ch.baseUrl ?? "",
     enabled: ch.enabled,
     keys: existingKeys.length ? existingKeys.map((k) => k.key) : [""],
   };
@@ -73,7 +73,7 @@ function removeKeySlot(idx: number) {
 }
 
 async function save() {
-  const baseUrls = form.value.baseUrl ? [form.value.baseUrl] : [defaultUrlForType.value];
+  const baseUrl = form.value.baseUrl || defaultUrlForType.value;
   const nonEmptyKeys = form.value.keys.filter((k) => k.trim());
 
   let channelId: number;
@@ -83,11 +83,9 @@ async function save() {
     await gw.updateChannel(channelId, {
       name: form.value.name,
       type: form.value.type,
-      baseUrls,
+      baseUrl,
       models: [],
       enabled: form.value.enabled,
-      priority: 0,
-      weight: 1,
     });
     const existing = store.channelKeys.get(channelId) ?? [];
     for (const ek of existing) {
@@ -100,11 +98,9 @@ async function save() {
     const ch = await gw.createChannel({
       name: form.value.name,
       type: form.value.type,
-      baseUrls,
+      baseUrl,
       models: [],
       enabled: form.value.enabled,
-      priority: 0,
-      weight: 1,
     });
     channelId = ch.id;
     for (const k of nonEmptyKeys) {

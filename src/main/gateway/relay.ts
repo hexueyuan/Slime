@@ -110,9 +110,8 @@ export function createRelay(deps: RelayDeps): Relay {
 
         const adapter = getAdapter(channel.type);
         const config = {
-          baseUrl: channel.baseUrls[0],
+          baseUrl: channel.baseUrl,
           apiKey: selectedKey.key,
-          proxy: channel.proxy,
           timeout: channel.timeout,
         };
 
@@ -185,9 +184,8 @@ export function createRelay(deps: RelayDeps): Relay {
 
         const adapter = getAdapter(channel.type);
         const config = {
-          baseUrl: channel.baseUrls[0],
+          baseUrl: channel.baseUrl,
           apiKey: selectedKey.key,
-          proxy: channel.proxy,
           timeout: channel.timeout,
         };
 

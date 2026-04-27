@@ -210,7 +210,7 @@ export class GatewayPresenter implements IGatewayPresenter {
     if (keys.length === 0) return { success: false, error: "No API keys configured" };
 
     try {
-      const models = await this.fetchModelsFromApi(channel.type, channel.baseUrls[0], keys[0].key);
+      const models = await this.fetchModelsFromApi(channel.type, channel.baseUrl, keys[0].key);
       return { success: true, models };
     } catch (e) {
       return { success: false, error: e instanceof Error ? e.message : String(e) };

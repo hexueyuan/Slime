@@ -5,12 +5,9 @@ interface ChannelRow {
   id: number;
   name: string;
   type: string;
-  base_urls: string;
+  base_url: string;
   models: string;
   enabled: number;
-  priority: number;
-  weight: number;
-  proxy: string | null;
   timeout: number | null;
   created_at: string;
   updated_at: string;
@@ -29,12 +26,9 @@ function rowToChannel(row: ChannelRow): Channel {
     id: row.id,
     name: row.name,
     type: row.type as Channel["type"],
-    baseUrls: JSON.parse(row.base_urls),
+    baseUrl: row.base_url,
     models: JSON.parse(row.models),
     enabled: !!row.enabled,
-    priority: row.priority,
-    weight: row.weight,
-    proxy: row.proxy ?? undefined,
     timeout: row.timeout ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -52,9 +46,7 @@ function rowToChannelKey(row: ChannelKeyRow): ChannelKey {
 }
 
 export function listChannels(db: BetterSqlite3.Database): Channel[] {
-  const rows = db
-    .prepare("SELECT * FROM channels ORDER BY priority DESC, id")
-    .all() as ChannelRow[];
+  const rows = db.prepare("SELECT * FROM channels ORDER BY id").all() as ChannelRow[];
   return rows.map(rowToChannel);
 }
 
@@ -68,18 +60,15 @@ export function createChannel(
   data: Omit<Channel, "id" | "createdAt" | "updatedAt">,
 ): Channel {
   const stmt = db.prepare(`
-    INSERT INTO channels (name, type, base_urls, models, enabled, priority, weight, proxy, timeout)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO channels (name, type, base_url, models, enabled, timeout)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
   const result = stmt.run(
     data.name,
     data.type,
-    JSON.stringify(data.baseUrls),
+    data.baseUrl,
     JSON.stringify(data.models),
     data.enabled ? 1 : 0,
-    data.priority,
-    data.weight,
-    data.proxy ?? null,
     data.timeout ?? null,
   );
   return getChannel(db, Number(result.lastInsertRowid))!;
@@ -101,9 +90,9 @@ export function updateChannel(
     sets.push("type = ?");
     values.push(data.type);
   }
-  if (data.baseUrls !== undefined) {
-    sets.push("base_urls = ?");
-    values.push(JSON.stringify(data.baseUrls));
+  if (data.baseUrl !== undefined) {
+    sets.push("base_url = ?");
+    values.push(data.baseUrl);
   }
   if (data.models !== undefined) {
     sets.push("models = ?");
@@ -112,18 +101,6 @@ export function updateChannel(
   if (data.enabled !== undefined) {
     sets.push("enabled = ?");
     values.push(data.enabled ? 1 : 0);
-  }
-  if (data.priority !== undefined) {
-    sets.push("priority = ?");
-    values.push(data.priority);
-  }
-  if (data.weight !== undefined) {
-    sets.push("weight = ?");
-    values.push(data.weight);
-  }
-  if (data.proxy !== undefined) {
-    sets.push("proxy = ?");
-    values.push(data.proxy);
   }
   if (data.timeout !== undefined) {
     sets.push("timeout = ?");

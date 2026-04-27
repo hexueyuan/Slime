@@ -4,12 +4,9 @@ export interface Channel {
   id: number;
   name: string;
   type: ChannelType;
-  baseUrls: string[];
+  baseUrl: string;
   models: string[];
   enabled: boolean;
-  priority: number;
-  weight: number;
-  proxy?: string;
   timeout?: number;
   createdAt: string;
   updatedAt: string;
