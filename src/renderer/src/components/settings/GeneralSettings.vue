@@ -24,28 +24,30 @@
       </div>
     </div>
 
-    <div v-if="showConfirm" class="fixed inset-0 z-[60] flex items-center justify-center">
-      <div class="absolute inset-0 bg-black/50" @click="showConfirm = false" />
-      <div class="relative w-80 rounded-lg border border-border bg-card p-5 shadow-xl">
-        <h4 class="mb-2 text-sm font-semibold text-foreground">确认重置</h4>
-        <p class="mb-4 text-xs text-muted-foreground">此操作不可撤销，确认删除所有数据？</p>
-        <div class="flex justify-end gap-2">
-          <button
-            class="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/50"
-            @click="showConfirm = false"
-          >
-            取消
-          </button>
-          <button
-            data-testid="confirm-reset-btn"
-            class="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700"
-            @click="doReset"
-          >
-            确认删除
-          </button>
+    <Teleport to="body">
+      <div v-if="showConfirm" class="fixed inset-0 z-[60] flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50" @click="showConfirm = false" />
+        <div class="relative w-80 rounded-lg border border-border bg-card p-5 shadow-xl">
+          <h4 class="mb-2 text-sm font-semibold text-foreground">确认重置</h4>
+          <p class="mb-4 text-xs text-muted-foreground">此操作不可撤销，确认删除所有数据？</p>
+          <div class="flex justify-end gap-2">
+            <button
+              class="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/50"
+              @click="showConfirm = false"
+            >
+              取消
+            </button>
+            <button
+              data-testid="confirm-reset-btn"
+              class="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700"
+              @click="doReset"
+            >
+              确认删除
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -64,12 +66,17 @@ async function doReset() {
   showConfirm.value = false;
   resetting.value = true;
   resetError.value = "";
-  const result = (await appPresenter.resetAllData()) as { success: boolean; error?: string };
-  resetting.value = false;
-  if (result.success) {
-    resetSuccess.value = true;
-  } else {
-    resetError.value = result.error ?? "重置失败";
+  try {
+    const result = (await appPresenter.resetAllData()) as { success: boolean; error?: string };
+    if (result.success) {
+      resetSuccess.value = true;
+    } else {
+      resetError.value = result.error ?? "重置失败";
+    }
+  } catch (err) {
+    resetError.value = err instanceof Error ? err.message : "重置失败";
+  } finally {
+    resetting.value = false;
   }
 }
 </script>
