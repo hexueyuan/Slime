@@ -40,11 +40,23 @@
           >
             网关
           </button>
+          <button
+            :class="[
+              'rounded-md px-3 py-1.5 text-left text-sm',
+              activeTab === 'general'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/50',
+            ]"
+            @click="activeTab = 'general'"
+          >
+            通用
+          </button>
         </div>
         <!-- Right content -->
         <div class="flex flex-1 flex-col overflow-y-auto p-5">
           <ProfileSettings v-if="activeTab === 'profile'" />
           <GatewaySettings v-else-if="activeTab === 'gateway'" />
+          <GeneralSettings v-else-if="activeTab === 'general'" />
         </div>
       </div>
     </div>
@@ -55,11 +67,12 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import GatewaySettings from "./GatewaySettings.vue";
 import ProfileSettings from "./ProfileSettings.vue";
+import GeneralSettings from "./GeneralSettings.vue";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();
 
-const activeTab = ref<"profile" | "gateway">("profile");
+const activeTab = ref<"profile" | "gateway" | "general">("profile");
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") emit("update:open", false);

@@ -41,4 +41,11 @@ describe("SettingsDialog", () => {
     await wrapper.vm.$nextTick();
     expect(wrapper.emitted("update:open")).toEqual([[false]]);
   });
+
+  it("should render general tab button", () => {
+    mount(SettingsDialog, { props: { open: true }, attachTo: document.body });
+    const buttons = document.querySelectorAll("button");
+    const generalBtn = Array.from(buttons).find((b) => b.textContent?.includes("通用"));
+    expect(generalBtn).not.toBeUndefined();
+  });
 });
