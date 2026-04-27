@@ -5,6 +5,7 @@ import type { RelayLog } from "@shared/types/gateway";
 import { GATEWAY_EVENTS } from "@shared/events";
 import { Icon } from "@iconify/vue";
 import ModelIcon from "@/components/ModelIcon.vue";
+import JsonViewer from "@/components/gateway/JsonViewer.vue";
 
 const gw = usePresenter("gatewayPresenter");
 
@@ -56,7 +57,8 @@ function closeDrawer() {
 }
 
 function formatTime(iso: string): string {
-  const d = new Date(iso);
+  // SQLite datetime('now') returns UTC without Z suffix; append ' UTC' so JS parses correctly
+  const d = new Date(iso.includes("T") || iso.endsWith("Z") ? iso : iso + " UTC");
   return d.toLocaleString("zh-CN", {
     month: "2-digit",
     day: "2-digit",
@@ -71,13 +73,13 @@ function formatCost(n: number): string {
 }
 
 function formatDuration(ms: number): string {
-  return `${ms}ms`;
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
 }
 
-function formatJson(raw: string | undefined): string {
-  if (!raw) return "";
+function parseJson(raw: string | undefined): unknown {
+  if (!raw) return null;
   try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
+    return JSON.parse(raw);
   } catch {
     return raw;
   }
@@ -108,16 +110,22 @@ function formatJson(raw: string | undefined): string {
       >
         <div class="flex items-center gap-3 p-3 text-xs">
           <span class="w-28 shrink-0 text-muted-foreground">{{ formatTime(log.createdAt) }}</span>
-          <span class="flex w-28 shrink-0 items-center gap-1.5 truncate font-medium">
-            <ModelIcon :model-name="log.modelName" :size="16" />
-            {{ log.modelName }}
+          <span class="flex w-40 shrink-0 items-center gap-1.5 overflow-hidden font-medium">
+            <ModelIcon :model-name="log.modelName" :size="16" class="shrink-0" />
+            <span class="truncate" :title="log.modelName">{{ log.modelName }}</span>
           </span>
           <span class="w-24 shrink-0 truncate text-muted-foreground">{{
             log.channelName ?? "-"
           }}</span>
+          <span class="w-20 shrink-0 truncate text-muted-foreground">{{
+            log.apiKeyName ?? "-"
+          }}</span>
           <span class="w-24 shrink-0 text-muted-foreground">
             {{ log.inputTokens }} / {{ log.outputTokens }}
           </span>
+          <span class="w-16 shrink-0 text-muted-foreground">{{
+            log.ttftMs != null ? formatDuration(log.ttftMs) : "-"
+          }}</span>
           <span class="w-16 shrink-0 text-muted-foreground">{{ formatCost(log.cost) }}</span>
           <span class="w-16 shrink-0 text-muted-foreground">{{
             formatDuration(log.durationMs)
@@ -159,7 +167,7 @@ function formatJson(raw: string | undefined): string {
         <div class="flex h-full w-[50vw] flex-col border-l border-border bg-card shadow-xl">
           <!-- Header -->
           <div class="flex items-center justify-between border-b border-border px-4 py-3">
-            <h3 class="text-sm font-medium">日志详情</h3>
+            <h3 class="text-sm font-medium text-foreground">日志详情</h3>
             <button
               class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
               @click="closeDrawer"
@@ -178,7 +186,7 @@ function formatJson(raw: string | undefined): string {
             <!-- Meta -->
             <div class="space-y-2 border-b border-border px-4 py-3 text-xs">
               <div class="flex items-center gap-4">
-                <span class="flex items-center gap-1.5 font-medium">
+                <span class="flex items-center gap-1.5 font-medium text-foreground">
                   <ModelIcon :model-name="drawerLog.modelName" :size="18" />
                   {{ drawerLog.modelName }}
                 </span>
@@ -199,7 +207,12 @@ function formatJson(raw: string | undefined): string {
                 <div>Tokens: {{ drawerLog.inputTokens }} in / {{ drawerLog.outputTokens }} out</div>
                 <div>费用: {{ formatCost(drawerLog.cost) }}</div>
                 <div>Group: {{ drawerLog.groupName }}</div>
-                <div>API Key ID: {{ drawerLog.apiKeyId ?? "-" }}</div>
+                <div>
+                  来源:
+                  {{
+                    drawerLog.apiKeyName ?? (drawerLog.apiKeyId ? `#${drawerLog.apiKeyId}` : "-")
+                  }}
+                </div>
                 <div>Cache Read: {{ drawerLog.cacheReadTokens }}</div>
                 <div>Cache Write: {{ drawerLog.cacheWriteTokens }}</div>
               </div>
@@ -238,19 +251,15 @@ function formatJson(raw: string | undefined): string {
             <!-- Body content -->
             <div class="flex-1 overflow-auto p-4">
               <template v-if="activeTab === 'request'">
-                <pre
-                  v-if="drawerLog.requestBody"
-                  class="whitespace-pre-wrap break-all text-xs leading-relaxed text-foreground"
-                  >{{ formatJson(drawerLog.requestBody) }}</pre
-                >
+                <div v-if="drawerLog.requestBody" class="font-mono text-xs leading-relaxed">
+                  <JsonViewer :data="parseJson(drawerLog.requestBody)" />
+                </div>
                 <div v-else class="py-8 text-center text-sm text-muted-foreground">无内容</div>
               </template>
               <template v-else>
-                <pre
-                  v-if="drawerLog.responseBody"
-                  class="whitespace-pre-wrap break-all text-xs leading-relaxed text-foreground"
-                  >{{ formatJson(drawerLog.responseBody) }}</pre
-                >
+                <div v-if="drawerLog.responseBody" class="font-mono text-xs leading-relaxed">
+                  <JsonViewer :data="parseJson(drawerLog.responseBody)" />
+                </div>
                 <div v-else class="py-8 text-center text-sm text-muted-foreground">无内容</div>
               </template>
             </div>
