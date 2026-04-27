@@ -23,11 +23,9 @@ function makeChannel(overrides: Partial<Parameters<typeof channelDao.createChann
   return channelDao.createChannel(db, {
     name: "test-ch",
     type: "openai",
-    baseUrls: ["https://api.openai.com"],
+    baseUrl: "https://api.openai.com",
     models: [],
     enabled: true,
-    priority: 0,
-    weight: 1,
     ...overrides,
   });
 }
@@ -80,24 +78,20 @@ describe("database", () => {
 
 describe("channelDao", () => {
   it("createChannel returns full object", () => {
-    const ch = makeChannel({ name: "openai-1", priority: 10 });
+    const ch = makeChannel({ name: "openai-1" });
     expect(ch.id).toBeGreaterThan(0);
     expect(ch.name).toBe("openai-1");
-    expect(ch.priority).toBe(10);
     expect(ch.enabled).toBe(true);
     expect(ch.createdAt).toBeDefined();
     expect(ch.updatedAt).toBeDefined();
   });
 
-  it("listChannels returns all sorted by priority DESC", () => {
-    makeChannel({ name: "low", priority: 1 });
-    makeChannel({ name: "high", priority: 10 });
-    makeChannel({ name: "mid", priority: 5 });
+  it("listChannels returns all", () => {
+    makeChannel({ name: "c1" });
+    makeChannel({ name: "c2" });
+    makeChannel({ name: "c3" });
     const list = channelDao.listChannels(db);
     expect(list).toHaveLength(3);
-    expect(list[0].name).toBe("high");
-    expect(list[1].name).toBe("mid");
-    expect(list[2].name).toBe("low");
   });
 
   it("getChannel by id", () => {
@@ -108,11 +102,9 @@ describe("channelDao", () => {
 
   it("updateChannel partial update", () => {
     const ch = makeChannel({ name: "old" });
-    channelDao.updateChannel(db, ch.id, { name: "new", priority: 99 });
+    channelDao.updateChannel(db, ch.id, { name: "new" });
     const updated = channelDao.getChannel(db, ch.id)!;
     expect(updated.name).toBe("new");
-    expect(updated.priority).toBe(99);
-    expect(updated.weight).toBe(ch.weight); // unchanged
   });
 
   it("updateChannel with empty data is noop", () => {
@@ -129,10 +121,9 @@ describe("channelDao", () => {
     expect(channelDao.listChannelKeys(db, ch.id)).toHaveLength(0);
   });
 
-  it("baseUrls JSON serialization roundtrip", () => {
-    const urls = ["https://a.com", "https://b.com"];
-    const ch = makeChannel({ baseUrls: urls });
-    expect(channelDao.getChannel(db, ch.id)!.baseUrls).toEqual(urls);
+  it("baseUrl roundtrip", () => {
+    const ch = makeChannel({ baseUrl: "https://custom.example.com" });
+    expect(channelDao.getChannel(db, ch.id)!.baseUrl).toBe("https://custom.example.com");
   });
 
   it("enabled boolean conversion", () => {

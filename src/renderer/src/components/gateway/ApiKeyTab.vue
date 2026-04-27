@@ -15,13 +15,12 @@ const copied = ref(false);
 const form = ref({
   name: "",
   expiresAt: "",
-  maxCost: undefined as number | undefined,
   allowedModels: "",
 });
 
 function openCreate() {
   justCreatedKey.value = null;
-  form.value = { name: "", expiresAt: "", maxCost: undefined, allowedModels: "" };
+  form.value = { name: "", expiresAt: "", allowedModels: "" };
   showEditor.value = true;
 }
 
@@ -34,7 +33,6 @@ async function save() {
   const ak = await gw.createApiKey({
     name: form.value.name,
     expiresAt: form.value.expiresAt || undefined,
-    maxCost: form.value.maxCost,
     allowedModels: allowedModels.length ? allowedModels : undefined,
   });
 
@@ -59,7 +57,7 @@ async function copyKey(key: string) {
 }
 
 function maskKey(key: string): string {
-  return key.length > 8 ? key.slice(0, 8) + "..." : key;
+  return key.length > 8 ? `${key.slice(0, 4)}...${key.slice(-4)}` : key;
 }
 
 function formatDate(d?: string): string {
@@ -107,7 +105,6 @@ function formatDate(d?: string): string {
           <div class="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
             <span class="font-mono">{{ maskKey(ak.key) }}</span>
             <span v-if="ak.expiresAt">过期: {{ formatDate(ak.expiresAt) }}</span>
-            <span v-if="ak.maxCost != null">上限: ${{ ak.maxCost }}</span>
           </div>
         </div>
         <div class="flex shrink-0 items-center gap-1">
@@ -194,17 +191,6 @@ function formatDate(d?: string): string {
                 v-model="form.expiresAt"
                 type="date"
                 class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-              />
-            </label>
-
-            <label class="mb-3 block">
-              <span class="mb-1 block text-xs text-muted-foreground">费用上限（可选）</span>
-              <input
-                v-model.number="form.maxCost"
-                type="number"
-                step="0.01"
-                class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-                placeholder="100.00"
               />
             </label>
 

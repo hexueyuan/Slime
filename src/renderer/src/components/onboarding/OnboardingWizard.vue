@@ -43,10 +43,8 @@ async function complete() {
     const channel = (await gw("createChannel", {
       name: config.channelName,
       type: config.channelType,
-      baseUrls: [config.baseUrl],
+      baseUrl: config.baseUrl,
       enabled: true,
-      priority: 0,
-      weight: 1,
     })) as { id: number };
 
     // 2. Add key
@@ -60,7 +58,6 @@ async function complete() {
         channelId: channel.id,
         modelName: model,
         capabilities: caps,
-        priority: 0,
         enabled: true,
       });
     }

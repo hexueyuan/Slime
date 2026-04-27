@@ -23,19 +23,16 @@ function setup() {
   const ch = channelDao.createChannel(db, {
     name: "test",
     type: "openai",
-    baseUrls: ["https://api.openai.com"],
+    baseUrl: "https://api.openai.com",
     models: [],
     enabled: true,
-    priority: 0,
-    weight: 1,
   });
 
-  function addModel(name: string, caps: string[], priority: number) {
+  function addModel(name: string, caps: string[]) {
     const model = modelDao.createModel(db, {
       channelId: ch.id,
       modelName: name,
       capabilities: caps as any,
-      priority,
       enabled: true,
     });
     groupDao.syncBuiltinGroupItems(db);
@@ -48,8 +45,8 @@ function setup() {
 describe("CapabilitySelector", () => {
   it("select independent mode — returns best model per capability", () => {
     const { addModel } = setup();
-    addModel("claude-sonnet", ["reasoning", "vision"], 10);
-    addModel("deepseek-r1", ["reasoning"], 5);
+    addModel("claude-sonnet", ["reasoning", "vision"]);
+    addModel("deepseek-r1", ["reasoning"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select(["reasoning", "vision"]);
@@ -60,8 +57,8 @@ describe("CapabilitySelector", () => {
 
   it("select independent mode — different models for different caps", () => {
     const { addModel } = setup();
-    addModel("deepseek-r1", ["reasoning"], 10);
-    addModel("qwen-vl", ["vision"], 5);
+    addModel("deepseek-r1", ["reasoning"]);
+    addModel("qwen-vl", ["vision"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select(["reasoning", "vision"]);
@@ -72,8 +69,8 @@ describe("CapabilitySelector", () => {
 
   it("select unified mode — single model must match all", () => {
     const { addModel } = setup();
-    addModel("claude-sonnet", ["reasoning", "vision"], 10);
-    addModel("deepseek-r1", ["reasoning"], 5);
+    addModel("claude-sonnet", ["reasoning", "vision"]);
+    addModel("deepseek-r1", ["reasoning"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select([["reasoning", "vision"]]);
@@ -83,8 +80,8 @@ describe("CapabilitySelector", () => {
 
   it("select unified mode — no single model matches → missing", () => {
     const { addModel } = setup();
-    addModel("deepseek-r1", ["reasoning"], 10);
-    addModel("qwen-vl", ["vision"], 5);
+    addModel("deepseek-r1", ["reasoning"]);
+    addModel("qwen-vl", ["vision"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select([["reasoning", "vision"]]);
@@ -94,8 +91,8 @@ describe("CapabilitySelector", () => {
 
   it("select mixed mode", () => {
     const { addModel } = setup();
-    addModel("claude-sonnet", ["reasoning", "vision"], 10);
-    addModel("dalle", ["image_gen"], 5);
+    addModel("claude-sonnet", ["reasoning", "vision"]);
+    addModel("dalle", ["image_gen"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select([["reasoning", "vision"], "image_gen"]);
@@ -104,24 +101,23 @@ describe("CapabilitySelector", () => {
     expect(result.matched.image_gen.modelName).toBe("dalle");
   });
 
-  it("select respects priority ordering", () => {
+  it("select returns first inserted model when multiple match", () => {
     const { addModel } = setup();
-    addModel("cheap", ["reasoning"], 1);
-    addModel("expensive", ["reasoning"], 100);
+    addModel("first", ["reasoning"]);
+    addModel("second", ["reasoning"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select(["reasoning"]);
-    expect(result.matched.reasoning.modelName).toBe("expensive");
+    expect(result.matched.reasoning.modelName).toBe("first");
   });
 
   it("select skips disabled models", () => {
     const { ch, addModel } = setup();
-    addModel("enabled", ["reasoning"], 5);
+    addModel("enabled", ["reasoning"]);
     modelDao.createModel(db, {
       channelId: ch.id,
       modelName: "disabled",
       capabilities: ["reasoning"],
-      priority: 100,
       enabled: false,
     });
     const selector = createCapabilitySelector(db, createCircuitBreaker());
@@ -140,7 +136,7 @@ describe("CapabilitySelector", () => {
 
   it("hasCapability returns true/false", () => {
     const { addModel } = setup();
-    addModel("m", ["reasoning", "vision"], 1);
+    addModel("m", ["reasoning", "vision"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     expect(selector.hasCapability("reasoning")).toBe(true);
@@ -149,29 +145,27 @@ describe("CapabilitySelector", () => {
 
   it("availableCapabilities returns deduplicated list", () => {
     const { addModel } = setup();
-    addModel("a", ["reasoning"], 1);
-    addModel("b", ["reasoning", "vision"], 2);
+    addModel("a", ["reasoning"]);
+    addModel("b", ["reasoning", "vision"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const caps = selector.availableCapabilities();
     expect(caps.sort()).toEqual(["reasoning", "vision"]);
   });
 
-  it("modelsWithCapability returns matching models sorted by priority", () => {
+  it("modelsWithCapability returns matching models", () => {
     const { addModel } = setup();
-    addModel("low", ["reasoning"], 1);
-    addModel("high", ["reasoning"], 10);
+    addModel("m1", ["reasoning"]);
+    addModel("m2", ["reasoning"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const models = selector.modelsWithCapability("reasoning");
     expect(models).toHaveLength(2);
-    expect(models[0].modelName).toBe("high");
-    expect(models[1].modelName).toBe("low");
   });
 
   it("groupName in ModelMatch corresponds to built-in capability group name", () => {
     const { addModel } = setup();
-    addModel("claude-sonnet", ["reasoning"], 10);
+    addModel("claude-sonnet", ["reasoning"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select(["reasoning"]);
@@ -180,7 +174,7 @@ describe("CapabilitySelector", () => {
 
   it("groupName for unified mode corresponds to composite group name", () => {
     const { addModel } = setup();
-    addModel("claude-sonnet", ["reasoning", "vision"], 10);
+    addModel("claude-sonnet", ["reasoning", "vision"]);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select([["reasoning", "vision"]]);

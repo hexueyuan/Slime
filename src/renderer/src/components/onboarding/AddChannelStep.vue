@@ -69,11 +69,9 @@ async function runTest() {
     const channel = (await gw("presenter:call", "gatewayPresenter", "createChannel", {
       name: "__onboarding_test__",
       type: props.channelType,
-      baseUrls: [props.baseUrl],
+      baseUrl: props.baseUrl,
       models: [],
       enabled: true,
-      priority: 0,
-      weight: 1,
     })) as { id: number };
 
     await gw("presenter:call", "gatewayPresenter", "addChannelKey", channel.id, props.apiKey);

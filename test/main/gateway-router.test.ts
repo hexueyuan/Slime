@@ -19,11 +19,9 @@ function makeChannel(name = "ch") {
   return channelDao.createChannel(db, {
     name,
     type: "openai",
-    baseUrls: ["https://api.openai.com"],
+    baseUrl: "https://api.openai.com",
     models: [],
     enabled: true,
-    priority: 0,
-    weight: 1,
   });
 }
 

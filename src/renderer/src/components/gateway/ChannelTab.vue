@@ -226,10 +226,8 @@ async function addModelToChannel(channelId: number, modelName: string) {
     modelName,
     type: "chat",
     capabilities: [],
-    priority: 0,
     enabled: true,
   });
-  await store.loadModelsByChannel(channelId);
 }
 
 async function removeModelFromChannel(modelId: number) {
@@ -256,7 +254,6 @@ async function refreshModels() {
           modelName: name,
           type: "chat",
           capabilities: [],
-          priority: 0,
           enabled: true,
         });
       }
