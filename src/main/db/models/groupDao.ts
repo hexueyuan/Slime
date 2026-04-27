@@ -158,7 +158,7 @@ export function syncBuiltinGroupItems(db: BetterSqlite3.Database): void {
       `INSERT INTO group_items (group_id, channel_id, model_name, priority, weight) VALUES (?, ?, ?, ?, ?)`,
     );
     for (const m of matched) {
-      insert.run(group.id, m.channelId, m.modelName, m.priority, 1);
+      insert.run(group.id, m.channelId, m.modelName, 0, 1);
     }
   }
 }
@@ -181,6 +181,6 @@ export function syncCompositeGroupItems(db: BetterSqlite3.Database, groupName: s
     `INSERT INTO group_items (group_id, channel_id, model_name, priority, weight) VALUES (?, ?, ?, ?, ?)`,
   );
   for (const m of models) {
-    insert.run(group.id, m.channelId, m.modelName, m.priority, 1);
+    insert.run(group.id, m.channelId, m.modelName, 0, 1);
   }
 }
