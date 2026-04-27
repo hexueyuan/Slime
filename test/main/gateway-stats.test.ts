@@ -140,6 +140,86 @@ describe("calculateCost", () => {
   });
 });
 
+describe("statsDao 稳定性查询", () => {
+  function insertLog(date: string, status: "success" | "error", durationMs = 200) {
+    db.prepare(
+      `
+      INSERT INTO relay_logs
+        (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+         cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
+      VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, ?, ?, ?)
+    `,
+    ).run(durationMs, status, date);
+  }
+
+  it("aggregateToHourly 写入 success_count/fail_count/avg_latency_ms", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-26T12:00:00Z"));
+    insertLog("2026-04-15 10:00:00", "success", 100);
+    insertLog("2026-04-15 10:30:00", "error", 300);
+    const { aggregateToHourly } = await import("@/db/models/statsDao");
+    aggregateToHourly(db, "2026-04-16");
+    const row = db.prepare("SELECT * FROM stats_hourly").get() as Record<string, unknown>;
+    expect(row.success_count).toBe(1);
+    expect(row.fail_count).toBe(1);
+    expect(row.avg_latency_ms).toBeCloseTo(200);
+    vi.useRealTimers();
+  });
+
+  it("getChannelRanking 按请求数排序", async () => {
+    const { getChannelRanking } = await import("@/db/models/statsDao");
+    insertLog("2026-04-26 10:00:00", "success");
+    insertLog("2026-04-26 10:01:00", "success");
+    insertLog("2026-04-26 10:02:00", "error");
+    const rows = getChannelRanking(db, "2026-04-26", "2026-04-27");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].channelId).toBe(1);
+    expect(rows[0].requests).toBe(3);
+    expect(rows[0].successCount).toBe(2);
+    expect(rows[0].failCount).toBe(1);
+  });
+
+  it("getModelRanking 按请求数排序", async () => {
+    const { getModelRanking } = await import("@/db/models/statsDao");
+    insertLog("2026-04-26 10:00:00", "success");
+    insertLog("2026-04-26 10:01:00", "success");
+    const rows = getModelRanking(db, "2026-04-26", "2026-04-27");
+    expect(rows[0].modelName).toBe("gpt-4o");
+    expect(rows[0].requests).toBe(2);
+  });
+
+  it("getLatencyPercentiles 返回 P50/P95", async () => {
+    const { getLatencyPercentiles } = await import("@/db/models/statsDao");
+    for (let i = 1; i <= 100; i++) {
+      db.prepare(
+        `INSERT INTO relay_logs (group_name, model_name, channel_id, channel_name,
+         input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
+         cost, duration_ms, status, created_at)
+         VALUES ('g', 'gpt-4o', 1, 'ch1', 10, 5, 0, 0, 0, ?, 'success', '2026-04-26 10:00:00')`,
+      ).run(i * 10); // 10, 20, ..., 1000 ms
+    }
+    const result = getLatencyPercentiles(db, "2026-04-26", "2026-04-27");
+    expect(result.p50).toBeGreaterThanOrEqual(490);
+    expect(result.p50).toBeLessThanOrEqual(510);
+    expect(result.p95).toBeGreaterThanOrEqual(940);
+    expect(result.p95).toBeLessThanOrEqual(960);
+  });
+
+  it("getChannelStabilityHourly 返回按小时的稳定性数据", async () => {
+    const { getChannelStabilityHourly } = await import("@/db/models/statsDao");
+    // 需要先 aggregateToHourly
+    insertLog("2026-04-15 10:00:00", "success");
+    insertLog("2026-04-15 10:30:00", "error");
+    const { aggregateToHourly } = await import("@/db/models/statsDao");
+    aggregateToHourly(db, "2026-04-16");
+    const rows = getChannelStabilityHourly(db, 1, "2026-04-15", "2026-04-16");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].successCount).toBe(1);
+    expect(rows[0].failCount).toBe(1);
+    expect(rows[0].hour).toBe("2026-04-15T10");
+  });
+});
+
 describe("ScheduledTasks", () => {
   function insertTestLog(date: string) {
     db.prepare(`
