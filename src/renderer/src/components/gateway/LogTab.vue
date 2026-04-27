@@ -4,6 +4,7 @@ import { usePresenter } from "@/composables/usePresenter";
 import type { RelayLog } from "@shared/types/gateway";
 import { GATEWAY_EVENTS } from "@shared/events";
 import { Icon } from "@iconify/vue";
+import ModelIcon from "@/components/ModelIcon.vue";
 
 const gw = usePresenter("gatewayPresenter");
 
@@ -107,7 +108,10 @@ function formatJson(raw: string | undefined): string {
       >
         <div class="flex items-center gap-3 p-3 text-xs">
           <span class="w-28 shrink-0 text-muted-foreground">{{ formatTime(log.createdAt) }}</span>
-          <span class="w-28 shrink-0 truncate font-medium">{{ log.modelName }}</span>
+          <span class="flex w-28 shrink-0 items-center gap-1.5 truncate font-medium">
+            <ModelIcon :model-name="log.modelName" :size="16" />
+            {{ log.modelName }}
+          </span>
           <span class="w-24 shrink-0 truncate text-muted-foreground">{{
             log.channelName ?? "-"
           }}</span>
@@ -174,7 +178,10 @@ function formatJson(raw: string | undefined): string {
             <!-- Meta -->
             <div class="space-y-2 border-b border-border px-4 py-3 text-xs">
               <div class="flex items-center gap-4">
-                <span class="font-medium">{{ drawerLog.modelName }}</span>
+                <span class="flex items-center gap-1.5 font-medium">
+                  <ModelIcon :model-name="drawerLog.modelName" :size="18" />
+                  {{ drawerLog.modelName }}
+                </span>
                 <span
                   :class="[
                     'rounded px-1.5 py-0.5',

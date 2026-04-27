@@ -4,6 +4,7 @@ import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
 import type { Channel, ChannelType, Capability, Model } from "@shared/types/gateway";
 import { Icon } from "@iconify/vue";
+import ModelIcon from "@/components/ModelIcon.vue";
 
 const gw = usePresenter("gatewayPresenter");
 const store = useGatewayStore();
@@ -432,6 +433,7 @@ const newCapModelName = ref("");
             class="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2"
           >
             <div class="flex items-center gap-2">
+              <ModelIcon :model-name="model.modelName" :size="18" />
               <span class="text-[13px]">{{ model.modelName }}</span>
               <span
                 :class="[
