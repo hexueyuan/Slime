@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
 import type { Channel, ChannelType, Capability, Model } from "@shared/types/gateway";
@@ -184,19 +184,19 @@ async function selectChannel(ch: Channel) {
   store.loadChannelStability(ch.id);
 }
 
+function autoSelectFirst(channels: Channel[]) {
+  if (!channels.length) return;
+  for (const ch of channels) {
+    if (!store.models.has(ch.id)) store.loadModelsByChannel(ch.id);
+  }
+  if (!selectedChannelId.value || !channels.some((ch) => ch.id === selectedChannelId.value))
+    selectChannel(channels[0]);
+}
+
 // Auto-select first channel, preload all model counts
-watch(
-  () => store.channels,
-  (channels) => {
-    if (!channels.length) return;
-    for (const ch of channels) {
-      if (!store.models.has(ch.id)) store.loadModelsByChannel(ch.id);
-    }
-    if (!selectedChannelId.value || !channels.some((ch) => ch.id === selectedChannelId.value))
-      selectChannel(channels[0]);
-  },
-  { immediate: true },
-);
+watch(() => store.channels, autoSelectFirst);
+
+onMounted(() => autoSelectFirst(store.channels));
 
 const selectedChannel = computed(
   () => store.channels.find((ch) => ch.id === selectedChannelId.value) ?? null,
