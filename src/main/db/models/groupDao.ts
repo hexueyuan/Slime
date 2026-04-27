@@ -1,10 +1,14 @@
 import type BetterSqlite3 from "better-sqlite3";
-import type { Group, GroupItem } from "@shared/types/gateway";
+import type { Group, GroupItem, Capability } from "@shared/types/gateway";
+import * as modelDao from "./modelDao";
+
+export const BUILTIN_CAPABILITIES: Capability[] = ["chat", "reasoning", "vision", "image_gen"];
 
 interface GroupRow {
   id: number;
   name: string;
   balance_mode: string;
+  is_builtin: number;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +27,7 @@ function rowToGroup(row: GroupRow): Group {
     id: row.id,
     name: row.name,
     balanceMode: row.balance_mode as Group["balanceMode"],
+    isBuiltin: !!row.is_builtin,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -59,10 +64,10 @@ export function createGroup(
   data: Omit<Group, "id" | "createdAt" | "updatedAt">,
 ): Group {
   const stmt = db.prepare(`
-    INSERT INTO groups_ (name, balance_mode)
-    VALUES (?, ?)
+    INSERT INTO groups_ (name, balance_mode, is_builtin)
+    VALUES (?, ?, ?)
   `);
-  const result = stmt.run(data.name, data.balanceMode);
+  const result = stmt.run(data.name, data.balanceMode, data.isBuiltin ? 1 : 0);
   return getGroup(db, Number(result.lastInsertRowid))!;
 }
 
@@ -117,4 +122,60 @@ export function setGroupItems(
     }
   });
   tx();
+}
+
+export function ensureBuiltinGroups(db: BetterSqlite3.Database): void {
+  for (const cap of BUILTIN_CAPABILITIES) {
+    const existing = db
+      .prepare("SELECT id FROM groups_ WHERE name = ? AND is_builtin = 1")
+      .get(cap) as { id: number } | undefined;
+    if (!existing) {
+      db.prepare(
+        `INSERT OR IGNORE INTO groups_ (name, balance_mode, is_builtin) VALUES (?, 'failover', 1)`,
+      ).run(cap);
+    }
+  }
+}
+
+export function syncBuiltinGroupItems(db: BetterSqlite3.Database): void {
+  const models = modelDao.listModels(db).filter((m) => m.enabled);
+
+  for (const cap of BUILTIN_CAPABILITIES) {
+    const group = db.prepare("SELECT id FROM groups_ WHERE name = ? AND is_builtin = 1").get(cap) as
+      | { id: number }
+      | undefined;
+    if (!group) continue;
+
+    const matched = models.filter((m) => m.capabilities.includes(cap));
+
+    db.prepare("DELETE FROM group_items WHERE group_id = ?").run(group.id);
+    const insert = db.prepare(
+      `INSERT INTO group_items (group_id, channel_id, model_name, priority, weight) VALUES (?, ?, ?, ?, ?)`,
+    );
+    for (const m of matched) {
+      insert.run(group.id, m.channelId, m.modelName, m.priority, 1);
+    }
+  }
+}
+
+export function syncCompositeGroupItems(db: BetterSqlite3.Database, groupName: string): void {
+  const caps = groupName.split("+") as Capability[];
+  if (caps.length < 2) return;
+
+  const group = db
+    .prepare("SELECT id FROM groups_ WHERE name = ? AND is_builtin = 1")
+    .get(groupName) as { id: number } | undefined;
+  if (!group) return;
+
+  const models = modelDao
+    .listModels(db)
+    .filter((m) => m.enabled && caps.every((c) => m.capabilities.includes(c)));
+
+  db.prepare("DELETE FROM group_items WHERE group_id = ?").run(group.id);
+  const insert = db.prepare(
+    `INSERT INTO group_items (group_id, channel_id, model_name, priority, weight) VALUES (?, ?, ?, ?, ?)`,
+  );
+  for (const m of models) {
+    insert.run(group.id, m.channelId, m.modelName, m.priority, 1);
+  }
 }

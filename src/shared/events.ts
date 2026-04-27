@@ -48,3 +48,13 @@ export const CONTENT_EVENTS = {
 export const GATEWAY_EVENTS = {
   LOG_ADDED: "gateway:log-added",
 } as const;
+
+export const AGENT_EVENTS = {
+  CHANGED: "agent:changed",
+} as const;
+
+export const CHAT_STREAM_EVENTS = {
+  RESPONSE: "chat:stream:response",
+  END: "chat:stream:end",
+  ERROR: "chat:stream:error",
+} as const;

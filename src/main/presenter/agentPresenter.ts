@@ -44,7 +44,7 @@ export class AgentPresenter implements IAgentPresenter {
   private createModel(modelName: string) {
     const provider = createAnthropic({
       apiKey: this.gatewayPresenter.getInternalKey(),
-      baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}/`,
+      baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}/v1/`,
     });
     return provider(modelName);
   }

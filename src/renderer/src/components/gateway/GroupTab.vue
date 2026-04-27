@@ -55,6 +55,12 @@ async function deleteGroup(id: number) {
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
             <span class="text-sm font-medium">{{ g.name }}</span>
+            <span
+              v-if="g.isBuiltin"
+              class="rounded bg-violet-600/20 px-1.5 py-0.5 text-[10px] font-medium text-violet-400"
+            >
+              内置
+            </span>
           </div>
           <div class="mt-0.5 text-xs text-muted-foreground">
             {{ g.balanceMode }}
@@ -69,6 +75,7 @@ async function deleteGroup(id: number) {
             <Icon icon="lucide:pencil" class="h-3.5 w-3.5" />
           </button>
           <button
+            v-if="!g.isBuiltin"
             class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-400"
             title="删除"
             @click="deleteGroup(g.id)"

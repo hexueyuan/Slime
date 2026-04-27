@@ -8,6 +8,7 @@ import type {
 } from "@shared/types/gateway";
 import type { CircuitBreaker } from "./circuit";
 import * as modelDao from "@/db/models/modelDao";
+import { syncCompositeGroupItems } from "@/db/models/groupDao";
 
 export interface CapabilitySelector {
   select(requirements: CapabilityRequirement): SelectResult;
@@ -24,18 +25,30 @@ export function createCapabilitySelector(
     return modelDao.listModels(db).filter((m) => m.enabled);
   }
 
-  function toMatch(model: Model): ModelMatch {
+  function toMatch(model: Model, groupName: string): ModelMatch {
     return {
       modelId: model.id,
       modelName: model.modelName,
       channelId: model.channelId,
-      groupName: model.modelName,
+      groupName,
       capabilities: model.capabilities,
     };
   }
 
   function modelsWithAllCaps(models: Model[], caps: Capability[]): Model[] {
     return models.filter((m) => caps.every((c) => m.capabilities.includes(c)));
+  }
+
+  function ensureCompositeGroup(groupName: string): void {
+    const existing = db
+      .prepare("SELECT id FROM groups_ WHERE name = ? AND is_builtin = 1")
+      .get(groupName) as { id: number } | undefined;
+    if (!existing) {
+      db.prepare(
+        `INSERT OR IGNORE INTO groups_ (name, balance_mode, is_builtin) VALUES (?, 'failover', 1)`,
+      ).run(groupName);
+    }
+    syncCompositeGroupItems(db, groupName);
   }
 
   return {
@@ -46,19 +59,21 @@ export function createCapabilitySelector(
 
       for (const req of requirements) {
         if (typeof req === "string") {
-          const candidates = modelsWithAllCaps(models, [req]);
+          const groupName = req;
+          const candidates = modelsWithAllCaps(models, [req as Capability]);
           if (candidates.length > 0) {
-            matched[req] = toMatch(candidates[0]);
+            matched[groupName] = toMatch(candidates[0], groupName);
           } else {
-            missing.push(req);
+            missing.push(groupName);
           }
         } else {
-          const key = req.join("+");
+          const groupName = req.join("+");
           const candidates = modelsWithAllCaps(models, req);
           if (candidates.length > 0) {
-            matched[key] = toMatch(candidates[0]);
+            ensureCompositeGroup(groupName);
+            matched[groupName] = toMatch(candidates[0], groupName);
           } else {
-            missing.push(key);
+            missing.push(groupName);
           }
         }
       }
@@ -79,9 +94,10 @@ export function createCapabilitySelector(
     },
 
     modelsWithCapability(cap) {
+      const groupName = cap;
       return getEnabledModels()
         .filter((m) => m.capabilities.includes(cap))
-        .map(toMatch);
+        .map((m) => toMatch(m, groupName));
     },
   };
 }

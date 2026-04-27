@@ -1,0 +1,153 @@
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import EvolabChatPanel from "../components/evolab/EvolabChatPanel.vue";
+import FunctionPanel from "../components/evolab/FunctionPanel.vue";
+import EvolutionStatusBar from "../components/evolab/EvolutionStatusBar.vue";
+import { useSplitPane } from "../composables/useSplitPane";
+import { useMessageStore } from "@/stores/chat";
+import { useContentStore, setupContentIpc } from "@/stores/content";
+import { useEvolutionStore, setupEvolutionIpc } from "@/stores/evolution";
+import { useSessionStore } from "@/stores/session";
+import type { AssistantMessageBlock } from "@shared/types/chat";
+
+const mainRef = ref<HTMLElement | null>(null);
+const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
+  containerRef: mainRef,
+  defaultRatio: 0.65,
+  minLeftPx: 280,
+  minRightPx: 320,
+});
+
+const messageStore = useMessageStore();
+const activeTab = ref<"tools" | "preview" | "history">("tools");
+const selectedToolCallId = ref<string | null>(null);
+
+const contentStore = useContentStore();
+const cleanupContentIpc = setupContentIpc(contentStore);
+onUnmounted(cleanupContentIpc);
+
+const evolutionStore = useEvolutionStore();
+setupEvolutionIpc(evolutionStore);
+
+const sessionStore = useSessionStore();
+
+// Check for pending recovery
+onMounted(async () => {
+  const recovery = (await window.electron.ipcRenderer.invoke("recovery:check")) as {
+    stage: string;
+    description: string;
+    sessionId: string;
+  } | null;
+  if (recovery && recovery.stage !== "idle") {
+    evolutionStore.setRecovery(recovery);
+  }
+});
+
+async function onRecoveryContinue() {
+  const recovery = evolutionStore.recoveryContext;
+  if (!recovery) return;
+  if (recovery.sessionId) {
+    sessionStore.setActiveSession(recovery.sessionId);
+  }
+  evolutionStore.setRecovery(null);
+  await window.electron.ipcRenderer.invoke("recovery:continue", recovery.sessionId);
+}
+
+async function onRecoveryAbandon() {
+  evolutionStore.setRecovery(null);
+  await window.electron.ipcRenderer.invoke("recovery:abandon");
+}
+
+watch(
+  () => contentStore.content,
+  (newContent) => {
+    if (newContent) activeTab.value = "preview";
+  },
+);
+
+const toolCallBlocks = computed<AssistantMessageBlock[]>(() => {
+  const all: AssistantMessageBlock[] = [];
+  for (const id of messageStore.messageIds) {
+    const msg = messageStore.getMessage(id);
+    if (msg?.role === "assistant") {
+      try {
+        const blocks: AssistantMessageBlock[] = JSON.parse(msg.content);
+        for (const b of blocks) {
+          if (b.type === "tool_call") all.push(b);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  // 追加流式中的工具调用
+  for (const b of messageStore.streamingBlocks) {
+    if (b.type === "tool_call") all.push(b);
+  }
+  return all;
+});
+
+function onSelectToolCall(id: string | null) {
+  if (id) {
+    selectedToolCallId.value = id;
+    activeTab.value = "tools";
+  } else {
+    selectedToolCallId.value = null;
+  }
+}
+</script>
+
+<template>
+  <div ref="mainRef" class="flex h-full flex-col">
+    <EvolutionStatusBar />
+    <!-- Recovery banner -->
+    <div
+      v-if="evolutionStore.recoveryContext"
+      class="mx-4 mt-2 flex items-center justify-between rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3"
+    >
+      <div class="text-sm">
+        <span class="text-violet-400">检测到未完成的进化任务：</span>
+        <span class="text-foreground">「{{ evolutionStore.recoveryContext.description }}」</span>
+        <span class="ml-2 text-muted-foreground">({{ evolutionStore.recoveryContext.stage }})</span>
+      </div>
+      <div class="flex gap-2">
+        <button
+          class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
+          @click="onRecoveryContinue"
+        >
+          继续进化
+        </button>
+        <button
+          class="rounded px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          @click="onRecoveryAbandon"
+        >
+          放弃并回滚
+        </button>
+      </div>
+    </div>
+    <div class="flex min-h-0 flex-1 overflow-hidden">
+      <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
+        <EvolabChatPanel
+          :selected-tool-call-id="selectedToolCallId"
+          @select-tool-call="onSelectToolCall"
+        />
+      </div>
+      <div
+        class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
+        @mousedown="onMouseDown"
+        @dblclick="resetToDefault"
+      >
+        <div class="absolute inset-y-0 -left-1 -right-1" />
+      </div>
+      <div class="min-w-[320px] flex-1 overflow-hidden">
+        <FunctionPanel
+          :active-tab="activeTab"
+          :tool-call-blocks="toolCallBlocks"
+          :selected-tool-call-id="selectedToolCallId"
+          @update:active-tab="activeTab = $event"
+          @select-tool-call="onSelectToolCall"
+        />
+      </div>
+    </div>
+  </div>
+</template>

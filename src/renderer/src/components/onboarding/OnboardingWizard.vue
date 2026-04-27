@@ -52,25 +52,8 @@ async function complete() {
     // 2. Add key
     await gw("addChannelKey", channel.id, config.apiKey);
 
-    // 3. Create groups for selected models
-    const groupMap = new Map<string, number>();
-    for (const model of config.selectedModels) {
-      const group = (await gw("createGroup", {
-        name: model,
-        balanceMode: "failover",
-      })) as { id: number };
-      await gw("setGroupItems", group.id, [
-        {
-          channelId: channel.id,
-          modelName: model,
-          priority: 0,
-          weight: 1,
-        },
-      ]);
-      groupMap.set(model, group.id);
-    }
-
-    // 4. Register models with user-tagged capabilities
+    // 3. Register models with user-tagged capabilities
+    // Built-in groups (chat/reasoning/vision/image_gen) are auto-maintained
     for (const model of config.selectedModels) {
       const caps = config.modelCapabilities[model] || [];
       await gw("createModel", {
@@ -82,7 +65,7 @@ async function complete() {
       });
     }
 
-    // 5. Save user + mark onboarded
+    // 4. Save user + mark onboarded
     await cfg("set", "evolution.user", config.userName || "dev");
     await cfg("set", "app.onboarded", true);
 

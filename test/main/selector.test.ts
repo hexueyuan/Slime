@@ -18,6 +18,8 @@ afterEach(() => {
 });
 
 function setup() {
+  groupDao.ensureBuiltinGroups(db);
+
   const ch = channelDao.createChannel(db, {
     name: "test",
     type: "openai",
@@ -29,17 +31,15 @@ function setup() {
   });
 
   function addModel(name: string, caps: string[], priority: number) {
-    const g = groupDao.createGroup(db, { name, balanceMode: "failover" });
-    groupDao.setGroupItems(db, g.id, [
-      { channelId: ch.id, modelName: name, priority: 0, weight: 1 },
-    ]);
-    return modelDao.createModel(db, {
+    const model = modelDao.createModel(db, {
       channelId: ch.id,
       modelName: name,
       capabilities: caps as any,
       priority,
       enabled: true,
     });
+    groupDao.syncBuiltinGroupItems(db);
+    return model;
   }
 
   return { ch, addModel };
@@ -124,7 +124,6 @@ describe("CapabilitySelector", () => {
       priority: 100,
       enabled: false,
     });
-    groupDao.createGroup(db, { name: "disabled", balanceMode: "failover" });
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select(["reasoning"]);
@@ -170,12 +169,21 @@ describe("CapabilitySelector", () => {
     expect(models[1].modelName).toBe("low");
   });
 
-  it("groupName in ModelMatch corresponds to a group with same name as model", () => {
+  it("groupName in ModelMatch corresponds to built-in capability group name", () => {
     const { addModel } = setup();
     addModel("claude-sonnet", ["reasoning"], 10);
     const selector = createCapabilitySelector(db, createCircuitBreaker());
 
     const result = selector.select(["reasoning"]);
-    expect(result.matched.reasoning.groupName).toBe("claude-sonnet");
+    expect(result.matched.reasoning.groupName).toBe("reasoning");
+  });
+
+  it("groupName for unified mode corresponds to composite group name", () => {
+    const { addModel } = setup();
+    addModel("claude-sonnet", ["reasoning", "vision"], 10);
+    const selector = createCapabilitySelector(db, createCircuitBreaker());
+
+    const result = selector.select([["reasoning", "vision"]]);
+    expect(result.matched["reasoning+vision"].groupName).toBe("reasoning+vision");
   });
 });

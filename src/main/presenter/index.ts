@@ -11,6 +11,9 @@ import { EvolutionPresenter } from "./evolutionPresenter";
 import { WorkspacePresenter } from "./workspacePresenter";
 import { ContentPresenter } from "./contentPresenter";
 import { GatewayPresenter } from "./gatewayPresenter";
+import { AgentConfigPresenter } from "./agentConfigPresenter";
+import { AgentChatPresenter } from "./agentChat/agentChatPresenter";
+import { AgentChatPresenterAdapter } from "./agentChatPresenterAdapter";
 import { buildRollbackPrompt } from "./rollbackPrompt";
 import type { EvolutionContext } from "@shared/types/evolution";
 import { EVOLUTION_EVENTS } from "@shared/events";
@@ -29,10 +32,13 @@ export class Presenter implements IPresenter {
   contentPresenter: ContentPresenter;
   workspacePresenter: WorkspacePresenter;
   gatewayPresenter: GatewayPresenter;
+  agentConfigPresenter: AgentConfigPresenter;
+  agentChatPresenter: AgentChatPresenterAdapter;
 
   evolutionPresenter: EvolutionPresenter;
 
   private toolPresenter: ToolPresenter;
+  private agentChatEngine: AgentChatPresenter;
   private pendingRecovery: EvolutionContext | null = null;
 
   private static instance: Presenter | null = null;
@@ -52,6 +58,13 @@ export class Presenter implements IPresenter {
       this.evolutionPresenter,
     );
     this.gatewayPresenter = new GatewayPresenter();
+    this.agentConfigPresenter = new AgentConfigPresenter();
+    this.agentChatEngine = new AgentChatPresenter(
+      this.gatewayPresenter,
+      this.toolPresenter,
+      this.contentPresenter,
+    );
+    this.agentChatPresenter = new AgentChatPresenterAdapter(this.agentChatEngine);
     this.agentPresenter = new AgentPresenter(
       this.sessionPresenter,
       this.configPresenter,
@@ -85,6 +98,8 @@ export class Presenter implements IPresenter {
     "workspacePresenter",
     "evolutionPresenter",
     "gatewayPresenter",
+    "agentConfigPresenter",
+    "agentChatPresenter",
   ]);
 
   async init(): Promise<void> {
@@ -94,6 +109,7 @@ export class Presenter implements IPresenter {
     }
     const port = (await this.configPresenter.get("gateway.port")) as number | null;
     await this.gatewayPresenter.init(port ?? undefined);
+    this.agentConfigPresenter.init();
     logger.info("Presenter initialized");
   }
 

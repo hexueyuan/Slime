@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS groups_ (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
   balance_mode TEXT NOT NULL DEFAULT 'round_robin',
+  is_builtin INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -140,6 +141,73 @@ CREATE TABLE IF NOT EXISTS models (
 );
 
 CREATE INDEX IF NOT EXISTS idx_models_channel ON models(channel_id);
+
+CREATE TABLE IF NOT EXISTS agents (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'custom',
+  enabled INTEGER NOT NULL DEFAULT 1,
+  protected INTEGER NOT NULL DEFAULT 0,
+  description TEXT,
+  avatar_json TEXT,
+  config_json TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_agents_enabled ON agents(enabled);
+
+CREATE TABLE IF NOT EXISTS agent_sessions (
+  id TEXT PRIMARY KEY,
+  agent_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  is_pinned INTEGER DEFAULT 0,
+  session_kind TEXT NOT NULL DEFAULT 'regular',
+  parent_session_id TEXT,
+  subagent_meta_json TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_agent_sessions_agent ON agent_sessions(agent_id);
+CREATE INDEX IF NOT EXISTS idx_agent_sessions_updated ON agent_sessions(updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS agent_session_configs (
+  id TEXT PRIMARY KEY,
+  capability_requirements TEXT NOT NULL DEFAULT '["chat"]',
+  system_prompt TEXT,
+  temperature REAL,
+  context_length INTEGER,
+  max_tokens INTEGER,
+  thinking_budget INTEGER,
+  summary_text TEXT,
+  summary_cursor_seq INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS agent_messages (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  order_seq INTEGER NOT NULL,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  is_context_edge INTEGER DEFAULT 0,
+  metadata TEXT DEFAULT '{}',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_agent_messages_session ON agent_messages(session_id, order_seq);
+
+CREATE TABLE IF NOT EXISTS agent_usage_stats (
+  message_id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  model TEXT,
+  input_tokens INTEGER NOT NULL DEFAULT 0,
+  output_tokens INTEGER NOT NULL DEFAULT 0,
+  total_tokens INTEGER NOT NULL DEFAULT 0,
+  cached_input_tokens INTEGER NOT NULL DEFAULT 0,
+  estimated_cost_usd REAL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_agent_usage_session ON agent_usage_stats(session_id);
 `;
 
 function createDb(dbPath: string): BetterSqlite3.Database {
@@ -163,6 +231,11 @@ function createDb(dbPath: string): BetterSqlite3.Database {
   }
   try {
     instance.exec("ALTER TABLE relay_logs ADD COLUMN response_body TEXT");
+  } catch {
+    // column already exists
+  }
+  try {
+    instance.exec("ALTER TABLE groups_ ADD COLUMN is_builtin INTEGER NOT NULL DEFAULT 0");
   } catch {
     // column already exists
   }

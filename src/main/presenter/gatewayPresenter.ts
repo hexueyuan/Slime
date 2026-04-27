@@ -108,7 +108,10 @@ export class GatewayPresenter implements IGatewayPresenter {
 
   async init(configPort?: number): Promise<void> {
     if (configPort !== undefined) this.port = configPort;
-    this.router.reload(getDb());
+    const db = getDb();
+    groupDao.ensureBuiltinGroups(db);
+    groupDao.syncBuiltinGroupItems(db);
+    this.router.reload(db);
     await this.server.start(this.port);
     this.scheduledTasks.start();
     logger.info("Gateway started", { port: this.port });
@@ -165,6 +168,7 @@ export class GatewayPresenter implements IGatewayPresenter {
 
   deleteChannel(id: number): void {
     channelDao.deleteChannel(getDb(), id);
+    this.syncAndReload();
   }
 
   private async fetchModelsFromApi(
@@ -248,6 +252,8 @@ export class GatewayPresenter implements IGatewayPresenter {
   }
 
   deleteGroup(id: number): void {
+    const group = groupDao.getGroup(getDb(), id);
+    if (group?.isBuiltin) return;
     groupDao.deleteGroup(getDb(), id);
     this.router.reload(getDb());
   }
@@ -306,15 +312,24 @@ export class GatewayPresenter implements IGatewayPresenter {
   }
 
   createModel(data: Omit<Model, "id" | "createdAt" | "updatedAt">): Model {
-    return modelDao.createModel(getDb(), data);
+    const result = modelDao.createModel(getDb(), data);
+    this.syncAndReload();
+    return result;
   }
 
   updateModel(id: number, data: Partial<Model>): void {
     modelDao.updateModel(getDb(), id, data);
+    this.syncAndReload();
   }
 
   deleteModel(id: number): void {
     modelDao.deleteModel(getDb(), id);
+    this.syncAndReload();
+  }
+
+  private syncAndReload(): void {
+    groupDao.syncBuiltinGroupItems(getDb());
+    this.router.reload(getDb());
   }
 
   // --- Capability Selection ---

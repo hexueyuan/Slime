@@ -18,29 +18,29 @@ describe("AppSidebar", () => {
   });
 
   it("should render sidebar with fixed width", () => {
-    const wrapper = mount(AppSidebar, { props: { activeView: "evolution" } });
+    const wrapper = mount(AppSidebar, { props: { activeView: "chatroom" } });
     expect(wrapper.find('[data-testid="app-sidebar"]').exists()).toBe(true);
   });
 
-  it("should render evolution center icon button", () => {
-    const wrapper = mount(AppSidebar, { props: { activeView: "evolution" } });
-    expect(wrapper.find('[data-testid="sidebar-evolution"]').exists()).toBe(true);
+  it("should render chatroom icon button", () => {
+    const wrapper = mount(AppSidebar, { props: { activeView: "chatroom" } });
+    expect(wrapper.find('[data-testid="sidebar-chatroom"]').exists()).toBe(true);
   });
 
-  it("should have active state on evolution button by default", () => {
-    const wrapper = mount(AppSidebar, { props: { activeView: "evolution" } });
-    const btn = wrapper.find('[data-testid="sidebar-evolution"]');
+  it("should have active state on chatroom button by default", () => {
+    const wrapper = mount(AppSidebar, { props: { activeView: "chatroom" } });
+    const btn = wrapper.find('[data-testid="sidebar-chatroom"]');
     expect(btn.classes()).toContain("bg-muted");
   });
 
   it("should render settings button", () => {
-    const wrapper = mount(AppSidebar, { props: { activeView: "evolution" } });
+    const wrapper = mount(AppSidebar, { props: { activeView: "chatroom" } });
     expect(wrapper.find('[data-testid="sidebar-settings"]').exists()).toBe(true);
   });
 
   it("should open settings dialog when settings button clicked", async () => {
     const wrapper = mount(AppSidebar, {
-      props: { activeView: "evolution" },
+      props: { activeView: "chatroom" },
       attachTo: document.body,
     });
     await wrapper.find('[data-testid="sidebar-settings"]').trigger("click");

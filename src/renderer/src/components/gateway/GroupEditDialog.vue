@@ -130,6 +130,7 @@ async function save() {
       const g = await gw.createGroup({
         name: form.value.name,
         balanceMode: form.value.balanceMode,
+        isBuiltin: false,
       });
       await gw.setGroupItems(g.id, items);
     }

@@ -162,7 +162,11 @@ describe("channelDao", () => {
 
 describe("groupDao", () => {
   it("createGroup without slot", () => {
-    const g = groupDao.createGroup(db, { name: "g1", balanceMode: "round_robin" });
+    const g = groupDao.createGroup(db, {
+      name: "g1",
+      balanceMode: "round_robin",
+      isBuiltin: false,
+    });
     expect(g.id).toBeGreaterThan(0);
     expect(g.name).toBe("g1");
     expect(g.balanceMode).toBe("round_robin");
@@ -172,13 +176,18 @@ describe("groupDao", () => {
     const g = groupDao.createGroup(db, {
       name: "g2",
       balanceMode: "failover",
+      isBuiltin: false,
     });
     expect(g.name).toBe("g2");
     expect(g.balanceMode).toBe("failover");
   });
 
   it("listGroups / getGroup / getGroupByName", () => {
-    const g = groupDao.createGroup(db, { name: "mygroup", balanceMode: "random" });
+    const g = groupDao.createGroup(db, {
+      name: "mygroup",
+      balanceMode: "random",
+      isBuiltin: false,
+    });
     expect(groupDao.listGroups(db)).toHaveLength(1);
     expect(groupDao.getGroup(db, g.id)!.name).toBe("mygroup");
     expect(groupDao.getGroupByName(db, "mygroup")!.id).toBe(g.id);
@@ -186,7 +195,7 @@ describe("groupDao", () => {
   });
 
   it("updateGroup balanceMode", () => {
-    const g = groupDao.createGroup(db, { name: "g", balanceMode: "round_robin" });
+    const g = groupDao.createGroup(db, { name: "g", balanceMode: "round_robin", isBuiltin: false });
     groupDao.updateGroup(db, g.id, {
       balanceMode: "weighted",
     });
@@ -196,7 +205,7 @@ describe("groupDao", () => {
 
   it("deleteGroup cascades to group_items", () => {
     const ch = makeChannel();
-    const g = groupDao.createGroup(db, { name: "g", balanceMode: "round_robin" });
+    const g = groupDao.createGroup(db, { name: "g", balanceMode: "round_robin", isBuiltin: false });
     groupDao.setGroupItems(db, g.id, [
       { channelId: ch.id, modelName: "gpt-4o", priority: 0, weight: 1 },
     ]);
@@ -207,7 +216,7 @@ describe("groupDao", () => {
 
   it("setGroupItems replaces all (transaction)", () => {
     const ch = makeChannel();
-    const g = groupDao.createGroup(db, { name: "g", balanceMode: "round_robin" });
+    const g = groupDao.createGroup(db, { name: "g", balanceMode: "round_robin", isBuiltin: false });
 
     groupDao.setGroupItems(db, g.id, [
       { channelId: ch.id, modelName: "a", priority: 1, weight: 1 },
@@ -226,7 +235,7 @@ describe("groupDao", () => {
 
   it("listGroupItems sorted by priority DESC", () => {
     const ch = makeChannel();
-    const g = groupDao.createGroup(db, { name: "g", balanceMode: "round_robin" });
+    const g = groupDao.createGroup(db, { name: "g", balanceMode: "round_robin", isBuiltin: false });
     groupDao.setGroupItems(db, g.id, [
       { channelId: ch.id, modelName: "low", priority: 1, weight: 1 },
       { channelId: ch.id, modelName: "high", priority: 10, weight: 1 },

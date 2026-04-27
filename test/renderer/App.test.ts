@@ -6,8 +6,10 @@ import { createPinia } from "pinia";
 const mockInvoke = vi.fn(async (...args: unknown[]) => {
   const [, name, method] = args as [string, string, string];
   if (name === "workspacePresenter" && method === "needsInit") return false;
-  if (method === "createSession") return { id: "s1", title: "新对话", createdAt: 1, updatedAt: 1 };
-  return [];
+  if (name === "configPresenter" && method === "get") return true;
+  if (name === "agentConfigPresenter" && method === "listAgents") return [];
+  if (name === "agentChatPresenter" && method === "getSessions") return [];
+  return null;
 });
 const mockOn = vi.fn(() => vi.fn());
 
@@ -15,52 +17,39 @@ const mockOn = vi.fn(() => vi.fn());
   ipcRenderer: { invoke: mockInvoke, on: mockOn, removeAllListeners: vi.fn() },
 };
 
-vi.mock("markstream-vue", () => ({
-  default: {
-    name: "NodeRenderer",
-    props: ["content", "customId", "isDark"],
-    template: '<div class="mock-node-renderer">{{ content }}</div>',
-  },
-}));
+import App from "@/App.vue";
 
-import EvolutionCenter from "@/views/EvolutionCenter.vue";
-
-// Mock window.addEventListener/removeEventListener for resize handler in useSplitPane
-vi.stubGlobal("addEventListener", vi.fn());
-vi.stubGlobal("removeEventListener", vi.fn());
-
-describe("EvolutionCenter", () => {
+describe("App", () => {
   beforeEach(() => {
     mockInvoke.mockClear();
     mockOn.mockClear();
+    mockInvoke.mockImplementation(async (...args: unknown[]) => {
+      const [, name, method] = args as [string, string, string];
+      if (name === "workspacePresenter" && method === "needsInit") return false;
+      if (name === "configPresenter" && method === "get") return true;
+      if (name === "agentConfigPresenter" && method === "listAgents") return [];
+      if (name === "agentChatPresenter" && method === "getSessions") return [];
+      return null;
+    });
   });
 
-  it("should render title bar as drag region", async () => {
-    const wrapper = mount(EvolutionCenter, {
+  it("should render main layout when onboarded", async () => {
+    const wrapper = mount(App, {
       global: { plugins: [createPinia()] },
       attachTo: document.body,
     });
     await flushPromises();
-    expect(wrapper.find(".h-9").exists()).toBe(true);
+    expect(wrapper.find('[data-testid="app-sidebar"]').exists()).toBe(true);
+    wrapper.unmount();
   });
 
-  it("should render chat and function panels", async () => {
-    const wrapper = mount(EvolutionCenter, {
+  it("should render chatroom panel by default", async () => {
+    const wrapper = mount(App, {
       global: { plugins: [createPinia()] },
       attachTo: document.body,
     });
     await flushPromises();
-    expect(wrapper.find("textarea").exists()).toBe(true);
-    expect(wrapper.text()).toContain("暂无工具调用");
-  });
-
-  it("should render draggable divider", async () => {
-    const wrapper = mount(EvolutionCenter, {
-      global: { plugins: [createPinia()] },
-      attachTo: document.body,
-    });
-    await flushPromises();
-    const divider = wrapper.find(".cursor-col-resize");
-    expect(divider.exists()).toBe(true);
+    expect(wrapper.find('[data-testid="sidebar-chatroom"]').exists()).toBe(true);
+    wrapper.unmount();
   });
 });

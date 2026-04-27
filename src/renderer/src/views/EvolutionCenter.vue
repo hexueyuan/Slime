@@ -16,7 +16,7 @@ import { useSessionStore } from "@/stores/session";
 import type { AssistantMessageBlock } from "@shared/types/chat";
 
 // Sidebar active view
-const activeView = ref<"evolution" | "gateway">("evolution");
+const activeView = ref<"chatroom" | "gateway" | "evolab">("chatroom");
 
 // Onboarding + workspace init check
 const configPresenter = usePresenter("configPresenter");
@@ -153,7 +153,7 @@ function onSelectToolCall(id: string | null) {
         class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
       >
         <!-- Evolution view -->
-        <template v-if="activeView === 'evolution'">
+        <template v-if="activeView === 'evolab'">
           <EvolutionStatusBar />
           <!-- Recovery banner -->
           <div

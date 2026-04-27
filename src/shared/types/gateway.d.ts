@@ -55,6 +55,7 @@ export interface Group {
   id: number;
   name: string;
   balanceMode: "round_robin" | "random" | "failover" | "weighted";
+  isBuiltin: boolean;
   createdAt: string;
   updatedAt: string;
 }

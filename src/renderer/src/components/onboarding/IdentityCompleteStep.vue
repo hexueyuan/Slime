@@ -67,7 +67,7 @@ watch(localName, (val) => emit("update:userName", val));
         {{ validationError }}
       </p>
       <p v-else-if="localName" class="text-[11px] text-slate-500">
-        版本号示例: <span class="text-violet-400">egg-v0.1-{{ localName }}.1</span>
+        完成后你可以开始和 HalAI 对话了
       </p>
     </div>
 
