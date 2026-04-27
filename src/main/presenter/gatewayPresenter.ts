@@ -16,6 +16,11 @@ import type {
   ModelStats,
   ChannelStats,
   RelayLog,
+  ChannelRankItem,
+  ModelRankItem,
+  LatencyPercentiles,
+  StabilityPoint,
+  TrendPoint,
 } from "@shared/types/gateway";
 import { initDb, getDb, closeDb } from "@/db";
 import * as channelDao from "@/db/models/channelDao";
@@ -367,6 +372,30 @@ export class GatewayPresenter implements IGatewayPresenter {
 
   getLogDetail(id: number): RelayLog | undefined {
     return logDao.getLogDetail(getDb(), id);
+  }
+
+  getChannelRanking(from: string, to: string): ChannelRankItem[] {
+    return statsDao.getChannelRanking(getDb(), from, to);
+  }
+
+  getModelRanking(from: string, to: string): ModelRankItem[] {
+    return statsDao.getModelRanking(getDb(), from, to);
+  }
+
+  getLatencyPercentiles(from: string, to: string, channelId?: number): LatencyPercentiles {
+    return statsDao.getLatencyPercentiles(getDb(), from, to, channelId);
+  }
+
+  getChannelStability(channelId: number, from: string, to: string): StabilityPoint[] {
+    return statsDao.getChannelStabilityHourly(getDb(), channelId, from, to);
+  }
+
+  getStatsDailyTrend(from: string, to: string): TrendPoint[] {
+    return statsDao.getStatsDailyTrend(getDb(), from, to);
+  }
+
+  getStatsHourlyTrend(from: string, to: string): TrendPoint[] {
+    return statsDao.getStatsHourlyTrend(getDb(), from, to);
   }
 
   // --- Prices ---

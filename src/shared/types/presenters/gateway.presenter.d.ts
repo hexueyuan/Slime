@@ -14,6 +14,11 @@ import type {
   ModelStats,
   ChannelStats,
   RelayLog,
+  ChannelRankItem,
+  ModelRankItem,
+  LatencyPercentiles,
+  StabilityPoint,
+  TrendPoint,
 } from "../gateway";
 
 export interface IGatewayPresenter {
@@ -74,6 +79,12 @@ export interface IGatewayPresenter {
   getStatsByChannel(from?: string, to?: string): ChannelStats[];
   getRecentLogs(limit: number, offset: number): RelayLog[];
   getLogDetail(id: number): RelayLog | undefined;
+  getChannelRanking(from: string, to: string): ChannelRankItem[];
+  getModelRanking(from: string, to: string): ModelRankItem[];
+  getLatencyPercentiles(from: string, to: string, channelId?: number): LatencyPercentiles;
+  getChannelStability(channelId: number, from: string, to: string): StabilityPoint[];
+  getStatsDailyTrend(from: string, to: string): TrendPoint[];
+  getStatsHourlyTrend(from: string, to: string): TrendPoint[];
 
   // Prices
   listPrices(): ModelPrice[];
