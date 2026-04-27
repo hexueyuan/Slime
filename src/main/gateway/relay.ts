@@ -45,6 +45,7 @@ export type StatsCallback = (data: {
   error?: string;
   requestBody?: string;
   responseBody?: string;
+  ttftMs?: number | null;
 }) => void;
 
 export interface Relay {
@@ -125,7 +126,7 @@ export function createRelay(deps: RelayDeps): Relay {
             channelId: channel.id,
             channelName: channel.name,
             modelName: item.modelName,
-            apiKeyId: selectedKey.id,
+            apiKeyId: request.apiKeyId,
             usage: response.usage,
             durationMs,
             status: "success",
@@ -152,7 +153,7 @@ export function createRelay(deps: RelayDeps): Relay {
             channelId: channel.id,
             channelName: channel.name,
             modelName: item.modelName,
-            apiKeyId: selectedKey.id,
+            apiKeyId: request.apiKeyId,
             usage: { inputTokens: 0, outputTokens: 0 },
             durationMs,
             status: "error",
@@ -203,7 +204,7 @@ export function createRelay(deps: RelayDeps): Relay {
           const groupName = group.name;
           const chId = channel.id;
           const chName = channel.name;
-          const keyId = selectedKey.id;
+          const inApiKeyId = request.apiKeyId;
           const modelName = item.modelName;
 
           async function* wrappedStream(): AsyncIterable<StreamEvent> {
@@ -211,10 +212,16 @@ export function createRelay(deps: RelayDeps): Relay {
             let contentText = "";
             let stopReason = "";
             let responseModel = modelName;
+            let ttftMs: number | null = null;
+            let firstChunkSeen = false;
 
             function accumulate(evt: StreamEvent) {
               if (evt.type === "usage") usage = evt.usage;
               if (evt.type === "content_delta" && evt.delta.type === "text") {
+                if (!firstChunkSeen) {
+                  ttftMs = Date.now() - startTime;
+                  firstChunkSeen = true;
+                }
                 contentText += evt.delta.text;
               }
               if (evt.type === "stop") {
@@ -245,12 +252,13 @@ export function createRelay(deps: RelayDeps): Relay {
                 channelId: chId,
                 channelName: chName,
                 modelName,
-                apiKeyId: keyId,
+                apiKeyId: inApiKeyId,
                 usage,
                 durationMs: Date.now() - startTime,
                 status: "success",
                 requestBody: filterForLog(request),
                 responseBody,
+                ttftMs,
               });
             } catch (streamErr) {
               statsCallback?.({
@@ -258,7 +266,7 @@ export function createRelay(deps: RelayDeps): Relay {
                 channelId: chId,
                 channelName: chName,
                 modelName,
-                apiKeyId: keyId,
+                apiKeyId: inApiKeyId,
                 usage: { inputTokens: 0, outputTokens: 0 },
                 durationMs: Date.now() - startTime,
                 status: "error",
@@ -288,7 +296,7 @@ export function createRelay(deps: RelayDeps): Relay {
             channelId: channel.id,
             channelName: channel.name,
             modelName: item.modelName,
-            apiKeyId: selectedKey.id,
+            apiKeyId: request.apiKeyId,
             usage: { inputTokens: 0, outputTokens: 0 },
             durationMs: Date.now() - startTime,
             status: "error",

@@ -96,6 +96,7 @@ export class GatewayPresenter implements IGatewayPresenter {
         error: data.error,
         requestBody: data.requestBody,
         responseBody: data.responseBody,
+        ttftMs: data.ttftMs,
       });
       this.statsCollector.flush();
       eventBus.sendToRenderer(GATEWAY_EVENTS.LOG_ADDED);
