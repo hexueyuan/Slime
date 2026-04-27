@@ -88,19 +88,6 @@ describe("agentMessageDao", () => {
     const m = messageDao.getMessageById(db, "m1")!;
     expect(m.content).toBe("new");
     expect(m.status).toBe("sent");
-    expect(m.isContextEdge).toBe(false); // unchanged
-  });
-
-  it("updateMessage isContextEdge", () => {
-    messageDao.createMessage(db, {
-      id: "m1",
-      sessionId: "s1",
-      orderSeq: 1,
-      role: "user",
-      content: "x",
-    });
-    messageDao.updateMessage(db, "m1", { isContextEdge: true });
-    expect(messageDao.getMessageById(db, "m1")!.isContextEdge).toBe(true);
   });
 
   it("deleteBySession clears all messages", () => {
@@ -165,21 +152,5 @@ describe("agentMessageDao", () => {
     expect(parsed).toHaveLength(2);
     expect(parsed[0].type).toBe("content");
     expect(parsed[1].tool_call.name).toBe("read");
-  });
-
-  it("metadata JSON serialization", () => {
-    const meta = JSON.stringify({ totalTokens: 100, model: "gpt-4o" });
-    messageDao.createMessage(db, {
-      id: "m1",
-      sessionId: "s1",
-      orderSeq: 1,
-      role: "assistant",
-      content: "hi",
-      metadata: meta,
-    });
-    const m = messageDao.getMessageById(db, "m1")!;
-    const parsed = JSON.parse(m.metadata);
-    expect(parsed.totalTokens).toBe(100);
-    expect(parsed.model).toBe("gpt-4o");
   });
 });

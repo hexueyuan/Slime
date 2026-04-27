@@ -8,8 +8,6 @@ interface MessageRow {
   role: string;
   content: string;
   status: string;
-  is_context_edge: number;
-  metadata: string;
   created_at: number;
   updated_at: number;
 }
@@ -22,8 +20,6 @@ function rowToMessage(row: MessageRow): ChatMessageRecord {
     role: row.role as ChatMessageRecord["role"],
     content: row.content,
     status: row.status as ChatMessageRecord["status"],
-    isContextEdge: !!row.is_context_edge,
-    metadata: row.metadata,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -38,13 +34,12 @@ export function createMessage(
     role: "user" | "assistant";
     content: string;
     status?: "pending" | "sent" | "error";
-    metadata?: string;
   },
 ): ChatMessageRecord {
   const now = Date.now();
   db.prepare(
-    `INSERT INTO agent_messages (id, session_id, order_seq, role, content, status, metadata, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO agent_messages (id, session_id, order_seq, role, content, status, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     data.id,
     data.sessionId,
@@ -52,7 +47,6 @@ export function createMessage(
     data.role,
     data.content,
     data.status ?? "pending",
-    data.metadata ?? "{}",
     now,
     now,
   );
@@ -92,7 +86,7 @@ export function getMessageById(
 export function updateMessage(
   db: BetterSqlite3.Database,
   id: string,
-  partial: { content?: string; status?: string; metadata?: string; isContextEdge?: boolean },
+  partial: { content?: string; status?: string },
 ): void {
   const sets: string[] = [];
   const values: unknown[] = [];
@@ -104,14 +98,6 @@ export function updateMessage(
   if (partial.status !== undefined) {
     sets.push("status = ?");
     values.push(partial.status);
-  }
-  if (partial.metadata !== undefined) {
-    sets.push("metadata = ?");
-    values.push(partial.metadata);
-  }
-  if (partial.isContextEdge !== undefined) {
-    sets.push("is_context_edge = ?");
-    values.push(partial.isContextEdge ? 1 : 0);
   }
 
   if (sets.length === 0) return;

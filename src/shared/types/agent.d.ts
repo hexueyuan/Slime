@@ -78,8 +78,6 @@ export interface ChatMessageRecord {
   role: "user" | "assistant";
   content: string;
   status: "pending" | "sent" | "error";
-  isContextEdge: boolean;
-  metadata: string;
   createdAt: number;
   updatedAt: number;
 }

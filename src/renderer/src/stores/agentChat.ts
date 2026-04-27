@@ -30,8 +30,6 @@ export const useAgentChatStore = defineStore("agentChat", () => {
       role: "user",
       content,
       status: "sent",
-      isContextEdge: false,
-      metadata: "{}",
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -84,6 +82,10 @@ export const useAgentChatStore = defineStore("agentChat", () => {
     isGenerating.value = false;
   }
 
+  function clearError() {
+    error.value = null;
+  }
+
   function clearMessages() {
     messages.value = [];
     streamingMessageId.value = null;
@@ -126,6 +128,7 @@ export const useAgentChatStore = defineStore("agentChat", () => {
     setStreamingState,
     clearStreamingState,
     setError,
+    clearError,
     clearMessages,
     fetchUserProfile,
     saveUserProfile,
