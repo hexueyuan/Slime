@@ -19,6 +19,7 @@ const drawerOpen = ref(false);
 const drawerLog = ref<RelayLog | null>(null);
 const drawerLoading = ref(false);
 const activeTab = ref<"request" | "response">("request");
+const copied = ref(false);
 
 onMounted(() => loadMore());
 
@@ -83,6 +84,18 @@ function parseJson(raw: string | undefined): unknown {
   } catch {
     return raw;
   }
+}
+
+function copyCurrentTab() {
+  const raw =
+    activeTab.value === "request" ? drawerLog.value?.requestBody : drawerLog.value?.responseBody;
+  if (!raw) return;
+  const parsed = parseJson(raw);
+  const text = typeof parsed === "string" ? parsed : JSON.stringify(parsed, null, 2);
+  navigator.clipboard.writeText(text).then(() => {
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 1500);
+  });
 }
 </script>
 
@@ -223,7 +236,7 @@ function parseJson(raw: string | undefined): unknown {
             </div>
 
             <!-- Tabs -->
-            <div class="flex border-b border-border px-4 text-xs">
+            <div class="flex items-center border-b border-border px-4 text-xs">
               <button
                 :class="[
                   'border-b-2 px-3 py-2 transition-colors',
@@ -231,7 +244,10 @@ function parseJson(raw: string | undefined): unknown {
                     ? 'border-violet-500 text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground',
                 ]"
-                @click="activeTab = 'request'"
+                @click="
+                  activeTab = 'request';
+                  copied = false;
+                "
               >
                 请求
               </button>
@@ -242,10 +258,22 @@ function parseJson(raw: string | undefined): unknown {
                     ? 'border-violet-500 text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground',
                 ]"
-                @click="activeTab = 'response'"
+                @click="
+                  activeTab = 'response';
+                  copied = false;
+                "
               >
                 响应
               </button>
+              <div class="ml-auto">
+                <button
+                  class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  :title="copied ? '已复制' : '复制 JSON'"
+                  @click="copyCurrentTab"
+                >
+                  <Icon :icon="copied ? 'lucide:check' : 'lucide:copy'" class="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
 
             <!-- Body content -->
