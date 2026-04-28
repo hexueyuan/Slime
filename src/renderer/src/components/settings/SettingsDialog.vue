@@ -62,6 +62,17 @@
           >
             Agent
           </button>
+          <button
+            :class="[
+              'rounded-md px-3 py-1.5 text-left text-sm',
+              activeTab === 'update'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/50',
+            ]"
+            @click="activeTab = 'update'"
+          >
+            更新
+          </button>
         </div>
         <!-- Right content -->
         <div class="flex flex-1 flex-col overflow-y-auto p-5">
@@ -69,6 +80,7 @@
           <GatewaySettings v-else-if="activeTab === 'gateway'" />
           <GeneralSettings v-else-if="activeTab === 'general'" />
           <AgentSettings v-else-if="activeTab === 'agents'" />
+          <UpdateSettings v-else-if="activeTab === 'update'" />
         </div>
       </div>
     </div>
@@ -81,11 +93,12 @@ import GatewaySettings from "./GatewaySettings.vue";
 import ProfileSettings from "./ProfileSettings.vue";
 import GeneralSettings from "./GeneralSettings.vue";
 import AgentSettings from "./AgentSettings.vue";
+import UpdateSettings from "./UpdateSettings.vue";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();
 
-const activeTab = ref<"profile" | "gateway" | "general" | "agents">("profile");
+const activeTab = ref<"profile" | "gateway" | "general" | "agents" | "update">("profile");
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") emit("update:open", false);
