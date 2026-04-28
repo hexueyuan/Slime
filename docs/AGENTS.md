@@ -103,7 +103,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - 状态机: idle → discuss → coding → applying → idle
 - Agent 工具: evolution_start / evolution_plan / evolution_complete(summary + rollback_description)
 - 用户操作（IPC）: cancel / rollback:start(AI 语义回滚) / restart(app.relaunch)
-- CHANGELOG.slime.md 记录进化节点，tag 格式: `egg-v0.1-{user}.{seq}`
+- CHANGELOG.slime.md 记录进化节点，tag 格式: `egg-{branch}.{seq}`（branch 为当前 git 分支名）
 - 进化档案: `.slime/evolutions/<tag>.json`（EvolutionArchive，不纳入 git）
 - 回滚: AI agent 读取档案 semanticSummary 进行语义级代码清理，typecheck 通过后 commit + 标记 archived
 - 依赖检测: checkDependencies 计算 changedFiles 交集，回滚前提醒用户
@@ -155,7 +155,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - 4 步: Welcome → AddChannelStep → CapabilityTagStep → IdentityCompleteStep
 - AddChannelStep: 选择渠道类型（anthropic/openai/gemini/deepseek/volcengine/custom），输入 baseUrl + API Key，testChannel 验证
 - CapabilityTagStep: 为渠道模型标记能力标签（reasoning/vision/image_gen/tool_call）
-- 完成后写入: `evolution.user`, `app.onboarded`；渠道/分组/Slot 通过 GatewayPresenter 持久化到 SQLite
+- 完成后写入: `app.userProfile`（含 name/avatar），`app.onboarded`；渠道/分组/Slot 通过 GatewayPresenter 持久化到 SQLite
 - 组件: `src/renderer/src/components/onboarding/`
 
 ### 聊天区 Streaming 状态
