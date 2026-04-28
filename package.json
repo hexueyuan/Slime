@@ -23,7 +23,7 @@
     "test": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest",
     "test:coverage": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest --coverage",
     "test:watch": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest --watch",
-    "postinstall": "electron-builder install-app-deps && simple-git-hooks && npx playwright install chromium"
+    "postinstall": "electron-builder install-app-deps && simple-git-hooks"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.71",
