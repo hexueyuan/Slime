@@ -8,7 +8,8 @@ const {
   mockMkdirSync,
   mockReaddirSync,
   mockWriteFileSync,
-  mockExecSync,
+  mockRmSync,
+  mockExecFileSync,
   mockSpawnReturn,
   mockSpawn,
 } = vi.hoisted(() => {
@@ -26,7 +27,8 @@ const {
     mockMkdirSync: vi.fn(),
     mockReaddirSync: vi.fn(),
     mockWriteFileSync: vi.fn(),
-    mockExecSync: vi.fn(),
+    mockRmSync: vi.fn(),
+    mockExecFileSync: vi.fn(),
     mockSpawnReturn,
     mockSpawn: vi.fn(() => mockSpawnReturn),
   };
@@ -48,9 +50,10 @@ vi.mock("fs", () => ({
   mkdirSync: (...args: unknown[]) => mockMkdirSync(...args),
   readdirSync: (...args: unknown[]) => mockReaddirSync(...args),
   writeFileSync: (...args: unknown[]) => mockWriteFileSync(...args),
+  rmSync: (...args: unknown[]) => mockRmSync(...args),
 }));
 vi.mock("child_process", () => ({
-  execSync: (...args: unknown[]) => mockExecSync(...args),
+  execFileSync: (...args: unknown[]) => mockExecFileSync(...args),
   spawn: (...args: unknown[]) => mockSpawn(...args),
 }));
 
@@ -148,8 +151,9 @@ describe("AppPresenter.applyLocalZip", () => {
   it("spawns swap script and exits in packaged mode", async () => {
     mockElectronApp.isPackaged = true;
     await presenter.applyLocalZip("/fake/slime.zip");
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("ditto -xk"),
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      "ditto",
+      expect.arrayContaining(["-xk"]),
       expect.any(Object),
     );
     expect(mockSpawn).toHaveBeenCalledWith(

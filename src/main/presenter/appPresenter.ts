@@ -1,8 +1,8 @@
 import { app, dialog } from "electron";
-import { mkdirSync, readdirSync, writeFileSync } from "fs";
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { unlink } from "fs/promises";
 import { join, dirname } from "path";
-import { execSync, spawn } from "child_process";
+import { execFileSync, spawn } from "child_process";
 import { paths } from "@/utils";
 import type { IAppPresenter } from "@shared/types/presenters";
 
@@ -50,14 +50,18 @@ export class AppPresenter implements IAppPresenter {
     if (!app.isPackaged) {
       return { success: false, error: "仅 packaged 模式支持本地更新" };
     }
+    if (process.platform !== "darwin") {
+      return { success: false, error: "本地更新仅支持 macOS" };
+    }
+    let tempDir: string | undefined;
     try {
       const currentAppPath = resolveAppBundlePath();
       if (!currentAppPath) {
         return { success: false, error: "无法找到当前 .app 路径" };
       }
-      const tempDir = join(app.getPath("temp"), `slime-local-update-${Date.now()}`);
+      tempDir = join(app.getPath("temp"), `slime-local-update-${Date.now()}`);
       mkdirSync(tempDir, { recursive: true });
-      execSync(`ditto -xk "${zipPath}" "${tempDir}"`, { timeout: 120000 });
+      execFileSync("ditto", ["-xk", zipPath, tempDir], { timeout: 120000 });
       const entries = readdirSync(tempDir) as string[];
       const appEntry = entries.find((e) => e.endsWith(".app"));
       if (!appEntry) {
@@ -80,6 +84,13 @@ export class AppPresenter implements IAppPresenter {
       app.exit(0);
       return { success: true };
     } catch (err) {
+      if (tempDir) {
+        try {
+          rmSync(tempDir, { recursive: true, force: true });
+        } catch {
+          /* ignore */
+        }
+      }
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
