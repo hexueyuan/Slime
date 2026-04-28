@@ -51,6 +51,7 @@ onMounted(async () => {
 
 // Session select
 function onSessionSelect(id: string) {
+  selectedToolCallId.value = null;
   sessionStore.setActiveSession(id);
   chatStore.fetchMessages(id);
 }
@@ -76,15 +77,36 @@ watch(
   },
 );
 
-// Aggregate tool call blocks from all messages + streaming
+// Aggregate tool call blocks from all messages + streaming（转换为 chat 类型供 ToolPanel 使用）
 const toolCallBlocks = computed<AssistantMessageBlock[]>(() => {
   const all: AssistantMessageBlock[] = [];
+
+  function convertBlock(
+    b: import("@shared/types/agent").AssistantMessageBlock,
+  ): AssistantMessageBlock | null {
+    if (b.type !== "tool_call" || !b.tool_call) return null;
+    return {
+      id: b.id,
+      type: "tool_call",
+      status: b.status,
+      timestamp: b.timestamp,
+      tool_call: {
+        name: b.tool_call.name,
+        params: JSON.stringify(b.tool_call.input ?? {}),
+        response: b.tool_call.output != null ? JSON.stringify(b.tool_call.output) : undefined,
+      },
+    };
+  }
+
   for (const msg of chatStore.messages) {
     if (msg.role === "assistant") {
       try {
-        const blocks = JSON.parse(msg.content) as AssistantMessageBlock[];
+        const blocks = JSON.parse(
+          msg.content,
+        ) as import("@shared/types/agent").AssistantMessageBlock[];
         for (const b of blocks) {
-          if (b.type === "tool_call") all.push(b);
+          const converted = convertBlock(b);
+          if (converted) all.push(converted);
         }
       } catch {
         /* ignore */
@@ -92,7 +114,8 @@ const toolCallBlocks = computed<AssistantMessageBlock[]>(() => {
     }
   }
   for (const b of chatStore.streamingBlocks) {
-    if (b.type === "tool_call") all.push(b as unknown as AssistantMessageBlock);
+    const converted = convertBlock(b);
+    if (converted) all.push(converted);
   }
   return all;
 });
