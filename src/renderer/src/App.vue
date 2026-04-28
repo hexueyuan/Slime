@@ -4,32 +4,21 @@ import AppSidebar from "./components/AppSidebar.vue";
 import ChatroomPanel from "./views/ChatroomPanel.vue";
 import GatewayPanel from "./views/GatewayPanel.vue";
 import EvolabPanel from "./views/EvolabPanel.vue";
-import WorkspaceSetup from "./components/workspace/WorkspaceSetup.vue";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard.vue";
 import { usePresenter } from "@/composables/usePresenter";
 
 const activeView = ref<"chatroom" | "gateway" | "evolab">("chatroom");
 
 const configPresenter = usePresenter("configPresenter");
-const workspacePresenter = usePresenter("workspacePresenter");
 const needsOnboarding = ref<boolean | null>(null);
-const needsWorkspaceInit = ref<boolean | null>(null);
 
 onMounted(async () => {
   const onboarded = await configPresenter.get("app.onboarded");
   needsOnboarding.value = !onboarded;
-  if (!needsOnboarding.value) {
-    needsWorkspaceInit.value = await workspacePresenter.needsInit();
-  }
 });
 
 async function onOnboardingDone() {
   needsOnboarding.value = false;
-  needsWorkspaceInit.value = await workspacePresenter.needsInit();
-}
-
-function onWorkspaceReady() {
-  needsWorkspaceInit.value = false;
 }
 </script>
 
@@ -47,9 +36,6 @@ function onWorkspaceReady() {
     <div v-else-if="needsOnboarding" class="h-full overflow-y-auto">
       <OnboardingWizard @done="onOnboardingDone" />
     </div>
-
-    <!-- Workspace setup -->
-    <WorkspaceSetup v-else-if="needsWorkspaceInit" @ready="onWorkspaceReady" />
 
     <!-- Main layout -->
     <div v-else class="flex h-full flex-col bg-sidebar">
