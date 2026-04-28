@@ -201,7 +201,8 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - **Context Builder**: token 估算(len/4)，summary 注入，turn history 裁剪，4096 reserve
 - **视图切换**: App.vue 三视图（chatroom/gateway/evolab），默认 chatroom，EvoLab 隐藏(v-if="false")
 - **Pinia Stores**: `useAgentStore` + `useAgentSessionStore` + `useAgentChatStore` + `setupAgentChatIpc`
-- **Chat UI**: ChatroomPanel(SessionList + NewThread/ChatView)、AgentEditDialog、AgentAvatar、ChatInput、ChatMessageList/User/Assistant
+- **Chat UI**: ChatroomPanel(SessionList + split pane(ChatView + ChatFunctionPanel))、AgentEditDialog、AgentAvatar、ChatInput、ChatMessageList/User/Assistant
+- **ChatFunctionPanel**: 工具/预览两 Tab（无历史），与 evolab/FunctionPanel 完全独立；tool_call block 点击高亮，interaction submit 走 agentChatStore.answerQuestion；agent 类型 block 在 ChatroomPanel.toolCallBlocks computed 中转换为 chat 格式再传给 ToolPanel
 - **AGENT_EVENTS.CHANGED**: Agent 变更时推送，渲染进程监听刷新列表
 
 ## 安全
