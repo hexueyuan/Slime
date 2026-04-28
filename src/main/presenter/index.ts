@@ -19,6 +19,7 @@ import type { EvolutionContext } from "@shared/types/evolution";
 import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
+import { browserSession } from "@/browser/browserSession";
 
 type DispatchableKey = Exclude<keyof IPresenter, "init" | "destroy">;
 
@@ -56,6 +57,7 @@ export class Presenter implements IPresenter {
       this.filePresenter,
       this.contentPresenter,
       this.evolutionPresenter,
+      browserSession,
     );
     this.gatewayPresenter = new GatewayPresenter();
     this.agentConfigPresenter = new AgentConfigPresenter();
@@ -137,6 +139,7 @@ export class Presenter implements IPresenter {
   }
 
   async destroy(): Promise<void> {
+    await browserSession.close();
     await this.gatewayPresenter.destroy();
     logger.info("Presenter destroyed");
   }
