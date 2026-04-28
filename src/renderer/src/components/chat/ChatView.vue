@@ -7,8 +7,13 @@ import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
 
+const props = defineProps<{
+  selectedToolCallId?: string | null;
+}>();
+
 const emit = defineEmits<{
   openAgentEdit: [agentId: string];
+  "select-tool-call": [id: string];
 }>();
 
 const agentStore = useAgentStore();
@@ -58,7 +63,11 @@ function onStop() {
     </div>
 
     <!-- Message list -->
-    <ChatMessageList ref="messageListRef" />
+    <ChatMessageList
+      ref="messageListRef"
+      :selected-tool-call-id="props.selectedToolCallId"
+      @select-tool-call="emit('select-tool-call', $event)"
+    />
 
     <!-- Input -->
     <ChatInput
