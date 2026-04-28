@@ -1,5 +1,17 @@
+import { existsSync } from "fs";
 import { chromium } from "playwright-core";
 import type { Browser, Page, Locator } from "playwright-core";
+
+const SYSTEM_CHROME_PATHS = [
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+];
+
+function resolveChromiumPath(): string | undefined {
+  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
+  return SYSTEM_CHROME_PATHS.find((p) => existsSync(p));
+}
 
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -68,7 +80,10 @@ export class BrowserSession {
 
   private async ensureReady(): Promise<Page> {
     if (!this.browser || !this.page) {
-      this.browser = await chromium.launch({ headless: true });
+      this.browser = await chromium.launch({
+        headless: true,
+        executablePath: resolveChromiumPath(),
+      });
       this.page = await this.browser.newPage();
     }
     this._resetIdleTimer();
