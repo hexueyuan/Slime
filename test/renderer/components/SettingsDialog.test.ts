@@ -48,4 +48,11 @@ describe("SettingsDialog", () => {
     const generalBtn = Array.from(buttons).find((b) => b.textContent?.includes("通用"));
     expect(generalBtn).not.toBeUndefined();
   });
+
+  it("should render agent tab button", () => {
+    mount(SettingsDialog, { props: { open: true }, attachTo: document.body });
+    const buttons = document.querySelectorAll("button");
+    const agentBtn = Array.from(buttons).find((b) => b.textContent?.trim() === "Agent");
+    expect(agentBtn).not.toBeUndefined();
+  });
 });

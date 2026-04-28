@@ -9,7 +9,7 @@
       />
       <!-- Dialog -->
       <div
-        class="relative flex h-[480px] w-[640px] overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+        class="relative flex h-[560px] w-[640px] overflow-hidden rounded-lg border border-border bg-card shadow-xl"
       >
         <!-- Left nav -->
         <div class="flex w-48 shrink-0 flex-col border-r border-border bg-sidebar p-3">
@@ -51,12 +51,24 @@
           >
             通用
           </button>
+          <button
+            :class="[
+              'rounded-md px-3 py-1.5 text-left text-sm',
+              activeTab === 'agents'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/50',
+            ]"
+            @click="activeTab = 'agents'"
+          >
+            Agent
+          </button>
         </div>
         <!-- Right content -->
         <div class="flex flex-1 flex-col overflow-y-auto p-5">
           <ProfileSettings v-if="activeTab === 'profile'" />
           <GatewaySettings v-else-if="activeTab === 'gateway'" />
           <GeneralSettings v-else-if="activeTab === 'general'" />
+          <AgentSettings v-else-if="activeTab === 'agents'" />
         </div>
       </div>
     </div>
@@ -68,11 +80,12 @@ import { ref, onMounted, onUnmounted } from "vue";
 import GatewaySettings from "./GatewaySettings.vue";
 import ProfileSettings from "./ProfileSettings.vue";
 import GeneralSettings from "./GeneralSettings.vue";
+import AgentSettings from "./AgentSettings.vue";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();
 
-const activeTab = ref<"profile" | "gateway" | "general">("profile");
+const activeTab = ref<"profile" | "gateway" | "general" | "agents">("profile");
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") emit("update:open", false);
