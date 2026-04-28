@@ -12,15 +12,8 @@ const emit = defineEmits<{
 }>();
 
 const localName = ref(props.userName);
-const VALID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
-const validationError = computed(() => {
-  if (!localName.value) return null;
-  if (!VALID_PATTERN.test(localName.value)) return "只允许字母、数字、下划线和连字符";
-  return null;
-});
-
-const canComplete = computed(() => localName.value.trim().length > 0 && !validationError.value);
+const canComplete = computed(() => localName.value.trim().length > 0);
 
 watch(localName, (val) => emit("update:userName", val));
 </script>
@@ -42,20 +35,16 @@ watch(localName, (val) => emit("update:userName", val));
 
     <!-- Username -->
     <div class="flex w-full flex-col gap-1.5">
-      <label class="text-xs font-medium uppercase tracking-wider text-slate-400">用户标识</label>
+      <label class="text-xs font-medium uppercase tracking-wider text-slate-400">用户名</label>
       <input
         v-model="localName"
         data-testid="onboard-username"
         type="text"
-        placeholder="alice"
+        placeholder="何雪源"
         class="w-full rounded-lg border border-violet-500/20 bg-violet-500/5 px-3.5 py-2.5 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-violet-500/50"
       />
-      <p v-if="validationError" data-testid="validation-error" class="text-xs text-red-400">
-        {{ validationError }}
-      </p>
-      <p v-else-if="localName" class="text-[11px] text-slate-500">
-        完成后你可以开始和 HalAI 对话了
-      </p>
+      <p v-if="localName" class="text-[11px] text-slate-500">完成后你可以开始和 HalAI 对话了</p>
+      <p v-else class="text-[11px] text-slate-500">将显示在对话消息旁</p>
     </div>
 
     <!-- Nav -->

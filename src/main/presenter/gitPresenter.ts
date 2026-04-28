@@ -27,6 +27,11 @@ export class GitPresenter implements IGitPresenter {
     return stdout.trim();
   }
 
+  async getCurrentBranch(): Promise<string> {
+    const { stdout } = await this.run("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
+    return stdout.trim() || "main";
+  }
+
   async rollbackToRef(ref: string): Promise<boolean> {
     const checkout = await this.run("git", ["checkout", ref, "--", "."]);
     if (checkout.exitCode !== 0) return false;

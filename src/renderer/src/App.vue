@@ -44,7 +44,9 @@ function onWorkspaceReady() {
     </div>
 
     <!-- Onboarding -->
-    <OnboardingWizard v-else-if="needsOnboarding" @done="onOnboardingDone" />
+    <div v-else-if="needsOnboarding" class="h-full overflow-y-auto">
+      <OnboardingWizard @done="onOnboardingDone" />
+    </div>
 
     <!-- Workspace setup -->
     <WorkspaceSetup v-else-if="needsWorkspaceInit" @ready="onWorkspaceReady" />

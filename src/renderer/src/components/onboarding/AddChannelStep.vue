@@ -122,6 +122,19 @@ function toggleModel(model: string) {
       </select>
     </div>
 
+    <!-- Channel Name -->
+    <div class="flex w-full flex-col gap-1.5">
+      <label class="text-xs font-medium uppercase tracking-wider text-slate-400">渠道名称</label>
+      <input
+        data-testid="onboard-channel-name"
+        type="text"
+        :value="channelName"
+        placeholder="我的渠道"
+        class="w-full rounded-lg border border-violet-500/20 bg-violet-500/5 px-3.5 py-2.5 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-violet-500/50"
+        @input="emit('update:channelName', ($event.target as HTMLInputElement).value)"
+      />
+    </div>
+
     <!-- Base URL -->
     <div class="flex w-full flex-col gap-1.5">
       <label class="text-xs font-medium uppercase tracking-wider text-slate-400">Base URL</label>
@@ -182,7 +195,9 @@ function toggleModel(model: string) {
       <label class="text-xs font-medium uppercase tracking-wider text-slate-400"
         >启用模型 ({{ selectedModels.length }}/{{ testResult.models.length }})</label
       >
-      <div class="max-h-[160px] overflow-y-auto rounded-lg border border-violet-500/20 p-2">
+      <div
+        class="max-h-[160px] overflow-y-auto rounded-lg border border-violet-500/20 bg-[#0d0d1a] p-2"
+      >
         <label
           v-for="model in testResult.models"
           :key="model"

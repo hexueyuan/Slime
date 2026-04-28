@@ -61,8 +61,12 @@ async function complete() {
       });
     }
 
-    // 4. Save user + mark onboarded
-    await cfg("set", "evolution.user", config.userName || "dev");
+    // 4. Save user profile + mark onboarded
+    const firstChar = config.userName.trim().charAt(0) || "U";
+    await cfg("set", "app.userProfile", {
+      name: config.userName.trim(),
+      avatar: { kind: "monogram", text: firstChar, backgroundColor: "#3b82f6" },
+    });
     await cfg("set", "app.onboarded", true);
 
     emit("done");
@@ -74,7 +78,7 @@ async function complete() {
 
 <template>
   <div
-    class="flex h-full flex-col items-center justify-center"
+    class="flex min-h-full flex-col items-center justify-center py-8"
     style="background: linear-gradient(135deg, #1a1025 0%, #0d0d1a 50%, #0a0a12 100%)"
   >
     <!-- Progress dots -->

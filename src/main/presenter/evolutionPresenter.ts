@@ -582,13 +582,13 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   }
 
   private async nextTagName(): Promise<string> {
-    const user = ((await this.config.get("evolution.user")) as string) || "dev";
-    const tags = await this.git.listTags("egg-v0.1-*");
+    const branch = await this.git.getCurrentBranch();
+    const tags = await this.git.listTags(`egg-${branch}-*`);
     const maxSeq = tags.reduce((max, t) => {
       const m = t.match(/\.(\d+)$/);
       return m ? Math.max(max, parseInt(m[1])) : max;
     }, 0);
-    return `egg-v0.1-${user}.${maxSeq + 1}`;
+    return `egg-${branch}.${maxSeq + 1}`;
   }
 
   private async appendChangelog(

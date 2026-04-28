@@ -99,11 +99,8 @@ export const useAgentChatStore = defineStore("agentChat", () => {
     if (raw && typeof raw === "object") {
       userProfile.value = raw as UserProfile;
     } else {
-      const userName = (await configPresenter.get("evolution.user")) as string | null;
-      const firstChar = userName?.charAt(0) || "U";
       userProfile.value = {
-        name: userName || undefined,
-        avatar: { kind: "monogram", text: firstChar, backgroundColor: "#3b82f6" },
+        avatar: { kind: "monogram", text: "U", backgroundColor: "#3b82f6" },
       };
     }
   }
