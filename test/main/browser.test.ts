@@ -260,4 +260,18 @@ describe("BrowserSession", () => {
     await session.wait({ load_state: "networkidle" });
     expect(mockPage.waitForLoadState).toHaveBeenCalledWith("networkidle");
   });
+
+  it("click({ selector, double_click: true }) calls dblclick by selector", async () => {
+    await session.navigate("https://example.com");
+    await session.click({ selector: ".card", double_click: true });
+    expect(mockPage.locator).toHaveBeenCalledWith(".card");
+    expect(mockLocator.dblclick).toHaveBeenCalled();
+  });
+
+  it("scroll({ selector }) calls element scrollBy by selector", async () => {
+    await session.navigate("https://example.com");
+    await session.scroll({ selector: ".list", direction: "down", amount: 200 });
+    expect(mockPage.locator).toHaveBeenCalledWith(".list");
+    expect(mockLocator.evaluate).toHaveBeenCalled();
+  });
 });
