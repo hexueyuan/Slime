@@ -60,7 +60,7 @@ describe("UpdateSettings", () => {
     });
     const wrapper = mount(UpdateSettings, { props: { forceEnabled: true } });
     await flushPromises();
-    wrapper.find("button").trigger("click");
+    await wrapper.find("button").trigger("click");
     await flushPromises();
     expect(wrapper.find("button").text()).toContain("安装中");
     resolveApply({ success: true });

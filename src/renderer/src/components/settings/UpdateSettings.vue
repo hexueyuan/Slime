@@ -43,10 +43,13 @@ async function handleUpdate() {
   const zipPath = await appPresenter.selectLocalZip();
   if (!zipPath) return;
   applying.value = true;
-  const result = await appPresenter.applyLocalZip(zipPath);
-  applying.value = false;
-  if (!result.success) {
-    errorMsg.value = result.error ?? "更新失败";
+  try {
+    const result = await appPresenter.applyLocalZip(zipPath);
+    if (!result.success) {
+      errorMsg.value = result.error ?? "更新失败";
+    }
+  } finally {
+    applying.value = false;
   }
 }
 </script>
