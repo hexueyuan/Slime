@@ -90,6 +90,7 @@ export interface AssistantMessageBlock {
   timestamp: number;
   tool_call?: ToolCallBlockData;
   image_data?: { data: string; mimeType: string };
+  is_final?: boolean;
 }
 
 export interface ToolCallBlockData {
