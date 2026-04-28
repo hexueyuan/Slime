@@ -25,6 +25,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "select-tool-call": [id: string];
+  "show-thought-chain": [messageId?: string];
 }>();
 
 const chatStore = useAgentChatStore();
@@ -52,6 +53,20 @@ const parsedBlocks = computed<AssistantMessageBlock[]>(() => {
       },
     ];
   }
+});
+
+// 携带原始 idx，使 getBlockContent 的 debouncedContents 下标保持一致
+const finalBlocks = computed<{ block: AssistantMessageBlock; originalIdx: number }[]>(() => {
+  if (props.isStreaming) return [];
+  const blocks = parsedBlocks.value;
+  const hasFinal = blocks.some((b) => b.is_final);
+  const filtered = hasFinal ? blocks.filter((b) => b.is_final) : blocks;
+  return filtered.map((block) => ({ block, originalIdx: blocks.indexOf(block) }));
+});
+
+const intermediateBlocks = computed<AssistantMessageBlock[]>(() => {
+  if (props.isStreaming) return [];
+  return parsedBlocks.value.filter((b) => !b.is_final);
 });
 
 const debouncedContents = ref<Map<number, string>>(new Map());
@@ -130,85 +145,80 @@ function regenerate() {
 
       <!-- Content blocks -->
       <div class="w-full">
-        <template v-for="(block, idx) in parsedBlocks" :key="idx">
-          <!-- Content block -->
-          <div
-            v-if="block.type === 'content'"
-            class="prose prose-xs dark:prose-invert w-full max-w-none"
-          >
-            <NodeRenderer
-              :content="getBlockContent(idx, block)"
-              :custom-id="`chat-block-${idx}`"
-              :is-dark="true"
-            />
-          </div>
-
-          <!-- Reasoning block -->
-          <details
-            v-else-if="block.type === 'reasoning_content'"
-            class="mb-2 rounded-md border border-border"
-          >
-            <summary
-              class="cursor-pointer px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+        <!-- Streaming indicator -->
+        <template v-if="isStreaming">
+          <div class="flex items-center gap-2 py-1">
+            <div class="flex gap-1">
+              <span
+                class="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400"
+                style="animation-delay: 0ms"
+              />
+              <span
+                class="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400"
+                style="animation-delay: 150ms"
+              />
+              <span
+                class="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400"
+                style="animation-delay: 300ms"
+              />
+            </div>
+            <span class="text-xs text-muted-foreground">思考中...</span>
+            <button
+              class="ml-1 rounded px-1.5 py-0.5 text-xs text-violet-400 hover:text-violet-300"
+              @click="emit('show-thought-chain')"
             >
-              推理过程
-            </summary>
-            <div class="whitespace-pre-wrap px-3 pb-2 text-xs text-muted-foreground">
+              查看进度
+            </button>
+          </div>
+        </template>
+
+        <!-- Finished: only final blocks -->
+        <template v-else>
+          <template v-for="{ block, originalIdx } in finalBlocks" :key="originalIdx">
+            <!-- Content block -->
+            <div
+              v-if="block.type === 'content'"
+              class="prose prose-xs dark:prose-invert w-full max-w-none"
+            >
+              <NodeRenderer
+                :content="getBlockContent(originalIdx, block)"
+                :custom-id="`chat-block-${originalIdx}`"
+                :is-dark="true"
+              />
+            </div>
+
+            <!-- Reasoning block -->
+            <details
+              v-else-if="block.type === 'reasoning_content'"
+              class="mb-2 rounded-md border border-border"
+            >
+              <summary
+                class="cursor-pointer px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                推理过程
+              </summary>
+              <div class="whitespace-pre-wrap px-3 pb-2 text-xs text-muted-foreground">
+                {{ block.content }}
+              </div>
+            </details>
+
+            <!-- Error block -->
+            <div
+              v-else-if="block.type === 'error'"
+              class="mb-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400"
+            >
               {{ block.content }}
             </div>
-          </details>
 
-          <!-- Tool call block -->
-          <div
-            v-else-if="block.type === 'tool_call' && block.tool_call"
-            class="mb-2 w-full max-w-3xl"
-          >
-            <div
-              class="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-muted/30"
-              :class="
-                selectedToolCallId && block.id && selectedToolCallId === block.id
-                  ? 'border-violet-500/60 bg-violet-500/10'
-                  : 'border-border'
-              "
-              @click="block.id && emit('select-tool-call', block.id)"
-            >
-              <svg
-                v-if="block.status === 'loading'"
-                class="h-3.5 w-3.5 shrink-0 animate-spin"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-              </svg>
-              <Icon
-                v-else-if="block.status === 'error'"
-                icon="lucide:x"
-                class="h-3.5 w-3.5 shrink-0 text-red-400"
+            <!-- Image block -->
+            <div v-else-if="block.type === 'image' && block.image_data" class="mb-2">
+              <img
+                :src="`data:${block.image_data.mimeType};base64,${block.image_data.data}`"
+                alt="Generated image"
+                class="max-h-80 rounded-md"
               />
-              <Icon v-else icon="lucide:check" class="h-3.5 w-3.5 shrink-0 text-green-500" />
-              <span class="font-medium text-foreground">{{ block.tool_call.name }}</span>
-              <span class="truncate">{{ formatToolInput(block.tool_call.input) }}</span>
             </div>
-          </div>
-
-          <!-- Error block -->
-          <div
-            v-else-if="block.type === 'error'"
-            class="mb-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400"
-          >
-            {{ block.content }}
-          </div>
-
-          <!-- Image block -->
-          <div v-else-if="block.type === 'image' && block.image_data" class="mb-2">
-            <img
-              :src="`data:${block.image_data.mimeType};base64,${block.image_data.data}`"
-              alt="Generated image"
-              class="max-h-80 rounded-md"
-            />
-          </div>
+          </template>
         </template>
       </div>
 
@@ -219,6 +229,14 @@ function regenerate() {
           @click="copyMessage"
         >
           <Icon :icon="copied ? 'lucide:check' : 'lucide:copy'" class="h-3.5 w-3.5" />
+        </button>
+        <button
+          v-if="!isStreaming && intermediateBlocks.length > 0"
+          class="rounded p-1 text-muted-foreground hover:text-foreground"
+          title="查看思考链"
+          @click="message && emit('show-thought-chain', message.id)"
+        >
+          <Icon icon="lucide:list-tree" class="h-3.5 w-3.5" />
         </button>
         <button
           v-if="isLast && !isStreaming && !chatStore.isGenerating"
