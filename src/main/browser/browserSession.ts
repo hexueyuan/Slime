@@ -15,12 +15,6 @@ function resolveChromiumPath(): string | undefined {
 
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
 
-interface AccessibilityNode {
-  role?: string;
-  name?: string;
-  children?: AccessibilityNode[];
-}
-
 export interface ScreenshotOpts {
   full_page?: boolean;
   ref?: string;
@@ -80,8 +74,9 @@ export class BrowserSession {
 
   private async ensureReady(): Promise<Page> {
     if (!this.browser || !this.page) {
+      const headless = process.env.BROWSER_HEADLESS !== "false";
       this.browser = await chromium.launch({
-        headless: true,
+        headless,
         executablePath: resolveChromiumPath(),
       });
       this.page = await this.browser.newPage();
@@ -129,29 +124,33 @@ export class BrowserSession {
     const page = await this.ensureReady();
     this.refMap.clear();
     this.refCounter = 0;
-    const tree = await (page as any).accessibility.snapshot();
-    const lines: string[] = [];
-    this._walkTree(tree, 0, lines);
-    return lines.join("\n");
-  }
 
-  private _walkTree(node: AccessibilityNode | null, depth: number, lines: string[]): void {
-    if (!node) return;
-    const indent = "  ".repeat(depth);
-    const role = node.role ?? "";
-    const name = node.name ?? "";
-    let ref = "";
-    if (INTERACTIVE_ROLES.has(role) && name) {
-      this.refCounter++;
-      const refKey = `e${this.refCounter}`;
-      const locator = this.page!.getByRole(role as any, { name });
-      this.refMap.set(refKey, locator);
-      ref = ` [ref=${refKey}]`;
+    // Build refMap by querying interactive elements directly
+    const refLines: string[] = [];
+    for (const role of INTERACTIVE_ROLES) {
+      const locs = page.getByRole(role as any);
+      const count = await locs.count();
+      for (let i = 0; i < count; i++) {
+        const loc = locs.nth(i);
+        const ariaLabel = await loc.getAttribute("aria-label");
+        const text = await loc.textContent();
+        const placeholder = await loc.getAttribute("placeholder");
+        const name = ariaLabel || text || placeholder || "";
+        const trimmed = name.trim();
+        if (trimmed) {
+          this.refCounter++;
+          const key = `e${this.refCounter}`;
+          this.refMap.set(key, loc);
+          refLines.push(`${key}: ${role} "${trimmed.slice(0, 60)}"`);
+        }
+      }
     }
-    lines.push(`${indent}${role}${name ? ` "${name}"` : ""}${ref}`);
-    for (const child of node.children ?? []) {
-      this._walkTree(child, depth + 1, lines);
-    }
+
+    // ariaSnapshot returns YAML-like ARIA tree string
+    const yaml = await (page as any).ariaSnapshot();
+    const refSection =
+      refLines.length > 0 ? `\n\n# Interactive element refs\n${refLines.join("\n")}` : "";
+    return (yaml as string) + refSection;
   }
 
   async click(opts: ClickOpts): Promise<void> {

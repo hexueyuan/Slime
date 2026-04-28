@@ -15,7 +15,24 @@ import type { GatewayPresenter } from "../gatewayPresenter";
 import type { ToolPresenter } from "../toolPresenter";
 import type { ContentPresenter } from "../contentPresenter";
 
+const SLIME_REPLY_RE = /<SLIME_REPLY>([\s\S]*?)<\/SLIME_REPLY>/;
 const MAX_STEPS = 128;
+
+function markFinalBlock(blocks: AssistantMessageBlock[]): void {
+  for (const block of blocks) {
+    if (block.type === "content" && block.content) {
+      const match = SLIME_REPLY_RE.exec(block.content as string);
+      if (match) {
+        block.content = match[1].trim();
+        block.is_final = true;
+        return;
+      }
+    }
+  }
+  // fallback: last content block
+  const lastContentIdx = blocks.map((b) => b.type).lastIndexOf("content");
+  if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true;
+}
 
 interface PendingQuestion {
   toolCallId: string;
@@ -225,7 +242,9 @@ export class AgentChatPresenter {
     });
 
     // Build context — contextBuilder deduplicates newUserContent from history
-    const messages: any[] = buildContext(sessionId, content, db);
+    const messages: any[] = buildContext(sessionId, content, db, {
+      agentSystemPrompt: agent?.config?.systemPrompt,
+    });
     const model = this.createModel(groupName);
 
     // Filter disabled tools
@@ -245,11 +264,8 @@ export class AgentChatPresenter {
         if (abortController.signal.aborted) break;
         stepCount++;
 
-        const systemPrompt =
-          config?.systemPrompt || agent?.config?.systemPrompt || "You are a helpful AI assistant.";
         const result = streamText({
           model,
-          system: systemPrompt,
           messages: messages as any,
           tools: tools as any,
           abortSignal: abortController.signal,
@@ -299,9 +315,7 @@ export class AgentChatPresenter {
         if (block.status === "loading") block.status = "success";
       }
 
-      // Mark the last content block as the final answer
-      const lastContentIdx = blocks.map((b) => b.type).lastIndexOf("content");
-      if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true;
+      markFinalBlock(blocks);
 
       // Save assistant message
       const assistantSeq = messageDao.getNextOrderSeq(db, sessionId);
@@ -325,8 +339,7 @@ export class AgentChatPresenter {
     } catch (err) {
       if (abortController.signal.aborted) {
         for (const block of blocks) if (block.status === "loading") block.status = "success";
-        const lastContentIdx = blocks.map((b) => b.type).lastIndexOf("content");
-        if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true;
+        markFinalBlock(blocks);
         // Save whatever blocks were collected before abort
         if (blocks.length > 0) {
           const assistantSeq = messageDao.getNextOrderSeq(db, sessionId);

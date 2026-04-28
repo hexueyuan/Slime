@@ -23,26 +23,18 @@ describe("BrowserSession", () => {
       fill: vi.fn().mockResolvedValue(undefined),
       press: vi.fn().mockResolvedValue(undefined),
       evaluate: vi.fn().mockImplementation((_fn: any, args: any) => Promise.resolve(undefined)),
+      count: vi.fn().mockResolvedValue(1),
+      nth: vi.fn().mockReturnThis(),
+      getAttribute: vi.fn().mockResolvedValue("Submit"),
+      textContent: vi.fn().mockResolvedValue("Submit"),
     };
     mockPage = {
       goto: vi.fn().mockResolvedValue(undefined),
       url: vi.fn().mockReturnValue("https://example.com"),
       screenshot: vi.fn().mockResolvedValue(Buffer.from("screenshot")),
-      accessibility: {
-        snapshot: vi.fn().mockResolvedValue({
-          role: "WebArea",
-          name: "Test Page",
-          children: [
-            { role: "button", name: "Submit", children: [] },
-            { role: "textbox", name: "Email", children: [] },
-            {
-              role: "generic",
-              name: "Container",
-              children: [{ role: "link", name: "Home", children: [] }],
-            },
-          ],
-        }),
-      },
+      ariaSnapshot: vi
+        .fn()
+        .mockResolvedValue('- button "Submit" [ref=e1]\n- textbox "Email" [ref=e2]'),
       getByRole: vi.fn().mockReturnValue(mockLocator),
       locator: vi.fn().mockReturnValue({ first: () => mockLocator }),
       evaluate: vi.fn().mockResolvedValue("eval-result"),
@@ -94,18 +86,18 @@ describe("BrowserSession", () => {
   it("snapshot() builds refMap for interactive elements", async () => {
     await session.navigate("https://example.com");
     const text = await session.snapshot();
-    // button, textbox, link should get refs
-    expect(text).toContain("[ref=e1]");
-    expect(text).toContain("[ref=e2]");
-    expect(text).toContain("[ref=e3]");
-    // non-interactive generic should NOT get a ref
-    expect(text).not.toMatch(/"Container".*\[ref=/);
+    // ref table appended at end
+    expect(text).toContain("# Interactive element refs");
+    expect(text).toContain("e1:");
+    // ariaSnapshot content also present
+    expect(text).toContain("button");
+    expect(mockPage.getByRole).toHaveBeenCalled();
   });
 
   it("snapshot() assigns refs only to interactive roles", async () => {
     await session.navigate("https://example.com");
     await session.snapshot();
-    // e1=button Submit, clicking e1 should use the locator
+    // e1 should be populated from getByRole mock (count=1 per role)
     await session.click({ ref: "e1" });
     expect(mockLocator.click).toHaveBeenCalled();
   });

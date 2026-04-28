@@ -126,13 +126,14 @@ export function buildContext(
   sessionId: string,
   newUserContent: string,
   db: BetterSqlite3.Database,
-  options?: { reserveTokens?: number },
+  options?: { reserveTokens?: number; agentSystemPrompt?: string },
 ): CoreMessage[] {
   const reserve = options?.reserveTokens ?? 4096;
   const config = configDao.getConfigById(db, sessionId);
   const contextLength = config?.contextLength ?? 128000;
 
-  const systemPrompt = config?.systemPrompt || "You are a helpful AI assistant.";
+  const systemPrompt =
+    config?.systemPrompt || options?.agentSystemPrompt || "You are a helpful AI assistant.";
   const systemMsg: CoreMessage = { role: "system", content: systemPrompt };
 
   const allMessages = messageDao.listBySession(db, sessionId);
