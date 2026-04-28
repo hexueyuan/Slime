@@ -37,10 +37,9 @@ export function setupAgentChatIpc(
 
   const unsubEnd = window.electron.ipcRenderer.on(CHAT_STREAM_EVENTS.END, (data: unknown) => {
     const d = data as StreamEndData;
-    if (d.sessionId === activeSessionId()) {
-      store.clearStreamingState();
-      store.fetchMessages(d.sessionId);
-    }
+    if (d.sessionId !== activeSessionId()) return;
+    store.clearStreamingState();
+    store.fetchMessages(d.sessionId);
     store.isGenerating = false;
   });
   unsubs.push(unsubEnd);

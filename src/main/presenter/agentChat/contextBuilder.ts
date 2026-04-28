@@ -10,8 +10,11 @@ import type {
 export type CoreMessage =
   | { role: "system"; content: string }
   | { role: "user"; content: string }
-  | { role: "assistant"; content: string }
-  | { role: "tool"; content: string; toolCallId: string };
+  | { role: "assistant"; content: string | Array<{ type: string; [key: string]: unknown }> }
+  | {
+      role: "tool";
+      content: Array<{ type: string; toolCallId: string; toolName: string; output: unknown }>;
+    };
 
 export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
@@ -48,17 +51,23 @@ export function recordToCoreMessages(records: ChatMessageRecord[]): CoreMessage[
         messages.push({ role: "assistant", content: textContent });
       }
     } else {
-      // assistant text + tool call info as text
-      let assistantText = textContent;
+      // assistant message: array of text + tool-call parts
+      const assistantParts: Array<{ type: string; [key: string]: unknown }> = [];
+      if (textContent) assistantParts.push({ type: "text", text: textContent });
       for (const b of toolCalls) {
         const tc = b.tool_call;
-        const inputStr = typeof tc.input === "string" ? tc.input : JSON.stringify(tc.input);
-        assistantText += `\n[Tool call: ${tc.name}(${inputStr})]`;
+        const input = typeof tc.input === "string" ? JSON.parse(tc.input) : (tc.input ?? {});
+        assistantParts.push({
+          type: "tool-call",
+          toolCallId: tc.id,
+          toolName: tc.name,
+          input,
+        });
       }
-      messages.push({ role: "assistant", content: assistantText });
+      messages.push({ role: "assistant", content: assistantParts });
 
-      // tool results
-      for (const b of toolCalls) {
+      // tool results: array of tool-result parts
+      const toolResultParts = toolCalls.map((b) => {
         const tc = b.tool_call;
         const output =
           tc.output != null
@@ -66,8 +75,14 @@ export function recordToCoreMessages(records: ChatMessageRecord[]): CoreMessage[
               ? tc.output
               : JSON.stringify(tc.output)
             : "";
-        messages.push({ role: "tool", content: output, toolCallId: tc.id });
-      }
+        return {
+          type: "tool-result",
+          toolCallId: tc.id,
+          toolName: tc.name,
+          output: { type: "text", value: output },
+        };
+      });
+      messages.push({ role: "tool", content: toolResultParts });
     }
   }
 
@@ -83,8 +98,9 @@ export function selectTurnHistory(messages: CoreMessage[], availableTokens: numb
 
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
-    const content = "content" in msg ? msg.content : "";
-    const msgTokens = estimateTokens(content);
+    const raw = "content" in msg ? msg.content : "";
+    const contentStr = typeof raw === "string" ? raw : JSON.stringify(raw);
+    const msgTokens = estimateTokens(contentStr);
 
     if (tokens + msgTokens > availableTokens) {
       // If this is an assistant message paired with the next user message,
@@ -124,6 +140,17 @@ export function buildContext(
   const sentMessages = allMessages.filter((m) => m.status === "sent" && m.orderSeq > cursor);
 
   const historyMessages = recordToCoreMessages(sentMessages);
+
+  // Guard: if the last history message is the same user content as newUserContent,
+  // remove it to avoid duplication (can happen if caller writes user msg to DB before calling buildContext)
+  if (
+    historyMessages.length > 0 &&
+    historyMessages[historyMessages.length - 1].role === "user" &&
+    (historyMessages[historyMessages.length - 1] as { role: "user"; content: string }).content ===
+      newUserContent
+  ) {
+    historyMessages.pop();
+  }
 
   const systemTokens = estimateTokens(systemPrompt);
   const newUserTokens = estimateTokens(newUserContent);
