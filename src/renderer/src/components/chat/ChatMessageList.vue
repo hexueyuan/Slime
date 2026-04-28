@@ -48,6 +48,14 @@ watch(
   { flush: "post" },
 );
 
+const props = defineProps<{
+  selectedToolCallId?: string | null;
+}>();
+
+const emit = defineEmits<{
+  "select-tool-call": [id: string];
+}>();
+
 defineExpose({ scrollToBottom });
 
 onMounted(() => scrollToBottom(true));
@@ -69,6 +77,8 @@ onMounted(() => scrollToBottom(true));
           :agent-id="activeAgentId ?? undefined"
           :show-timestamp="shouldShowTimestamp(chatStore.messages, idx)"
           :is-last="isLastMessage(chatStore.messages, idx)"
+          :selected-tool-call-id="props.selectedToolCallId"
+          @select-tool-call="emit('select-tool-call', $event)"
         />
       </template>
 
@@ -80,6 +90,8 @@ onMounted(() => scrollToBottom(true));
         :agent-id="activeAgentId ?? undefined"
         :show-timestamp="true"
         :is-last="true"
+        :selected-tool-call-id="props.selectedToolCallId"
+        @select-tool-call="emit('select-tool-call', $event)"
       />
 
       <!-- Generating indicator -->
