@@ -208,6 +208,7 @@ export function createRelay(deps: RelayDeps): Relay {
           async function* wrappedStream(): AsyncIterable<StreamEvent> {
             let usage: InternalResponse["usage"] = { inputTokens: 0, outputTokens: 0 };
             let contentText = "";
+            const toolCalls = new Map<string, { id: string; name: string; inputJson: string }>();
             let stopReason = "";
             let responseModel = modelName;
             let ttftMs: number | null = null;
@@ -215,12 +216,18 @@ export function createRelay(deps: RelayDeps): Relay {
 
             function accumulate(evt: StreamEvent) {
               if (evt.type === "usage") usage = evt.usage;
-              if (evt.type === "content_delta" && evt.delta.type === "text") {
+              if (evt.type === "content_delta") {
                 if (!firstChunkSeen) {
                   ttftMs = Date.now() - startTime;
                   firstChunkSeen = true;
                 }
-                contentText += evt.delta.text;
+                if (evt.delta.type === "text") {
+                  contentText += evt.delta.text;
+                } else if (evt.delta.type === "tool_use") {
+                  const { id, name, input_json_delta } = evt.delta;
+                  if (!toolCalls.has(id)) toolCalls.set(id, { id, name, inputJson: "" });
+                  toolCalls.get(id)!.inputJson += input_json_delta;
+                }
               }
               if (evt.type === "stop") {
                 stopReason = evt.stopReason;
@@ -239,8 +246,20 @@ export function createRelay(deps: RelayDeps): Relay {
                 accumulate(next.value);
                 yield next.value;
               }
+              const logContent: import("./outbound/types").InternalContent[] = [];
+              if (contentText) logContent.push({ type: "text", text: contentText });
+              for (const tc of toolCalls.values()) {
+                let input: unknown;
+                try {
+                  input = JSON.parse(tc.inputJson);
+                } catch {
+                  input = tc.inputJson;
+                }
+                logContent.push({ type: "tool_use", id: tc.id, name: tc.name, input });
+              }
+              if (logContent.length === 0) logContent.push({ type: "text", text: "" });
               const responseBody = JSON.stringify({
-                content: [{ type: "text", text: contentText }],
+                content: logContent,
                 usage,
                 model: responseModel,
                 stopReason,

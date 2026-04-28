@@ -314,8 +314,8 @@ export class AgentChatPresenter {
         status: "sent",
       });
 
-      // Touch session updated_at
-      sessionDao.updateTitle(db, sessionId, session.title);
+      // Touch session updated_at (without overwriting title that may have been generated)
+      sessionDao.touchUpdatedAt(db, sessionId);
 
       this.sessionStates.set(sessionId, "idle");
       eventBus.sendToRenderer(CHAT_STREAM_EVENTS.END, {

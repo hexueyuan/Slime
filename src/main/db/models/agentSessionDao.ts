@@ -89,6 +89,10 @@ export function updateTitle(db: BetterSqlite3.Database, id: string, title: strin
   );
 }
 
+export function touchUpdatedAt(db: BetterSqlite3.Database, id: string): void {
+  db.prepare("UPDATE agent_sessions SET updated_at = ? WHERE id = ?").run(Date.now(), id);
+}
+
 export function togglePin(db: BetterSqlite3.Database, id: string): void {
   db.prepare(
     "UPDATE agent_sessions SET is_pinned = CASE WHEN is_pinned = 0 THEN 1 ELSE 0 END, updated_at = ? WHERE id = ?",
