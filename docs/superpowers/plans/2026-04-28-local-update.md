@@ -12,21 +12,22 @@
 
 ## 文件清单
 
-| 操作 | 文件 |
-|------|------|
-| 修改 | `src/main/presenter/gatewayPresenter.ts`（第 61 行端口） |
-| 修改 | `src/shared/types/presenters/app.presenter.d.ts` |
-| 修改 | `src/main/presenter/appPresenter.ts` |
+| 操作 | 文件                                                            |
+| ---- | --------------------------------------------------------------- |
+| 修改 | `src/main/presenter/gatewayPresenter.ts`（第 61 行端口）        |
+| 修改 | `src/shared/types/presenters/app.presenter.d.ts`                |
+| 修改 | `src/main/presenter/appPresenter.ts`                            |
 | 修改 | `test/main/appPresenter.test.ts`（扩展现有文件，加新 describe） |
-| 新建 | `src/renderer/src/components/settings/UpdateSettings.vue` |
-| 新建 | `test/renderer/components/settings/UpdateSettings.test.ts` |
-| 修改 | `src/renderer/src/components/settings/SettingsDialog.vue` |
+| 新建 | `src/renderer/src/components/settings/UpdateSettings.vue`       |
+| 新建 | `test/renderer/components/settings/UpdateSettings.test.ts`      |
+| 修改 | `src/renderer/src/components/settings/SettingsDialog.vue`       |
 
 ---
 
 ### Task 1: 端口隔离
 
 **Files:**
+
 - Modify: `src/main/presenter/gatewayPresenter.ts`
 
 - [ ] **Step 1: 确认 `app` import**
@@ -40,10 +41,13 @@ import { app } from "electron";
 - [ ] **Step 2: 修改默认端口**
 
 找到第 61 行：
+
 ```typescript
   private port = 8930;
 ```
+
 改为：
+
 ```typescript
   private port = app.isPackaged ? 8930 : 8920;
 ```
@@ -68,6 +72,7 @@ git commit -m "fix(gateway): default port 8920 dev / 8930 packaged"
 ### Task 2: IAppPresenter 接口扩展
 
 **Files:**
+
 - Modify: `src/shared/types/presenters/app.presenter.d.ts`
 
 - [ ] **Step 1: 添加新方法签名**
@@ -103,6 +108,7 @@ git commit -m "feat(types): add selectLocalZip + applyLocalZip to IAppPresenter"
 ### Task 3: AppPresenter 实现（TDD）
 
 **Files:**
+
 - Modify: `src/main/presenter/appPresenter.ts`
 - Modify: `test/main/appPresenter.test.ts`（在文件末尾追加新 describe 块）
 
@@ -118,10 +124,13 @@ git commit -m "feat(types): add selectLocalZip + applyLocalZip to IAppPresenter"
 ```
 
 **实际操作**：将文件顶部第 4 行：
+
 ```typescript
 vi.mock("electron", () => ({ app: { getVersion: () => "0.0.0" } }));
 ```
+
 替换为：
+
 ```typescript
 const mockElectronApp = {
   getVersion: () => "0.0.0",
@@ -352,6 +361,7 @@ git commit -m "feat(app): add selectLocalZip + applyLocalZip"
 ### Task 4: UpdateSettings 组件（TDD）
 
 **Files:**
+
 - Create: `src/renderer/src/components/settings/UpdateSettings.vue`
 - Create: `test/renderer/components/settings/UpdateSettings.test.ts`
 
@@ -377,12 +387,10 @@ import UpdateSettings from "@/components/settings/UpdateSettings.vue";
 describe("UpdateSettings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockInvoke.mockImplementation(
-      async (_channel: string, _name: string, method: string) => {
-        if (method === "getVersion") return "0.3.0";
-        return null;
-      },
-    );
+    mockInvoke.mockImplementation(async (_channel: string, _name: string, method: string) => {
+      if (method === "getVersion") return "0.3.0";
+      return null;
+    });
   });
 
   it("displays current version", async () => {
@@ -399,16 +407,14 @@ describe("UpdateSettings", () => {
   });
 
   it("shows error when applyLocalZip returns error", async () => {
-    mockInvoke.mockImplementation(
-      async (_channel: string, _name: string, method: string) => {
-        if (method === "getVersion") return "0.3.0";
-        if (method === "selectLocalZip") return "/fake/slime.zip";
-        if (method === "applyLocalZip") {
-          return { success: false, error: "安装包内未找到 .app 文件" };
-        }
-        return null;
-      },
-    );
+    mockInvoke.mockImplementation(async (_channel: string, _name: string, method: string) => {
+      if (method === "getVersion") return "0.3.0";
+      if (method === "selectLocalZip") return "/fake/slime.zip";
+      if (method === "applyLocalZip") {
+        return { success: false, error: "安装包内未找到 .app 文件" };
+      }
+      return null;
+    });
     const wrapper = mount(UpdateSettings, { props: { forceEnabled: true } });
     await flushPromises();
     await wrapper.find("button").trigger("click");
@@ -418,14 +424,12 @@ describe("UpdateSettings", () => {
 
   it("button shows loading state while applying", async () => {
     let resolveApply!: (v: unknown) => void;
-    mockInvoke.mockImplementation(
-      async (_channel: string, _name: string, method: string) => {
-        if (method === "getVersion") return "0.3.0";
-        if (method === "selectLocalZip") return "/fake/slime.zip";
-        if (method === "applyLocalZip") return new Promise((r) => (resolveApply = r));
-        return null;
-      },
-    );
+    mockInvoke.mockImplementation(async (_channel: string, _name: string, method: string) => {
+      if (method === "getVersion") return "0.3.0";
+      if (method === "selectLocalZip") return "/fake/slime.zip";
+      if (method === "applyLocalZip") return new Promise((r) => (resolveApply = r));
+      return null;
+    });
     const wrapper = mount(UpdateSettings, { props: { forceEnabled: true } });
     await flushPromises();
     wrapper.find("button").trigger("click");
@@ -474,30 +478,30 @@ Expected: FAIL — 组件文件不存在
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
-import { usePresenter } from "@/composables/usePresenter"
+import { ref, onMounted } from "vue";
+import { usePresenter } from "@/composables/usePresenter";
 
-const props = withDefaults(defineProps<{ forceEnabled?: boolean }>(), { forceEnabled: false })
+const props = withDefaults(defineProps<{ forceEnabled?: boolean }>(), { forceEnabled: false });
 
-const appPresenter = usePresenter("appPresenter")
-const version = ref("")
-const applying = ref(false)
-const errorMsg = ref("")
-const isEnabled = import.meta.env.PROD || props.forceEnabled
+const appPresenter = usePresenter("appPresenter");
+const version = ref("");
+const applying = ref(false);
+const errorMsg = ref("");
+const isEnabled = import.meta.env.PROD || props.forceEnabled;
 
 onMounted(async () => {
-  version.value = await appPresenter.getVersion()
-})
+  version.value = await appPresenter.getVersion();
+});
 
 async function handleUpdate() {
-  errorMsg.value = ""
-  const zipPath = await appPresenter.selectLocalZip()
-  if (!zipPath) return
-  applying.value = true
-  const result = await appPresenter.applyLocalZip(zipPath)
-  applying.value = false
+  errorMsg.value = "";
+  const zipPath = await appPresenter.selectLocalZip();
+  if (!zipPath) return;
+  applying.value = true;
+  const result = await appPresenter.applyLocalZip(zipPath);
+  applying.value = false;
   if (!result.success) {
-    errorMsg.value = result.error ?? "更新失败"
+    errorMsg.value = result.error ?? "更新失败";
   }
 }
 </script>
@@ -523,6 +527,7 @@ git commit -m "feat(ui): add UpdateSettings component"
 ### Task 5: SettingsDialog 接入
 
 **Files:**
+
 - Modify: `src/renderer/src/components/settings/SettingsDialog.vue`
 
 - [ ] **Step 1: 添加 import**
@@ -530,18 +535,21 @@ git commit -m "feat(ui): add UpdateSettings component"
 在 `<script setup>` 中现有 import 末尾添加：
 
 ```typescript
-import UpdateSettings from "./UpdateSettings.vue"
+import UpdateSettings from "./UpdateSettings.vue";
 ```
 
 - [ ] **Step 2: 扩展 activeTab 类型**
 
 将：
+
 ```typescript
-const activeTab = ref<"profile" | "gateway" | "general" | "agents">("profile")
+const activeTab = ref<"profile" | "gateway" | "general" | "agents">("profile");
 ```
+
 改为：
+
 ```typescript
-const activeTab = ref<"profile" | "gateway" | "general" | "agents" | "update">("profile")
+const activeTab = ref<"profile" | "gateway" | "general" | "agents" | "update">("profile");
 ```
 
 - [ ] **Step 3: 左侧 nav 添加按钮**

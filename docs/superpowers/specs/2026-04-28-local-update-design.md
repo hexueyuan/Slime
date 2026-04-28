@@ -3,6 +3,7 @@
 ## 概述
 
 两个独立目标：
+
 1. **本地更新**：在 Settings 对话框新增"更新"tab，支持选择本地 `.zip` 安装包替换当前 `.app`（参考 deepchat `applyLocalZip` 实现）
 2. **端口隔离**：dev 模式默认端口 8920，packaged 模式默认端口 8930，两个 Slime 实例互不影响
 
@@ -29,6 +30,7 @@ userData 路径天然隔离（dev: `~/Library/Application Support/Electron`，pa
 ## 2. 后端：AppPresenter 新增方法
 
 **改动文件**：
+
 - `src/main/presenter/appPresenter.ts`
 - `src/shared/presenter.d.ts`（IAppPresenter 接口）
 
@@ -63,6 +65,7 @@ IPC 暴露：通过现有 `presenter:call` 分发，无需独立 IPC channel。
 ## 3. 前端：Settings 更新 Tab
 
 **改动文件**：
+
 - `src/renderer/src/components/settings/`（新增 `UpdateTab.vue` 或在现有 dialog 加 tab）
 - Settings dialog 的 tab 列表
 

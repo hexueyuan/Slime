@@ -11,6 +11,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
   - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages, agent_usage_stats）
   - `gateway/`: LLM Gateway 核心（router, balancer, circuit, keypool, relay, server, outbound adapters, inbound handlers, stats, auth）
   - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool）
+  - `browser/`: 浏览器自动化（browserSession.ts 封装 playwright-core，browserTools.ts 定义 10 个工具）
   - `eventbus.ts`: EventBus 单例（主进程事件 + 渲染进程推送）
   - `utils/`: 工具模块（logger, paths, errors）
   - `window.ts`: 窗口管理
@@ -84,7 +85,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | FilePresenter             | 文件读写+目录列表（resolveSafe 路径安全）                                                                                          |
 | GitPresenter              | Git 操作（spawn，tag/commit/rollback/diff）                                                                                        |
 | AgentPresenter            | AI 对话、工具调用、阶段感知 systemPrompt；通过 Gateway 本地代理调用 LLM                                                            |
-| ToolPresenter             | 9 tools（read/write/edit/exec/ask_user/open + 3 evolution）                                                                        |
+| ToolPresenter             | 19 tools（read/write/edit/exec/ask_user/open + 3 evolution + 9 browser_* + web_fetch）；browser_* 基于 playwright-core + 系统 Chrome（auto-detect）；web_fetch 基于 Node.js fetch |
 | EvolutionPresenter        | 进化状态机（idle→discuss→coding→applying）+ CHANGELOG + apply(打包+自替换) + archive CRUD + AI 语义回滚 + build verification       |
 | ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                       |
 | WorkspacePresenter        | 源码工作区初始化                                                                                                                   |
