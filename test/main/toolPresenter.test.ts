@@ -31,14 +31,28 @@ describe("ToolPresenter", () => {
       completeEvolution: vi.fn().mockResolvedValue({ success: true, tag: "egg-v0.1-dev.1" }),
       getStatus: vi.fn().mockReturnValue({ stage: "idle" }),
     } as any;
-    tp = new ToolPresenter(fp, cp, evo);
+    const mockBrowserSession = {
+      navigate: vi.fn().mockResolvedValue("https://example.com"),
+      screenshot: vi
+        .fn()
+        .mockResolvedValue({ base64: "", mimeType: "image/png", width: 0, height: 0 }),
+      snapshot: vi.fn().mockResolvedValue("WebArea"),
+      click: vi.fn().mockResolvedValue(undefined),
+      type: vi.fn().mockResolvedValue(undefined),
+      scroll: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn().mockResolvedValue(null),
+      wait: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+      isActive: vi.fn().mockReturnValue(false),
+    } as any;
+    tp = new ToolPresenter(fp, cp, evo, mockBrowserSession);
   });
 
   afterEach(() => {
     rmSync(testRoot, { recursive: true, force: true });
   });
 
-  it("should return a ToolSet with all 10 tools", () => {
+  it("should return a ToolSet with all 19 tools", () => {
     const tools = tp.getToolSet("s1");
     expect(Object.keys(tools)).toEqual(
       expect.arrayContaining([
@@ -51,15 +65,25 @@ describe("ToolPresenter", () => {
         "evolution_start",
         "evolution_plan",
         "evolution_complete",
+        "browser_navigate",
+        "browser_screenshot",
+        "browser_snapshot",
+        "browser_click",
+        "browser_type",
+        "browser_scroll",
+        "browser_evaluate",
+        "browser_wait",
+        "browser_close",
+        "web_fetch",
       ]),
     );
-    expect(Object.keys(tools)).toHaveLength(9);
+    expect(Object.keys(tools)).toHaveLength(19);
   });
 
   it("should include ask_user tool in toolset", () => {
     const tools = tp.getToolSet("s1");
     expect(Object.keys(tools)).toContain("ask_user");
-    expect(Object.keys(tools)).toHaveLength(9);
+    expect(Object.keys(tools)).toHaveLength(19);
   });
 
   it("should execute read tool", async () => {

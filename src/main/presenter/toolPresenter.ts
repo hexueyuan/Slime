@@ -6,6 +6,19 @@ import type { FilePresenter } from "./filePresenter";
 import type { ContentPresenter } from "./contentPresenter";
 import type { EvolutionPresenter } from "./evolutionPresenter";
 import { logger, paths } from "@/utils";
+import type { BrowserSession } from "@/browser/browserSession";
+import {
+  makeBrowserNavigateTool,
+  makeBrowserScreenshotTool,
+  makeBrowserSnapshotTool,
+  makeBrowserClickTool,
+  makeBrowserTypeTool,
+  makeBrowserScrollTool,
+  makeBrowserEvaluateTool,
+  makeBrowserWaitTool,
+  makeBrowserCloseTool,
+  makeWebFetchTool,
+} from "@/browser/browserTools";
 
 const execAsync = promisify(execCb);
 
@@ -43,6 +56,7 @@ export class ToolPresenter {
     private filePresenter: FilePresenter,
     private contentPresenter: ContentPresenter,
     private evolutionPresenter: EvolutionPresenter,
+    private browserSession: BrowserSession,
   ) {}
 
   getToolSet(sessionId: string) {
@@ -203,6 +217,16 @@ export class ToolPresenter {
           return `Apply failed: ${result.error}. Fix the issue and try again.`;
         },
       }),
+      browser_navigate: createTool(makeBrowserNavigateTool(this.browserSession)),
+      browser_screenshot: createTool(makeBrowserScreenshotTool(this.browserSession)),
+      browser_snapshot: createTool(makeBrowserSnapshotTool(this.browserSession)),
+      browser_click: createTool(makeBrowserClickTool(this.browserSession)),
+      browser_type: createTool(makeBrowserTypeTool(this.browserSession)),
+      browser_scroll: createTool(makeBrowserScrollTool(this.browserSession)),
+      browser_evaluate: createTool(makeBrowserEvaluateTool(this.browserSession)),
+      browser_wait: createTool(makeBrowserWaitTool(this.browserSession)),
+      browser_close: createTool(makeBrowserCloseTool(this.browserSession)),
+      web_fetch: createTool(makeWebFetchTool()),
     };
   }
 
