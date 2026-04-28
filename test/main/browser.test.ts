@@ -275,3 +275,80 @@ describe("BrowserSession", () => {
     expect(mockLocator.evaluate).toHaveBeenCalled();
   });
 });
+
+describe("makeWebFetchTool", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns text body for text/html content type", async () => {
+    const mockResponse = {
+      status: 200,
+      headers: {
+        get: (k: string) => (k === "content-type" ? "text/html; charset=utf-8" : null),
+        forEach: (cb: (v: string, k: string) => void) => cb("text/html", "content-type"),
+      },
+      text: vi.fn().mockResolvedValue("<html>hello</html>"),
+      arrayBuffer: vi.fn(),
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse));
+
+    const { makeWebFetchTool } = await import("@/browser/browserTools");
+    const toolDef = makeWebFetchTool();
+    const result = (await toolDef.execute({ url: "https://example.com" })) as any;
+
+    expect(result.status).toBe(200);
+    expect(result.encoding).toBe("text");
+    expect(result.body).toBe("<html>hello</html>");
+    expect(result.content_type).toBe("text/html; charset=utf-8");
+  });
+
+  it("returns base64 body for binary content type", async () => {
+    const bin = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+    const mockResponse = {
+      status: 200,
+      headers: {
+        get: (k: string) => (k === "content-type" ? "image/png" : null),
+        forEach: (cb: (v: string, k: string) => void) => cb("image/png", "content-type"),
+      },
+      text: vi.fn(),
+      arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array([0x89, 0x50, 0x4e, 0x47]).buffer),
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse));
+
+    const { makeWebFetchTool } = await import("@/browser/browserTools");
+    const toolDef = makeWebFetchTool();
+    const result = (await toolDef.execute({ url: "https://example.com/img.png" })) as any;
+
+    expect(result.encoding).toBe("base64");
+    expect(result.body).toBe(bin.toString("base64"));
+  });
+
+  it("passes method, headers, body to fetch", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      status: 201,
+      headers: {
+        get: () => "application/json",
+        forEach: (cb: (v: string, k: string) => void) => cb("application/json", "content-type"),
+      },
+      text: vi.fn().mockResolvedValue('{"ok":true}'),
+      arrayBuffer: vi.fn(),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const { makeWebFetchTool } = await import("@/browser/browserTools");
+    const toolDef = makeWebFetchTool();
+    await toolDef.execute({
+      url: "https://api.example.com/data",
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: '{"x":1}',
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith("https://api.example.com/data", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: '{"x":1}',
+    });
+  });
+});
