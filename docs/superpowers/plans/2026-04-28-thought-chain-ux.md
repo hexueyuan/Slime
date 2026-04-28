@@ -12,25 +12,26 @@
 
 ## 文件清单
 
-| 文件 | 操作 |
-|------|------|
-| `src/shared/types/agent.d.ts` | 修改：`AssistantMessageBlock` 加 `is_final?: boolean` |
-| `src/main/presenter/agentChat/agentChatPresenter.ts` | 修改：保存前标记最后 content block |
-| `src/renderer/src/components/chat/ChatMessageAssistant.vue` | 修改：过滤 final block、流式状态、思考链按钮 |
-| `src/renderer/src/components/chat/ChatMessageList.vue` | 修改：透传 `show-thought-chain` 事件 |
-| `src/renderer/src/components/chat/ChatView.vue` | 修改：透传 `show-thought-chain` 事件 |
-| `src/renderer/src/components/chat/ThoughtChainPanel.vue` | 新建：步骤时间线组件 |
-| `src/renderer/src/components/chat/ChatFunctionPanel.vue` | 修改：预览 Tab 按类型分发 |
-| `src/renderer/src/views/ChatroomPanel.vue` | 修改：思考链状态管理 |
-| `test/main/agentChat/agentChatPresenter.test.ts` | 修改：加 is_final 标记测试 |
-| `test/renderer/components/chat/ThoughtChainPanel.test.ts` | 新建 |
-| `test/renderer/components/chat/ChatFunctionPanel.test.ts` | 修改：加思考链分发测试 |
+| 文件                                                        | 操作                                                  |
+| ----------------------------------------------------------- | ----------------------------------------------------- |
+| `src/shared/types/agent.d.ts`                               | 修改：`AssistantMessageBlock` 加 `is_final?: boolean` |
+| `src/main/presenter/agentChat/agentChatPresenter.ts`        | 修改：保存前标记最后 content block                    |
+| `src/renderer/src/components/chat/ChatMessageAssistant.vue` | 修改：过滤 final block、流式状态、思考链按钮          |
+| `src/renderer/src/components/chat/ChatMessageList.vue`      | 修改：透传 `show-thought-chain` 事件                  |
+| `src/renderer/src/components/chat/ChatView.vue`             | 修改：透传 `show-thought-chain` 事件                  |
+| `src/renderer/src/components/chat/ThoughtChainPanel.vue`    | 新建：步骤时间线组件                                  |
+| `src/renderer/src/components/chat/ChatFunctionPanel.vue`    | 修改：预览 Tab 按类型分发                             |
+| `src/renderer/src/views/ChatroomPanel.vue`                  | 修改：思考链状态管理                                  |
+| `test/main/agentChat/agentChatPresenter.test.ts`            | 修改：加 is_final 标记测试                            |
+| `test/renderer/components/chat/ThoughtChainPanel.test.ts`   | 新建                                                  |
+| `test/renderer/components/chat/ChatFunctionPanel.test.ts`   | 修改：加思考链分发测试                                |
 
 ---
 
 ## Task 1: AssistantMessageBlock 加 is_final 字段
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 
 - [ ] **Step 1: 加字段**
@@ -39,14 +40,14 @@
 
 ```ts
 export interface AssistantMessageBlock {
-  id?: string
-  type: AssistantBlockType
-  content?: string
-  status: 'pending' | 'success' | 'error' | 'loading'
-  timestamp: number
-  tool_call?: ToolCallBlockData
-  image_data?: { data: string; mimeType: string }
-  is_final?: boolean
+  id?: string;
+  type: AssistantBlockType;
+  content?: string;
+  status: "pending" | "success" | "error" | "loading";
+  timestamp: number;
+  tool_call?: ToolCallBlockData;
+  image_data?: { data: string; mimeType: string };
+  is_final?: boolean;
 }
 ```
 
@@ -70,6 +71,7 @@ git commit -m "feat(agent): add is_final to AssistantMessageBlock"
 ## Task 2: AgentChatPresenter 标记 is_final
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentChatPresenter.ts`
 - Test: `test/main/agentChat/agentChatPresenter.test.ts`
 
@@ -78,45 +80,58 @@ git commit -m "feat(agent): add is_final to AssistantMessageBlock"
 在 `test/main/agentChat/agentChatPresenter.test.ts` 找到现有测试末尾，添加：
 
 ```ts
-it('marks last content block as is_final before saving', async () => {
+it("marks last content block as is_final before saving", async () => {
   // loop: text → tool call → text (final)
-  let callCount = 0
+  let callCount = 0;
   vi.mocked(streamText).mockImplementation(() => {
-    callCount++
+    callCount++;
     if (callCount === 1) {
-      async function* gen() { yield 'let me check' }
+      async function* gen() {
+        yield "let me check";
+      }
       return {
         textStream: gen(),
         toolCalls: Promise.resolve([
-          { toolCallId: 'tc1', toolName: 'exec', input: { command: 'date' } },
+          { toolCallId: "tc1", toolName: "exec", input: { command: "date" } },
         ]),
-      } as any
+      } as any;
     }
-    async function* gen() { yield 'today is Tuesday' }
-    return { textStream: gen(), toolCalls: Promise.resolve([]) } as any
-  })
+    async function* gen() {
+      yield "today is Tuesday";
+    }
+    return { textStream: gen(), toolCalls: Promise.resolve([]) } as any;
+  });
 
-  vi.mocked(messageDao.getNextOrderSeq).mockReturnValue(2)
-  vi.mocked(messageDao.createMessage).mockImplementation(() => {})
+  vi.mocked(messageDao.getNextOrderSeq).mockReturnValue(2);
+  vi.mocked(messageDao.createMessage).mockImplementation(() => {});
   vi.mocked(messageDao.listBySession).mockReturnValue([
-    { id: 'u1', sessionId: 'sess1', orderSeq: 1, role: 'user', content: 'what day', status: 'sent', createdAt: 1, updatedAt: 1 },
-  ])
+    {
+      id: "u1",
+      sessionId: "sess1",
+      orderSeq: 1,
+      role: "user",
+      content: "what day",
+      status: "sent",
+      createdAt: 1,
+      updatedAt: 1,
+    },
+  ]);
 
-  const gw = makeGatewayPresenter()
-  const tool = makeToolPresenter()
-  const content = makeContentPresenter()
-  const presenter = new AgentChatPresenter(gw, tool, content)
+  const gw = makeGatewayPresenter();
+  const tool = makeToolPresenter();
+  const content = makeContentPresenter();
+  const presenter = new AgentChatPresenter(gw, tool, content);
 
-  await presenter.chat('sess1', 'what day')
+  await presenter.chat("sess1", "what day");
 
-  const saved = vi.mocked(messageDao.createMessage).mock.calls[0][1]
-  const blocks = JSON.parse(saved.content)
-  const contentBlocks = blocks.filter((b: any) => b.type === 'content')
-  const lastContent = contentBlocks[contentBlocks.length - 1]
-  expect(lastContent.is_final).toBe(true)
+  const saved = vi.mocked(messageDao.createMessage).mock.calls[0][1];
+  const blocks = JSON.parse(saved.content);
+  const contentBlocks = blocks.filter((b: any) => b.type === "content");
+  const lastContent = contentBlocks[contentBlocks.length - 1];
+  expect(lastContent.is_final).toBe(true);
   // intermediate content block must NOT have is_final
-  expect(contentBlocks[0].is_final).toBeUndefined()
-})
+  expect(contentBlocks[0].is_final).toBeUndefined();
+});
 ```
 
 - [ ] **Step 2: 跑测试确认失败**
@@ -132,9 +147,9 @@ Expected: 新增测试 FAIL，`expect(lastContent.is_final).toBe(true)` 失败�
 在 `agentChatPresenter.ts` 第 297 行（`// Finalize blocks`）之后、第 303 行（`// Save assistant message`）之前插入：
 
 ```ts
-      // Mark the last content block as the final answer
-      const lastContentIdx = blocks.map((b) => b.type).lastIndexOf('content')
-      if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true
+// Mark the last content block as the final answer
+const lastContentIdx = blocks.map((b) => b.type).lastIndexOf("content");
+if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true;
 ```
 
 - [ ] **Step 4: 在 abort 路径同样标记**
@@ -142,8 +157,8 @@ Expected: 新增测试 FAIL，`expect(lastContent.is_final).toBe(true)` 失败�
 在 `agentChatPresenter.ts` 第 323 行（`for (const block of blocks) if...`）之后插入：
 
 ```ts
-        const lastContentIdx = blocks.map((b) => b.type).lastIndexOf('content')
-        if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true
+const lastContentIdx = blocks.map((b) => b.type).lastIndexOf("content");
+if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true;
 ```
 
 - [ ] **Step 5: 跑测试确认通过**
@@ -167,9 +182,11 @@ git commit -m "feat(agent): mark last content block as is_final before save"
 ## Task 3: ChatMessageAssistant 过滤 final block + 思考链按钮
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatMessageAssistant.vue`
 
 **背景：**
+
 - 非流式消息：只渲染 `is_final === true` 的 block（fallback：若无任何 is_final，渲染全部——兼容旧消息和 abort 消息）
 - 流式消息（`isStreaming=true`）：隐藏实际 blocks，改为"思考中..."动画 + 始终可见的"查看进度"按钮
 - Toolbar：当有中间 blocks（`!is_final`）时，新增"思考链"按钮（hover 显示）
@@ -181,26 +198,26 @@ git commit -m "feat(agent): mark last content block as is_final before save"
 ```ts
 // 携带原始 idx，使 getBlockContent 的 debouncedContents 下标保持一致
 const finalBlocks = computed<{ block: AssistantMessageBlock; originalIdx: number }[]>(() => {
-  if (props.isStreaming) return []
-  const blocks = parsedBlocks.value
-  const hasFinal = blocks.some((b) => b.is_final)
-  const filtered = hasFinal ? blocks.filter((b) => b.is_final) : blocks
-  return filtered.map((block) => ({ block, originalIdx: blocks.indexOf(block) }))
-})
+  if (props.isStreaming) return [];
+  const blocks = parsedBlocks.value;
+  const hasFinal = blocks.some((b) => b.is_final);
+  const filtered = hasFinal ? blocks.filter((b) => b.is_final) : blocks;
+  return filtered.map((block) => ({ block, originalIdx: blocks.indexOf(block) }));
+});
 
 const intermediateBlocks = computed<AssistantMessageBlock[]>(() => {
-  if (props.isStreaming) return []
-  return parsedBlocks.value.filter((b) => !b.is_final)
-})
+  if (props.isStreaming) return [];
+  return parsedBlocks.value.filter((b) => !b.is_final);
+});
 ```
 
 在 `defineEmits` 中加 `show-thought-chain` 事件：
 
 ```ts
 const emit = defineEmits<{
-  'select-tool-call': [id: string]
-  'show-thought-chain': [messageId?: string]
-}>()
+  "select-tool-call": [id: string];
+  "show-thought-chain": [messageId?: string];
+}>();
 ```
 
 - [ ] **Step 2: 替换 template 中的 content 区域**
@@ -296,10 +313,7 @@ const emit = defineEmits<{
 
 ```html
 <div class="mt-0.5 flex opacity-0 transition-opacity group-hover:opacity-100">
-  <button
-    class="rounded p-1 text-muted-foreground hover:text-foreground"
-    @click="copyMessage"
-  >
+  <button class="rounded p-1 text-muted-foreground hover:text-foreground" @click="copyMessage">
     <Icon :icon="copied ? 'lucide:check' : 'lucide:copy'" class="h-3.5 w-3.5" />
   </button>
   <button
@@ -350,6 +364,7 @@ git commit -m "feat(chat): filter final block, streaming indicator, thought-chai
 ## Task 4: ThoughtChainPanel 新组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/chat/ThoughtChainPanel.vue`
 - Create: `test/renderer/components/chat/ThoughtChainPanel.test.ts`
 
@@ -358,73 +373,79 @@ git commit -m "feat(chat): filter final block, streaming indicator, thought-chai
 创建 `test/renderer/components/chat/ThoughtChainPanel.test.ts`：
 
 ```ts
-import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi } from "vitest";
+import { mount } from "@vue/test-utils";
 
-vi.mock('@iconify/vue', () => ({ Icon: { template: '<span />' } }))
+vi.mock("@iconify/vue", () => ({ Icon: { template: "<span />" } }));
 
-import ThoughtChainPanel from '@/components/chat/ThoughtChainPanel.vue'
-import type { AssistantMessageBlock } from '@shared/types/agent'
+import ThoughtChainPanel from "@/components/chat/ThoughtChainPanel.vue";
+import type { AssistantMessageBlock } from "@shared/types/agent";
 
 function makeContentBlock(content: string): AssistantMessageBlock {
-  return { type: 'content', content, status: 'success', timestamp: 1 }
+  return { type: "content", content, status: "success", timestamp: 1 };
 }
 
 function makeToolBlock(id: string, name: string): AssistantMessageBlock {
   return {
     id,
-    type: 'tool_call',
-    status: 'success',
+    type: "tool_call",
+    status: "success",
     timestamp: 1,
-    tool_call: { id, name, input: {}, output: 'ok' },
-  }
+    tool_call: { id, name, input: {}, output: "ok" },
+  };
 }
 
-describe('ThoughtChainPanel', () => {
-  it('renders a content step', () => {
+describe("ThoughtChainPanel", () => {
+  it("renders a content step", () => {
     const wrapper = mount(ThoughtChainPanel, {
-      props: { blocks: [makeContentBlock('let me check')] },
-    })
-    expect(wrapper.text()).toContain('let me check')
-    expect(wrapper.text()).toContain('1')
-  })
+      props: { blocks: [makeContentBlock("let me check")] },
+    });
+    expect(wrapper.text()).toContain("let me check");
+    expect(wrapper.text()).toContain("1");
+  });
 
-  it('renders a tool_call step', () => {
+  it("renders a tool_call step", () => {
     const wrapper = mount(ThoughtChainPanel, {
-      props: { blocks: [makeToolBlock('tc1', 'exec')] },
-    })
-    expect(wrapper.text()).toContain('exec')
-  })
+      props: { blocks: [makeToolBlock("tc1", "exec")] },
+    });
+    expect(wrapper.text()).toContain("exec");
+  });
 
-  it('emits select-tool-call when tool step clicked', async () => {
+  it("emits select-tool-call when tool step clicked", async () => {
     const wrapper = mount(ThoughtChainPanel, {
-      props: { blocks: [makeToolBlock('tc1', 'exec')] },
-    })
-    await wrapper.find('[data-testid="tool-step-tc1"]').trigger('click')
-    expect(wrapper.emitted('select-tool-call')?.[0]).toEqual(['tc1'])
-  })
+      props: { blocks: [makeToolBlock("tc1", "exec")] },
+    });
+    await wrapper.find('[data-testid="tool-step-tc1"]').trigger("click");
+    expect(wrapper.emitted("select-tool-call")?.[0]).toEqual(["tc1"]);
+  });
 
-  it('renders multiple steps in order', () => {
+  it("renders multiple steps in order", () => {
     const wrapper = mount(ThoughtChainPanel, {
       props: {
-        blocks: [makeContentBlock('thinking'), makeToolBlock('tc2', 'read'), makeContentBlock('done')],
+        blocks: [
+          makeContentBlock("thinking"),
+          makeToolBlock("tc2", "read"),
+          makeContentBlock("done"),
+        ],
       },
-    })
-    expect(wrapper.text()).toContain('1')
-    expect(wrapper.text()).toContain('2')
-    expect(wrapper.text()).toContain('3')
-  })
+    });
+    expect(wrapper.text()).toContain("1");
+    expect(wrapper.text()).toContain("2");
+    expect(wrapper.text()).toContain("3");
+  });
 
-  it('highlights selected tool call', () => {
+  it("highlights selected tool call", () => {
     const wrapper = mount(ThoughtChainPanel, {
       props: {
-        blocks: [makeToolBlock('tc1', 'exec')],
-        selectedToolCallId: 'tc1',
+        blocks: [makeToolBlock("tc1", "exec")],
+        selectedToolCallId: "tc1",
       },
-    })
-    expect(wrapper.find('[data-testid="tool-step-tc1"]').classes()).toContain('border-violet-500/60')
-  })
-})
+    });
+    expect(wrapper.find('[data-testid="tool-step-tc1"]').classes()).toContain(
+      "border-violet-500/60",
+    );
+  });
+});
 ```
 
 - [ ] **Step 2: 跑测试确认失败**
@@ -441,17 +462,17 @@ Expected: 所有测试 FAIL（组件不存在）。
 
 ```vue
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
-import type { AssistantMessageBlock } from '@shared/types/agent'
+import { Icon } from "@iconify/vue";
+import type { AssistantMessageBlock } from "@shared/types/agent";
 
 const props = defineProps<{
-  blocks: AssistantMessageBlock[]
-  selectedToolCallId?: string | null
-}>()
+  blocks: AssistantMessageBlock[];
+  selectedToolCallId?: string | null;
+}>();
 
 const emit = defineEmits<{
-  'select-tool-call': [id: string]
-}>()
+  "select-tool-call": [id: string];
+}>();
 </script>
 
 <template>
@@ -533,6 +554,7 @@ git commit -m "feat(chat): add ThoughtChainPanel component"
 ## Task 5: 串联 show-thought-chain 事件链
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatMessageList.vue`
 - Modify: `src/renderer/src/components/chat/ChatView.vue`
 
@@ -544,9 +566,9 @@ git commit -m "feat(chat): add ThoughtChainPanel component"
 
 ```ts
 const emit = defineEmits<{
-  'select-tool-call': [id: string]
-  'show-thought-chain': [messageId?: string]
-}>()
+  "select-tool-call": [id: string];
+  "show-thought-chain": [messageId?: string];
+}>();
 ```
 
 在两处 `<ChatMessageAssistant>` 标签（history 和 streaming）各加：
@@ -561,10 +583,10 @@ const emit = defineEmits<{
 
 ```ts
 const emit = defineEmits<{
-  openAgentEdit: [agentId: string]
-  'select-tool-call': [id: string]
-  'show-thought-chain': [messageId?: string]
-}>()
+  openAgentEdit: [agentId: string];
+  "select-tool-call": [id: string];
+  "show-thought-chain": [messageId?: string];
+}>();
 ```
 
 在 `<ChatMessageList>` 标签加：
@@ -594,6 +616,7 @@ git commit -m "feat(chat): thread show-thought-chain event up to ChatroomPanel"
 ## Task 6: ChatroomPanel 思考链状态管理
 
 **Files:**
+
 - Modify: `src/renderer/src/views/ChatroomPanel.vue`
 
 - [ ] **Step 1: 加状态和 computed**
@@ -601,30 +624,30 @@ git commit -m "feat(chat): thread show-thought-chain event up to ChatroomPanel"
 在 `selectedToolCallId` ref 下方加：
 
 ```ts
-const showStreamingThought = ref(false)
-const selectedThoughtMessageId = ref<string | null>(null)
+const showStreamingThought = ref(false);
+const selectedThoughtMessageId = ref<string | null>(null);
 
 // 当前要展示在思考链面板的 blocks（agent 类型，不做转换）
-const thoughtChainBlocks = computed<import('@shared/types/agent').AssistantMessageBlock[] | null>(
+const thoughtChainBlocks = computed<import("@shared/types/agent").AssistantMessageBlock[] | null>(
   () => {
     if (showStreamingThought.value) {
-      return chatStore.streamingBlocks.filter((b) => !b.is_final)
+      return chatStore.streamingBlocks.filter((b) => !b.is_final);
     }
     if (selectedThoughtMessageId.value) {
-      const msg = chatStore.messages.find((m) => m.id === selectedThoughtMessageId.value)
-      if (!msg || msg.role !== 'assistant') return null
+      const msg = chatStore.messages.find((m) => m.id === selectedThoughtMessageId.value);
+      if (!msg || msg.role !== "assistant") return null;
       try {
         const blocks = JSON.parse(
           msg.content,
-        ) as import('@shared/types/agent').AssistantMessageBlock[]
-        return blocks.filter((b) => !b.is_final)
+        ) as import("@shared/types/agent").AssistantMessageBlock[];
+        return blocks.filter((b) => !b.is_final);
       } catch {
-        return null
+        return null;
       }
     }
-    return null
+    return null;
   },
-)
+);
 ```
 
 - [ ] **Step 2: 加事件处理器和 watch**
@@ -634,13 +657,13 @@ const thoughtChainBlocks = computed<import('@shared/types/agent').AssistantMessa
 ```ts
 function onShowThoughtChain(messageId?: string) {
   if (messageId) {
-    selectedThoughtMessageId.value = messageId
-    showStreamingThought.value = false
+    selectedThoughtMessageId.value = messageId;
+    showStreamingThought.value = false;
   } else {
-    showStreamingThought.value = true
-    selectedThoughtMessageId.value = null
+    showStreamingThought.value = true;
+    selectedThoughtMessageId.value = null;
   }
-  activeTab.value = 'preview'
+  activeTab.value = "preview";
 }
 ```
 
@@ -651,9 +674,9 @@ function onShowThoughtChain(messageId?: string) {
 watch(
   () => chatStore.isGenerating,
   (val) => {
-    if (!val) showStreamingThought.value = false
+    if (!val) showStreamingThought.value = false;
   },
-)
+);
 ```
 
 - [ ] **Step 3: 在 onSessionSelect 中重置**
@@ -662,11 +685,11 @@ watch(
 
 ```ts
 function onSessionSelect(id: string) {
-  selectedToolCallId.value = null
-  selectedThoughtMessageId.value = null
-  showStreamingThought.value = false
-  sessionStore.setActiveSession(id)
-  chatStore.fetchMessages(id)
+  selectedToolCallId.value = null;
+  selectedThoughtMessageId.value = null;
+  showStreamingThought.value = false;
+  sessionStore.setActiveSession(id);
+  chatStore.fetchMessages(id);
 }
 ```
 
@@ -713,6 +736,7 @@ git commit -m "feat(chat): manage thought-chain state in ChatroomPanel"
 ## Task 7: ChatFunctionPanel 接入 ThoughtChainPanel
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatFunctionPanel.vue`
 - Modify: `test/renderer/components/chat/ChatFunctionPanel.test.ts`
 
@@ -721,24 +745,29 @@ git commit -m "feat(chat): manage thought-chain state in ChatroomPanel"
 在 `test/renderer/components/chat/ChatFunctionPanel.test.ts` 末尾加：
 
 ```ts
-it('shows ThoughtChainPanel in preview tab when thoughtChainBlocks provided', () => {
+it("shows ThoughtChainPanel in preview tab when thoughtChainBlocks provided", () => {
   const blocks = [
-    { type: 'content', content: 'thinking', status: 'success', timestamp: 1 },
-    { type: 'tool_call', id: 'tc1', status: 'success', timestamp: 1,
-      tool_call: { id: 'tc1', name: 'exec', input: {}, output: 'ok' } },
-  ]
+    { type: "content", content: "thinking", status: "success", timestamp: 1 },
+    {
+      type: "tool_call",
+      id: "tc1",
+      status: "success",
+      timestamp: 1,
+      tool_call: { id: "tc1", name: "exec", input: {}, output: "ok" },
+    },
+  ];
   const wrapper = mount(ChatFunctionPanel, {
-    props: { activeTab: 'preview', toolCallBlocks: [], thoughtChainBlocks: blocks },
-  })
-  expect(wrapper.text()).toContain('思考过程')
-})
+    props: { activeTab: "preview", toolCallBlocks: [], thoughtChainBlocks: blocks },
+  });
+  expect(wrapper.text()).toContain("思考过程");
+});
 
-it('shows ContentDispatcher in preview tab when no thoughtChainBlocks', () => {
+it("shows ContentDispatcher in preview tab when no thoughtChainBlocks", () => {
   const wrapper = mount(ChatFunctionPanel, {
-    props: { activeTab: 'preview', toolCallBlocks: [], thoughtChainBlocks: null },
-  })
-  expect(wrapper.text()).toContain('暂无预览内容')
-})
+    props: { activeTab: "preview", toolCallBlocks: [], thoughtChainBlocks: null },
+  });
+  expect(wrapper.text()).toContain("暂无预览内容");
+});
 ```
 
 - [ ] **Step 2: 跑测试确认失败**
@@ -754,19 +783,19 @@ Expected: 新增两个测试 FAIL。
 在 `<script setup>` 加 import：
 
 ```ts
-import ThoughtChainPanel from './ThoughtChainPanel.vue'
-import type { AssistantMessageBlock as AgentBlock } from '@shared/types/agent'
+import ThoughtChainPanel from "./ThoughtChainPanel.vue";
+import type { AssistantMessageBlock as AgentBlock } from "@shared/types/agent";
 ```
 
 在 `defineProps` 加字段：
 
 ```ts
 defineProps<{
-  activeTab: 'tools' | 'preview'
-  toolCallBlocks: AssistantMessageBlock[]
-  selectedToolCallId?: string | null
-  thoughtChainBlocks?: AgentBlock[] | null
-}>()
+  activeTab: "tools" | "preview";
+  toolCallBlocks: AssistantMessageBlock[];
+  selectedToolCallId?: string | null;
+  thoughtChainBlocks?: AgentBlock[] | null;
+}>();
 ```
 
 将 `<ContentDispatcher v-else-if="activeTab === 'preview'">` 改为：

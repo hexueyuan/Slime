@@ -12,21 +12,22 @@
 
 ## 文件清单
 
-| 操作 | 路径 |
-|------|------|
-| 新建 | `src/renderer/src/components/settings/AgentSettings.vue` |
+| 操作 | 路径                                                      |
+| ---- | --------------------------------------------------------- |
+| 新建 | `src/renderer/src/components/settings/AgentSettings.vue`  |
 | 修改 | `src/renderer/src/components/settings/SettingsDialog.vue` |
-| 修改 | `src/renderer/src/components/chat/NewThread.vue` |
-| 修改 | `src/renderer/src/views/ChatroomPanel.vue` |
+| 修改 | `src/renderer/src/components/chat/NewThread.vue`          |
+| 修改 | `src/renderer/src/views/ChatroomPanel.vue`                |
 | 新建 | `test/renderer/components/settings/AgentSettings.test.ts` |
-| 修改 | `test/renderer/components/SettingsDialog.test.ts` |
-| 修改 | `test/renderer/views/ChatroomPanel.test.ts` |
+| 修改 | `test/renderer/components/SettingsDialog.test.ts`         |
+| 修改 | `test/renderer/views/ChatroomPanel.test.ts`               |
 
 ---
 
 ## Task 1: 新建 AgentSettings.vue
 
 **Files:**
+
 - Create: `src/renderer/src/components/settings/AgentSettings.vue`
 - Create: `test/renderer/components/settings/AgentSettings.test.ts`
 
@@ -35,141 +36,141 @@
 创建 `test/renderer/components/settings/AgentSettings.test.ts`：
 
 ```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { mount, flushPromises } from "@vue/test-utils";
+import { setActivePinia, createPinia } from "pinia";
 
-const mockInvoke = vi.fn()
-;(window as any).electron = {
+const mockInvoke = vi.fn();
+(window as any).electron = {
   ipcRenderer: {
     invoke: mockInvoke,
     on: vi.fn(() => vi.fn()),
     removeAllListeners: vi.fn(),
   },
-}
+};
 
-vi.mock('@/components/chat/AgentEditDialog.vue', () => ({
+vi.mock("@/components/chat/AgentEditDialog.vue", () => ({
   default: {
-    name: 'AgentEditDialog',
-    props: ['open', 'agentId'],
-    emits: ['update:open', 'saved'],
+    name: "AgentEditDialog",
+    props: ["open", "agentId"],
+    emits: ["update:open", "saved"],
     template: '<div data-testid="agent-edit-dialog" :data-open="open" :data-agent-id="agentId" />',
   },
-}))
-vi.mock('@/components/chat/AgentAvatar.vue', () => ({
+}));
+vi.mock("@/components/chat/AgentAvatar.vue", () => ({
   default: {
-    name: 'AgentAvatar',
-    props: ['avatar', 'size'],
+    name: "AgentAvatar",
+    props: ["avatar", "size"],
     template: '<div data-testid="agent-avatar" />',
   },
-}))
+}));
 
-import AgentSettings from '@/components/settings/AgentSettings.vue'
+import AgentSettings from "@/components/settings/AgentSettings.vue";
 
 const AGENTS = [
   {
-    id: 'hal-ai',
-    name: 'HalAI',
-    description: '内置助手',
+    id: "hal-ai",
+    name: "HalAI",
+    description: "内置助手",
     enabled: true,
     protected: true,
     avatar: null,
     config: {},
-    type: 'builtin',
+    type: "builtin",
     createdAt: 0,
     updatedAt: 0,
   },
   {
-    id: 'my-agent',
-    name: 'MyAgent',
-    description: '自定义',
+    id: "my-agent",
+    name: "MyAgent",
+    description: "自定义",
     enabled: true,
     protected: false,
     avatar: null,
     config: {},
-    type: 'custom',
+    type: "custom",
     createdAt: 0,
     updatedAt: 0,
   },
-]
+];
 
-describe('AgentSettings', () => {
+describe("AgentSettings", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
+    setActivePinia(createPinia());
     mockInvoke.mockImplementation(async (_ch: string, _name: string, method: string) => {
-      if (method === 'listAgents') return AGENTS
-      return null
-    })
-  })
+      if (method === "listAgents") return AGENTS;
+      return null;
+    });
+  });
 
-  it('renders agent rows after fetch', async () => {
-    const wrapper = mount(AgentSettings, { attachTo: document.body })
-    await flushPromises()
-    const rows = wrapper.findAll('[data-testid="agent-row"]')
-    expect(rows).toHaveLength(2)
-  })
+  it("renders agent rows after fetch", async () => {
+    const wrapper = mount(AgentSettings, { attachTo: document.body });
+    await flushPromises();
+    const rows = wrapper.findAll('[data-testid="agent-row"]');
+    expect(rows).toHaveLength(2);
+  });
 
-  it('shows 内置 badge for protected agent', async () => {
-    const wrapper = mount(AgentSettings, { attachTo: document.body })
-    await flushPromises()
-    expect(wrapper.text()).toContain('内置')
-  })
+  it("shows 内置 badge for protected agent", async () => {
+    const wrapper = mount(AgentSettings, { attachTo: document.body });
+    await flushPromises();
+    expect(wrapper.text()).toContain("内置");
+  });
 
-  it('hides delete button for protected agent', async () => {
-    const wrapper = mount(AgentSettings, { attachTo: document.body })
-    await flushPromises()
-    const rows = wrapper.findAll('[data-testid="agent-row"]')
-    const halRow = rows[0]
-    expect(halRow.find('[data-testid="delete-btn"]').exists()).toBe(false)
-  })
+  it("hides delete button for protected agent", async () => {
+    const wrapper = mount(AgentSettings, { attachTo: document.body });
+    await flushPromises();
+    const rows = wrapper.findAll('[data-testid="agent-row"]');
+    const halRow = rows[0];
+    expect(halRow.find('[data-testid="delete-btn"]').exists()).toBe(false);
+  });
 
-  it('shows delete button for non-protected agent', async () => {
-    const wrapper = mount(AgentSettings, { attachTo: document.body })
-    await flushPromises()
-    const rows = wrapper.findAll('[data-testid="agent-row"]')
-    const customRow = rows[1]
-    expect(customRow.find('[data-testid="delete-btn"]').exists()).toBe(true)
-  })
+  it("shows delete button for non-protected agent", async () => {
+    const wrapper = mount(AgentSettings, { attachTo: document.body });
+    await flushPromises();
+    const rows = wrapper.findAll('[data-testid="agent-row"]');
+    const customRow = rows[1];
+    expect(customRow.find('[data-testid="delete-btn"]').exists()).toBe(true);
+  });
 
-  it('opens dialog with no agentId on new agent click', async () => {
-    const wrapper = mount(AgentSettings, { attachTo: document.body })
-    await flushPromises()
-    await wrapper.find('[data-testid="new-agent-btn"]').trigger('click')
-    const dialog = document.querySelector('[data-testid="agent-edit-dialog"]') as HTMLElement
-    expect(dialog.dataset.open).toBe('true')
-    expect(dialog.dataset.agentId).toBeFalsy()
-  })
+  it("opens dialog with no agentId on new agent click", async () => {
+    const wrapper = mount(AgentSettings, { attachTo: document.body });
+    await flushPromises();
+    await wrapper.find('[data-testid="new-agent-btn"]').trigger("click");
+    const dialog = document.querySelector('[data-testid="agent-edit-dialog"]') as HTMLElement;
+    expect(dialog.dataset.open).toBe("true");
+    expect(dialog.dataset.agentId).toBeFalsy();
+  });
 
-  it('opens dialog with agentId on edit click', async () => {
-    const wrapper = mount(AgentSettings, { attachTo: document.body })
-    await flushPromises()
-    const rows = wrapper.findAll('[data-testid="agent-row"]')
-    await rows[1].find('[data-testid="edit-btn"]').trigger('click')
-    const dialog = document.querySelector('[data-testid="agent-edit-dialog"]') as HTMLElement
-    expect(dialog.dataset.open).toBe('true')
-    expect(dialog.dataset.agentId).toBe('my-agent')
-  })
+  it("opens dialog with agentId on edit click", async () => {
+    const wrapper = mount(AgentSettings, { attachTo: document.body });
+    await flushPromises();
+    const rows = wrapper.findAll('[data-testid="agent-row"]');
+    await rows[1].find('[data-testid="edit-btn"]').trigger("click");
+    const dialog = document.querySelector('[data-testid="agent-edit-dialog"]') as HTMLElement;
+    expect(dialog.dataset.open).toBe("true");
+    expect(dialog.dataset.agentId).toBe("my-agent");
+  });
 
-  it('calls deleteAgent and re-fetches on delete confirm', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+  it("calls deleteAgent and re-fetches on delete confirm", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockInvoke.mockImplementation(async (_ch: string, _name: string, method: string) => {
-      if (method === 'listAgents') return AGENTS
-      if (method === 'deleteAgent') return null
-      return null
-    })
-    const wrapper = mount(AgentSettings, { attachTo: document.body })
-    await flushPromises()
-    const rows = wrapper.findAll('[data-testid="agent-row"]')
-    await rows[1].find('[data-testid="delete-btn"]').trigger('click')
-    await flushPromises()
+      if (method === "listAgents") return AGENTS;
+      if (method === "deleteAgent") return null;
+      return null;
+    });
+    const wrapper = mount(AgentSettings, { attachTo: document.body });
+    await flushPromises();
+    const rows = wrapper.findAll('[data-testid="agent-row"]');
+    await rows[1].find('[data-testid="delete-btn"]').trigger("click");
+    await flushPromises();
     expect(mockInvoke).toHaveBeenCalledWith(
-      'presenter:call',
-      'agentConfigPresenter',
-      'deleteAgent',
-      ['my-agent'],
-    )
-  })
-})
+      "presenter:call",
+      "agentConfigPresenter",
+      "deleteAgent",
+      ["my-agent"],
+    );
+  });
+});
 ```
 
 - [ ] **Step 2: 运行测试确认失败**
@@ -186,32 +187,32 @@ pnpm test test/renderer/components/settings/AgentSettings.test.ts
 
 ```vue
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Icon } from '@iconify/vue'
-import { useAgentStore } from '@/stores/agent'
-import AgentAvatar from '@/components/chat/AgentAvatar.vue'
-import AgentEditDialog from '@/components/chat/AgentEditDialog.vue'
+import { ref, onMounted } from "vue";
+import { Icon } from "@iconify/vue";
+import { useAgentStore } from "@/stores/agent";
+import AgentAvatar from "@/components/chat/AgentAvatar.vue";
+import AgentEditDialog from "@/components/chat/AgentEditDialog.vue";
 
-const agentStore = useAgentStore()
+const agentStore = useAgentStore();
 
-const editOpen = ref(false)
-const editAgentId = ref<string | undefined>(undefined)
+const editOpen = ref(false);
+const editAgentId = ref<string | undefined>(undefined);
 
-onMounted(() => agentStore.fetchAgents())
+onMounted(() => agentStore.fetchAgents());
 
 function openNew() {
-  editAgentId.value = undefined
-  editOpen.value = true
+  editAgentId.value = undefined;
+  editOpen.value = true;
 }
 
 function openEdit(id: string) {
-  editAgentId.value = id
-  editOpen.value = true
+  editAgentId.value = id;
+  editOpen.value = true;
 }
 
 async function onDelete(id: string) {
-  if (!window.confirm('确定删除该 Agent？')) return
-  await agentStore.deleteAgent(id)
+  if (!window.confirm("确定删除该 Agent？")) return;
+  await agentStore.deleteAgent(id);
 }
 </script>
 
@@ -250,7 +251,7 @@ async function onDelete(id: string) {
             </span>
           </div>
           <div class="truncate text-xs text-muted-foreground">
-            {{ agent.description || '-' }}
+            {{ agent.description || "-" }}
           </div>
         </div>
         <div class="flex shrink-0 items-center gap-1">
@@ -309,6 +310,7 @@ git commit -m "feat(chat): add AgentSettings component"
 ## Task 2: SettingsDialog 新增 agents tab
 
 **Files:**
+
 - Modify: `src/renderer/src/components/settings/SettingsDialog.vue`
 - Modify: `test/renderer/components/SettingsDialog.test.ts`
 
@@ -317,12 +319,12 @@ git commit -m "feat(chat): add AgentSettings component"
 在 `test/renderer/components/SettingsDialog.test.ts` 末尾追加：
 
 ```typescript
-  it('should render agent tab button', () => {
-    mount(SettingsDialog, { props: { open: true }, attachTo: document.body })
-    const buttons = document.querySelectorAll('button')
-    const agentBtn = Array.from(buttons).find((b) => b.textContent?.trim() === 'Agent')
-    expect(agentBtn).not.toBeUndefined()
-  })
+it("should render agent tab button", () => {
+  mount(SettingsDialog, { props: { open: true }, attachTo: document.body });
+  const buttons = document.querySelectorAll("button");
+  const agentBtn = Array.from(buttons).find((b) => b.textContent?.trim() === "Agent");
+  expect(agentBtn).not.toBeUndefined();
+});
 ```
 
 - [ ] **Step 2: 运行测试确认失败**
@@ -416,22 +418,22 @@ pnpm test test/renderer/components/SettingsDialog.test.ts
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import GatewaySettings from './GatewaySettings.vue'
-import ProfileSettings from './ProfileSettings.vue'
-import GeneralSettings from './GeneralSettings.vue'
-import AgentSettings from './AgentSettings.vue'
+import { ref, onMounted, onUnmounted } from "vue";
+import GatewaySettings from "./GatewaySettings.vue";
+import ProfileSettings from "./ProfileSettings.vue";
+import GeneralSettings from "./GeneralSettings.vue";
+import AgentSettings from "./AgentSettings.vue";
 
-defineProps<{ open: boolean }>()
-const emit = defineEmits<{ 'update:open': [value: boolean] }>()
+defineProps<{ open: boolean }>();
+const emit = defineEmits<{ "update:open": [value: boolean] }>();
 
-const activeTab = ref<'profile' | 'gateway' | 'general' | 'agents'>('profile')
+const activeTab = ref<"profile" | "gateway" | "general" | "agents">("profile");
 
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') emit('update:open', false)
+  if (e.key === "Escape") emit("update:open", false);
 }
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+onMounted(() => window.addEventListener("keydown", onKeydown));
+onUnmounted(() => window.removeEventListener("keydown", onKeydown));
 </script>
 ```
 
@@ -455,6 +457,7 @@ git commit -m "feat(chat): add agents tab to SettingsDialog"
 ## Task 3: 移除 NewThread 新建入口，清理 ChatroomPanel
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/NewThread.vue`
 - Modify: `src/renderer/src/views/ChatroomPanel.vue`
 - Modify: `test/renderer/views/ChatroomPanel.test.ts`
@@ -465,41 +468,41 @@ git commit -m "feat(chat): add agents tab to SettingsDialog"
 
 ```vue
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Icon } from '@iconify/vue'
-import NewThreadInput from './NewThreadInput.vue'
-import { useAgentStore } from '@/stores/agent'
-import { useAgentSessionStore } from '@/stores/agentSession'
-import { useAgentChatStore } from '@/stores/agentChat'
-import type { Agent } from '@shared/types/agent'
+import { ref, onMounted } from "vue";
+import { Icon } from "@iconify/vue";
+import NewThreadInput from "./NewThreadInput.vue";
+import { useAgentStore } from "@/stores/agent";
+import { useAgentSessionStore } from "@/stores/agentSession";
+import { useAgentChatStore } from "@/stores/agentChat";
+import type { Agent } from "@shared/types/agent";
 
-const agentStore = useAgentStore()
-const sessionStore = useAgentSessionStore()
-const chatStore = useAgentChatStore()
+const agentStore = useAgentStore();
+const sessionStore = useAgentSessionStore();
+const chatStore = useAgentChatStore();
 
-const selectedAgentId = ref<string | null>(null)
+const selectedAgentId = ref<string | null>(null);
 
 onMounted(() => {
-  const halAi = agentStore.enabledAgents.find((a) => a.id === 'hal-ai')
+  const halAi = agentStore.enabledAgents.find((a) => a.id === "hal-ai");
   if (halAi) {
-    selectedAgentId.value = halAi.id
+    selectedAgentId.value = halAi.id;
   } else if (agentStore.enabledAgents.length > 0) {
-    selectedAgentId.value = agentStore.enabledAgents[0].id
+    selectedAgentId.value = agentStore.enabledAgents[0].id;
   }
-})
+});
 
 function getAvatarStyle(agent: Agent) {
-  if (!agent.avatar) return {}
-  if (agent.avatar.kind === 'lucide') {
-    return { color: agent.avatar.color ?? '#a855f7' }
+  if (!agent.avatar) return {};
+  if (agent.avatar.kind === "lucide") {
+    return { color: agent.avatar.color ?? "#a855f7" };
   }
-  return {}
+  return {};
 }
 
 async function onSend(content: string) {
-  if (!selectedAgentId.value) return
-  const session = await sessionStore.createSession(selectedAgentId.value)
-  await chatStore.sendMessage(session.id, content)
+  if (!selectedAgentId.value) return;
+  const session = await sessionStore.createSession(selectedAgentId.value);
+  await chatStore.sendMessage(session.id, content);
 }
 </script>
 
@@ -571,24 +574,24 @@ async function onSend(content: string) {
 在 `test/renderer/views/ChatroomPanel.test.ts` 中，将 NewThread mock 从：
 
 ```typescript
-vi.mock('@/components/chat/NewThread.vue', () => ({
+vi.mock("@/components/chat/NewThread.vue", () => ({
   default: {
-    name: 'NewThread',
-    emits: ['openAgentEdit'],
+    name: "NewThread",
+    emits: ["openAgentEdit"],
     template: '<div data-testid="new-thread" />',
   },
-}))
+}));
 ```
 
 改为：
 
 ```typescript
-vi.mock('@/components/chat/NewThread.vue', () => ({
+vi.mock("@/components/chat/NewThread.vue", () => ({
   default: {
-    name: 'NewThread',
+    name: "NewThread",
     template: '<div data-testid="new-thread" />',
   },
-}))
+}));
 ```
 
 - [ ] **Step 4: 运行测试确认通过**

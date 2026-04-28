@@ -50,9 +50,9 @@ is_final?: 0 | 1
 
 ```ts
 interface MessageTurn {
-  turnId: string
-  intermediates: ChatMessageRecord[]  // is_final = 0，按时间排序
-  final: ChatMessageRecord | null     // is_final = 1
+  turnId: string;
+  intermediates: ChatMessageRecord[]; // is_final = 0，按时间排序
+  final: ChatMessageRecord | null; // is_final = 1
 }
 ```
 
@@ -121,14 +121,14 @@ props: `intermediates: ChatMessageRecord[]`
 
 ## 改动范围
 
-| 文件 | 类型 |
-|------|------|
-| `src/main/db/agentDb.ts` | 修改：migration 增加两列 |
-| `src/main/presenter/agentChat/agentChatPresenter.ts` | 修改：生成 turnId，标记 is_final |
-| `src/shared/types/agent.d.ts` | 修改：AgentMessage 新增字段 |
-| `src/renderer/src/stores/agentChatStore.ts` | 修改：新增 turns computed，currentTurnId |
-| `src/renderer/src/components/chat/ChatMessageList.vue` | 修改：遍历 turns |
-| `src/renderer/src/components/chat/ChatMessageAssistant.vue` | 修改：加载态、思考链按钮 |
-| `src/renderer/src/components/chat/ThoughtChainPanel.vue` | 新增 |
-| `src/renderer/src/components/chat/ChatFunctionPanel.vue` | 修改：预览 Tab 分发逻辑 |
-| `src/renderer/src/components/ChatroomPanel.vue` | 修改：selectedTurnId，toolCallBlocks 聚合 |
+| 文件                                                        | 类型                                      |
+| ----------------------------------------------------------- | ----------------------------------------- |
+| `src/main/db/agentDb.ts`                                    | 修改：migration 增加两列                  |
+| `src/main/presenter/agentChat/agentChatPresenter.ts`        | 修改：生成 turnId，标记 is_final          |
+| `src/shared/types/agent.d.ts`                               | 修改：AgentMessage 新增字段               |
+| `src/renderer/src/stores/agentChatStore.ts`                 | 修改：新增 turns computed，currentTurnId  |
+| `src/renderer/src/components/chat/ChatMessageList.vue`      | 修改：遍历 turns                          |
+| `src/renderer/src/components/chat/ChatMessageAssistant.vue` | 修改：加载态、思考链按钮                  |
+| `src/renderer/src/components/chat/ThoughtChainPanel.vue`    | 新增                                      |
+| `src/renderer/src/components/chat/ChatFunctionPanel.vue`    | 修改：预览 Tab 分发逻辑                   |
+| `src/renderer/src/components/ChatroomPanel.vue`             | 修改：selectedTurnId，toolCallBlocks 聚合 |

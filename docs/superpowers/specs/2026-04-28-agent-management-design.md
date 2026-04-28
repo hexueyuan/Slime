@@ -26,6 +26,7 @@
 路径：`src/renderer/src/components/settings/AgentSettings.vue`
 
 **布局**：
+
 - 顶部：标题"Agent 管理" + 右侧"新建 Agent"按钮（Icon `lucide:plus`）
 - 列表：每行包含：
   - `AgentAvatar` 组件（复用现有）
@@ -35,6 +36,7 @@
   - 操作区：编辑按钮（`lucide:pencil`）+ 删除按钮（`lucide:trash-2`，protected agent 不显示）
 
 **交互**：
+
 - 点击编辑 → 打开 `AgentEditDialog`，传入 `agentId`
 - 点击新建 → 打开 `AgentEditDialog`，不传 `agentId`
 - 点击删除 → `window.confirm("确定删除该 Agent？")` → `agentStore.deleteAgent(id)` → `agentStore.fetchAgents()`

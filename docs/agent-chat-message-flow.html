@@ -1,0 +1,1948 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Chat — 消息管理流程分析</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #020617;
+        color: #e2e8f0;
+        font-family: "JetBrains Mono", monospace;
+        padding: 32px;
+        min-height: 100vh;
+      }
+      .header {
+        margin-bottom: 28px;
+      }
+      .header-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+      .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #f59e0b;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(1.3);
+        }
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #f1f5f9;
+      }
+      .subtitle {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 4px;
+      }
+
+      .diagram-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        overflow-x: auto;
+      }
+      .section-title {
+        font-size: 11px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 16px;
+      }
+
+      /* Summary cards */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 16px;
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .card-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      .card-dot.cyan {
+        background: #22d3ee;
+      }
+      .card-dot.emerald {
+        background: #34d399;
+      }
+      .card-dot.rose {
+        background: #fb7185;
+      }
+      .card-dot.amber {
+        background: #fbbf24;
+      }
+      .card-dot.violet {
+        background: #a78bfa;
+      }
+      .card h3 {
+        font-size: 11px;
+        font-weight: 600;
+        color: #cbd5e1;
+      }
+      .card ul {
+        list-style: none;
+      }
+      .card ul li {
+        font-size: 10px;
+        color: #64748b;
+        padding: 3px 0;
+        border-bottom: 1px solid #1e293b;
+      }
+      .card ul li:last-child {
+        border-bottom: none;
+      }
+      .card ul li span.ok {
+        color: #34d399;
+      }
+      .card ul li span.warn {
+        color: #fb7185;
+      }
+      .card ul li span.note {
+        color: #fbbf24;
+      }
+
+      /* Bug sections */
+      .bugs-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .bug-card {
+        background: #0f172a;
+        border: 1px solid #7f1d1d;
+        border-radius: 8px;
+        padding: 16px;
+      }
+      .bug-card .bug-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .bug-badge {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid #ef4444;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 9px;
+        color: #fca5a5;
+      }
+      .bug-card h3 {
+        font-size: 11px;
+        font-weight: 600;
+        color: #fca5a5;
+      }
+      .bug-card p {
+        font-size: 10px;
+        color: #94a3b8;
+        line-height: 1.6;
+        margin-top: 8px;
+      }
+      .bug-card code {
+        background: #1e293b;
+        border-radius: 3px;
+        padding: 0 4px;
+        font-size: 9px;
+        color: #e2e8f0;
+      }
+      .fix-hint {
+        margin-top: 10px;
+        padding: 8px;
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid #065f46;
+        border-radius: 4px;
+        font-size: 10px;
+        color: #6ee7b7;
+      }
+
+      footer {
+        font-size: 10px;
+        color: #334155;
+        text-align: center;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-title">
+        <div class="pulse-dot"></div>
+        <h1>Agent Chat — 消息管理流程分析</h1>
+      </div>
+      <div class="subtitle">v0.3 brave 分支 · 现状分析 + 已知问题</div>
+    </div>
+
+    <!-- DIAGRAM 1: 整体架构 -->
+    <div class="diagram-card">
+      <div class="section-title">整体架构 — 组件分层</div>
+      <svg viewBox="0 0 1000 420" width="100%" style="display: block">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5" />
+          </pattern>
+          <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
+          </marker>
+          <marker id="arr-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#22d3ee" />
+          </marker>
+          <marker id="arr-rose" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#fb7185" />
+          </marker>
+          <marker id="arr-emerald" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#34d399" />
+          </marker>
+          <marker id="arr-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#fbbf24" />
+          </marker>
+        </defs>
+        <rect width="1000" height="420" fill="url(#grid)" />
+
+        <!-- Renderer Layer label -->
+        <rect
+          x="10"
+          y="10"
+          width="300"
+          height="400"
+          rx="10"
+          fill="none"
+          stroke="#1e40af"
+          stroke-width="1"
+          stroke-dasharray="6,3"
+        />
+        <text
+          x="20"
+          y="30"
+          fill="#3b82f6"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+        >
+          RENDERER PROCESS
+        </text>
+
+        <!-- IPC Bridge label -->
+        <rect
+          x="340"
+          y="10"
+          width="100"
+          height="400"
+          rx="10"
+          fill="rgba(30,41,59,0.3)"
+          stroke="#334155"
+          stroke-width="1"
+          stroke-dasharray="4,4"
+        />
+        <text
+          x="390"
+          y="30"
+          fill="#475569"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          IPC
+        </text>
+        <text
+          x="390"
+          y="44"
+          fill="#334155"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          preload
+        </text>
+
+        <!-- Main Process label -->
+        <rect
+          x="460"
+          y="10"
+          width="530"
+          height="400"
+          rx="10"
+          fill="none"
+          stroke="#166534"
+          stroke-width="1"
+          stroke-dasharray="6,3"
+        />
+        <text
+          x="470"
+          y="30"
+          fill="#22c55e"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+        >
+          MAIN PROCESS
+        </text>
+
+        <!-- ===== RENDERER COMPONENTS ===== -->
+        <!-- ChatInput -->
+        <rect x="30" y="50" width="140" height="68" rx="6" fill="#020617" />
+        <rect
+          x="30"
+          y="50"
+          width="140"
+          height="68"
+          rx="6"
+          fill="rgba(8,51,68,0.4)"
+          stroke="#22d3ee"
+          stroke-width="1.5"
+        />
+        <text
+          x="100"
+          y="72"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="11"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          ChatInput.vue
+        </text>
+        <text
+          x="100"
+          y="88"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          textarea + send btn
+        </text>
+        <text
+          x="100"
+          y="104"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          ⚠ disabled 仅绑 pendingQ
+        </text>
+
+        <!-- ChatMessageList -->
+        <rect x="185" y="50" width="110" height="68" rx="6" fill="#020617" />
+        <rect
+          x="185"
+          y="50"
+          width="110"
+          height="68"
+          rx="6"
+          fill="rgba(8,51,68,0.4)"
+          stroke="#22d3ee"
+          stroke-width="1.5"
+        />
+        <text
+          x="240"
+          y="72"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          MessageList
+        </text>
+        <text
+          x="240"
+          y="88"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          messages[]
+        </text>
+        <text
+          x="240"
+          y="104"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          streamingBlocks
+        </text>
+
+        <!-- agentChat Store -->
+        <rect x="30" y="145" width="265" height="80" rx="6" fill="#020617" />
+        <rect
+          x="30"
+          y="145"
+          width="265"
+          height="80"
+          rx="6"
+          fill="rgba(8,51,68,0.5)"
+          stroke="#7dd3fc"
+          stroke-width="1.5"
+        />
+        <text
+          x="162"
+          y="167"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="11"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          agentChat.ts (Pinia Store)
+        </text>
+        <text
+          x="162"
+          y="183"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          messages[] · isGenerating · streamingBlocks
+        </text>
+        <text
+          x="162"
+          y="197"
+          fill="#fbbf24"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          sendMessage() → optimistic insert → chat() IPC
+        </text>
+        <text
+          x="162"
+          y="211"
+          fill="#fbbf24"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          retryLast() → remove local assistant → retryLastMessage() IPC
+        </text>
+
+        <!-- agentChatIpc -->
+        <rect x="30" y="250" width="265" height="80" rx="6" fill="#020617" />
+        <rect
+          x="30"
+          y="250"
+          width="265"
+          height="80"
+          rx="6"
+          fill="rgba(8,51,68,0.4)"
+          stroke="#0ea5e9"
+          stroke-width="1.5"
+        />
+        <text
+          x="162"
+          y="272"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="11"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          agentChatIpc.ts
+        </text>
+        <text
+          x="162"
+          y="288"
+          fill="#34d399"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          on(RESPONSE) → setStreamingState [filter sessionId ✓]
+        </text>
+        <text
+          x="162"
+          y="304"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          on(END) → fetchMessages ✓ / isGenerating=false ✗
+        </text>
+        <text
+          x="162"
+          y="320"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          on(ERROR) → setError [filter sessionId ✓]
+        </text>
+
+        <!-- agentSession Store -->
+        <rect x="30" y="350" width="265" height="50" rx="6" fill="#020617" />
+        <rect
+          x="30"
+          y="350"
+          width="265"
+          height="50"
+          rx="6"
+          fill="rgba(8,51,68,0.3)"
+          stroke="#38bdf8"
+          stroke-width="1"
+        />
+        <text
+          x="162"
+          y="370"
+          fill="#cbd5e1"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          agentSession.ts
+        </text>
+        <text
+          x="162"
+          y="386"
+          fill="#64748b"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          activeSessionId · sessions[]
+        </text>
+
+        <!-- ===== MAIN PROCESS COMPONENTS ===== -->
+        <!-- AgentChatPresenter -->
+        <rect x="475" y="45" width="240" height="120" rx="6" fill="#020617" />
+        <rect
+          x="475"
+          y="45"
+          width="240"
+          height="120"
+          rx="6"
+          fill="rgba(6,78,59,0.4)"
+          stroke="#34d399"
+          stroke-width="1.5"
+        />
+        <text
+          x="595"
+          y="68"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="11"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          AgentChatPresenter
+        </text>
+        <text
+          x="595"
+          y="84"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          sessionStates Map (idle/generating/error)
+        </text>
+        <text
+          x="595"
+          y="100"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          abortControllers Map
+        </text>
+        <text
+          x="595"
+          y="116"
+          fill="#fbbf24"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          chat() · stopGeneration() · retryLastMessage()
+        </text>
+        <text
+          x="595"
+          y="132"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          ⚠ chat() 无并发入口保护
+        </text>
+        <text
+          x="595"
+          y="148"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          ⚠ abort 时 assistant 消息不落 DB
+        </text>
+
+        <!-- contextBuilder -->
+        <rect x="475" y="185" width="240" height="80" rx="6" fill="#020617" />
+        <rect
+          x="475"
+          y="185"
+          width="240"
+          height="80"
+          rx="6"
+          fill="rgba(6,78,59,0.4)"
+          stroke="#34d399"
+          stroke-width="1.5"
+        />
+        <text
+          x="595"
+          y="207"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="11"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          contextBuilder.ts
+        </text>
+        <text
+          x="595"
+          y="223"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          buildContext(sessionId, newContent, db)
+        </text>
+        <text
+          x="595"
+          y="239"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          listBySession → recordToCoreMessages
+        </text>
+        <text
+          x="595"
+          y="255"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          ⚠ 读 DB 时 user 消息已写入 → 重复！
+        </text>
+
+        <!-- agentMessageDao -->
+        <rect x="475" y="285" width="240" height="65" rx="6" fill="#020617" />
+        <rect
+          x="475"
+          y="285"
+          width="240"
+          height="65"
+          rx="6"
+          fill="rgba(76,29,149,0.4)"
+          stroke="#a78bfa"
+          stroke-width="1.5"
+        />
+        <text
+          x="595"
+          y="307"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="11"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          agentMessageDao.ts
+        </text>
+        <text
+          x="595"
+          y="323"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          createMessage · listBySession · deleteMessage
+        </text>
+        <text
+          x="595"
+          y="339"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          getNextOrderSeq (MAX+1, 非事务)
+        </text>
+
+        <!-- SQLite DB -->
+        <rect x="475" y="368" width="110" height="40" rx="6" fill="#020617" />
+        <rect
+          x="475"
+          y="368"
+          width="110"
+          height="40"
+          rx="6"
+          fill="rgba(76,29,149,0.5)"
+          stroke="#a78bfa"
+          stroke-width="1.5"
+        />
+        <text
+          x="530"
+          y="385"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          SQLite DB
+        </text>
+        <text
+          x="530"
+          y="400"
+          fill="#a78bfa"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          agent_messages
+        </text>
+
+        <!-- LLM Gateway -->
+        <rect x="730" y="45" width="240" height="80" rx="6" fill="#020617" />
+        <rect
+          x="730"
+          y="45"
+          width="240"
+          height="80"
+          rx="6"
+          fill="rgba(120,53,15,0.3)"
+          stroke="#fbbf24"
+          stroke-width="1.5"
+        />
+        <text
+          x="850"
+          y="68"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="11"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          LLM Gateway
+        </text>
+        <text
+          x="850"
+          y="84"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          Fastify HTTP Server :port
+        </text>
+        <text
+          x="850"
+          y="100"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          Anthropic / OpenAI protocol
+        </text>
+        <text
+          x="850"
+          y="116"
+          fill="#64748b"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          router → balancer → circuit → keypool → outbound
+        </text>
+
+        <!-- toolPresenter -->
+        <rect x="730" y="145" width="240" height="55" rx="6" fill="#020617" />
+        <rect
+          x="730"
+          y="145"
+          width="240"
+          height="55"
+          rx="6"
+          fill="rgba(6,78,59,0.35)"
+          stroke="#4ade80"
+          stroke-width="1"
+        />
+        <text
+          x="850"
+          y="167"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          ToolPresenter
+        </text>
+        <text
+          x="850"
+          y="183"
+          fill="#94a3b8"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          read/write/edit/exec/ask_user/...
+        </text>
+
+        <!-- EventBus -->
+        <rect x="730" y="220" width="240" height="50" rx="6" fill="#020617" />
+        <rect
+          x="730"
+          y="220"
+          width="240"
+          height="50"
+          rx="6"
+          fill="rgba(251,146,60,0.3)"
+          stroke="#fb923c"
+          stroke-width="1.5"
+        />
+        <text
+          x="850"
+          y="242"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          EventBus
+        </text>
+        <text
+          x="850"
+          y="258"
+          fill="#fb923c"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          RESPONSE / END / ERROR events
+        </text>
+
+        <!-- ===== ARROWS ===== -->
+        <!-- ChatInput → Store -->
+        <line
+          x1="100"
+          y1="118"
+          x2="100"
+          y2="143"
+          stroke="#22d3ee"
+          stroke-width="1.5"
+          marker-end="url(#arr-cyan)"
+        />
+        <text x="106" y="134" fill="#22d3ee" font-family="'JetBrains Mono',monospace" font-size="8">
+          sendMessage()
+        </text>
+
+        <!-- MessageList → Store (read) -->
+        <line
+          x1="240"
+          y1="118"
+          x2="240"
+          y2="143"
+          stroke="#64748b"
+          stroke-width="1"
+          stroke-dasharray="3,2"
+          marker-end="url(#arr)"
+        />
+
+        <!-- Store → IPC (chat invoke) -->
+        <line
+          x1="162"
+          y1="225"
+          x2="162"
+          y2="248"
+          stroke="#22d3ee"
+          stroke-width="1.5"
+          marker-end="url(#arr-cyan)"
+        />
+
+        <!-- IPC → Store (events) -->
+        <line
+          x1="295"
+          y1="290"
+          x2="340"
+          y2="290"
+          stroke="#fb923c"
+          stroke-width="1.5"
+          marker-end="url(#arr-amber)"
+        />
+        <text x="297" y="285" fill="#fb923c" font-family="'JetBrains Mono',monospace" font-size="7">
+          stream events
+        </text>
+
+        <!-- IPC bridge → Presenter (chat call) -->
+        <line
+          x1="440"
+          y1="185"
+          x2="473"
+          y2="185"
+          stroke="#22d3ee"
+          stroke-width="1.5"
+          marker-end="url(#arr-cyan)"
+        />
+        <text x="441" y="179" fill="#22d3ee" font-family="'JetBrains Mono',monospace" font-size="7">
+          chat() invoke
+        </text>
+
+        <!-- Presenter → contextBuilder -->
+        <line
+          x1="595"
+          y1="165"
+          x2="595"
+          y2="183"
+          stroke="#34d399"
+          stroke-width="1.5"
+          marker-end="url(#arr-emerald)"
+        />
+        <text x="600" y="177" fill="#34d399" font-family="'JetBrains Mono',monospace" font-size="8">
+          buildContext()
+        </text>
+
+        <!-- Presenter → MessageDao (write user) -->
+        <line
+          x1="560"
+          y1="165"
+          x2="530"
+          y2="283"
+          stroke="#a78bfa"
+          stroke-width="1.5"
+          marker-end="url(#arr)"
+        />
+        <text x="493" y="238" fill="#a78bfa" font-family="'JetBrains Mono',monospace" font-size="8">
+          createMessage(user)
+        </text>
+
+        <!-- contextBuilder → MessageDao (read) -->
+        <line
+          x1="595"
+          y1="265"
+          x2="595"
+          y2="283"
+          stroke="#a78bfa"
+          stroke-width="1"
+          stroke-dasharray="3,2"
+          marker-end="url(#arr)"
+        />
+        <text x="600" y="278" fill="#fb7185" font-family="'JetBrains Mono',monospace" font-size="7">
+          listBySession ⚠
+        </text>
+
+        <!-- MessageDao → DB -->
+        <line
+          x1="530"
+          y1="350"
+          x2="530"
+          y2="366"
+          stroke="#a78bfa"
+          stroke-width="1.5"
+          marker-end="url(#arr)"
+        />
+
+        <!-- Presenter → LLM Gateway -->
+        <line
+          x1="715"
+          y1="105"
+          x2="728"
+          y2="105"
+          stroke="#fbbf24"
+          stroke-width="1.5"
+          marker-end="url(#arr-amber)"
+        />
+        <text x="716" y="99" fill="#fbbf24" font-family="'JetBrains Mono',monospace" font-size="7">
+          streamText()
+        </text>
+
+        <!-- Presenter → ToolPresenter -->
+        <line
+          x1="715"
+          y1="155"
+          x2="728"
+          y2="165"
+          stroke="#4ade80"
+          stroke-width="1"
+          marker-end="url(#arr-emerald)"
+        />
+
+        <!-- Presenter → EventBus -->
+        <line
+          x1="715"
+          y1="200"
+          x2="730"
+          y2="235"
+          stroke="#fb923c"
+          stroke-width="1.5"
+          marker-end="url(#arr-amber)"
+        />
+        <text x="718" y="222" fill="#fb923c" font-family="'JetBrains Mono',monospace" font-size="7">
+          sendToRenderer()
+        </text>
+
+        <!-- EventBus → IPC (events back) -->
+        <line
+          x1="730"
+          y1="265"
+          x2="440"
+          y2="290"
+          stroke="#fb923c"
+          stroke-width="1.5"
+          stroke-dasharray="4,2"
+          marker-end="url(#arr-amber)"
+        />
+
+        <!-- Bug label: duplicate user -->
+        <rect x="476" y="256" width="10" height="10" rx="2" fill="#ef4444" />
+        <text
+          x="481"
+          y="264"
+          fill="white"
+          font-family="'JetBrains Mono',monospace"
+          font-size="7"
+          font-weight="700"
+          text-anchor="middle"
+        >
+          !
+        </text>
+      </svg>
+    </div>
+
+    <!-- DIAGRAM 2: chat() 时序 -->
+    <div class="diagram-card">
+      <div class="section-title">chat() 执行时序 — 正常路径 vs 错误路径</div>
+      <svg viewBox="0 0 1000 520" width="100%" style="display: block">
+        <defs>
+          <pattern id="grid2" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5" />
+          </pattern>
+          <marker id="arr2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
+          </marker>
+          <marker id="arr2-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#22d3ee" />
+          </marker>
+          <marker id="arr2-rose" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#fb7185" />
+          </marker>
+          <marker
+            id="arr2-emerald"
+            markerWidth="8"
+            markerHeight="6"
+            refX="7"
+            refY="3"
+            orient="auto"
+          >
+            <polygon points="0 0, 8 3, 0 6" fill="#34d399" />
+          </marker>
+          <marker id="arr2-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#fbbf24" />
+          </marker>
+          <marker id="arr2-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a78bfa" />
+          </marker>
+        </defs>
+        <rect width="1000" height="520" fill="url(#grid2)" />
+
+        <!-- Column headers -->
+        <rect
+          x="20"
+          y="10"
+          width="110"
+          height="30"
+          rx="4"
+          fill="rgba(8,51,68,0.5)"
+          stroke="#22d3ee"
+          stroke-width="1"
+        />
+        <text
+          x="75"
+          y="29"
+          fill="#22d3ee"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          Renderer Store
+        </text>
+
+        <rect
+          x="165"
+          y="10"
+          width="110"
+          height="30"
+          rx="4"
+          fill="rgba(6,78,59,0.5)"
+          stroke="#34d399"
+          stroke-width="1"
+        />
+        <text
+          x="220"
+          y="29"
+          fill="#34d399"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          AgentChatPresenter
+        </text>
+
+        <rect
+          x="320"
+          y="10"
+          width="110"
+          height="30"
+          rx="4"
+          fill="rgba(6,78,59,0.4)"
+          stroke="#4ade80"
+          stroke-width="1"
+        />
+        <text
+          x="375"
+          y="29"
+          fill="#4ade80"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          contextBuilder
+        </text>
+
+        <rect
+          x="475"
+          y="10"
+          width="110"
+          height="30"
+          rx="4"
+          fill="rgba(76,29,149,0.4)"
+          stroke="#a78bfa"
+          stroke-width="1"
+        />
+        <text
+          x="530"
+          y="29"
+          fill="#a78bfa"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          MessageDAO / DB
+        </text>
+
+        <rect
+          x="630"
+          y="10"
+          width="110"
+          height="30"
+          rx="4"
+          fill="rgba(120,53,15,0.3)"
+          stroke="#fbbf24"
+          stroke-width="1"
+        />
+        <text
+          x="685"
+          y="29"
+          fill="#fbbf24"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          LLM Gateway
+        </text>
+
+        <rect
+          x="785"
+          y="10"
+          width="110"
+          height="30"
+          rx="4"
+          fill="rgba(251,146,60,0.3)"
+          stroke="#fb923c"
+          stroke-width="1"
+        />
+        <text
+          x="840"
+          y="29"
+          fill="#fb923c"
+          font-family="'JetBrains Mono',monospace"
+          font-size="10"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          EventBus
+        </text>
+
+        <!-- Lifelines -->
+        <line
+          x1="75"
+          y1="40"
+          x2="75"
+          y2="510"
+          stroke="#22d3ee"
+          stroke-width="0.5"
+          stroke-dasharray="4,4"
+        />
+        <line
+          x1="220"
+          y1="40"
+          x2="220"
+          y2="510"
+          stroke="#34d399"
+          stroke-width="0.5"
+          stroke-dasharray="4,4"
+        />
+        <line
+          x1="375"
+          y1="40"
+          x2="375"
+          y2="510"
+          stroke="#4ade80"
+          stroke-width="0.5"
+          stroke-dasharray="4,4"
+        />
+        <line
+          x1="530"
+          y1="40"
+          x2="530"
+          y2="510"
+          stroke="#a78bfa"
+          stroke-width="0.5"
+          stroke-dasharray="4,4"
+        />
+        <line
+          x1="685"
+          y1="40"
+          x2="685"
+          y2="510"
+          stroke="#fbbf24"
+          stroke-width="0.5"
+          stroke-dasharray="4,4"
+        />
+        <line
+          x1="840"
+          y1="40"
+          x2="840"
+          y2="510"
+          stroke="#fb923c"
+          stroke-width="0.5"
+          stroke-dasharray="4,4"
+        />
+
+        <!-- Step 1: sendMessage -->
+        <text x="14" y="63" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ①
+        </text>
+        <line
+          x1="75"
+          y1="60"
+          x2="218"
+          y2="60"
+          stroke="#22d3ee"
+          stroke-width="1.5"
+          marker-end="url(#arr2-cyan)"
+        />
+        <rect x="80" y="50" width="130" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="145"
+          y="61"
+          fill="#22d3ee"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          chat(sessionId, content)
+        </text>
+        <!-- optimistic insert label -->
+        <rect
+          x="20"
+          y="68"
+          width="110"
+          height="14"
+          rx="2"
+          fill="rgba(34,211,238,0.1)"
+          stroke="#22d3ee"
+          stroke-width="0.5"
+        />
+        <text
+          x="75"
+          y="79"
+          fill="#7dd3fc"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          optimistic insert (local)
+        </text>
+
+        <!-- Step 2: set generating + createMessage(user) -->
+        <text x="14" y="103" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ②
+        </text>
+        <line
+          x1="220"
+          y1="100"
+          x2="528"
+          y2="100"
+          stroke="#a78bfa"
+          stroke-width="1.5"
+          marker-end="url(#arr2-violet)"
+        />
+        <rect x="225" y="90" width="295" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="372"
+          y="101"
+          fill="#a78bfa"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          createMessage(user) — 写 DB ← 已写！
+        </text>
+
+        <!-- Bug marker -->
+        <rect
+          x="880"
+          y="90"
+          width="106"
+          height="30"
+          rx="4"
+          fill="rgba(239,68,68,0.15)"
+          stroke="#ef4444"
+          stroke-width="1"
+        />
+        <text
+          x="933"
+          y="103"
+          fill="#fca5a5"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          ⚠ BUG ROOT
+        </text>
+        <text
+          x="933"
+          y="115"
+          fill="#fca5a5"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          user 已在 DB 中
+        </text>
+        <line
+          x1="880"
+          y1="105"
+          x2="532"
+          y2="105"
+          stroke="#ef4444"
+          stroke-width="0.5"
+          stroke-dasharray="3,2"
+        />
+
+        <!-- Step 3: buildContext reads DB -->
+        <text x="14" y="143" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ③
+        </text>
+        <line
+          x1="220"
+          y1="140"
+          x2="373"
+          y2="140"
+          stroke="#4ade80"
+          stroke-width="1.5"
+          marker-end="url(#arr2-emerald)"
+        />
+        <rect x="225" y="130" width="140" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="295"
+          y="141"
+          fill="#4ade80"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          buildContext()
+        </text>
+
+        <line
+          x1="375"
+          y1="155"
+          x2="528"
+          y2="155"
+          stroke="#a78bfa"
+          stroke-width="1"
+          marker-end="url(#arr2-violet)"
+        />
+        <rect x="380" y="145" width="140" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="450"
+          y="156"
+          fill="#a78bfa"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          listBySession(db)
+        </text>
+
+        <line
+          x1="530"
+          y1="170"
+          x2="377"
+          y2="170"
+          stroke="#a78bfa"
+          stroke-width="1"
+          stroke-dasharray="4,2"
+          marker-end="url(#arr2-violet)"
+        />
+        <rect x="380" y="160" width="145" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="452"
+          y="171"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          返回含刚写 user 的历史
+        </text>
+
+        <!-- Bug: duplicate -->
+        <rect
+          x="375"
+          y="182"
+          width="155"
+          height="20"
+          rx="3"
+          fill="rgba(239,68,68,0.2)"
+          stroke="#ef4444"
+          stroke-width="1"
+        />
+        <text
+          x="452"
+          y="196"
+          fill="#fca5a5"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          ⚠ messages 末尾 user 重复！
+        </text>
+
+        <!-- Step 4: streamText -->
+        <text x="14" y="225" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ④
+        </text>
+        <line
+          x1="220"
+          y1="222"
+          x2="683"
+          y2="222"
+          stroke="#fbbf24"
+          stroke-width="1.5"
+          marker-end="url(#arr2-amber)"
+        />
+        <rect x="225" y="212" width="450" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="450"
+          y="223"
+          fill="#fbbf24"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          streamText({ messages: [...history, user, user] }) ← 含重复 user
+        </text>
+
+        <!-- Step 5: streaming RESPONSE events -->
+        <text x="14" y="263" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ⑤
+        </text>
+        <line
+          x1="840"
+          y1="260"
+          x2="77"
+          y2="260"
+          stroke="#fb923c"
+          stroke-width="1"
+          stroke-dasharray="4,2"
+          marker-end="url(#arr2-amber)"
+        />
+        <rect x="300" y="250" width="200" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="400"
+          y="261"
+          fill="#fb923c"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          RESPONSE event (streaming blocks)
+        </text>
+        <line
+          x1="685"
+          y1="240"
+          x2="838"
+          y2="260"
+          stroke="#fbbf24"
+          stroke-width="1"
+          stroke-dasharray="3,2"
+        />
+
+        <!-- Step 6: loop end → save assistant / fork: abort -->
+        <!-- Normal path -->
+        <text x="14" y="313" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ⑥a
+        </text>
+        <rect
+          x="160"
+          y="298"
+          width="130"
+          height="16"
+          rx="3"
+          fill="rgba(52,211,153,0.1)"
+          stroke="#34d399"
+          stroke-width="0.5"
+        />
+        <text
+          x="225"
+          y="309"
+          fill="#34d399"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          正常结束 (no tool calls)
+        </text>
+
+        <line
+          x1="220"
+          y1="318"
+          x2="528"
+          y2="318"
+          stroke="#a78bfa"
+          stroke-width="1.5"
+          marker-end="url(#arr2-violet)"
+        />
+        <rect x="225" y="308" width="295" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="372"
+          y="319"
+          fill="#a78bfa"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          createMessage(assistant, blocks) — 写 DB ✓
+        </text>
+
+        <!-- Abort path -->
+        <text x="14" y="353" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ⑥b
+        </text>
+        <rect
+          x="160"
+          y="338"
+          width="130"
+          height="16"
+          rx="3"
+          fill="rgba(239,68,68,0.1)"
+          stroke="#ef4444"
+          stroke-width="0.5"
+        />
+        <text
+          x="225"
+          y="349"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          abort / stopGeneration()
+        </text>
+
+        <line
+          x1="220"
+          y1="358"
+          x2="528"
+          y2="358"
+          stroke="#fb7185"
+          stroke-width="1.5"
+          stroke-dasharray="5,3"
+          marker-end="url(#arr2-rose)"
+        />
+        <rect x="225" y="348" width="295" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="372"
+          y="359"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          ⚠ 不写 assistant 消息！仅推 END 事件
+        </text>
+
+        <!-- Step 7: END event -->
+        <text x="14" y="393" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ⑦
+        </text>
+        <line
+          x1="220"
+          y1="390"
+          x2="838"
+          y2="390"
+          stroke="#fb923c"
+          stroke-width="1.5"
+          marker-end="url(#arr2-amber)"
+        />
+        <rect x="350" y="380" width="180" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="440"
+          y="391"
+          fill="#fb923c"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          sendToRenderer(END, {sessionId})
+        </text>
+
+        <line
+          x1="840"
+          y1="400"
+          x2="77"
+          y2="400"
+          stroke="#fb923c"
+          stroke-width="1"
+          stroke-dasharray="4,2"
+          marker-end="url(#arr2-amber)"
+        />
+        <!-- Bug: END not filtered -->
+        <rect
+          x="880"
+          y="390"
+          width="106"
+          height="30"
+          rx="4"
+          fill="rgba(239,68,68,0.15)"
+          stroke="#ef4444"
+          stroke-width="1"
+        />
+        <text
+          x="933"
+          y="403"
+          fill="#fca5a5"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          ⚠ BUG
+        </text>
+        <text
+          x="933"
+          y="415"
+          fill="#fca5a5"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          无 sessionId 过滤
+        </text>
+        <line
+          x1="880"
+          y1="405"
+          x2="78"
+          y2="405"
+          stroke="#ef4444"
+          stroke-width="0.5"
+          stroke-dasharray="3,2"
+        />
+
+        <!-- Step 8: fetchMessages -->
+        <text x="14" y="433" fill="#475569" font-family="'JetBrains Mono',monospace" font-size="8">
+          ⑧
+        </text>
+        <rect
+          x="20"
+          y="420"
+          width="110"
+          height="16"
+          rx="3"
+          fill="rgba(34,211,238,0.1)"
+          stroke="#22d3ee"
+          stroke-width="0.5"
+        />
+        <text
+          x="75"
+          y="431"
+          fill="#22d3ee"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          END handler
+        </text>
+
+        <line
+          x1="75"
+          y1="436"
+          x2="528"
+          y2="436"
+          stroke="#a78bfa"
+          stroke-width="1"
+          marker-end="url(#arr2-violet)"
+        />
+        <rect x="80" y="426" width="440" height="14" rx="2" fill="#0f172a" />
+        <text
+          x="300"
+          y="437"
+          fill="#a78bfa"
+          font-family="'JetBrains Mono',monospace"
+          font-size="9"
+          text-anchor="middle"
+        >
+          fetchMessages → listBySession → refresh local messages[]
+        </text>
+
+        <line
+          x1="530"
+          y1="450"
+          x2="77"
+          y2="450"
+          stroke="#a78bfa"
+          stroke-width="1"
+          stroke-dasharray="3,2"
+          marker-end="url(#arr2-violet)"
+        />
+        <text
+          x="300"
+          y="462"
+          fill="#64748b"
+          font-family="'JetBrains Mono',monospace"
+          font-size="8"
+          text-anchor="middle"
+        >
+          abort 时: 仅有 user，无 assistant → 用户只看到自己的消息
+        </text>
+
+        <!-- isGenerating reset note -->
+        <rect
+          x="20"
+          y="468"
+          width="110"
+          height="28"
+          rx="3"
+          fill="rgba(251,146,60,0.1)"
+          stroke="#fb923c"
+          stroke-width="0.5"
+        />
+        <text
+          x="75"
+          y="480"
+          fill="#fbbf24"
+          font-family="'JetBrains Mono',monospace"
+          font-size="7"
+          text-anchor="middle"
+        >
+          isGenerating=false
+        </text>
+        <text
+          x="75"
+          y="491"
+          fill="#fb7185"
+          font-family="'JetBrains Mono',monospace"
+          font-size="7"
+          text-anchor="middle"
+        >
+          ⚠ 任意 session END 触发
+        </text>
+      </svg>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>正常工作的部分</h3>
+        </div>
+        <ul>
+          <li><span class="ok">✓</span> per-session AbortController 独立</li>
+          <li><span class="ok">✓</span> RESPONSE 事件有 sessionId 过滤</li>
+          <li><span class="ok">✓</span> ERROR 事件有 sessionId 过滤</li>
+          <li><span class="ok">✓</span> agentic loop tool call 内存维护正确</li>
+          <li><span class="ok">✓</span> 乐观插入 user 消息即时渲染</li>
+          <li><span class="ok">✓</span> retryLast 本地即时移除 assistant</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>已知 Bug 根因</h3>
+        </div>
+        <ul>
+          <li><span class="warn">A</span> user 先写 DB 再 buildContext → 重复</li>
+          <li><span class="warn">B</span> abort 时 assistant 消息不落 DB</li>
+          <li><span class="warn">C</span> END 不过滤 sessionId → isGenerating 误置</li>
+          <li><span class="warn">D</span> chat() 无并发入口保护</li>
+          <li><span class="warn">E</span> 历史 tool_call 退化为纯文本传给 LLM</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>修复方向</h3>
+        </div>
+        <ul>
+          <li><span class="note">A</span> 先 buildContext，再写 user 到 DB</li>
+          <li><span class="note">B</span> abort 分支也 createMessage(assistant)</li>
+          <li><span class="note">C</span> END handler 加 sessionId === activeId 判断</li>
+          <li><span class="note">D</span> chat() 开头检查 sessionState === generating</li>
+          <li><span class="note">E</span> 历史重建用结构化 tool-call parts（可选）</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bug detail cards -->
+    <div class="bugs-grid">
+      <div class="bug-card">
+        <div class="bug-header">
+          <div class="bug-badge">BUG A · 消息重复</div>
+          <h3>user 消息被发送两次</h3>
+        </div>
+        <p>
+          <code>chat()</code> 第 216 行先调
+          <code>createMessage(db, {role:"user",...})</code> 将消息写入 DB， 紧接着第 226 行调
+          <code>buildContext(sessionId, content, db)</code>。 <code>buildContext</code> 内部
+          <code>listBySession(db, sessionId)</code> 读出全部历史， 此时刚写入的 user
+          消息已经在其中，最终构建的 messages 末尾变为：
+          <code>...history, {role:"user", content}, {role:"user", content}</code>——
+          同一条消息出现两次，LLM 报 <em>"No output generated"</em> 或返回空。
+        </p>
+        <div class="fix-hint">
+          修复：交换顺序——先 buildContext（此时 DB 无当前 user 消息），再 createMessage。
+        </div>
+      </div>
+      <div class="bug-card">
+        <div class="bug-header">
+          <div class="bug-badge">BUG B · assistant 消息丢失</div>
+          <h3>abort 后刷新只剩 user 消息</h3>
+        </div>
+        <p>
+          <code>stopGeneration()</code> 触发 AbortController，<code>chat()</code> catch 分支检测到
+          <code>abortSignal.aborted</code> 后直接推 END 事件然后 return，
+          <strong>不写 assistant 消息到 DB</strong>。 END 事件触发 <code>fetchMessages</code> 重新从
+          DB 加载，此时只有 user 消息， 已经渲染的 streaming blocks 被清空，用户看到对话"缺一半"。
+        </p>
+        <div class="fix-hint">
+          修复：abort 分支中，若 blocks 非空，同样 createMessage(assistant, blocks,
+          status:"aborted")。
+        </div>
+      </div>
+      <div class="bug-card">
+        <div class="bug-header">
+          <div class="bug-badge">BUG C · 状态错误重置</div>
+          <h3>isGenerating 被其他 session END 误清</h3>
+        </div>
+        <p>
+          <code>agentChatIpc.ts</code> 第 44 行：<code>store.isGenerating = false</code> 在 END
+          handler 中无条件执行，不检查 <code>d.sessionId === activeSessionId()</code>。 若用户在
+          session A 生成中切换到 session B，session A 的 END 事件到来时， session B 的 isGenerating
+          被置 false，发送按钮恢复，用户发出第二条消息， 与主进程仍在运行的 session A loop
+          产生竞态。
+        </p>
+        <div class="fix-hint">
+          修复：END handler 加一行 <code>if (d.sessionId !== activeSessionId()) return</code> 在
+          isGenerating 重置之前。
+        </div>
+      </div>
+      <div class="bug-card">
+        <div class="bug-header">
+          <div class="bug-badge">BUG D · 无并发保护</div>
+          <h3>主进程 chat() 可被重复调用</h3>
+        </div>
+        <p>
+          <code>AgentChatPresenter.chat()</code> 进入时直接 set state = generating，
+          但没有检查当前是否已在 generating。 若渲染进程侧的 isGenerating 因 Bug C
+          被误清，用户可以触发第二次 chat()， 主进程会为同一 sessionId 启动两个并行的 agentic loop，
+          共享同一 <code>messages[]</code> 上下文（contextBuilder 每次从 DB 重建）， 但
+          assistantMessageId 不同，写 DB 时产生两条 assistant 消息。
+        </p>
+        <div class="fix-hint">
+          修复：chat() 开头检查
+          <code>if (this.sessionStates.get(sessionId) === "generating") return</code>。
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      agent-chat-message-flow.html · Slime v0.3 brave · 分析基于 agentChatPresenter.ts /
+      contextBuilder.ts / agentChat.ts / agentChatIpc.ts
+    </footer>
+  </body>
+</html>
