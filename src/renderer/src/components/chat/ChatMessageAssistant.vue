@@ -20,6 +20,11 @@ const props = defineProps<{
   agentId?: string;
   showTimestamp?: boolean;
   isLast?: boolean;
+  selectedToolCallId?: string | null;
+}>();
+
+const emit = defineEmits<{
+  "select-tool-call": [id: string];
 }>();
 
 const chatStore = useAgentChatStore();
@@ -159,7 +164,13 @@ function regenerate() {
             class="mb-2 w-full max-w-3xl"
           >
             <div
-              class="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground"
+              class="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-muted/30"
+              :class="
+                selectedToolCallId && block.id && selectedToolCallId === block.id
+                  ? 'border-violet-500/60 bg-violet-500/10'
+                  : 'border-border'
+              "
+              @click="block.id && emit('select-tool-call', block.id)"
             >
               <svg
                 v-if="block.status === 'loading'"
