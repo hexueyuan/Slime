@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AssistantMessageBlock } from "@shared/types/agent";
+import type { AssistantMessageBlock } from "@shared/types/chat";
 import ToolPanel from "@/components/function/ToolPanel.vue";
 import ContentDispatcher from "@/components/function/ContentDispatcher.vue";
 import { useContentStore } from "@/stores/content";
