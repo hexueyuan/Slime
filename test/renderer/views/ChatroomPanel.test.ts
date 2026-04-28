@@ -23,7 +23,6 @@ vi.mock("@/components/chat/SessionList.vue", () => ({
 vi.mock("@/components/chat/NewThread.vue", () => ({
   default: {
     name: "NewThread",
-    emits: ["openAgentEdit"],
     template: '<div data-testid="new-thread" />',
   },
 }));

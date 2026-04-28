@@ -187,7 +187,7 @@ function onShowThoughtChain(messageId?: string) {
     <div ref="mainRef" class="flex min-w-0 flex-1 overflow-hidden">
       <!-- Center: Chat area -->
       <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
-        <NewThread v-if="!sessionStore.activeSessionId" @open-agent-edit="openAgentEdit()" />
+        <NewThread v-if="!sessionStore.activeSessionId" />
         <ChatView
           v-else
           :selected-tool-call-id="selectedToolCallId"

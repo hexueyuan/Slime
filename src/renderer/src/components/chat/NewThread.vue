@@ -7,10 +7,6 @@ import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
 import type { Agent } from "@shared/types/agent";
 
-defineEmits<{
-  openAgentEdit: [];
-}>();
-
 const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
 const chatStore = useAgentChatStore();
@@ -78,15 +74,6 @@ async function onSend(content: string) {
             <Icon icon="lucide:bot" class="h-4 w-4 text-violet-400" />
           </template>
           {{ agent.name }}
-        </button>
-
-        <!-- New Agent button -->
-        <button
-          class="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground hover:border-muted-foreground hover:text-foreground"
-          @click="$emit('openAgentEdit')"
-        >
-          <Icon icon="lucide:plus" class="h-3.5 w-3.5" />
-          新建 Agent
         </button>
       </div>
     </div>
