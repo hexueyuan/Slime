@@ -12,7 +12,7 @@ import { useContentStore } from "@/stores/content";
 import { setupAgentChatIpc } from "@/stores/agentChatIpc";
 import { useSplitPane } from "@/composables/useSplitPane";
 import { AGENT_EVENTS, SESSION_EVENTS } from "@shared/events";
-import type { AssistantMessageBlock } from "@shared/types/chat";
+import type { AssistantMessageBlock, BlockStatus } from "@shared/types/chat";
 
 const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
@@ -127,7 +127,7 @@ const toolCallBlocks = computed<AssistantMessageBlock[]>(() => {
     return {
       id: b.id,
       type: "tool_call",
-      status: b.status,
+      status: (b.status === "pending" ? "loading" : b.status) as BlockStatus,
       timestamp: b.timestamp,
       tool_call: {
         name: b.tool_call.name,

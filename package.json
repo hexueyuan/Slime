@@ -23,7 +23,7 @@
     "test": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest",
     "test:coverage": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest --coverage",
     "test:watch": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest --watch",
-    "postinstall": "electron-builder install-app-deps && simple-git-hooks"
+    "postinstall": "electron-builder install-app-deps && simple-git-hooks && npx playwright install chromium"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.71",
@@ -39,6 +39,7 @@
     "fastify": "^5.8.5",
     "markstream-vue": "0.0.13-beta.4",
     "pinia": "^3.0.4",
+    "playwright-core": "^1.52.0",
     "vue": "^3.5.31",
     "vue-draggable-plus": "^0.6.1",
     "vue-echarts": "^8.0.1",
@@ -98,6 +99,7 @@
       "electron",
       "electron-winstaller",
       "esbuild",
+      "playwright-core",
       "simple-git-hooks"
     ]
   }

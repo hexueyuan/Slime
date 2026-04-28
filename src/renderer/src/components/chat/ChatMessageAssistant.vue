@@ -96,17 +96,6 @@ function getBlockContent(idx: number, block: AssistantMessageBlock): string {
   return debouncedContents.value.get(idx) ?? block.content ?? "";
 }
 
-function formatToolInput(input: unknown): string {
-  if (!input) return "";
-  if (typeof input === "string") return input.slice(0, 100);
-  try {
-    const str = JSON.stringify(input);
-    return str.length > 100 ? str.slice(0, 100) + "..." : str;
-  } catch {
-    return "";
-  }
-}
-
 const copied = ref(false);
 
 function copyMessage() {

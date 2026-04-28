@@ -9,7 +9,6 @@ import type {
   EvolutionContext,
 } from "@shared/types/evolution";
 import type { GitPresenter } from "./gitPresenter";
-import type { ConfigPresenter } from "./configPresenter";
 import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
@@ -36,10 +35,7 @@ export class EvolutionPresenter implements IEvolutionPresenter {
   };
   rollbackInProgress = false;
 
-  constructor(
-    private git: GitPresenter,
-    private config: ConfigPresenter,
-  ) {}
+  constructor(private git: GitPresenter) {}
 
   getStatus(): EvolutionStatus {
     return {

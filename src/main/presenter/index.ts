@@ -51,7 +51,7 @@ export class Presenter implements IPresenter {
     this.filePresenter = new FilePresenter(paths.effectiveProjectRoot);
     this.contentPresenter = new ContentPresenter();
     this.gitPresenter = new GitPresenter(paths.effectiveProjectRoot);
-    this.evolutionPresenter = new EvolutionPresenter(this.gitPresenter, this.configPresenter);
+    this.evolutionPresenter = new EvolutionPresenter(this.gitPresenter);
     this.toolPresenter = new ToolPresenter(
       this.filePresenter,
       this.contentPresenter,

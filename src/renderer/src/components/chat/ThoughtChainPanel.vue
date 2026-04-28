@@ -2,7 +2,7 @@
 import { Icon } from "@iconify/vue";
 import type { AssistantMessageBlock } from "@shared/types/agent";
 
-const props = defineProps<{
+defineProps<{
   blocks: AssistantMessageBlock[];
   selectedToolCallId?: string | null;
 }>();
