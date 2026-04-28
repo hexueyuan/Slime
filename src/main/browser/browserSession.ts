@@ -66,7 +66,7 @@ export class BrowserSession {
   private idleTimer: NodeJS.Timeout | null = null;
   private refCounter = 0;
 
-  async ensureReady(): Promise<Page> {
+  private async ensureReady(): Promise<Page> {
     if (!this.browser || !this.page) {
       this.browser = await chromium.launch({ headless: true });
       this.page = await this.browser.newPage();
@@ -114,7 +114,7 @@ export class BrowserSession {
     const page = await this.ensureReady();
     this.refMap.clear();
     this.refCounter = 0;
-    const tree = await (page.accessibility as any).snapshot();
+    const tree = await (page as any).accessibility.snapshot();
     const lines: string[] = [];
     this._walkTree(tree, 0, lines);
     return lines.join("\n");
@@ -145,12 +145,24 @@ export class BrowserSession {
     if (opts.ref) {
       const loc = this.refMap.get(opts.ref);
       if (!loc) throw new Error(`Unknown ref: ${opts.ref}`);
-      dbl ? await loc.dblclick() : await loc.click();
+      if (dbl) {
+        await loc.dblclick();
+      } else {
+        await loc.click();
+      }
     } else if (opts.selector) {
       const loc = page.locator(opts.selector).first();
-      dbl ? await loc.dblclick() : await loc.click();
+      if (dbl) {
+        await loc.dblclick();
+      } else {
+        await loc.click();
+      }
     } else if (opts.x !== undefined && opts.y !== undefined) {
-      dbl ? await page.mouse.dblclick(opts.x, opts.y) : await page.mouse.click(opts.x, opts.y);
+      if (dbl) {
+        await page.mouse.dblclick(opts.x, opts.y);
+      } else {
+        await page.mouse.click(opts.x, opts.y);
+      }
     } else {
       throw new Error("click requires ref, selector, or x+y coordinates");
     }
