@@ -52,6 +52,8 @@ onMounted(async () => {
 // Session select
 function onSessionSelect(id: string) {
   selectedToolCallId.value = null;
+  selectedThoughtMessageId.value = null;
+  showStreamingThought.value = false;
   sessionStore.setActiveSession(id);
   chatStore.fetchMessages(id);
 }
@@ -68,12 +70,42 @@ const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
 // Function panel state
 const activeTab = ref<"tools" | "preview">("tools");
 const selectedToolCallId = ref<string | null>(null);
+const showStreamingThought = ref(false);
+const selectedThoughtMessageId = ref<string | null>(null);
+
+const thoughtChainBlocks = computed<import("@shared/types/agent").AssistantMessageBlock[] | null>(
+  () => {
+    if (showStreamingThought.value) {
+      return chatStore.streamingBlocks.filter((b) => !b.is_final);
+    }
+    if (selectedThoughtMessageId.value) {
+      const msg = chatStore.messages.find((m) => m.id === selectedThoughtMessageId.value);
+      if (!msg || msg.role !== "assistant") return null;
+      try {
+        const blocks = JSON.parse(
+          msg.content,
+        ) as import("@shared/types/agent").AssistantMessageBlock[];
+        return blocks.filter((b) => !b.is_final);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  },
+);
 
 // Auto-switch to preview when content arrives
 watch(
   () => contentStore.content,
   (newContent) => {
     if (newContent) activeTab.value = "preview";
+  },
+);
+
+watch(
+  () => chatStore.isGenerating,
+  (val) => {
+    if (!val) showStreamingThought.value = false;
   },
 );
 
@@ -124,6 +156,17 @@ function onSelectToolCall(id: string | null) {
   selectedToolCallId.value = id;
   if (id) activeTab.value = "tools";
 }
+
+function onShowThoughtChain(messageId?: string) {
+  if (messageId) {
+    selectedThoughtMessageId.value = messageId;
+    showStreamingThought.value = false;
+  } else {
+    showStreamingThought.value = true;
+    selectedThoughtMessageId.value = null;
+  }
+  activeTab.value = "preview";
+}
 </script>
 
 <template>
@@ -143,6 +186,7 @@ function onSelectToolCall(id: string | null) {
           :selected-tool-call-id="selectedToolCallId"
           @open-agent-edit="openAgentEdit($event)"
           @select-tool-call="onSelectToolCall"
+          @show-thought-chain="onShowThoughtChain"
         />
       </div>
 
@@ -161,6 +205,7 @@ function onSelectToolCall(id: string | null) {
           :active-tab="activeTab"
           :tool-call-blocks="toolCallBlocks"
           :selected-tool-call-id="selectedToolCallId"
+          :thought-chain-blocks="thoughtChainBlocks"
           @update:active-tab="activeTab = $event"
           @select-tool-call="onSelectToolCall"
         />
