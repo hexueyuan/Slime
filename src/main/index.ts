@@ -1,10 +1,15 @@
 import { app, BrowserWindow } from "electron";
 import { electronApp } from "@electron-toolkit/utils";
 import { existsSync, mkdirSync } from "fs";
+import { join } from "path";
 import { createMainWindow } from "./window";
 import { Presenter } from "./presenter";
 import { eventBus } from "./eventbus";
 import { logger, paths } from "./utils";
+
+if (!app.isPackaged) {
+  app.setPath("userData", join(app.getPath("appData"), "slime-dev"));
+}
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
