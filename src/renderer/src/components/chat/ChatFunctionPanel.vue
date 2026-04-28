@@ -34,12 +34,20 @@
         @select="$emit('select-tool-call', $event)"
         @back="$emit('select-tool-call', null)"
       />
-      <ContentDispatcher
-        v-else-if="activeTab === 'preview'"
-        :content="contentStore.content"
-        @interaction-submit="onInteractionSubmit"
-        @progress-cancel="onProgressCancel"
-      />
+      <template v-else-if="activeTab === 'preview'">
+        <ThoughtChainPanel
+          v-if="thoughtChainBlocks && thoughtChainBlocks.length > 0"
+          :blocks="thoughtChainBlocks"
+          :selected-tool-call-id="selectedToolCallId"
+          @select-tool-call="$emit('select-tool-call', $event)"
+        />
+        <ContentDispatcher
+          v-else
+          :content="contentStore.content"
+          @interaction-submit="onInteractionSubmit"
+          @progress-cancel="onProgressCancel"
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -48,6 +56,8 @@
 import type { AssistantMessageBlock } from "@shared/types/chat";
 import ToolPanel from "@/components/function/ToolPanel.vue";
 import ContentDispatcher from "@/components/function/ContentDispatcher.vue";
+import ThoughtChainPanel from "./ThoughtChainPanel.vue";
+import type { AssistantMessageBlock as AgentBlock } from "@shared/types/agent";
 import { useContentStore } from "@/stores/content";
 import { usePresenter } from "@/composables/usePresenter";
 import { useAgentSessionStore } from "@/stores/agentSession";
@@ -57,6 +67,7 @@ defineProps<{
   activeTab: "tools" | "preview";
   toolCallBlocks: AssistantMessageBlock[];
   selectedToolCallId?: string | null;
+  thoughtChainBlocks?: AgentBlock[] | null;
 }>();
 
 defineEmits<{

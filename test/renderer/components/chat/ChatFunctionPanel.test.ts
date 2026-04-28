@@ -53,4 +53,28 @@ describe("ChatFunctionPanel", () => {
     });
     expect(wrapper.find('[data-testid="chat-tab-history"]').exists()).toBe(false);
   });
+
+  it("shows ThoughtChainPanel in preview tab when thoughtChainBlocks provided", () => {
+    const blocks = [
+      { type: "content", content: "thinking", status: "success", timestamp: 1 },
+      {
+        type: "tool_call",
+        id: "tc1",
+        status: "success",
+        timestamp: 1,
+        tool_call: { id: "tc1", name: "exec", input: {}, output: "ok" },
+      },
+    ];
+    const wrapper = mount(ChatFunctionPanel, {
+      props: { activeTab: "preview", toolCallBlocks: [], thoughtChainBlocks: blocks },
+    });
+    expect(wrapper.text()).toContain("思考过程");
+  });
+
+  it("shows ContentDispatcher in preview tab when no thoughtChainBlocks", () => {
+    const wrapper = mount(ChatFunctionPanel, {
+      props: { activeTab: "preview", toolCallBlocks: [], thoughtChainBlocks: null },
+    });
+    expect(wrapper.text()).toContain("暂无预览内容");
+  });
 });
