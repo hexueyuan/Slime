@@ -182,6 +182,7 @@ export class AgentChatPresenter {
   }
 
   async chat(sessionId: string, content: string): Promise<void> {
+    if (this.sessionStates.get(sessionId) === "generating") return;
     const db = getDb();
     this.sessionStates.set(sessionId, "generating");
     const abortController = new AbortController();
@@ -223,6 +224,7 @@ export class AgentChatPresenter {
       status: "sent",
     });
 
+    // Build context — contextBuilder deduplicates newUserContent from history
     const messages: any[] = buildContext(sessionId, content, db);
     const model = this.createModel(groupName);
 
@@ -297,6 +299,10 @@ export class AgentChatPresenter {
         if (block.status === "loading") block.status = "success";
       }
 
+      // Mark the last content block as the final answer
+      const lastContentIdx = blocks.map((b) => b.type).lastIndexOf("content");
+      if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true;
+
       // Save assistant message
       const assistantSeq = messageDao.getNextOrderSeq(db, sessionId);
       messageDao.createMessage(db, {
@@ -319,6 +325,20 @@ export class AgentChatPresenter {
     } catch (err) {
       if (abortController.signal.aborted) {
         for (const block of blocks) if (block.status === "loading") block.status = "success";
+        const lastContentIdx = blocks.map((b) => b.type).lastIndexOf("content");
+        if (lastContentIdx !== -1) blocks[lastContentIdx].is_final = true;
+        // Save whatever blocks were collected before abort
+        if (blocks.length > 0) {
+          const assistantSeq = messageDao.getNextOrderSeq(db, sessionId);
+          messageDao.createMessage(db, {
+            id: assistantMessageId,
+            sessionId,
+            orderSeq: assistantSeq,
+            role: "assistant",
+            content: JSON.stringify(blocks),
+            status: "sent",
+          });
+        }
         this.sessionStates.set(sessionId, "idle");
         eventBus.sendToRenderer(CHAT_STREAM_EVENTS.END, {
           sessionId,

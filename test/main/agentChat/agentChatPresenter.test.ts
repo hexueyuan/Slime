@@ -322,11 +322,130 @@ describe("AgentChatPresenter", () => {
     });
   });
 
+  // BUG-B 复现：stopGeneration 触发 abort 后，已收到的 streaming blocks 不会落 DB。
+  // 当前实现：abort 分支 catch 里直接推 END 事件然后 return，不写 assistant 消息到 DB。
+  it("saves assistant message to DB even when generation is aborted mid-stream", async () => {
+    // 模拟 stream 收到第一个 chunk 后由 abort signal 结束（collectStreamResult 里 break）
+    vi.mocked(streamText).mockImplementation(({ abortSignal }: any) => {
+      return {
+        textStream: (async function* () {
+          yield "partial answer";
+          // 等待 abort，然后退出（模拟 collectStreamResult 的 break 分支）
+          await new Promise<void>((resolve) => {
+            if (abortSignal.aborted) {
+              resolve();
+              return;
+            }
+            abortSignal.addEventListener("abort", resolve);
+          });
+        })(),
+        toolCalls: Promise.resolve([]),
+      } as any;
+    });
+
+    const chatPromise = presenter.chat("sess-1", "hello");
+    // 等 stream 推第一个 chunk
+    await new Promise((r) => setTimeout(r, 20));
+    // 此时 blocks 已有 "partial answer" 内容
+    presenter.stopGeneration("sess-1");
+    await chatPromise;
+
+    // assistant 消息必须写入 DB（BUG-B：当前不写 → 红灯）
+    const calls = vi.mocked(messageDao.createMessage).mock.calls;
+    const assistantCall = calls.find((c) => c[1].role === "assistant");
+    expect(assistantCall).toBeDefined();
+  });
+
+  // BUG-D 复现：当 sessionId 已在 generating 状态时，第二次 chat() 调用应直接返回，不再进入 loop。
+  it("ignores concurrent chat() calls for the same session", async () => {
+    // 第一个 chat() 挂起（stream 不结束）
+    let resolveStream!: () => void;
+    let callCount = 0;
+    vi.mocked(streamText).mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          textStream: (async function* () {
+            yield "thinking...";
+            await new Promise<void>((r) => {
+              resolveStream = r;
+            });
+          })(),
+          toolCalls: Promise.resolve([]),
+        } as any;
+      }
+      // 第二次调用（不应触发，但如果触发了，立即结束以免挂住测试）
+      return {
+        textStream: (async function* () {
+          yield "second";
+        })(),
+        toolCalls: Promise.resolve([]),
+      } as any;
+    });
+
+    const first = presenter.chat("sess-1", "first");
+    // 等 state 变为 generating
+    await new Promise((r) => setTimeout(r, 5));
+    expect(presenter.getSessionState("sess-1")).toBe("generating");
+
+    // 第二次调用必须立即返回（状态 generating → 直接 return）
+    // BUG-D：当前无保护，会调第二次 streamText → callCount 变成 2 → 红灯
+    await presenter.chat("sess-1", "second");
+    expect(callCount).toBe(1); // streamText 只应被调一次
+
+    // 收尾
+    resolveStream();
+    await first;
+  }, 8000);
+
   describe("retryLastMessage", () => {
     it("does nothing when no assistant message", async () => {
       vi.mocked(messageDao.listBySession).mockReturnValue([]);
       await presenter.retryLastMessage("sess-1");
       expect(messageDao.updateMessage).not.toHaveBeenCalled();
     });
+  });
+
+  it("marks last content block as is_final before saving", async () => {
+    // loop: text → tool call → text (final)
+    let callCount = 0;
+    vi.mocked(streamText).mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        async function* gen() {
+          yield "let me check";
+        }
+        return {
+          textStream: gen(),
+          toolCalls: Promise.resolve([
+            { toolCallId: "tc1", toolName: "exec", input: { command: "date" } },
+          ]),
+        } as any;
+      }
+      async function* gen() {
+        yield "today is Tuesday";
+      }
+      return { textStream: gen(), toolCalls: Promise.resolve([]) } as any;
+    });
+
+    vi.mocked(messageDao.getNextOrderSeq).mockReturnValue(2);
+    vi.mocked(messageDao.createMessage).mockImplementation(() => {});
+
+    const gw = makeGatewayPresenter();
+    const tool = makeToolPresenter();
+    const content = makeContentPresenter();
+    const p = new AgentChatPresenter(gw, tool, content);
+
+    await p.chat("sess-1", "what day");
+
+    const calls = vi.mocked(messageDao.createMessage).mock.calls;
+    const assistantCall = calls.find((c) => c[1].role === "assistant");
+    expect(assistantCall).toBeDefined();
+    const blocks = JSON.parse(assistantCall![1].content);
+    const contentBlocks = blocks.filter((b: any) => b.type === "content");
+    expect(contentBlocks.length).toBeGreaterThanOrEqual(2);
+    const lastContent = contentBlocks[contentBlocks.length - 1];
+    expect(lastContent.is_final).toBe(true);
+    expect(contentBlocks[0].is_final).toBeUndefined();
   });
 });
