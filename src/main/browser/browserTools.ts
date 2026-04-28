@@ -173,7 +173,7 @@ export function makeWebFetchTool() {
     parameters: z.object({
       url: z.string().describe("Request URL"),
       method: z.string().optional().default("GET").describe("HTTP method"),
-      headers: z.record(z.string()).optional().describe("Request headers"),
+      headers: z.record(z.string(), z.string()).optional().describe("Request headers"),
       body: z.string().optional().describe("Request body"),
     }),
     execute: async (opts: {
