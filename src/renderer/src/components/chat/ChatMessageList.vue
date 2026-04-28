@@ -54,6 +54,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "select-tool-call": [id: string];
+  "show-thought-chain": [messageId?: string];
 }>();
 
 defineExpose({ scrollToBottom });
@@ -79,6 +80,7 @@ onMounted(() => scrollToBottom(true));
           :is-last="isLastMessage(chatStore.messages, idx)"
           :selected-tool-call-id="props.selectedToolCallId"
           @select-tool-call="emit('select-tool-call', $event)"
+          @show-thought-chain="emit('show-thought-chain', $event)"
         />
       </template>
 
@@ -92,6 +94,7 @@ onMounted(() => scrollToBottom(true));
         :is-last="true"
         :selected-tool-call-id="props.selectedToolCallId"
         @select-tool-call="emit('select-tool-call', $event)"
+        @show-thought-chain="emit('show-thought-chain', $event)"
       />
 
       <!-- Generating indicator -->
