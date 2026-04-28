@@ -194,4 +194,70 @@ describe("BrowserSession", () => {
     expect(mockLocator.fill).toHaveBeenCalledWith("hello@example.com");
     expect(mockLocator.press).toHaveBeenCalledWith("Enter");
   });
+
+  it("scroll() calls window.scrollBy when no ref/selector (down)", async () => {
+    await session.navigate("https://example.com");
+    await session.scroll({ direction: "down", amount: 300 });
+    expect(mockPage.evaluate).toHaveBeenCalled();
+  });
+
+  it("scroll() calls element scrollBy when ref given", async () => {
+    await session.navigate("https://example.com");
+    await session.snapshot(); // populate refs
+    await session.scroll({ ref: "e1", direction: "up", amount: 100 });
+    expect(mockLocator.evaluate).toHaveBeenCalled();
+  });
+
+  it("screenshot({ element }) calls locator.screenshot() by CSS selector", async () => {
+    await session.navigate("https://example.com");
+    await session.screenshot({ element: "#hero" });
+    expect(mockPage.locator).toHaveBeenCalledWith("#hero");
+  });
+
+  it("click({ selector }) clicks by CSS selector", async () => {
+    await session.navigate("https://example.com");
+    await session.click({ selector: "#submit-btn" });
+    expect(mockPage.locator).toHaveBeenCalledWith("#submit-btn");
+    expect(mockLocator.click).toHaveBeenCalled();
+  });
+
+  it("click({ double_click: true }) calls dblclick", async () => {
+    await session.navigate("https://example.com");
+    await session.snapshot();
+    await session.click({ ref: "e1", double_click: true });
+    expect(mockLocator.dblclick).toHaveBeenCalled();
+  });
+
+  it("type({ selector }) fills by CSS selector", async () => {
+    await session.navigate("https://example.com");
+    await session.type({ selector: "input[name=email]", text: "test@test.com" });
+    expect(mockPage.locator).toHaveBeenCalledWith("input[name=email]");
+    expect(mockLocator.fill).toHaveBeenCalledWith("test@test.com");
+  });
+
+  it("type() does not press Enter when submit=false", async () => {
+    await session.navigate("https://example.com");
+    await session.snapshot();
+    await session.type({ ref: "e2", text: "no-submit" });
+    expect(mockLocator.fill).toHaveBeenCalledWith("no-submit");
+    expect(mockLocator.press).not.toHaveBeenCalled();
+  });
+
+  it("wait({ text }) calls page.waitForFunction", async () => {
+    await session.navigate("https://example.com");
+    await session.wait({ text: "Loading complete" });
+    expect(mockPage.waitForFunction).toHaveBeenCalled();
+  });
+
+  it("wait({ url }) calls page.waitForURL", async () => {
+    await session.navigate("https://example.com");
+    await session.wait({ url: "https://example.com/done" });
+    expect(mockPage.waitForURL).toHaveBeenCalledWith("https://example.com/done");
+  });
+
+  it("wait({ load_state }) calls page.waitForLoadState", async () => {
+    await session.navigate("https://example.com");
+    await session.wait({ load_state: "networkidle" });
+    expect(mockPage.waitForLoadState).toHaveBeenCalledWith("networkidle");
+  });
 });
