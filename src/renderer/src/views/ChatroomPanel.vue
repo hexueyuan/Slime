@@ -51,9 +51,6 @@ onMounted(async () => {
 
 // Session select
 function onSessionSelect(id: string) {
-  selectedToolCallId.value = null;
-  selectedThoughtMessageId.value = null;
-  showStreamingThought.value = false;
   sessionStore.setActiveSession(id);
   chatStore.fetchMessages(id);
 }
@@ -73,10 +70,20 @@ const selectedToolCallId = ref<string | null>(null);
 const showStreamingThought = ref(false);
 const selectedThoughtMessageId = ref<string | null>(null);
 
+// Reset thought chain state on session change (covers NewThread + SessionList)
+watch(
+  () => sessionStore.activeSessionId,
+  () => {
+    selectedToolCallId.value = null;
+    selectedThoughtMessageId.value = null;
+    showStreamingThought.value = false;
+  },
+);
+
 const thoughtChainBlocks = computed<import("@shared/types/agent").AssistantMessageBlock[] | null>(
   () => {
     if (showStreamingThought.value) {
-      return chatStore.streamingBlocks.filter((b) => !b.is_final);
+      return chatStore.streamingBlocks;
     }
     if (selectedThoughtMessageId.value) {
       const msg = chatStore.messages.find((m) => m.id === selectedThoughtMessageId.value);
