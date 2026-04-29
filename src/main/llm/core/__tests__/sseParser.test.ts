@@ -72,7 +72,7 @@ describe("parseSSE", () => {
       events.push(event);
     }
 
-    expect(events).toEqual([{ data: '{"text":"你好', event: undefined }]);
+    expect(events).toEqual([{ data: '{"text":"你好' }]);
   });
 
   it("should handle UTF-8 multibyte characters", async () => {
