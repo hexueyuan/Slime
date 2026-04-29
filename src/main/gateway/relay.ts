@@ -118,9 +118,22 @@ export function createRelay(deps: RelayDeps): Relay {
 
         const start = Date.now();
         try {
-          const response = await adapter.send({ ...request, model: item.modelName }, config);
+          const outboundRequest = { ...request, model: item.modelName };
+          const response = await adapter.send(outboundRequest, config);
           const durationMs = Date.now() - start;
           deps.circuitBreaker.recordSuccess(item.channelId, selectedKey.id, item.modelName);
+
+          // 构建实际发送的请求体用于日志记录
+          let outboundRequestBody: string;
+          if (channel.type === "anthropic") {
+            const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
+            outboundRequestBody = JSON.stringify(
+              toAnthropicRequest({ ...outboundRequest, stream: false }),
+            );
+          } else {
+            outboundRequestBody = filterForLog(outboundRequest);
+          }
+
           statsCallback?.({
             groupName: group.name,
             channelId: channel.id,
@@ -130,7 +143,7 @@ export function createRelay(deps: RelayDeps): Relay {
             usage: response.usage,
             durationMs,
             status: "success",
-            requestBody: filterForLog(request),
+            requestBody: outboundRequestBody,
             rawRequestBody: request.rawBody,
             responseBody: JSON.stringify(response),
           });
@@ -149,6 +162,19 @@ export function createRelay(deps: RelayDeps): Relay {
           if (is429(err)) {
             deps.keyPool.mark429(item.channelId, selectedKey.id);
           }
+
+          // 构建实际发送的请求体用于日志记录
+          const outboundRequest = { ...request, model: item.modelName };
+          let outboundRequestBody: string;
+          if (channel.type === "anthropic") {
+            const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
+            outboundRequestBody = JSON.stringify(
+              toAnthropicRequest({ ...outboundRequest, stream: false }),
+            );
+          } else {
+            outboundRequestBody = filterForLog(outboundRequest);
+          }
+
           statsCallback?.({
             groupName: group.name,
             channelId: channel.id,
@@ -159,7 +185,7 @@ export function createRelay(deps: RelayDeps): Relay {
             durationMs,
             status: "error",
             error: lastError.message,
-            requestBody: filterForLog(request),
+            requestBody: outboundRequestBody,
             rawRequestBody: request.rawBody,
           });
         }
@@ -194,12 +220,24 @@ export function createRelay(deps: RelayDeps): Relay {
 
         const startTime = Date.now();
         try {
-          const stream = adapter.sendStream({ ...request, model: item.modelName }, config);
+          const outboundRequest = { ...request, model: item.modelName };
+          const stream = adapter.sendStream(outboundRequest, config);
           // 尝试拉取第一个 chunk 确认连接成功
           const iterator = stream[Symbol.asyncIterator]();
           const first = await iterator.next();
 
           deps.circuitBreaker.recordSuccess(item.channelId, selectedKey.id, item.modelName);
+
+          // 构建实际发送的请求体用于日志记录
+          let outboundRequestBody: string;
+          if (channel.type === "anthropic") {
+            const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
+            outboundRequestBody = JSON.stringify(
+              toAnthropicRequest({ ...outboundRequest, stream: true }),
+            );
+          } else {
+            outboundRequestBody = filterForLog(outboundRequest);
+          }
 
           // 包装：先 yield first，再 yield 剩余；流结束后上报 stats
           const groupName = group.name;
@@ -276,7 +314,7 @@ export function createRelay(deps: RelayDeps): Relay {
                 usage,
                 durationMs: Date.now() - startTime,
                 status: "success",
-                requestBody: filterForLog(request),
+                requestBody: outboundRequestBody,
                 rawRequestBody: request.rawBody,
                 responseBody,
                 ttftMs,
@@ -292,7 +330,7 @@ export function createRelay(deps: RelayDeps): Relay {
                 durationMs: Date.now() - startTime,
                 status: "error",
                 error: streamErr instanceof Error ? streamErr.message : String(streamErr),
-                requestBody: filterForLog(request),
+                requestBody: outboundRequestBody,
                 rawRequestBody: request.rawBody,
               });
               throw streamErr;
@@ -313,6 +351,19 @@ export function createRelay(deps: RelayDeps): Relay {
           if (is429(err)) {
             deps.keyPool.mark429(item.channelId, selectedKey.id);
           }
+
+          // 构建实际发送的请求体用于日志记录
+          const outboundRequest = { ...request, model: item.modelName };
+          let outboundRequestBody: string;
+          if (channel.type === "anthropic") {
+            const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
+            outboundRequestBody = JSON.stringify(
+              toAnthropicRequest({ ...outboundRequest, stream: true }),
+            );
+          } else {
+            outboundRequestBody = filterForLog(outboundRequest);
+          }
+
           statsCallback?.({
             groupName: group.name,
             channelId: channel.id,
@@ -323,7 +374,7 @@ export function createRelay(deps: RelayDeps): Relay {
             durationMs: Date.now() - startTime,
             status: "error",
             error: lastError.message,
-            requestBody: filterForLog(request),
+            requestBody: outboundRequestBody,
             rawRequestBody: request.rawBody,
           });
         }
