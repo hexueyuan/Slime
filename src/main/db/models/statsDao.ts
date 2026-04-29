@@ -196,11 +196,14 @@ export function getChannelRanking(
         SUM(requests) AS requests,
         SUM(success_count) AS success_count,
         SUM(fail_count) AS fail_count,
+        SUM(cache_read_tokens) AS cache_read_tokens,
+        SUM(cache_write_tokens) AS cache_write_tokens,
         SUM(weighted_latency) / NULLIF(SUM(requests), 0) AS avg_latency_ms,
         SUM(cost) AS cost
       FROM (
         SELECT d.channel_id, COALESCE(c.name, 'unknown') AS channel_name,
                d.requests, d.success_count, d.fail_count,
+               d.cache_read_tokens, d.cache_write_tokens,
                d.avg_latency_ms * d.requests AS weighted_latency, d.cost
         FROM stats_daily d LEFT JOIN channels c ON c.id = d.channel_id
         WHERE d.date >= ? AND d.date < ?
@@ -209,6 +212,7 @@ export function getChannelRanking(
                1,
                CASE WHEN l.status = 'success' THEN 1 ELSE 0 END,
                CASE WHEN l.status = 'error' THEN 1 ELSE 0 END,
+               l.cache_read_tokens, l.cache_write_tokens,
                l.duration_ms, l.cost
         FROM relay_logs l LEFT JOIN channels c ON c.id = l.channel_id
         WHERE date(l.created_at) >= ? AND date(l.created_at) < ?
@@ -225,6 +229,8 @@ export function getChannelRanking(
     requests: r.requests as number,
     successCount: r.success_count as number,
     failCount: r.fail_count as number,
+    cacheReadTokens: r.cache_read_tokens as number,
+    cacheWriteTokens: r.cache_write_tokens as number,
     avgLatencyMs: (r.avg_latency_ms as number) ?? 0,
     cost: r.cost as number,
   }));
@@ -242,12 +248,16 @@ export function getModelRanking(
         SUM(requests) AS requests,
         SUM(input_tokens) AS input_tokens,
         SUM(output_tokens) AS output_tokens,
+        SUM(cache_read_tokens) AS cache_read_tokens,
+        SUM(cache_write_tokens) AS cache_write_tokens,
         SUM(cost) AS cost
       FROM (
-        SELECT model_name, requests, input_tokens, output_tokens, cost
+        SELECT model_name, requests, input_tokens, output_tokens,
+               cache_read_tokens, cache_write_tokens, cost
         FROM stats_daily WHERE date >= ? AND date < ?
         UNION ALL
-        SELECT model_name, 1, input_tokens, output_tokens, cost
+        SELECT model_name, 1, input_tokens, output_tokens,
+               cache_read_tokens, cache_write_tokens, cost
         FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
           AND date(created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
@@ -261,6 +271,8 @@ export function getModelRanking(
     requests: r.requests as number,
     inputTokens: r.input_tokens as number,
     outputTokens: r.output_tokens as number,
+    cacheReadTokens: r.cache_read_tokens as number,
+    cacheWriteTokens: r.cache_write_tokens as number,
     cost: r.cost as number,
   }));
 }
@@ -348,12 +360,16 @@ export function getStatsDailyTrend(
   const rows = db
     .prepare(
       `SELECT date, SUM(requests) AS requests, SUM(input_tokens) AS input_tokens,
-              SUM(output_tokens) AS output_tokens, SUM(cost) AS cost
+              SUM(output_tokens) AS output_tokens, SUM(cost) AS cost,
+              SUM(cache_read_tokens) AS cache_read_tokens,
+              SUM(cache_write_tokens) AS cache_write_tokens
       FROM (
-        SELECT date, requests, input_tokens, output_tokens, cost
+        SELECT date, requests, input_tokens, output_tokens, cost,
+               cache_read_tokens, cache_write_tokens
         FROM stats_daily WHERE date >= ? AND date < ?
         UNION ALL
-        SELECT date(created_at) AS date, 1, input_tokens, output_tokens, cost
+        SELECT date(created_at) AS date, 1, input_tokens, output_tokens, cost,
+               cache_read_tokens, cache_write_tokens
         FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
           AND date(created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
@@ -366,6 +382,8 @@ export function getStatsDailyTrend(
     requests: r.requests as number,
     inputTokens: r.input_tokens as number,
     outputTokens: r.output_tokens as number,
+    cacheReadTokens: r.cache_read_tokens as number,
+    cacheWriteTokens: r.cache_write_tokens as number,
     cost: r.cost as number,
   }));
 }
@@ -378,13 +396,17 @@ export function getStatsHourlyTrend(
   const rows = db
     .prepare(
       `SELECT date, hour, SUM(requests) AS requests, SUM(input_tokens) AS input_tokens,
-              SUM(output_tokens) AS output_tokens, SUM(cost) AS cost
+              SUM(output_tokens) AS output_tokens, SUM(cost) AS cost,
+              SUM(cache_read_tokens) AS cache_read_tokens,
+              SUM(cache_write_tokens) AS cache_write_tokens
       FROM (
-        SELECT date, hour, requests, input_tokens, output_tokens, cost
+        SELECT date, hour, requests, input_tokens, output_tokens, cost,
+               cache_read_tokens, cache_write_tokens
         FROM stats_hourly WHERE date >= ? AND date < ?
         UNION ALL
         SELECT date(created_at), CAST(strftime('%H', created_at) AS INTEGER),
-               1, input_tokens, output_tokens, cost
+               1, input_tokens, output_tokens, cost,
+               cache_read_tokens, cache_write_tokens
         FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
           AND (date(created_at) || '_' || CAST(strftime('%H', created_at) AS INTEGER))
             NOT IN (SELECT date || '_' || hour FROM stats_hourly WHERE date >= ? AND date < ?)
@@ -399,6 +421,8 @@ export function getStatsHourlyTrend(
     requests: r.requests as number,
     inputTokens: r.input_tokens as number,
     outputTokens: r.output_tokens as number,
+    cacheReadTokens: r.cache_read_tokens as number,
+    cacheWriteTokens: r.cache_write_tokens as number,
     cost: r.cost as number,
   }));
 }
