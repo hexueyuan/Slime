@@ -103,6 +103,52 @@ describe("anthropic outbound", () => {
       const body = toAnthropicRequest(baseRequest());
       expect(body.max_tokens).toBe(4096);
     });
+
+    it("converts base64 image with media_type (not mediaType)", () => {
+      const body = toAnthropicRequest(
+        baseRequest({
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: { type: "base64", mediaType: "image/png", data: "abc123" },
+                },
+              ],
+            },
+          ],
+        }),
+      );
+      const msgs = body.messages as Array<{ content: Array<Record<string, unknown>> }>;
+      expect(msgs[0].content[0]).toEqual({
+        type: "image",
+        source: { type: "base64", media_type: "image/png", data: "abc123" },
+      });
+    });
+
+    it("converts url image", () => {
+      const body = toAnthropicRequest(
+        baseRequest({
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: { type: "url", url: "https://img.com/a.png" },
+                },
+              ],
+            },
+          ],
+        }),
+      );
+      const msgs = body.messages as Array<{ content: Array<Record<string, unknown>> }>;
+      expect(msgs[0].content[0]).toEqual({
+        type: "image",
+        source: { type: "url", url: "https://img.com/a.png" },
+      });
+    });
   });
 
   describe("fromAnthropicResponse", () => {

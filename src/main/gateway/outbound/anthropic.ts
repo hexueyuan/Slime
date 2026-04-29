@@ -53,7 +53,13 @@ function convertContent(msg: InternalMessage) {
       case "text":
         return { type: "text" as const, text: c.text };
       case "image":
-        return { type: "image" as const, source: c.source };
+        return {
+          type: "image" as const,
+          source:
+            c.source.type === "base64"
+              ? { type: "base64" as const, media_type: c.source.mediaType, data: c.source.data }
+              : { type: "url" as const, url: c.source.url },
+        };
       case "tool_use":
         return { type: "tool_use" as const, id: c.id, name: c.name, input: c.input };
       case "tool_result":
