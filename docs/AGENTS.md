@@ -90,7 +90,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                      |
 | WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                  |
 | GatewayPresenter          | LLM Gateway 生命周期管理：渠道/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                                |
-| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete），ensureBuiltin 创建 HalAI                                                                                                           |
+| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                                |
 | AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                        |
 
 ### 自研 LLM 客户端
