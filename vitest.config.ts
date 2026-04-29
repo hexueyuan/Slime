@@ -29,7 +29,10 @@ export default defineConfig({
         test: {
           name: "main",
           environment: "node",
-          include: ["test/main/**/*.{test,spec}.{js,ts}"],
+          include: [
+            "test/main/**/*.{test,spec}.{js,ts}",
+            "src/main/**/__tests__/*.{test,spec}.{js,ts}",
+          ],
           setupFiles: ["./test/setup.ts"],
           globals: true,
         },
