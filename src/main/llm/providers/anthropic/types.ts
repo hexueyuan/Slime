@@ -30,7 +30,9 @@ export type AnthropicContentBlock =
       source: { type: "base64" | "url"; media_type?: string; data?: string; url?: string };
     }
   | { type: "tool_use"; id: string; name: string; input: unknown }
-  | { type: "tool_result"; tool_use_id: string; content: string; is_error?: boolean };
+  | { type: "tool_result"; tool_use_id: string; content: string; is_error?: boolean }
+  | { type: "thinking"; thinking: string; signature: string }
+  | { type: "redacted_thinking"; data: string };
 
 /**
  * Anthropic 工具定义
@@ -50,11 +52,16 @@ export interface AnthropicSSEPayload {
     type?: string;
     text?: string;
     partial_json?: string;
+    thinking?: string;
+    signature?: string;
   };
   content_block?: {
     type?: string;
     id?: string;
     name?: string;
+    thinking?: string;
+    signature?: string;
+    data?: string;
   };
   index?: number;
   usage?: {

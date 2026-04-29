@@ -8,6 +8,10 @@ export type StreamEvent =
   | { type: "tool_call_start"; id: string; name: string }
   | { type: "tool_call_delta"; id: string; delta: string }
   | { type: "tool_call_end"; id: string; input: unknown }
+  | { type: "thinking_start" }
+  | { type: "thinking_delta"; text: string }
+  | { type: "signature_delta"; signature: string }
+  | { type: "thinking_end"; thinking: string; signature: string }
   | { type: "usage"; usage: Usage }
   | { type: "error"; error: string }
   | { type: "done" };
