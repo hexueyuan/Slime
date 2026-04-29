@@ -37,8 +37,9 @@ export function toAnthropicRequest(req: InternalRequest) {
     body.system = req.systemParts.map((p) => {
       const part: Record<string, unknown> = { type: p.type, text: p.text };
       if (p.cacheControl) {
-        part.cache_control = { type: p.cacheControl.type };
-        if (p.cacheControl.ttl) part.cache_control.ttl = p.cacheControl.ttl;
+        const cc: Record<string, unknown> = { type: p.cacheControl.type };
+        if (p.cacheControl.ttl) cc.ttl = p.cacheControl.ttl;
+        part.cache_control = cc;
       }
       return part;
     });
@@ -57,16 +58,18 @@ export function toAnthropicRequest(req: InternalRequest) {
         input_schema: t.inputSchema,
       };
       if (t.cacheControl) {
-        tool.cache_control = { type: t.cacheControl.type };
-        if (t.cacheControl.ttl) tool.cache_control.ttl = t.cacheControl.ttl;
+        const cc: Record<string, unknown> = { type: t.cacheControl.type };
+        if (t.cacheControl.ttl) cc.ttl = t.cacheControl.ttl;
+        tool.cache_control = cc;
       }
       return tool;
     });
   }
 
   if (req.cacheControl) {
-    body.cache_control = { type: req.cacheControl.type };
-    if (req.cacheControl.ttl) body.cache_control.ttl = req.cacheControl.ttl;
+    const cc: Record<string, unknown> = { type: req.cacheControl.type };
+    if (req.cacheControl.ttl) cc.ttl = req.cacheControl.ttl;
+    body.cache_control = cc;
   }
 
   return body;
@@ -101,8 +104,9 @@ function convertContent(msg: InternalMessage) {
         break;
     }
     if (c.cacheControl) {
-      result.cache_control = { type: c.cacheControl.type };
-      if (c.cacheControl.ttl) result.cache_control.ttl = c.cacheControl.ttl;
+      const cc: Record<string, unknown> = { type: c.cacheControl.type };
+      if (c.cacheControl.ttl) cc.ttl = c.cacheControl.ttl;
+      result.cache_control = cc;
     }
     return result;
   });
