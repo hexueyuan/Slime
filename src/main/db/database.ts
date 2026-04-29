@@ -198,6 +198,14 @@ CREATE TABLE IF NOT EXISTS agent_messages (
 CREATE INDEX IF NOT EXISTS idx_agent_messages_session ON agent_messages(session_id, order_seq);
 `;
 
+function migrate(instance: BetterSqlite3.Database): void {
+  // Add raw_request_body column if it doesn't exist
+  const cols = instance.prepare("PRAGMA table_info(relay_logs)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "raw_request_body")) {
+    instance.exec("ALTER TABLE relay_logs ADD COLUMN raw_request_body TEXT");
+  }
+}
+
 function createDb(dbPath: string): BetterSqlite3.Database {
   if (dbPath !== ":memory:") {
     mkdirSync(dirname(dbPath), { recursive: true });
@@ -206,6 +214,7 @@ function createDb(dbPath: string): BetterSqlite3.Database {
   instance.pragma("journal_mode = WAL");
   instance.pragma("foreign_keys = ON");
   instance.exec(DDL);
+  migrate(instance);
   return instance;
 }
 

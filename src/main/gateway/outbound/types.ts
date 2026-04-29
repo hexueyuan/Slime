@@ -7,6 +7,7 @@ export interface InternalRequest {
   tools?: InternalTool[];
   systemPrompt?: string;
   rawHeaders?: Record<string, string>;
+  rawBody?: string;
   apiKeyId?: number;
 }
 

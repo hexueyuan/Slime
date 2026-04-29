@@ -101,6 +101,7 @@ export class GatewayPresenter implements IGatewayPresenter {
         status: data.status,
         error: data.error,
         requestBody: data.requestBody,
+        rawRequestBody: data.rawRequestBody,
         responseBody: data.responseBody,
         ttftMs: data.ttftMs,
       });

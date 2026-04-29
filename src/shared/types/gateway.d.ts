@@ -107,6 +107,7 @@ export interface RelayLog {
   status: "success" | "error";
   error?: string;
   requestBody?: string;
+  rawRequestBody?: string;
   responseBody?: string;
   createdAt: string;
 }

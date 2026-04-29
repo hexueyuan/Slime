@@ -19,6 +19,7 @@ interface LogRow {
   status: string;
   error: string | null;
   request_body: string | null;
+  raw_request_body: string | null;
   response_body: string | null;
   created_at: string;
 }
@@ -42,6 +43,7 @@ function rowToLog(row: LogRow): RelayLog {
     status: row.status as RelayLog["status"],
     error: row.error ?? undefined,
     requestBody: row.request_body ?? undefined,
+    rawRequestBody: row.raw_request_body ?? undefined,
     responseBody: row.response_body ?? undefined,
     createdAt: row.created_at,
   };
@@ -55,8 +57,8 @@ export function insertLogs(
     INSERT INTO relay_logs
       (api_key_id, group_name, channel_id, channel_name, model_name,
        input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
-       cost, duration_ms, status, error, request_body, response_body, ttft_ms)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       cost, duration_ms, status, error, request_body, raw_request_body, response_body, ttft_ms)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const tx = db.transaction(() => {
     for (const log of logs) {
@@ -75,6 +77,7 @@ export function insertLogs(
         log.status,
         log.error ?? null,
         log.requestBody ?? null,
+        log.rawRequestBody ?? null,
         log.responseBody ?? null,
         log.ttftMs ?? null,
       );

@@ -87,8 +87,12 @@ function parseJson(raw: string | undefined): unknown {
 }
 
 function copyCurrentTab() {
-  const raw =
-    activeTab.value === "request" ? drawerLog.value?.requestBody : drawerLog.value?.responseBody;
+  let raw: string | undefined;
+  if (activeTab.value === "request") {
+    raw = drawerLog.value?.rawRequestBody ?? drawerLog.value?.requestBody;
+  } else {
+    raw = drawerLog.value?.responseBody;
+  }
   if (!raw) return;
   const parsed = parseJson(raw);
   const text = typeof parsed === "string" ? parsed : JSON.stringify(parsed, null, 2);

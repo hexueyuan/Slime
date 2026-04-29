@@ -44,6 +44,7 @@ export type StatsCallback = (data: {
   status: "success" | "error";
   error?: string;
   requestBody?: string;
+  rawRequestBody?: string;
   responseBody?: string;
   ttftMs?: number | null;
 }) => void;
@@ -130,6 +131,7 @@ export function createRelay(deps: RelayDeps): Relay {
             durationMs,
             status: "success",
             requestBody: filterForLog(request),
+            rawRequestBody: request.rawBody,
             responseBody: JSON.stringify(response),
           });
           return {
@@ -158,6 +160,7 @@ export function createRelay(deps: RelayDeps): Relay {
             status: "error",
             error: lastError.message,
             requestBody: filterForLog(request),
+            rawRequestBody: request.rawBody,
           });
         }
       }
@@ -274,6 +277,7 @@ export function createRelay(deps: RelayDeps): Relay {
                 durationMs: Date.now() - startTime,
                 status: "success",
                 requestBody: filterForLog(request),
+                rawRequestBody: request.rawBody,
                 responseBody,
                 ttftMs,
               });
@@ -289,6 +293,7 @@ export function createRelay(deps: RelayDeps): Relay {
                 status: "error",
                 error: streamErr instanceof Error ? streamErr.message : String(streamErr),
                 requestBody: filterForLog(request),
+                rawRequestBody: request.rawBody,
               });
               throw streamErr;
             }
@@ -319,6 +324,7 @@ export function createRelay(deps: RelayDeps): Relay {
             status: "error",
             error: lastError.message,
             requestBody: filterForLog(request),
+            rawRequestBody: request.rawBody,
           });
         }
       }

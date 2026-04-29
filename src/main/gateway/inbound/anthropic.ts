@@ -128,6 +128,7 @@ export function registerAnthropicInbound(
       temperature: body.temperature,
       tools: toInternalTools(body.tools),
       systemPrompt: parseSystem(body.system),
+      rawBody: JSON.stringify(body),
       apiKeyId: request.apiKeyId,
     };
 

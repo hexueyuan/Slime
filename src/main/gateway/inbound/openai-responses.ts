@@ -18,6 +18,7 @@ interface OAIResponsesToolDef {
 interface OAIContentPart {
   type: string;
   text?: string;
+  image_url?: { url: string };
 }
 
 interface OAIInputMessage {
@@ -62,7 +63,20 @@ function toInternalMessages(input: OAIResponsesRequestBody["input"]): InternalMe
     }
     return {
       role,
-      content: msg.content.map((p) => ({ type: "text" as const, text: p.text ?? "" })),
+      content: msg.content.map((p): InternalContent => {
+        if (p.type === "image_url" && p.image_url) {
+          const url = p.image_url.url;
+          const dataUriMatch = url.match(/^data:([^;]+);base64,(.+)$/s);
+          if (dataUriMatch) {
+            return {
+              type: "image",
+              source: { type: "base64", mediaType: dataUriMatch[1], data: dataUriMatch[2] },
+            };
+          }
+          return { type: "image", source: { type: "url", url } };
+        }
+        return { type: "text", text: p.text ?? "" };
+      }),
     };
   });
 }
@@ -129,6 +143,7 @@ export function registerOpenAIResponsesInbound(
       temperature: body.temperature,
       tools: toInternalTools(body.tools),
       systemPrompt: body.instructions,
+      rawBody: JSON.stringify(body),
       apiKeyId: request.apiKeyId,
     };
 
