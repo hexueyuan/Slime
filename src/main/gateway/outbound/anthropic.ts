@@ -20,7 +20,7 @@ export function toAnthropicRequest(req: InternalRequest) {
   const system = req.systemPrompt ?? (extracted || undefined);
 
   const messages = req.messages
-    .filter((m) => m.role !== "system")
+    .filter((m) => m.role !== "system" && m.content.length > 0)
     .map((m) => ({
       role: m.role === "tool" ? ("user" as const) : m.role,
       content: convertContent(m),

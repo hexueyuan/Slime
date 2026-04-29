@@ -25,7 +25,9 @@ export function recordToCoreMessages(records: ChatMessageRecord[]): CoreMessage[
 
   for (const record of records) {
     if (record.role === "user") {
-      messages.push({ role: "user", content: record.content });
+      if (record.content) {
+        messages.push({ role: "user", content: record.content });
+      }
       continue;
     }
 
@@ -178,6 +180,14 @@ export function buildContext(
 
   const trimmed = selectTurnHistory(historyMessages, available);
 
+  // Drop messages with empty content (Anthropic rejects them)
+  const filtered = trimmed.filter((m) => {
+    const c = "content" in m ? (m as { content: unknown }).content : undefined;
+    if (typeof c === "string") return c.length > 0;
+    if (Array.isArray(c)) return c.length > 0;
+    return c != null;
+  });
+
   const newUserMsg: CoreMessage = { role: "user", content: newUserContent };
-  return [systemMsg, ...summaryMessages, ...trimmed, newUserMsg];
+  return [systemMsg, ...summaryMessages, ...filtered, newUserMsg];
 }
