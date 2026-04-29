@@ -104,10 +104,12 @@ Success Rate: 99.5%
 ```
 
 **失败测试分析**:
+
 - 3 个 evolutionPresenter 测试：pre-existing，与本次无关
 - 1 个 EvolabPanel 测试：pre-existing，与本次无关
 
 **新增测试全部通过**:
+
 - ✅ sseParser: 6/6 通过
 - ✅ requestBuilder: 4/4 通过
 - ✅ streamParser: 4/4 通过
@@ -191,7 +193,7 @@ src/main/llm/
 - **启动时间**: 无明显变化（移除 AI SDK 减少依赖，但新增模块抵消）
 - **内存占用**: 略微减少（移除 AI SDK runtime）
 - **运行时性能**: 无差异（SSE 解析性能相当）
-- **包体积**: 减少约 2MB（移除 ai + @ai-sdk/* 依赖）
+- **包体积**: 减少约 2MB（移除 ai + @ai-sdk/\* 依赖）
 
 ## 遗留问题
 
@@ -249,6 +251,7 @@ export class GeminiClient implements LLMClient {
 成功实现了移除 AI SDK 依赖、自研 LLM 客户端的目标。架构清晰可扩展，测试覆盖充分，日志格式符合预期。项目可正常运行，无阻断性问题。
 
 **下一步建议**:
+
 1. 执行手动 E2E 测试（Task 10）确认用户体验
 2. 根据实际使用情况补充边缘场景测试（Task 11）
 3. 考虑添加 OpenAI provider 支持更多模型

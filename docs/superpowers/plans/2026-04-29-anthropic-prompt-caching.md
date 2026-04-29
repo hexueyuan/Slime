@@ -15,6 +15,7 @@
 ### Task 1: 添加 CacheControl 到内部类型
 
 **Files:**
+
 - Modify: `src/main/gateway/outbound/types.ts:1-67`
 
 - [ ] **Step 1: 添加类型定义**
@@ -24,55 +25,55 @@
 ```typescript
 // 在 InternalTool 之前新增
 export interface CacheControl {
-  type: "ephemeral"
-  ttl?: string // "5m" | "1h"，透传用
+  type: "ephemeral";
+  ttl?: string; // "5m" | "1h"，透传用
 }
 
 export interface SystemTextPart {
-  type: "text"
-  text: string
-  cacheControl?: CacheControl
+  type: "text";
+  text: string;
+  cacheControl?: CacheControl;
 }
 
 // InternalContent 各变体加 cacheControl
 export type InternalContent =
   | { type: "text"; text: string; cacheControl?: CacheControl }
   | {
-      type: "image"
-      source: { type: "base64"; mediaType: string; data: string } | { type: "url"; url: string }
-      cacheControl?: CacheControl
+      type: "image";
+      source: { type: "base64"; mediaType: string; data: string } | { type: "url"; url: string };
+      cacheControl?: CacheControl;
     }
   | { type: "tool_use"; id: string; name: string; input: unknown; cacheControl?: CacheControl }
   | {
-      type: "tool_result"
-      toolUseId: string
-      content: string
-      isError?: boolean
-      cacheControl?: CacheControl
-    }
+      type: "tool_result";
+      toolUseId: string;
+      content: string;
+      isError?: boolean;
+      cacheControl?: CacheControl;
+    };
 
 // InternalTool 加 cacheControl
 export interface InternalTool {
-  name: string
-  description?: string
-  inputSchema: unknown
-  cacheControl?: CacheControl
+  name: string;
+  description?: string;
+  inputSchema: unknown;
+  cacheControl?: CacheControl;
 }
 
 // InternalRequest 加 cacheControl 和 systemParts
 export interface InternalRequest {
-  model: string
-  messages: InternalMessage[]
-  stream: boolean
-  maxTokens?: number
-  temperature?: number
-  tools?: InternalTool[]
-  systemPrompt?: string
-  systemParts?: SystemTextPart[] // 新增：数组格式 system
-  cacheControl?: CacheControl // 新增：顶级自动缓存
-  rawHeaders?: Record<string, string>
-  rawBody?: string
-  apiKeyId?: number
+  model: string;
+  messages: InternalMessage[];
+  stream: boolean;
+  maxTokens?: number;
+  temperature?: number;
+  tools?: InternalTool[];
+  systemPrompt?: string;
+  systemParts?: SystemTextPart[]; // 新增：数组格式 system
+  cacheControl?: CacheControl; // 新增：顶级自动缓存
+  rawHeaders?: Record<string, string>;
+  rawBody?: string;
+  apiKeyId?: number;
 }
 ```
 
@@ -104,6 +105,7 @@ git commit -m "feat(gateway): add CacheControl types to internal request model"
 ### Task 2: 入站解析 cache_control
 
 **Files:**
+
 - Modify: `src/main/gateway/inbound/anthropic.ts:1-50`
 - Create: `test/main/gateway-anthropic-inbound.test.ts`
 
@@ -112,7 +114,7 @@ git commit -m "feat(gateway): add CacheControl types to internal request model"
 创建 `test/main/gateway-anthropic-inbound.test.ts`：
 
 ```typescript
-import { describe, it, expect } from "vitest"
+import { describe, it, expect } from "vitest";
 
 // 直接引入内部函数（从模块导出后使用）
 // 注意：需要先在 inbound/anthropic.ts 中导出 toInternalContent 和 parseSystem
@@ -121,9 +123,9 @@ describe("Anthropic inbound cache_control", () => {
   it("解析请求顶级 cache_control", () => {
     // 测试注册到路由时会验证 InternalRequest.cacheControl
     // 此处测试解析逻辑能正确写入
-    expect(true).toBe(true) // 占位，后续通过集成测试验证
-  })
-})
+    expect(true).toBe(true); // 占位，后续通过集成测试验证
+  });
+});
 ```
 
 由于 inbound handler 的核心逻辑（`toInternalContent`、`parseSystem`）当前是模块私有函数，需要先导出后才能单元测试。这一步先确保 typecheck 通过，实际验证在 Task 3 的出站往返测试中覆盖。
@@ -135,36 +137,38 @@ describe("Anthropic inbound cache_control", () => {
 ```typescript
 // AnthropicContentBlock 加 cache_control
 interface AnthropicContentBlock {
-  type: string
-  text?: string
-  id?: string
-  name?: string
-  input?: unknown
-  tool_use_id?: string
-  content?: string
-  is_error?: boolean
-  source?: { type: string; media_type?: string; data?: string; url?: string }
-  cache_control?: { type: string; ttl?: string } // 新增
+  type: string;
+  text?: string;
+  id?: string;
+  name?: string;
+  input?: unknown;
+  tool_use_id?: string;
+  content?: string;
+  is_error?: boolean;
+  source?: { type: string; media_type?: string; data?: string; url?: string };
+  cache_control?: { type: string; ttl?: string }; // 新增
 }
 
 // AnthropicToolDef 加 cache_control
 interface AnthropicToolDef {
-  name: string
-  description?: string
-  input_schema: unknown
-  cache_control?: { type: string; ttl?: string } // 新增
+  name: string;
+  description?: string;
+  input_schema: unknown;
+  cache_control?: { type: string; ttl?: string }; // 新增
 }
 
 // AnthropicRequestBody 加顶级 cache_control
 interface AnthropicRequestBody {
-  model: string
-  messages: AnthropicMessage[]
-  system?: string | { type: string; text: string; cache_control?: { type: string; ttl?: string } }[]
-  max_tokens?: number
-  temperature?: number
-  tools?: AnthropicToolDef[]
-  stream?: boolean
-  cache_control?: { type: string; ttl?: string } // 新增
+  model: string;
+  messages: AnthropicMessage[];
+  system?:
+    | string
+    | { type: string; text: string; cache_control?: { type: string; ttl?: string } }[];
+  max_tokens?: number;
+  temperature?: number;
+  tools?: AnthropicToolDef[];
+  stream?: boolean;
+  cache_control?: { type: string; ttl?: string }; // 新增
 }
 ```
 
@@ -172,11 +176,11 @@ interface AnthropicRequestBody {
 
 ```typescript
 function toInternalContent(block: AnthropicContentBlock): InternalContent {
-  let result: InternalContent
+  let result: InternalContent;
   switch (block.type) {
     case "text":
-      result = { type: "text", text: block.text ?? "" }
-      break
+      result = { type: "text", text: block.text ?? "" };
+      break;
     case "image": {
       if (block.source?.type === "base64") {
         result = {
@@ -186,14 +190,14 @@ function toInternalContent(block: AnthropicContentBlock): InternalContent {
             mediaType: block.source.media_type ?? "image/png",
             data: block.source.data ?? "",
           },
-        }
+        };
       } else {
         result = {
           type: "image",
           source: { type: "url", url: block.source?.url ?? "" },
-        }
+        };
       }
-      break
+      break;
     }
     case "tool_use":
       result = {
@@ -201,24 +205,27 @@ function toInternalContent(block: AnthropicContentBlock): InternalContent {
         id: block.id ?? "",
         name: block.name ?? "",
         input: block.input,
-      }
-      break
+      };
+      break;
     case "tool_result":
       result = {
         type: "tool_result",
         toolUseId: block.tool_use_id ?? "",
         content: block.content ?? "",
         isError: block.is_error,
-      }
-      break
+      };
+      break;
     default:
-      result = { type: "text", text: "" }
+      result = { type: "text", text: "" };
   }
   // 透传 cache_control
   if (block.cache_control) {
-    result = { ...result, cacheControl: { type: "ephemeral" as const, ttl: block.cache_control.ttl } }
+    result = {
+      ...result,
+      cacheControl: { type: "ephemeral" as const, ttl: block.cache_control.ttl },
+    };
   }
-  return result
+  return result;
 }
 ```
 
@@ -226,16 +233,16 @@ function toInternalContent(block: AnthropicContentBlock): InternalContent {
 
 ```typescript
 function parseSystem(system: AnthropicRequestBody["system"]): {
-  systemPrompt?: string
-  systemParts?: SystemTextPart[]
+  systemPrompt?: string;
+  systemParts?: SystemTextPart[];
 } {
-  if (!system) return {}
-  if (typeof system === "string") return { systemPrompt: system }
+  if (!system) return {};
+  if (typeof system === "string") return { systemPrompt: system };
 
   // 检查是否有 cache_control
-  const hasCacheControl = system.some((s) => s.cache_control)
+  const hasCacheControl = system.some((s) => s.cache_control);
   if (!hasCacheControl) {
-    return { systemPrompt: system.map((s) => s.text).join("\n") }
+    return { systemPrompt: system.map((s) => s.text).join("\n") };
   }
 
   // 保留结构化
@@ -244,9 +251,11 @@ function parseSystem(system: AnthropicRequestBody["system"]): {
     systemParts: system.map((s) => ({
       type: "text" as const,
       text: s.text,
-      ...(s.cache_control ? { cacheControl: { type: "ephemeral" as const, ttl: s.cache_control.ttl } } : {}),
+      ...(s.cache_control
+        ? { cacheControl: { type: "ephemeral" as const, ttl: s.cache_control.ttl } }
+        : {}),
     })),
-  }
+  };
 }
 ```
 
@@ -257,7 +266,7 @@ function parseSystem(system: AnthropicRequestBody["system"]): {
 ```typescript
 // 原: const systemPrompt = parseSystem(body.system)
 // 改为:
-const { systemPrompt, systemParts } = parseSystem(body.system)
+const { systemPrompt, systemParts } = parseSystem(body.system);
 
 const internal: InternalRequest = {
   model: body.model,
@@ -265,17 +274,14 @@ const internal: InternalRequest = {
     role: msg.role as InternalMessage["role"],
     content: (typeof msg.content === "string"
       ? [{ type: "text", text: msg.content }]
-      : msg.content.map(toInternalContent)
-    ) as InternalContent[],
+      : msg.content.map(toInternalContent)) as InternalContent[],
   })),
   stream: body.stream ?? false,
   maxTokens: body.max_tokens,
   temperature: body.temperature,
   systemPrompt,
   systemParts, // 新增
-  cacheControl: body.cache_control
-    ? { type: "ephemeral", ttl: body.cache_control.ttl }
-    : undefined, // 新增：顶级 cache_control
+  cacheControl: body.cache_control ? { type: "ephemeral", ttl: body.cache_control.ttl } : undefined, // 新增：顶级 cache_control
   tools: body.tools?.map((t) => ({
     name: t.name,
     description: t.description,
@@ -285,7 +291,7 @@ const internal: InternalRequest = {
       : undefined,
   })),
   rawBody: body.rawBody,
-}
+};
 ```
 
 - [ ] **Step 6: 验证 typecheck 和现有测试**
@@ -308,6 +314,7 @@ git commit -m "feat(gateway): parse cache_control from Anthropic inbound request
 ### Task 3: 出站序列化 cache_control
 
 **Files:**
+
 - Modify: `src/main/gateway/outbound/anthropic.ts:10-74`
 - Modify: `test/main/gateway-outbound.test.ts:15-151`
 
@@ -317,11 +324,9 @@ git commit -m "feat(gateway): parse cache_control from Anthropic inbound request
 
 ```typescript
 it("adds top-level cache_control", () => {
-  const body = toAnthropicRequest(
-    baseRequest({ cacheControl: { type: "ephemeral" } }),
-  )
-  expect(body.cache_control).toEqual({ type: "ephemeral" })
-})
+  const body = toAnthropicRequest(baseRequest({ cacheControl: { type: "ephemeral" } }));
+  expect(body.cache_control).toEqual({ type: "ephemeral" });
+});
 
 it("adds cache_control on content blocks", () => {
   const body = toAnthropicRequest(
@@ -329,20 +334,18 @@ it("adds cache_control on content blocks", () => {
       messages: [
         {
           role: "user",
-          content: [
-            { type: "text", text: "hello", cacheControl: { type: "ephemeral" } },
-          ],
+          content: [{ type: "text", text: "hello", cacheControl: { type: "ephemeral" } }],
         },
       ],
     }),
-  )
-  const msgs = body.messages as Array<{ content: Array<Record<string, unknown>> }>
+  );
+  const msgs = body.messages as Array<{ content: Array<Record<string, unknown>> }>;
   expect(msgs[0].content[0]).toMatchObject({
     type: "text",
     text: "hello",
     cache_control: { type: "ephemeral" },
-  })
-})
+  });
+});
 
 it("adds cache_control on tools", () => {
   const body = toAnthropicRequest(
@@ -356,12 +359,12 @@ it("adds cache_control on tools", () => {
         },
       ],
     }),
-  )
+  );
   expect((body.tools as Array<Record<string, unknown>>)[0]).toMatchObject({
     name: "read",
     cache_control: { type: "ephemeral" },
-  })
-})
+  });
+});
 
 it("outputs array-format system when systemParts present", () => {
   const body = toAnthropicRequest(
@@ -371,19 +374,17 @@ it("outputs array-format system when systemParts present", () => {
         { type: "text", text: "more context", cacheControl: { type: "ephemeral" } },
       ],
     }),
-  )
+  );
   expect(body.system).toEqual([
     { type: "text", text: "you are helpful" },
     { type: "text", text: "more context", cache_control: { type: "ephemeral" } },
-  ])
-})
+  ]);
+});
 
 it("cache_control with ttl passes through", () => {
-  const body = toAnthropicRequest(
-    baseRequest({ cacheControl: { type: "ephemeral", ttl: "1h" } }),
-  )
-  expect(body.cache_control).toEqual({ type: "ephemeral", ttl: "1h" })
-})
+  const body = toAnthropicRequest(baseRequest({ cacheControl: { type: "ephemeral", ttl: "1h" } }));
+  expect(body.cache_control).toEqual({ type: "ephemeral", ttl: "1h" });
+});
 ```
 
 - [ ] **Step 2: 运行测试确认失败**
@@ -401,11 +402,11 @@ pnpm test -- test/main/gateway-outbound.test.ts
 ```typescript
 function convertContent(msg: InternalMessage) {
   return msg.content.map((c) => {
-    let result: Record<string, unknown>
+    let result: Record<string, unknown>;
     switch (c.type) {
       case "text":
-        result = { type: "text" as const, text: c.text }
-        break
+        result = { type: "text" as const, text: c.text };
+        break;
       case "image":
         result = {
           type: "image" as const,
@@ -413,28 +414,28 @@ function convertContent(msg: InternalMessage) {
             c.source.type === "base64"
               ? { type: "base64" as const, media_type: c.source.mediaType, data: c.source.data }
               : { type: "url" as const, url: c.source.url },
-        }
-        break
+        };
+        break;
       case "tool_use":
-        result = { type: "tool_use" as const, id: c.id, name: c.name, input: c.input }
-        break
+        result = { type: "tool_use" as const, id: c.id, name: c.name, input: c.input };
+        break;
       case "tool_result":
         result = {
           type: "tool_result" as const,
           tool_use_id: c.toolUseId,
           content: c.content,
           is_error: c.isError,
-        }
-        break
+        };
+        break;
     }
     if (c.cacheControl) {
       result.cache_control = {
         type: c.cacheControl.type,
         ...(c.cacheControl.ttl ? { ttl: c.cacheControl.ttl } : {}),
-      }
+      };
     }
-    return result
-  })
+    return result;
+  });
 }
 ```
 
@@ -448,33 +449,33 @@ export function toAnthropicRequest(req: InternalRequest) {
     model: req.model,
     messages,
     max_tokens: req.maxTokens ?? 4096,
-  }
+  };
 
   // system: 优先用 systemParts（数组格式），fallback 到 systemPrompt（字符串）
   if (req.systemParts) {
     body.system = req.systemParts.map((p) => {
-      const part: Record<string, unknown> = { type: p.type, text: p.text }
+      const part: Record<string, unknown> = { type: p.type, text: p.text };
       if (p.cacheControl) {
         part.cache_control = {
           type: p.cacheControl.type,
           ...(p.cacheControl.ttl ? { ttl: p.cacheControl.ttl } : {}),
-        }
+        };
       }
-      return part
-    })
+      return part;
+    });
   } else if (system) {
-    body.system = system
+    body.system = system;
   }
 
-  if (req.temperature !== undefined) body.temperature = req.temperature
-  if (req.stream) body.stream = true
+  if (req.temperature !== undefined) body.temperature = req.temperature;
+  if (req.stream) body.stream = true;
 
   // 顶级 cache_control
   if (req.cacheControl) {
     body.cache_control = {
       type: req.cacheControl.type,
       ...(req.cacheControl.ttl ? { ttl: req.cacheControl.ttl } : {}),
-    }
+    };
   }
 
   if (req.tools?.length) {
@@ -483,18 +484,18 @@ export function toAnthropicRequest(req: InternalRequest) {
         name: t.name,
         description: t.description,
         input_schema: t.inputSchema,
-      }
+      };
       if (t.cacheControl) {
         tool.cache_control = {
           type: t.cacheControl.type,
           ...(t.cacheControl.ttl ? { ttl: t.cacheControl.ttl } : {}),
-        }
+        };
       }
-      return tool
-    })
+      return tool;
+    });
   }
 
-  return body
+  return body;
 }
 ```
 
@@ -526,6 +527,7 @@ git commit -m "feat(gateway): serialize cache_control in Anthropic outbound adap
 ### Task 4: 客户端启用自动缓存
 
 **Files:**
+
 - Modify: `src/main/llm/providers/anthropic/types.ts:4-12`
 - Modify: `src/main/llm/providers/anthropic/requestBuilder.ts:10-47`
 - Modify: `src/main/llm/providers/anthropic/__tests__/requestBuilder.test.ts:1-82`
@@ -536,14 +538,14 @@ git commit -m "feat(gateway): serialize cache_control in Anthropic outbound adap
 
 ```typescript
 export interface AnthropicRequestBody {
-  model: string
-  max_tokens: number
-  stream: boolean
-  system?: string
-  messages: AnthropicMessage[]
-  tools?: AnthropicTool[]
-  temperature?: number
-  cache_control?: { type: string; ttl?: string } // 新增
+  model: string;
+  max_tokens: number;
+  stream: boolean;
+  system?: string;
+  messages: AnthropicMessage[];
+  tools?: AnthropicTool[];
+  temperature?: number;
+  cache_control?: { type: string; ttl?: string }; // 新增
 }
 ```
 
@@ -553,28 +555,28 @@ export interface AnthropicRequestBody {
 
 ```typescript
 it("includes cache_control for automatic caching", () => {
-  const messages: CoreMessage[] = [{ role: "user", content: "hello" }]
-  const result = buildAnthropicRequest(messages, {}, baseOptions)
-  expect(result.cache_control).toEqual({ type: "ephemeral" })
-})
+  const messages: CoreMessage[] = [{ role: "user", content: "hello" }];
+  const result = buildAnthropicRequest(messages, {}, baseOptions);
+  expect(result.cache_control).toEqual({ type: "ephemeral" });
+});
 
 it("cache_control does not affect existing request structure", () => {
   const messages: CoreMessage[] = [
     { role: "system", content: "be helpful" },
     { role: "user", content: "hi" },
-  ]
+  ];
   const tools: Record<string, Tool> = {
     read: {
       description: "read",
       parameters: { type: "object", properties: {} },
     },
-  }
-  const result = buildAnthropicRequest(messages, tools, baseOptions)
-  expect(result.system).toBe("be helpful")
-  expect(result.messages).toEqual([{ role: "user", content: "hi" }])
-  expect(result.tools).toBeDefined()
-  expect(result.cache_control).toEqual({ type: "ephemeral" })
-})
+  };
+  const result = buildAnthropicRequest(messages, tools, baseOptions);
+  expect(result.system).toBe("be helpful");
+  expect(result.messages).toEqual([{ role: "user", content: "hi" }]);
+  expect(result.tools).toBeDefined();
+  expect(result.cache_control).toEqual({ type: "ephemeral" });
+});
 ```
 
 - [ ] **Step 3: 运行测试确认失败**
@@ -599,7 +601,7 @@ return {
   tools: anthropicTools,
   temperature: options.temperature,
   cache_control: { type: "ephemeral" }, // ← 新增：启用自动缓存
-}
+};
 ```
 
 - [ ] **Step 5: 运行测试确认通过**
@@ -630,20 +632,21 @@ git commit -m "feat(llm): enable Anthropic automatic prompt caching in request b
 ### Task 5: 统计类型补充缓存字段
 
 **Files:**
+
 - Modify: `src/shared/types/gateway.d.ts:159-191`
 
 - [ ] **Step 1: 更新 TrendPoint**
 
 ```typescript
 export interface TrendPoint {
-  date: string
-  hour?: number
-  requests: number
-  inputTokens: number
-  outputTokens: number
-  cacheReadTokens: number   // 新增
-  cacheWriteTokens: number  // 新增
-  cost: number
+  date: string;
+  hour?: number;
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number; // 新增
+  cacheWriteTokens: number; // 新增
+  cost: number;
 }
 ```
 
@@ -651,15 +654,15 @@ export interface TrendPoint {
 
 ```typescript
 export interface ChannelRankItem {
-  channelId: number
-  channelName: string
-  requests: number
-  successCount: number
-  failCount: number
-  avgLatencyMs: number
-  cacheReadTokens: number   // 新增
-  cacheWriteTokens: number  // 新增
-  cost: number
+  channelId: number;
+  channelName: string;
+  requests: number;
+  successCount: number;
+  failCount: number;
+  avgLatencyMs: number;
+  cacheReadTokens: number; // 新增
+  cacheWriteTokens: number; // 新增
+  cost: number;
 }
 ```
 
@@ -667,13 +670,13 @@ export interface ChannelRankItem {
 
 ```typescript
 export interface ModelRankItem {
-  modelName: string
-  requests: number
-  inputTokens: number
-  outputTokens: number
-  cacheReadTokens: number   // 新增
-  cacheWriteTokens: number  // 新增
-  cost: number
+  modelName: string;
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number; // 新增
+  cacheWriteTokens: number; // 新增
+  cost: number;
 }
 ```
 
@@ -697,6 +700,7 @@ git commit -m "feat(gateway): add cache fields to TrendPoint, ChannelRankItem, M
 ### Task 6: 统计查询补缓存列
 
 **Files:**
+
 - Modify: `src/main/db/models/statsDao.ts:343-403` (trend queries)
 - Modify: `src/main/db/models/statsDao.ts:186-265` (ranking queries)
 
@@ -726,7 +730,7 @@ export function getStatsDailyTrend(
       )
       GROUP BY date ORDER BY date`,
     )
-    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>
+    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     date: r.date as string,
@@ -736,7 +740,7 @@ export function getStatsDailyTrend(
     cacheReadTokens: r.cache_read_tokens as number,
     cacheWriteTokens: r.cache_write_tokens as number,
     cost: r.cost as number,
-  }))
+  }));
 }
 ```
 
@@ -768,7 +772,7 @@ export function getStatsHourlyTrend(
       )
       GROUP BY date, hour ORDER BY date, hour`,
     )
-    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>
+    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     date: r.date as string,
@@ -779,7 +783,7 @@ export function getStatsHourlyTrend(
     cacheReadTokens: r.cache_read_tokens as number,
     cacheWriteTokens: r.cache_write_tokens as number,
     cost: r.cost as number,
-  }))
+  }));
 }
 ```
 
@@ -826,7 +830,7 @@ export function getChannelRanking(
       GROUP BY channel_id
       ORDER BY requests DESC`,
     )
-    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>
+    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     channelId: r.channel_id as number,
@@ -838,7 +842,7 @@ export function getChannelRanking(
     cacheWriteTokens: r.cache_write_tokens as number,
     avgLatencyMs: (r.avg_latency_ms as number) ?? 0,
     cost: r.cost as number,
-  }))
+  }));
 }
 ```
 
@@ -873,7 +877,7 @@ export function getModelRanking(
       GROUP BY model_name
       ORDER BY requests DESC`,
     )
-    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>
+    .all(from, to, from, to, from, to) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     modelName: r.model_name as string,
@@ -883,7 +887,7 @@ export function getModelRanking(
     cacheReadTokens: r.cache_read_tokens as number,
     cacheWriteTokens: r.cache_write_tokens as number,
     cost: r.cost as number,
-  }))
+  }));
 }
 ```
 
@@ -907,6 +911,7 @@ git commit -m "feat(gateway): add cache columns to trend/ranking SQL queries"
 ### Task 7: 趋势图和排行榜展示缓存指标
 
 **Files:**
+
 - Modify: `src/renderer/src/views/GatewayPanel.vue:68-77` (metricOptions)
 - Modify: `src/renderer/src/components/gateway/StatsChart.vue:14,24-35` (metric 支持)
 - Modify: `src/renderer/src/components/gateway/RankBoard.vue:31-58` (缓存展示)
@@ -916,14 +921,14 @@ git commit -m "feat(gateway): add cache columns to trend/ranking SQL queries"
 `GatewayPanel.vue`：
 
 ```typescript
-type MetricKey = "requests" | "cost" | "tokens" | "cachedTokens"  // 加 cachedTokens
+type MetricKey = "requests" | "cost" | "tokens" | "cachedTokens"; // 加 cachedTokens
 
 const metricOptions: { key: MetricKey; label: string }[] = [
   { key: "requests", label: "请求" },
   { key: "cost", label: "费用" },
   { key: "tokens", label: "Token" },
-  { key: "cachedTokens", label: "缓存Token" },  // 新增
-]
+  { key: "cachedTokens", label: "缓存Token" }, // 新增
+];
 ```
 
 - [ ] **Step 2: 更新 StatsChart 支持 cachedTokens 指标**
@@ -933,31 +938,31 @@ const metricOptions: { key: MetricKey; label: string }[] = [
 ```typescript
 // 更新 props metric 类型
 const props = defineProps<{
-  points: TrendPoint[]
-  metric: "requests" | "cost" | "tokens" | "cachedTokens"
-  granularity: "hourly" | "daily"
-}>()
+  points: TrendPoint[];
+  metric: "requests" | "cost" | "tokens" | "cachedTokens";
+  granularity: "hourly" | "daily";
+}>();
 
 // series computed 中新增
 const series = computed(() => {
   if (props.metric === "requests") {
-    return [{ name: "请求数", data: props.points.map((p) => p.requests) }]
+    return [{ name: "请求数", data: props.points.map((p) => p.requests) }];
   }
   if (props.metric === "cost") {
-    return [{ name: "费用($)", data: props.points.map((p) => Number(p.cost.toFixed(4))) }]
+    return [{ name: "费用($)", data: props.points.map((p) => Number(p.cost.toFixed(4))) }];
   }
   if (props.metric === "tokens") {
     return [
       { name: "Input Token", data: props.points.map((p) => p.inputTokens) },
       { name: "Output Token", data: props.points.map((p) => p.outputTokens) },
-    ]
+    ];
   }
   // 新增 cachedTokens
   return [
     { name: "缓存读", data: props.points.map((p) => p.cacheReadTokens) },
     { name: "缓存写", data: props.points.map((p) => p.cacheWriteTokens) },
-  ]
-})
+  ];
+});
 ```
 
 - [ ] **Step 3: 更新 RankBoard 模型排行榜展示缓存**
@@ -974,7 +979,7 @@ const series = computed(() => {
     ? `$${item.cost.toFixed(3)}`
     : sortKey === "tokens"
       ? `${formatNum(item.inputTokens + item.outputTokens)}`
-      : formatNum(item.requests)
+      : formatNum(item.requests);
 }
 // 在 tokens 排序时，新增缓存命中数展示：
 // <span class="text-xs text-muted-foreground/60"> | 缓存: {{ formatNum(item.cacheReadTokens) }}</span>
@@ -984,13 +989,8 @@ const series = computed(() => {
 
 ```html
 <span class="shrink-0 text-xs text-muted-foreground">
-  {{
-    sortKey === "cost"
-      ? `$${item.cost.toFixed(3)}`
-      : sortKey === "tokens"
-        ? `${formatNum(item.inputTokens + item.outputTokens)}`
-        : formatNum(item.requests)
-  }}
+  {{ sortKey === "cost" ? `$${item.cost.toFixed(3)}` : sortKey === "tokens" ?
+  `${formatNum(item.inputTokens + item.outputTokens)}` : formatNum(item.requests) }}
   <template v-if="sortKey === 'tokens' && item.cacheReadTokens > 0">
     <span class="text-muted-foreground/50"> | 缓存 {{ formatNum(item.cacheReadTokens) }}</span>
   </template>

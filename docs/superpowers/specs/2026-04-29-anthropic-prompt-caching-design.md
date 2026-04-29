@@ -5,6 +5,7 @@
 Slime Gateway 目前的数据层已准备好缓存追踪（`relay_logs`、`stats_*` 有 `cache_read_tokens` / `cache_write_tokens`，`model_prices` 有缓存定价），但链路中缺失 `cache_control` 的透传，导致上游 Anthropic 缓存从未触发。每次请求都完整计算，费用高、速度慢。
 
 Anthropic 支持两种缓存模式：
+
 - **自动缓存**：请求体顶级加 `cache_control: { type: "ephemeral" }`，系统自动管理断点
 - **显式断点**：content block / tool / system part 级别加 `cache_control`
 
@@ -88,11 +89,11 @@ Gateway 透传后，Anthropic 自动缓存 system prompt、tools、历史消息�
 
 ### `src/shared/types/gateway.d.ts`
 
-| 类型 | 补字段 |
-|------|--------|
-| `TrendPoint` | `cacheReadTokens: number`、`cacheWriteTokens: number` |
+| 类型              | 补字段                                                |
+| ----------------- | ----------------------------------------------------- |
+| `TrendPoint`      | `cacheReadTokens: number`、`cacheWriteTokens: number` |
 | `ChannelRankItem` | `cacheReadTokens: number`、`cacheWriteTokens: number` |
-| `ModelRankItem` | `cacheReadTokens: number`、`cacheWriteTokens: number` |
+| `ModelRankItem`   | `cacheReadTokens: number`、`cacheWriteTokens: number` |
 
 ### `src/main/db/models/statsDao.ts`
 
@@ -110,17 +111,17 @@ Channel/Model 排行榜增加缓存读 Token 列（排名已有 cost，缓存 to
 
 ## 文件改动总览
 
-| # | 文件 | 改动 |
-|---|------|------|
-| 1 | `gateway/outbound/types.ts` | 加 `CacheControl`、`SystemTextPart`；`InternalContent`/`InternalTool`/`InternalRequest` 加缓存字段 |
-| 2 | `gateway/inbound/anthropic.ts` | 解析请求顶级/content/tool/system 的 `cache_control` |
-| 3 | `gateway/outbound/anthropic.ts` | 序列化 `cache_control`、数组 system |
-| 4 | `llm/providers/anthropic/types.ts` | `AnthropicRequestBody` 加 `cache_control` |
-| 5 | `llm/providers/anthropic/requestBuilder.ts` | 请求体加 `cache_control: { type: "ephemeral" }` |
-| 6 | `shared/types/gateway.d.ts` | `TrendPoint`/`ChannelRankItem`/`ModelRankItem` 补缓存字段 |
-| 7 | `db/models/statsDao.ts` | SQL 补缓存列 |
-| 8 | `views/GatewayPanel.vue` | 趋势图加缓存指标 |
-| 9 | RankBoard 相关组件 | 排行榜展缓存数据 |
+| #   | 文件                                        | 改动                                                                                               |
+| --- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | `gateway/outbound/types.ts`                 | 加 `CacheControl`、`SystemTextPart`；`InternalContent`/`InternalTool`/`InternalRequest` 加缓存字段 |
+| 2   | `gateway/inbound/anthropic.ts`              | 解析请求顶级/content/tool/system 的 `cache_control`                                                |
+| 3   | `gateway/outbound/anthropic.ts`             | 序列化 `cache_control`、数组 system                                                                |
+| 4   | `llm/providers/anthropic/types.ts`          | `AnthropicRequestBody` 加 `cache_control`                                                          |
+| 5   | `llm/providers/anthropic/requestBuilder.ts` | 请求体加 `cache_control: { type: "ephemeral" }`                                                    |
+| 6   | `shared/types/gateway.d.ts`                 | `TrendPoint`/`ChannelRankItem`/`ModelRankItem` 补缓存字段                                          |
+| 7   | `db/models/statsDao.ts`                     | SQL 补缓存列                                                                                       |
+| 8   | `views/GatewayPanel.vue`                    | 趋势图加缓存指标                                                                                   |
+| 9   | RankBoard 相关组件                          | 排行榜展缓存数据                                                                                   |
 
 ## 边界情况
 
