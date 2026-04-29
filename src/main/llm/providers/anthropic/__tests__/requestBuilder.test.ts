@@ -79,4 +79,28 @@ describe("buildAnthropicRequest", () => {
       content: [{ type: "tool_result", tool_use_id: "tc1", content: "result" }],
     });
   });
+
+  it("includes cache_control for automatic caching", () => {
+    const messages: CoreMessage[] = [{ role: "user", content: "hello" }];
+    const result = buildAnthropicRequest(messages, {}, baseOptions);
+    expect(result.cache_control).toEqual({ type: "ephemeral" });
+  });
+
+  it("cache_control does not affect existing request structure", () => {
+    const messages: CoreMessage[] = [
+      { role: "system", content: "be helpful" },
+      { role: "user", content: "hi" },
+    ];
+    const tools: Record<string, Tool> = {
+      read: {
+        description: "read",
+        parameters: { type: "object", properties: {} },
+      },
+    };
+    const result = buildAnthropicRequest(messages, tools, baseOptions);
+    expect(result.system).toBe("be helpful");
+    expect(result.messages).toEqual([{ role: "user", content: "hi" }]);
+    expect(result.tools).toBeDefined();
+    expect(result.cache_control).toEqual({ type: "ephemeral" });
+  });
 });
