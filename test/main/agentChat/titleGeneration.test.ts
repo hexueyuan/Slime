@@ -2,14 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // --- Mocks ---
 
-vi.mock("ai", () => ({
-  generateText: vi.fn(),
-}));
-
-vi.mock("@ai-sdk/anthropic", () => ({
-  createAnthropic: vi.fn(() => vi.fn(() => "mock-model")),
-}));
-
 vi.mock("@/db", () => ({
   getDb: vi.fn(() => ({})),
 }));
@@ -23,7 +15,6 @@ vi.mock("@/eventbus", () => ({
   eventBus: { sendToRenderer: vi.fn() },
 }));
 
-import { generateText } from "ai";
 import * as sessionDao from "@/db/models/agentSessionDao";
 import * as messageDao from "@/db/models/agentMessageDao";
 import { eventBus } from "@/eventbus";
@@ -69,6 +60,13 @@ function makeSession(overrides?: Partial<Record<string, any>>) {
   };
 }
 
+function mockFetchTitle(title: string) {
+  globalThis.fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ content: [{ text: title }] }),
+  } as any);
+}
+
 // --- Tests ---
 
 describe("AgentChatPresenterAdapter generateTitle", () => {
@@ -86,7 +84,7 @@ describe("AgentChatPresenterAdapter generateTitle", () => {
     vi.mocked(messageDao.listBySession).mockReturnValue([]);
     vi.mocked(sessionDao.updateTitle).mockReturnValue(undefined);
     vi.mocked(sessionDao.updateMetadata).mockReturnValue(undefined);
-    vi.mocked(generateText).mockResolvedValue({ text: "测试标题" } as any);
+    mockFetchTitle("测试标题");
   });
 
   it("skips when titleManuallyEdited is true", async () => {
@@ -96,7 +94,7 @@ describe("AgentChatPresenterAdapter generateTitle", () => {
 
     await (adapter as any).generateTitle("sess-1", "hello");
 
-    expect(generateText).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it("skips when titleGeneratedCount >= 3", async () => {
@@ -106,13 +104,13 @@ describe("AgentChatPresenterAdapter generateTitle", () => {
 
     await (adapter as any).generateTitle("sess-1", "hello");
 
-    expect(generateText).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it("calls generateText when conditions are met", async () => {
+  it("calls fetch when conditions are met", async () => {
     await (adapter as any).generateTitle("sess-1", "hello");
 
-    expect(generateText).toHaveBeenCalled();
+    expect(globalThis.fetch).toHaveBeenCalled();
   });
 
   it("updates title and metadata on success", async () => {
@@ -135,7 +133,7 @@ describe("AgentChatPresenterAdapter generateTitle", () => {
 
     await (adapter as any).generateTitle("sess-1", "hello");
 
-    expect(generateText).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it("skips when session not found", async () => {
@@ -143,11 +141,11 @@ describe("AgentChatPresenterAdapter generateTitle", () => {
 
     await (adapter as any).generateTitle("sess-1", "hello");
 
-    expect(generateText).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it("silently ignores generateText errors", async () => {
-    vi.mocked(generateText).mockRejectedValue(new Error("LLM failed"));
+  it("silently ignores fetch errors", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("LLM failed"));
 
     await (adapter as any).generateTitle("sess-1", "hello");
 
@@ -164,19 +162,18 @@ describe("AgentChatPresenterAdapter generateTitle", () => {
 
     await (adapter as any).generateTitle("sess-1", "msg4");
 
-    const call = vi.mocked(generateText).mock.calls[0][0] as any;
-    expect(call.prompt).toContain("用户：msg1");
-    expect(call.prompt).toContain("用户：msg2");
-    expect(call.prompt).toContain("用户：msg3");
-    // msg4 is the current message, but we only take 3 total
-    expect(call.prompt).not.toContain("用户：msg4");
+    expect(globalThis.fetch).toHaveBeenCalled();
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body.messages[0].content).toContain("用户：msg1");
+    expect(body.messages[0].content).toContain("用户：msg2");
+    expect(body.messages[0].content).toContain("用户：msg3");
+    expect(body.messages[0].content).not.toContain("用户：msg4");
   });
 
   it("fires generateTitle in chat() as fire-and-forget", async () => {
     await adapter.chat("sess-1", "hello");
 
     expect(engine.chat).toHaveBeenCalledWith("sess-1", "hello");
-    // generateTitle was kicked off (fire-and-forget, so we just check it was called)
     expect(sessionDao.getSessionById).toHaveBeenCalled();
   });
 });

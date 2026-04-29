@@ -1,5 +1,5 @@
-import { streamText } from "ai";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { createLLMClient } from "@/llm";
+import type { LLMClient, Tool } from "@/llm";
 import type { IAgentPresenter } from "@shared/types/presenters";
 import type {
   UserMessageContent,
@@ -16,6 +16,8 @@ import type { EvolutionPresenter } from "./evolutionPresenter";
 import type { ContentPresenter } from "./contentPresenter";
 import type { GatewayPresenter } from "./gatewayPresenter";
 import { buildSystemPrompt } from "./systemPrompt";
+import { z } from "zod";
+import type { CoreMessage } from "./agentChat/contextBuilder";
 
 interface ToolCall {
   id: string;
@@ -41,12 +43,25 @@ export class AgentPresenter implements IAgentPresenter {
     private gatewayPresenter: GatewayPresenter,
   ) {}
 
-  private createModel(modelName: string) {
-    const provider = createAnthropic({
+  private createClient(): LLMClient {
+    return createLLMClient("anthropic", {
+      baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}`,
       apiKey: this.gatewayPresenter.getInternalKey(),
-      baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}/v1/`,
     });
-    return provider(modelName);
+  }
+
+  private convertTools(aiSdkTools: Record<string, any>): Record<string, Tool> {
+    const result: Record<string, Tool> = {};
+    for (const [name, t] of Object.entries(aiSdkTools)) {
+      const jsonSchema = t.inputSchema
+        ? z.toJSONSchema(t.inputSchema)
+        : { type: "object", properties: {} };
+      result[name] = {
+        description: t.description,
+        parameters: jsonSchema as Record<string, unknown>,
+      };
+    }
+    return result;
   }
 
   /**
@@ -143,14 +158,13 @@ export class AgentPresenter implements IAgentPresenter {
   }
 
   /**
-   * 使用 textStream 流式读取文本，然后获取 toolCalls
-   * 比 fullStream 更可靠，因为某些 OpenAI 兼容 API 的 fullStream 不产生 text-delta 事件
+   * 使用新 LLM client 流式读取，累积文本和工具调用
    */
   private async collectStreamResult(
-    result: {
-      textStream: AsyncIterable<string>;
-      toolCalls: PromiseLike<any[]>;
-    },
+    client: LLMClient,
+    messages: CoreMessage[],
+    tools: Record<string, Tool>,
+    options: { model: string },
     sessionId: string,
     messageId: string,
     blocks: AssistantMessageBlock[],
@@ -158,62 +172,71 @@ export class AgentPresenter implements IAgentPresenter {
   ): Promise<{ textContent: string; toolCalls: ToolCall[] }> {
     let textContent = "";
     let currentContentBlock: AssistantMessageBlock | null = null;
+    const pendingToolCalls = new Map<string, { id: string; name: string; inputJson: string }>();
+    const completedToolCalls: ToolCall[] = [];
 
-    // 1. 流式读取文本
-    for await (const chunk of result.textStream) {
+    const stream = client.chat(messages, tools, options, abortSignal);
+
+    for await (const event of stream) {
       if (abortSignal.aborted) break;
-      if (!chunk) continue;
 
-      textContent += chunk;
-      if (!currentContentBlock) {
-        currentContentBlock = {
-          type: "content",
-          content: "",
-          status: "loading",
-          timestamp: Date.now(),
-        };
-        blocks.push(currentContentBlock);
+      if (event.type === "text") {
+        textContent += event.text;
+        if (!currentContentBlock) {
+          currentContentBlock = {
+            type: "content",
+            content: "",
+            status: "loading",
+            timestamp: Date.now(),
+          };
+          blocks.push(currentContentBlock);
+        }
+        currentContentBlock.content += event.text;
+        this.pushToRenderer(sessionId, messageId, blocks);
+      } else if (event.type === "tool_call_start") {
+        pendingToolCalls.set(event.id, { id: event.id, name: event.name, inputJson: "" });
+      } else if (event.type === "tool_call_delta") {
+        const tc = pendingToolCalls.get(event.id);
+        if (tc) tc.inputJson += event.delta;
+      } else if (event.type === "tool_call_end") {
+        const tc = pendingToolCalls.get(event.id);
+        if (tc) {
+          let argsObj: unknown;
+          try {
+            argsObj = event.input ?? JSON.parse(tc.inputJson || "{}");
+          } catch {
+            argsObj = {};
+          }
+          const argsStr = JSON.stringify(argsObj);
+          completedToolCalls.push({ id: tc.id, name: tc.name, args: argsStr });
+          blocks.push({
+            type: "tool_call",
+            id: tc.id,
+            content: "",
+            status: "loading",
+            timestamp: Date.now(),
+            tool_call: {
+              name: tc.name,
+              params: argsStr,
+            },
+          });
+          pendingToolCalls.delete(event.id);
+        }
+      } else if (event.type === "error") {
+        throw new Error(event.error);
       }
-      currentContentBlock.content += chunk;
-      this.pushToRenderer(sessionId, messageId, blocks);
     }
 
-    // 标记文本完成
     if (currentContentBlock) {
       currentContentBlock.status = "success";
       this.pushToRenderer(sessionId, messageId, blocks);
     }
 
-    // 2. 获取工具调用
-    const rawToolCalls = await result.toolCalls;
-    const toolCalls: ToolCall[] = [];
-
-    for (const tc of rawToolCalls || []) {
-      const argsObj = tc.input ?? tc.args ?? {};
-      const argsStr = JSON.stringify(argsObj);
-      toolCalls.push({
-        id: tc.toolCallId,
-        name: tc.toolName,
-        args: argsStr,
-      });
-      blocks.push({
-        type: "tool_call",
-        id: tc.toolCallId,
-        content: "",
-        status: "loading",
-        timestamp: Date.now(),
-        tool_call: {
-          name: tc.toolName,
-          params: argsStr,
-        },
-      });
-    }
-
-    if (toolCalls.length > 0) {
+    if (completedToolCalls.length > 0) {
       this.pushToRenderer(sessionId, messageId, blocks);
     }
 
-    return { textContent, toolCalls };
+    return { textContent, toolCalls: completedToolCalls };
   }
 
   private async handleAskUser(
@@ -318,8 +341,8 @@ export class AgentPresenter implements IAgentPresenter {
     await this.sessionPresenter.saveMessage(userMessage);
 
     const messages = await this.buildMessages(sessionId);
-    const model = this.createModel(slotModel);
-    const tools = this.toolPresenter.getToolSet(sessionId);
+    const client = this.createClient();
+    const tools = this.convertTools(this.toolPresenter.getToolSet(sessionId));
 
     const blocks: AssistantMessageBlock[] = [];
     const assistantMessageId = crypto.randomUUID();
@@ -330,16 +353,16 @@ export class AgentPresenter implements IAgentPresenter {
         stepCount++;
 
         const systemPrompt = await buildSystemPrompt(this.evolutionPresenter.getStatus().stage);
-        const result = streamText({
-          model,
-          system: systemPrompt,
-          messages: messages as any,
-          tools: tools as any,
-          abortSignal: abortController.signal,
-        });
+        const messagesWithSystem: any[] = [
+          { role: "system", content: systemPrompt },
+          ...messages.filter((m) => m.role !== "system"),
+        ];
 
         const { textContent, toolCalls } = await this.collectStreamResult(
-          result,
+          client,
+          messagesWithSystem,
+          tools,
+          { model: slotModel },
           sessionId,
           assistantMessageId,
           blocks,
@@ -350,7 +373,7 @@ export class AgentPresenter implements IAgentPresenter {
           break;
         }
 
-        // AI SDK v6 CoreMessage 格式：assistant 带 toolCalls
+        // CoreMessage 格式：assistant 带 toolCalls
         const assistantParts: any[] = [];
         if (textContent) {
           assistantParts.push({ type: "text", text: textContent });

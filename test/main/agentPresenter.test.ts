@@ -17,15 +17,10 @@ vi.mock("@/eventbus", () => ({
   },
 }));
 
-// Mock Vercel AI SDK streamText
-const mockStreamText = vi.fn();
-vi.mock("ai", () => ({
-  streamText: (...args: unknown[]) => mockStreamText(...args),
-}));
-
-// Mock provider
-vi.mock("@ai-sdk/anthropic", () => ({
-  createAnthropic: vi.fn(() => vi.fn(() => "mock-model")),
+// Mock LLM client
+const mockClientChat = vi.fn();
+vi.mock("@/llm", () => ({
+  createLLMClient: vi.fn(() => ({ chat: mockClientChat })),
 }));
 
 const { AgentPresenter } = await import("@/presenter/agentPresenter");
@@ -79,6 +74,7 @@ describe("AgentPresenter", () => {
       mockGatewayPresenter as any,
     );
     mockSendToRenderer.mockClear();
+    mockClientChat.mockClear();
     mockGatewayPresenter.select.mockReturnValue({
       matched: {
         reasoning: {
@@ -100,12 +96,9 @@ describe("AgentPresenter", () => {
   });
 
   it("should call streamText and emit stream events", async () => {
-    mockStreamText.mockReturnValue({
-      textStream: (async function* () {
-        yield "Hello";
-        yield " world";
-      })(),
-      toolCalls: Promise.resolve([]),
+    mockClientChat.mockImplementation(async function* () {
+      yield { type: "text", text: "Hello" };
+      yield { type: "text", text: " world" };
     });
 
     const session = await sessionPresenter.createSession("test");
@@ -119,11 +112,8 @@ describe("AgentPresenter", () => {
   });
 
   it("should emit error event on streamText failure", async () => {
-    mockStreamText.mockReturnValue({
-      textStream: (async function* () {
-        throw new Error("API error");
-      })(),
-      toolCalls: Promise.resolve([]),
+    mockClientChat.mockImplementation(async function* () {
+      yield { type: "error", error: "API error" };
     });
 
     const session = await sessionPresenter.createSession("test");
@@ -134,18 +124,22 @@ describe("AgentPresenter", () => {
   });
 
   it("should stop generation", async () => {
-    mockStreamText.mockReturnValue({
-      textStream: (async function* () {
-        yield "Hello";
-        await new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("aborted")), 50);
+    mockClientChat.mockImplementation((_msgs: any, _tools: any, _opts: any, signal: any) =>
+      (async function* () {
+        yield { type: "text", text: "Hello" };
+        await new Promise<void>((resolve) => {
+          if (signal?.aborted) {
+            resolve();
+            return;
+          }
+          signal?.addEventListener("abort", resolve);
         });
       })(),
-      toolCalls: Promise.resolve([]),
-    });
+    );
 
     const session = await sessionPresenter.createSession("test");
     const chatPromise = agent.chat(session.id, { text: "hi", files: [] });
+    await new Promise((r) => setTimeout(r, 20));
     await agent.stopGeneration(session.id);
     await chatPromise;
     const endCall = mockSendToRenderer.mock.calls.find((c) => c[0] === "stream:end");

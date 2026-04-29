@@ -1,5 +1,3 @@
-import { generateText } from "ai";
-import { createAnthropic } from "@ai-sdk/anthropic";
 import { getDb } from "@/db";
 import * as sessionDao from "@/db/models/agentSessionDao";
 import * as configDao from "@/db/models/agentSessionConfigDao";
@@ -104,20 +102,25 @@ export class AgentChatPresenterAdapter {
     if (!groupName) return;
 
     try {
-      const provider = createAnthropic({
-        apiKey: this.gatewayPresenter.getInternalKey(),
-        baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}/v1/`,
+      const port = this.gatewayPresenter.getPort();
+      const apiKey = this.gatewayPresenter.getInternalKey();
+      const prompt = `根据以下对话内容，生成一个简短的标题（不超过20字），只返回标题文本，不要加引号或其他格式：\n\n${allUserMessages.map((msg) => `用户：${msg}`).join("\n")}`;
+      const resp = await fetch(`http://127.0.0.1:${port}/v1/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: groupName,
+          max_tokens: 50,
+          messages: [{ role: "user", content: prompt }],
+        }),
       });
-      const model = provider(groupName);
-
-      const result = await generateText({
-        model,
-        prompt: `根据以下对话内容，生成一个简短的标题（不超过20字），只返回标题文本，不要加引号或其他格式：\n\n${allUserMessages.map((msg) => `用户：${msg}`).join("\n")}`,
-        maxOutputTokens: 50,
-        temperature: 0.7,
-      });
-
-      const newTitle = result.text.trim();
+      if (!resp.ok) return;
+      const data = (await resp.json()) as any;
+      const newTitle = (data?.content?.[0]?.text ?? "").trim();
       if (newTitle) {
         sessionDao.updateTitle(db, sessionId, newTitle);
         metadata.titleGeneratedCount = (metadata.titleGeneratedCount ?? 0) + 1;

@@ -1,4 +1,3 @@
-import { tool } from "ai";
 import { z } from "zod";
 import { exec as execCb } from "child_process";
 import { promisify } from "util";
@@ -38,17 +37,16 @@ function validateCommand(command: string): void {
   }
 }
 
-// Helper: AI SDK v6 uses 'inputSchema' instead of 'parameters'
 function createTool(config: {
   description: string;
   parameters: z.ZodObject<any>;
   execute: (...args: any[]) => Promise<any>;
 }) {
-  return tool({
+  return {
     description: config.description,
     inputSchema: config.parameters,
     execute: config.execute,
-  } as any);
+  };
 }
 
 export class ToolPresenter {

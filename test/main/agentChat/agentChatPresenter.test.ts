@@ -2,12 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // --- Mocks ---
 
-vi.mock("ai", () => ({
-  streamText: vi.fn(),
-}));
-
-vi.mock("@ai-sdk/anthropic", () => ({
-  createAnthropic: vi.fn(() => vi.fn(() => "mock-model")),
+vi.mock("@/llm", () => ({
+  createLLMClient: vi.fn(),
 }));
 
 vi.mock("@/db", () => ({
@@ -34,7 +30,7 @@ vi.mock("@/presenter/agentChat/contextBuilder", () => ({
   ]),
 }));
 
-import { streamText } from "ai";
+import { createLLMClient } from "@/llm";
 import { eventBus } from "@/eventbus";
 import * as messageDao from "@/db/models/agentMessageDao";
 import * as sessionDao from "@/db/models/agentSessionDao";
@@ -71,14 +67,27 @@ function makeContentPresenter() {
   } as any;
 }
 
-function mockStreamTextSimple(text: string, toolCalls: any[] = []) {
-  async function* gen() {
-    yield text;
-  }
-  vi.mocked(streamText).mockReturnValue({
-    textStream: gen(),
-    toolCalls: Promise.resolve(toolCalls),
-  } as any);
+async function* textGen(text: string) {
+  yield { type: "text" as const, text };
+}
+
+async function* toolCallGen(id: string, name: string, input: unknown) {
+  yield { type: "tool_call_start" as const, id, name };
+  yield { type: "tool_call_end" as const, id, input };
+}
+
+async function* concatGen(...gens: AsyncGenerator<any>[]) {
+  for (const gen of gens) yield* gen;
+}
+
+function mockClientSimple(text: string) {
+  const mockClient = {
+    chat: vi.fn(async function* () {
+      yield { type: "text", text };
+    }),
+  };
+  vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
+  return mockClient;
 }
 
 function setupDefaultMocks() {
@@ -143,7 +152,7 @@ describe("AgentChatPresenter", () => {
 
   describe("chat", () => {
     it("saves user message and assistant message", async () => {
-      mockStreamTextSimple("Hello!");
+      mockClientSimple("Hello!");
       await presenter.chat("sess-1", "hi");
 
       expect(messageDao.createMessage).toHaveBeenCalledTimes(2);
@@ -154,7 +163,7 @@ describe("AgentChatPresenter", () => {
     });
 
     it("sends END event on completion", async () => {
-      mockStreamTextSimple("Done");
+      mockClientSimple("Done");
       await presenter.chat("sess-1", "test");
 
       expect(eventBus.sendToRenderer).toHaveBeenCalledWith(
@@ -164,9 +173,8 @@ describe("AgentChatPresenter", () => {
     });
 
     it("sets state to generating then idle", async () => {
-      mockStreamTextSimple("ok");
+      mockClientSimple("ok");
       const promise = presenter.chat("sess-1", "test");
-      // During execution state is generating (hard to catch synchronously)
       await promise;
       expect(presenter.getSessionState("sess-1")).toBe("idle");
     });
@@ -197,12 +205,12 @@ describe("AgentChatPresenter", () => {
     });
 
     it("handles LLM error gracefully", async () => {
-      vi.mocked(streamText).mockReturnValue({
-        textStream: (async function* () {
-          throw new Error("LLM failed");
-        })(),
-        toolCalls: Promise.resolve([]),
-      } as any);
+      const mockClient = {
+        chat: vi.fn(async function* () {
+          yield { type: "error", error: "LLM failed" };
+        }),
+      };
+      vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
 
       await presenter.chat("sess-1", "test");
 
@@ -215,25 +223,19 @@ describe("AgentChatPresenter", () => {
 
     it("executes tool calls and loops", async () => {
       let callCount = 0;
-      vi.mocked(streamText).mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            textStream: (async function* () {
-              yield "thinking...";
-            })(),
-            toolCalls: Promise.resolve([
-              { toolCallId: "tc-1", toolName: "read", input: { path: "/tmp" } },
-            ]),
-          } as any;
-        }
-        return {
-          textStream: (async function* () {
-            yield "done";
-          })(),
-          toolCalls: Promise.resolve([]),
-        } as any;
-      });
+      const mockClient = {
+        chat: vi.fn(async function* () {
+          callCount++;
+          if (callCount === 1) {
+            yield { type: "text", text: "thinking..." };
+            yield { type: "tool_call_start", id: "tc-1", name: "read" };
+            yield { type: "tool_call_end", id: "tc-1", input: { path: "/tmp" } };
+          } else {
+            yield { type: "text", text: "done" };
+          }
+        }),
+      };
+      vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
 
       const tp = makeToolPresenter();
       presenter = new AgentChatPresenter(makeGatewayPresenter(), tp, makeContentPresenter());
@@ -242,22 +244,19 @@ describe("AgentChatPresenter", () => {
       await presenter.chat("sess-1", "test");
 
       expect(tp.callTool).toHaveBeenCalledWith("sess-1", "read", { path: "/tmp" });
-      expect(streamText).toHaveBeenCalledTimes(2);
+      expect(mockClient.chat).toHaveBeenCalledTimes(2);
     });
 
     it("respects MAX_STEPS limit", async () => {
-      // Always return a tool call to force looping
-      vi.mocked(streamText).mockImplementation(
-        () =>
-          ({
-            textStream: (async function* () {
-              yield "";
-            })(),
-            toolCalls: Promise.resolve([
-              { toolCallId: `tc-${Date.now()}`, toolName: "read", input: { path: "/" } },
-            ]),
-          }) as any,
-      );
+      let callCount = 0;
+      const mockClient = {
+        chat: vi.fn(async function* () {
+          callCount++;
+          yield { type: "tool_call_start", id: `tc-${callCount}`, name: "read" };
+          yield { type: "tool_call_end", id: `tc-${callCount}`, input: { path: "/" } };
+        }),
+      };
+      vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
 
       const tp = makeToolPresenter();
       presenter = new AgentChatPresenter(makeGatewayPresenter(), tp, makeContentPresenter());
@@ -266,7 +265,7 @@ describe("AgentChatPresenter", () => {
       await presenter.chat("sess-1", "test");
 
       // Should cap at 128
-      expect(vi.mocked(streamText).mock.calls.length).toBe(128);
+      expect(mockClient.chat.mock.calls.length).toBe(128);
     });
   });
 
@@ -279,7 +278,6 @@ describe("AgentChatPresenter", () => {
     it("resolves pending question with cancelled", async () => {
       let resolved = "";
       const promise = new Promise<void>((done) => {
-        // Access private pendingQuestions via chat + ask_user
         (presenter as any).pendingQuestions.set("sess-1", {
           toolCallId: "tc-1",
           resolve: (answer: string) => {
@@ -317,83 +315,62 @@ describe("AgentChatPresenter", () => {
         resolve: vi.fn(),
       });
       presenter.answerQuestion("sess-1", "tc-wrong", "yes");
-      // Should not have been removed
       expect((presenter as any).pendingQuestions.has("sess-1")).toBe(true);
     });
   });
 
-  // BUG-B 复现：stopGeneration 触发 abort 后，已收到的 streaming blocks 不会落 DB。
-  // 当前实现：abort 分支 catch 里直接推 END 事件然后 return，不写 assistant 消息到 DB。
   it("saves assistant message to DB even when generation is aborted mid-stream", async () => {
-    // 模拟 stream 收到第一个 chunk 后由 abort signal 结束（collectStreamResult 里 break）
-    vi.mocked(streamText).mockImplementation(({ abortSignal }: any) => {
-      return {
-        textStream: (async function* () {
-          yield "partial answer";
-          // 等待 abort，然后退出（模拟 collectStreamResult 的 break 分支）
+    const mockClient = {
+      chat: vi.fn((_msgs: any, _tools: any, _opts: any, signal: any) => {
+        return (async function* () {
+          yield { type: "text", text: "partial answer" };
           await new Promise<void>((resolve) => {
-            if (abortSignal.aborted) {
+            if (signal?.aborted) {
               resolve();
               return;
             }
-            abortSignal.addEventListener("abort", resolve);
+            signal?.addEventListener("abort", resolve);
           });
-        })(),
-        toolCalls: Promise.resolve([]),
-      } as any;
-    });
+        })();
+      }),
+    };
+    vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
 
     const chatPromise = presenter.chat("sess-1", "hello");
-    // 等 stream 推第一个 chunk
     await new Promise((r) => setTimeout(r, 20));
-    // 此时 blocks 已有 "partial answer" 内容
     presenter.stopGeneration("sess-1");
     await chatPromise;
 
-    // assistant 消息必须写入 DB（BUG-B：当前不写 → 红灯）
     const calls = vi.mocked(messageDao.createMessage).mock.calls;
     const assistantCall = calls.find((c) => c[1].role === "assistant");
     expect(assistantCall).toBeDefined();
   });
 
-  // BUG-D 复现：当 sessionId 已在 generating 状态时，第二次 chat() 调用应直接返回，不再进入 loop。
   it("ignores concurrent chat() calls for the same session", async () => {
-    // 第一个 chat() 挂起（stream 不结束）
     let resolveStream!: () => void;
     let callCount = 0;
-    vi.mocked(streamText).mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        return {
-          textStream: (async function* () {
-            yield "thinking...";
-            await new Promise<void>((r) => {
-              resolveStream = r;
-            });
-          })(),
-          toolCalls: Promise.resolve([]),
-        } as any;
-      }
-      // 第二次调用（不应触发，但如果触发了，立即结束以免挂住测试）
-      return {
-        textStream: (async function* () {
-          yield "second";
-        })(),
-        toolCalls: Promise.resolve([]),
-      } as any;
-    });
+    const mockClient = {
+      chat: vi.fn(async function* () {
+        callCount++;
+        if (callCount === 1) {
+          yield { type: "text", text: "thinking..." };
+          await new Promise<void>((r) => {
+            resolveStream = r;
+          });
+        } else {
+          yield { type: "text", text: "second" };
+        }
+      }),
+    };
+    vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
 
     const first = presenter.chat("sess-1", "first");
-    // 等 state 变为 generating
     await new Promise((r) => setTimeout(r, 5));
     expect(presenter.getSessionState("sess-1")).toBe("generating");
 
-    // 第二次调用必须立即返回（状态 generating → 直接 return）
-    // BUG-D：当前无保护，会调第二次 streamText → callCount 变成 2 → 红灯
     await presenter.chat("sess-1", "second");
-    expect(callCount).toBe(1); // streamText 只应被调一次
+    expect(callCount).toBe(1);
 
-    // 收尾
     resolveStream();
     await first;
   }, 8000);
@@ -407,26 +384,20 @@ describe("AgentChatPresenter", () => {
   });
 
   it("marks last content block as is_final before saving", async () => {
-    // loop: text → tool call → text (final)
     let callCount = 0;
-    vi.mocked(streamText).mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        async function* gen() {
-          yield "let me check";
+    const mockClient = {
+      chat: vi.fn(async function* () {
+        callCount++;
+        if (callCount === 1) {
+          yield { type: "text", text: "let me check" };
+          yield { type: "tool_call_start", id: "tc1", name: "exec" };
+          yield { type: "tool_call_end", id: "tc1", input: { command: "date" } };
+        } else {
+          yield { type: "text", text: "today is Tuesday" };
         }
-        return {
-          textStream: gen(),
-          toolCalls: Promise.resolve([
-            { toolCallId: "tc1", toolName: "exec", input: { command: "date" } },
-          ]),
-        } as any;
-      }
-      async function* gen() {
-        yield "today is Tuesday";
-      }
-      return { textStream: gen(), toolCalls: Promise.resolve([]) } as any;
-    });
+      }),
+    };
+    vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
 
     vi.mocked(messageDao.getNextOrderSeq).mockReturnValue(2);
     vi.mocked(messageDao.createMessage).mockImplementation(() => {});
