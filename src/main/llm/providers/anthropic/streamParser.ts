@@ -40,11 +40,16 @@ export async function* parseAnthropicStream(
     } else if (type === "content_block_stop") {
       const tc = toolCalls.get(payload.index ?? 0);
       if (tc) {
-        let input: unknown = null;
+        let input: unknown;
         try {
           input = JSON.parse(tc.json);
-        } catch {
-          // leave null
+        } catch (e) {
+          yield {
+            type: "error",
+            error: `Tool call ${tc.id} JSON invalid: ${(e as Error).message}`,
+          };
+          toolCalls.delete(payload.index ?? 0);
+          continue;
         }
         yield { type: "tool_call_end", id: tc.id, input };
         toolCalls.delete(payload.index ?? 0);

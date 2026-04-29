@@ -66,7 +66,7 @@ describe("parseAnthropicStream", () => {
     expect(events[3]).toEqual({ type: "tool_call_end", id: "id1", input: { k: "v" } });
   });
 
-  it("invalid JSON in tool_call_end → tool_call_end with null input", async () => {
+  it("invalid JSON in tool_call_end → error event", async () => {
     const sse = makeSSE([
       {
         event: "content_block_start",
@@ -90,8 +90,10 @@ describe("parseAnthropicStream", () => {
       },
     ]);
     const events = await collect(parseAnthropicStream(sse));
-    const end = events.find((e) => e.type === "tool_call_end");
-    expect(end).toEqual({ type: "tool_call_end", id: "id2", input: null });
+    const errorEvent = events.find((e) => e.type === "error");
+    expect(errorEvent).toBeDefined();
+    expect((errorEvent as { type: "error"; error: string }).error).toContain("JSON");
+    expect(events.find((e) => e.type === "tool_call_end")).toBeUndefined();
   });
 
   it("message_delta usage → usage event with camelCase fields", async () => {
