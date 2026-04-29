@@ -125,12 +125,17 @@ export function createRelay(deps: RelayDeps): Relay {
 
           // 构建实际发送的请求体用于日志记录
           let outboundRequestBody: string;
-          if (channel.type === "anthropic") {
-            const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
-            outboundRequestBody = JSON.stringify(
-              toAnthropicRequest({ ...outboundRequest, stream: false }),
-            );
-          } else {
+          try {
+            if (channel.type === "anthropic") {
+              const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
+              outboundRequestBody = JSON.stringify(
+                toAnthropicRequest({ ...outboundRequest, stream: false }),
+              );
+            } else {
+              outboundRequestBody = filterForLog(outboundRequest);
+            }
+          } catch (logErr) {
+            // 日志构建失败时 fallback 到基本格式
             outboundRequestBody = filterForLog(outboundRequest);
           }
 
@@ -166,12 +171,17 @@ export function createRelay(deps: RelayDeps): Relay {
           // 构建实际发送的请求体用于日志记录
           const outboundRequest = { ...request, model: item.modelName };
           let outboundRequestBody: string;
-          if (channel.type === "anthropic") {
-            const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
-            outboundRequestBody = JSON.stringify(
-              toAnthropicRequest({ ...outboundRequest, stream: false }),
-            );
-          } else {
+          try {
+            if (channel.type === "anthropic") {
+              const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
+              outboundRequestBody = JSON.stringify(
+                toAnthropicRequest({ ...outboundRequest, stream: false }),
+              );
+            } else {
+              outboundRequestBody = filterForLog(outboundRequest);
+            }
+          } catch (logErr) {
+            // 日志构建失败时 fallback 到基本格式
             outboundRequestBody = filterForLog(outboundRequest);
           }
 
@@ -230,12 +240,17 @@ export function createRelay(deps: RelayDeps): Relay {
 
           // 构建实际发送的请求体用于日志记录
           let outboundRequestBody: string;
-          if (channel.type === "anthropic") {
-            const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
-            outboundRequestBody = JSON.stringify(
-              toAnthropicRequest({ ...outboundRequest, stream: true }),
-            );
-          } else {
+          try {
+            if (channel.type === "anthropic") {
+              const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
+              outboundRequestBody = JSON.stringify(
+                toAnthropicRequest({ ...outboundRequest, stream: true }),
+              );
+            } else {
+              outboundRequestBody = filterForLog(outboundRequest);
+            }
+          } catch (logErr) {
+            // 日志构建失败时 fallback 到基本格式
             outboundRequestBody = filterForLog(outboundRequest);
           }
 
@@ -355,12 +370,17 @@ export function createRelay(deps: RelayDeps): Relay {
           // 构建实际发送的请求体用于日志记录
           const outboundRequest = { ...request, model: item.modelName };
           let outboundRequestBody: string;
-          if (channel.type === "anthropic") {
-            const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
-            outboundRequestBody = JSON.stringify(
-              toAnthropicRequest({ ...outboundRequest, stream: true }),
-            );
-          } else {
+          try {
+            if (channel.type === "anthropic") {
+              const toAnthropicRequest = require("./outbound/anthropic").toAnthropicRequest;
+              outboundRequestBody = JSON.stringify(
+                toAnthropicRequest({ ...outboundRequest, stream: true }),
+              );
+            } else {
+              outboundRequestBody = filterForLog(outboundRequest);
+            }
+          } catch (logErr) {
+            // 日志构建失败时 fallback 到基本格式
             outboundRequestBody = filterForLog(outboundRequest);
           }
 
