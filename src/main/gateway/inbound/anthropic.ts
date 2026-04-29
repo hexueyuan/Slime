@@ -4,6 +4,7 @@ import type {
   InternalContent,
   InternalMessage,
   InternalTool,
+  SystemTextPart,
 } from "../outbound/types";
 import type { Relay } from "../relay";
 import type { Router } from "../router";
@@ -23,37 +24,62 @@ interface AnthropicContentBlock {
   content?: string;
   is_error?: boolean;
   source?: { type: string; media_type?: string; data?: string; url?: string };
+  cache_control?: { type: string; ttl?: string };
 }
 
 interface AnthropicToolDef {
   name: string;
   description?: string;
   input_schema: unknown;
+  cache_control?: { type: string; ttl?: string };
 }
 
 interface AnthropicRequestBody {
   model: string;
   messages: AnthropicMessage[];
-  system?: string | { type: string; text: string }[];
+  system?:
+    | string
+    | { type: string; text: string; cache_control?: { type: string; ttl?: string } }[];
   max_tokens?: number;
   temperature?: number;
   tools?: AnthropicToolDef[];
   stream?: boolean;
+  cache_control?: { type: string; ttl?: string };
 }
 
-function parseSystem(system: AnthropicRequestBody["system"]): string | undefined {
-  if (!system) return undefined;
-  if (typeof system === "string") return system;
-  return system.map((s) => s.text).join("\n");
+function parseSystem(system: AnthropicRequestBody["system"]): {
+  systemPrompt?: string;
+  systemParts?: SystemTextPart[];
+} {
+  if (!system) return {};
+  if (typeof system === "string") return { systemPrompt: system };
+
+  const hasCacheControl = system.some((s) => s.cache_control);
+  if (!hasCacheControl) {
+    return { systemPrompt: system.map((s) => s.text).join("\n") };
+  }
+
+  return {
+    systemPrompt: system.map((s) => s.text).join("\n"),
+    systemParts: system.map((s) => ({
+      type: "text" as const,
+      text: s.text,
+      ...(s.cache_control
+        ? { cacheControl: { type: "ephemeral" as const, ttl: s.cache_control.ttl } }
+        : {}),
+    })),
+  };
 }
 
 function toInternalContent(block: AnthropicContentBlock): InternalContent {
+  let result: InternalContent;
   switch (block.type) {
     case "text":
-      return { type: "text", text: block.text ?? "" };
+      result = { type: "text", text: block.text ?? "" };
+      break;
     case "image": {
       if (block.source?.type === "base64") {
-        return {
+        result = {
           type: "image",
           source: {
             type: "base64",
@@ -61,21 +87,32 @@ function toInternalContent(block: AnthropicContentBlock): InternalContent {
             data: block.source.data ?? "",
           },
         };
+      } else {
+        result = { type: "image", source: { type: "url", url: block.source?.url ?? "" } };
       }
-      return { type: "image", source: { type: "url", url: block.source?.url ?? "" } };
+      break;
     }
     case "tool_use":
-      return { type: "tool_use", id: block.id ?? "", name: block.name ?? "", input: block.input };
+      result = { type: "tool_use", id: block.id ?? "", name: block.name ?? "", input: block.input };
+      break;
     case "tool_result":
-      return {
+      result = {
         type: "tool_result",
         toolUseId: block.tool_use_id ?? "",
         content: block.content ?? "",
         isError: block.is_error,
       };
+      break;
     default:
-      return { type: "text", text: "" };
+      result = { type: "text", text: "" };
   }
+  if (block.cache_control) {
+    result = {
+      ...result,
+      cacheControl: { type: "ephemeral" as const, ttl: block.cache_control.ttl },
+    };
+  }
+  return result;
 }
 
 function toInternalMessage(msg: AnthropicMessage): InternalMessage {
@@ -92,6 +129,9 @@ function toInternalTools(tools?: AnthropicToolDef[]): InternalTool[] | undefined
     name: t.name,
     description: t.description,
     inputSchema: t.input_schema,
+    cacheControl: t.cache_control
+      ? { type: "ephemeral" as const, ttl: t.cache_control.ttl }
+      : undefined,
   }));
 }
 
@@ -120,6 +160,8 @@ export function registerAnthropicInbound(
       });
     }
 
+    const { systemPrompt, systemParts } = parseSystem(body.system);
+
     const internal: InternalRequest = {
       model: body.model,
       messages: body.messages.map(toInternalMessage),
@@ -127,7 +169,11 @@ export function registerAnthropicInbound(
       maxTokens: body.max_tokens,
       temperature: body.temperature,
       tools: toInternalTools(body.tools),
-      systemPrompt: parseSystem(body.system),
+      systemPrompt,
+      systemParts,
+      cacheControl: body.cache_control
+        ? { type: "ephemeral" as const, ttl: body.cache_control.ttl }
+        : undefined,
       rawBody: JSON.stringify(body),
       apiKeyId: request.apiKeyId,
     };
