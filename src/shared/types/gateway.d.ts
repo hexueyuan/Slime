@@ -162,6 +162,8 @@ export interface TrendPoint {
   requests: number;
   inputTokens: number;
   outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
   cost: number;
 }
 
@@ -178,6 +180,8 @@ export interface ChannelRankItem {
   requests: number;
   successCount: number;
   failCount: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
   avgLatencyMs: number;
   cost: number;
 }
@@ -187,6 +191,8 @@ export interface ModelRankItem {
   requests: number;
   inputTokens: number;
   outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
   cost: number;
 }
 
