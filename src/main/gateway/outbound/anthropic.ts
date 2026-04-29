@@ -102,6 +102,12 @@ function convertContent(msg: InternalMessage) {
           is_error: c.isError,
         };
         break;
+      case "thinking":
+        result = { type: "thinking" as const, thinking: c.thinking, signature: c.signature };
+        break;
+      case "redacted_thinking":
+        result = { type: "redacted_thinking" as const, data: c.data };
+        break;
     }
     if (c.cacheControl) {
       const cc: Record<string, unknown> = { type: c.cacheControl.type };
@@ -121,6 +127,16 @@ export function fromAnthropicResponse(data: Record<string, unknown>): InternalRe
         name: block.name as string,
         input: block.input,
       };
+    }
+    if (block.type === "thinking") {
+      return {
+        type: "thinking",
+        thinking: block.thinking as string,
+        signature: block.signature as string,
+      };
+    }
+    if (block.type === "redacted_thinking") {
+      return { type: "redacted_thinking", data: block.data as string };
     }
     return { type: "text", text: block.text as string };
   });
@@ -191,6 +207,8 @@ export function createAnthropicOutbound(): OutboundAdapter {
       let currentBlockType: string | undefined;
       let currentBlockId: string | undefined;
       let currentBlockName: string | undefined;
+      let accumulatedThinking = "";
+      let accumulatedSignature = "";
 
       for await (const sse of parseSSEStream(res)) {
         const parsed = JSON.parse(sse.data) as Record<string, unknown>;
@@ -220,6 +238,18 @@ export function createAnthropicOutbound(): OutboundAdapter {
                   input_json_delta: "",
                 },
               };
+            } else if (currentBlockType === "thinking") {
+              accumulatedThinking = "";
+              accumulatedSignature = "";
+            } else if (currentBlockType === "redacted_thinking") {
+              yield {
+                type: "content_delta",
+                delta: {
+                  type: "thinking",
+                  thinking: "[redacted]",
+                  signature: (block.data as string) ?? "",
+                },
+              };
             }
             break;
           }
@@ -238,6 +268,22 @@ export function createAnthropicOutbound(): OutboundAdapter {
                   id: currentBlockId!,
                   name: currentBlockName!,
                   input_json_delta: delta.partial_json as string,
+                },
+              };
+            } else if (delta.type === "thinking_delta") {
+              accumulatedThinking += (delta.thinking as string) ?? "";
+              yield {
+                type: "content_delta",
+                delta: { type: "thinking", thinking: delta.thinking as string, signature: "" },
+              };
+            } else if (delta.type === "signature_delta") {
+              accumulatedSignature += (delta.signature as string) ?? "";
+              yield {
+                type: "content_delta",
+                delta: {
+                  type: "thinking",
+                  thinking: "",
+                  signature: delta.signature as string,
                 },
               };
             }
