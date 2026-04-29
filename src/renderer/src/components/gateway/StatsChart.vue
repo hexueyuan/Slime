@@ -11,7 +11,7 @@ use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent
 
 const props = defineProps<{
   points: TrendPoint[];
-  metric: "requests" | "cost" | "tokens";
+  metric: "requests" | "cost" | "tokens" | "cachedTokens";
   granularity: "hourly" | "daily";
 }>();
 
@@ -27,6 +27,12 @@ const series = computed(() => {
   }
   if (props.metric === "cost") {
     return [{ name: "费用($)", data: props.points.map((p) => Number(p.cost.toFixed(4))) }];
+  }
+  if (props.metric === "cachedTokens") {
+    return [
+      { name: "缓存读", data: props.points.map((p) => p.cacheReadTokens) },
+      { name: "缓存写", data: props.points.map((p) => p.cacheWriteTokens) },
+    ];
   }
   return [
     { name: "Input Token", data: props.points.map((p) => p.inputTokens) },

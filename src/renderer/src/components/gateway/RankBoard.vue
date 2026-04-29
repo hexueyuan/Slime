@@ -161,10 +161,15 @@ function formatNum(n: number): string {
               {{
                 sortKey === "cost"
                   ? `$${item.cost.toFixed(3)}`
-                  : formatNum(
-                      sortKey === "tokens" ? item.inputTokens + item.outputTokens : item.requests,
-                    )
+                  : sortKey === "tokens"
+                    ? `${formatNum(item.inputTokens + item.outputTokens)}`
+                    : formatNum(item.requests)
               }}
+              <template v-if="sortKey === 'tokens' && item.cacheReadTokens > 0">
+                <span class="text-muted-foreground/50">
+                  | 缓存 {{ formatNum(item.cacheReadTokens) }}</span
+                >
+              </template>
             </span>
           </div>
           <div class="h-1 flex-1 rounded-full bg-muted/50">

@@ -65,7 +65,7 @@ const rangeOptions = [
   { key: "30d" as const, label: "30天" },
 ];
 
-type MetricKey = "requests" | "cost" | "tokens";
+type MetricKey = "requests" | "cost" | "tokens" | "cachedTokens";
 const activeMetric = ref<MetricKey>("requests");
 const trendGranularity = computed(() =>
   store.statsRange === "today" ? ("hourly" as const) : ("daily" as const),
@@ -74,6 +74,7 @@ const metricOptions: { key: MetricKey; label: string }[] = [
   { key: "requests", label: "请求" },
   { key: "cost", label: "费用" },
   { key: "tokens", label: "Token" },
+  { key: "cachedTokens", label: "缓存Token" },
 ];
 </script>
 
