@@ -56,8 +56,9 @@ export interface Relay {
 }
 
 function filterForLog(request: InternalRequest): string {
+  const { rawBody, rawHeaders, apiKeyId, ...rest } = request;
   const filtered = {
-    ...request,
+    ...rest,
     messages: request.messages.map((msg) => ({
       ...msg,
       content: msg.content.map((c) => {
