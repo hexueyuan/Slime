@@ -33,8 +33,8 @@ export type InternalContent =
       isError?: boolean;
       cacheControl?: CacheControl;
     }
-  | { type: "thinking"; thinking: string; signature: string }
-  | { type: "redacted_thinking"; data: string };
+  | { type: "thinking"; thinking: string; signature: string; cacheControl?: CacheControl }
+  | { type: "redacted_thinking"; data: string; cacheControl?: CacheControl };
 
 export interface CacheControl {
   type: "ephemeral";
