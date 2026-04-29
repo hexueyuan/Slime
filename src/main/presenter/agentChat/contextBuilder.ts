@@ -41,19 +41,31 @@ export function recordToCoreMessages(records: ChatMessageRecord[]): CoreMessage[
     const textParts = blocks.filter((b) => b.type === "content").map((b) => b.content || "");
     const textContent = textParts.join("");
 
+    const thinkingBlocks = blocks.filter(
+      (b): b is AssistantMessageBlock & { thinking: string; signature: string } =>
+        b.type === "thinking" && b.thinking !== undefined,
+    );
+
     const toolCalls = blocks.filter(
       (b): b is AssistantMessageBlock & { tool_call: ToolCallBlockData } =>
         b.type === "tool_call" && !!b.tool_call,
     );
 
-    if (toolCalls.length === 0) {
+    if (toolCalls.length === 0 && thinkingBlocks.length === 0) {
       if (textContent) {
         messages.push({ role: "assistant", content: textContent });
       }
     } else {
-      // assistant message: array of text + tool-call parts
+      // assistant message: array of text + thinking + tool-call parts
       const assistantParts: Array<{ type: string; [key: string]: unknown }> = [];
       if (textContent) assistantParts.push({ type: "text", text: textContent });
+      for (const b of thinkingBlocks) {
+        assistantParts.push({
+          type: "thinking",
+          thinking: b.thinking,
+          signature: b.signature ?? "",
+        });
+      }
       for (const b of toolCalls) {
         const tc = b.tool_call;
         const input = typeof tc.input === "string" ? JSON.parse(tc.input) : (tc.input ?? {});
