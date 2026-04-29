@@ -2,10 +2,11 @@ import { app, BrowserWindow } from "electron";
 import { electronApp } from "@electron-toolkit/utils";
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
-import { createMainWindow } from "./window";
+import { createMainWindow, setIsQuitting } from "./window";
 import { Presenter } from "./presenter";
 import { eventBus } from "./eventbus";
 import { logger, paths } from "./utils";
+import { TrayManager } from "./tray";
 
 if (!app.isPackaged) {
   app.setPath("userData", join(app.getPath("appData"), "slime-dev"));
@@ -38,12 +39,16 @@ async function bootstrap(): Promise<void> {
   const mainWindow = createMainWindow();
   eventBus.setWindow(mainWindow);
 
+  TrayManager.init(mainWindow);
+
   logger.info("Slime ready");
 }
 
 app.whenReady().then(bootstrap);
 
 app.on("window-all-closed", () => {
+  // macOS: window close now hides to tray instead of closing
+  // Non-macOS: quit when all windows closed
   if (process.platform !== "darwin") {
     app.quit();
   }
@@ -54,6 +59,14 @@ app.on("activate", () => {
     const win = createMainWindow();
     eventBus.setWindow(win);
   }
+});
+
+app.on("before-quit", () => {
+  setIsQuitting(true);
+});
+
+app.on("will-quit", () => {
+  TrayManager.destroy();
 });
 
 process.on("uncaughtException", (error) => {
