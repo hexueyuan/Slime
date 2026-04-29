@@ -1,12 +1,15 @@
 import type { CoreMessage } from "@/presenter/agentChat/contextBuilder";
-import type { LLMClient, LLMClientConfig, Tool, ChatOptions, StreamEvent } from "@/llm/core/types";
+import type { LLMClient, Tool, ChatOptions, StreamEvent } from "@/llm/core/types";
 import { LLMError } from "@/llm/core/errors";
 import { parseSSE } from "@/llm/core/sseParser";
 import { parseAnthropicStream } from "./streamParser";
 import { buildAnthropicRequest } from "./requestBuilder";
 
 export class AnthropicClient implements LLMClient {
-  constructor(private readonly config: LLMClientConfig) {}
+  constructor(
+    private readonly baseURL: string,
+    private readonly apiKey: string,
+  ) {}
 
   async *chat(
     messages: CoreMessage[],
@@ -18,11 +21,11 @@ export class AnthropicClient implements LLMClient {
 
     let response: Response;
     try {
-      response = await fetch(`${this.config.baseURL}/v1/messages`, {
+      response = await fetch(`${this.baseURL}/v1/messages`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-api-key": this.config.apiKey,
+          "x-api-key": this.apiKey,
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify(body),

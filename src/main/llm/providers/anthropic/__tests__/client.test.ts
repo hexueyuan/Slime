@@ -27,7 +27,7 @@ beforeEach(() => {
 });
 
 describe("AnthropicClient", () => {
-  const client = new AnthropicClient({ baseURL: "https://api.anthropic.com", apiKey: "test-key" });
+  const client = new AnthropicClient("https://api.anthropic.com", "test-key");
 
   it("sends correct POST request and yields stream events", async () => {
     const sseLines = [
