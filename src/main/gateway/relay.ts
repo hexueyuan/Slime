@@ -266,6 +266,8 @@ export function createRelay(deps: RelayDeps): Relay {
             let usage: InternalResponse["usage"] = { inputTokens: 0, outputTokens: 0 };
             let contentText = "";
             const toolCalls = new Map<string, { id: string; name: string; inputJson: string }>();
+            let thinkingText = "";
+            let thinkingSignature = "";
             let stopReason = "";
             let responseModel = modelName;
             let ttftMs: number | null = null;
@@ -284,6 +286,9 @@ export function createRelay(deps: RelayDeps): Relay {
                   const { id, name, input_json_delta } = evt.delta;
                   if (!toolCalls.has(id)) toolCalls.set(id, { id, name, inputJson: "" });
                   toolCalls.get(id)!.inputJson += input_json_delta;
+                } else if (evt.delta.type === "thinking") {
+                  thinkingText += evt.delta.thinking || "";
+                  thinkingSignature += evt.delta.signature || thinkingSignature;
                 }
               }
               if (evt.type === "stop") {
@@ -304,6 +309,13 @@ export function createRelay(deps: RelayDeps): Relay {
                 yield next.value;
               }
               const logContent: import("./outbound/types").InternalContent[] = [];
+              if (thinkingText || thinkingSignature) {
+                logContent.push({
+                  type: "thinking",
+                  thinking: thinkingText,
+                  signature: thinkingSignature,
+                });
+              }
               if (contentText) logContent.push({ type: "text", text: contentText });
               for (const tc of toolCalls.values()) {
                 let input: unknown;
