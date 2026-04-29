@@ -33,9 +33,9 @@ async function deleteGroup(id: number) {
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="flex h-full flex-col overflow-y-auto p-4">
     <!-- Header -->
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-4 flex shrink-0 items-center justify-between">
       <h3 class="text-sm font-medium">分组</h3>
       <button
         class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"

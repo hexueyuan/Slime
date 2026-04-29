@@ -100,9 +100,9 @@ function copyCurrentTab() {
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="flex h-full flex-col overflow-y-auto p-4">
     <!-- Header -->
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-4 flex shrink-0 items-center justify-between">
       <h3 class="text-sm font-medium">日志</h3>
       <button
         class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

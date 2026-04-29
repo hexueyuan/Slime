@@ -1,5 +1,6 @@
 appId: com.slime.app
 productName: Slime
+npmRebuild: false
 directories:
   buildResources: build
   output: dist
@@ -10,6 +11,8 @@ files:
   - "!test/*"
   - "!docs/*"
   - "!**/{.DS_Store,Thumbs.db}"
+asarUnpack:
+  - "node_modules/better-sqlite3/**"
 mac:
   category: public.app-category.developer-tools
   identity: null
