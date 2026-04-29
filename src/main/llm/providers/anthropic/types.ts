@@ -9,6 +9,7 @@ export interface AnthropicRequestBody {
   messages: AnthropicMessage[];
   tools?: AnthropicTool[];
   temperature?: number;
+  cache_control?: { type: string; ttl?: string };
 }
 
 /**
