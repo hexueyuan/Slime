@@ -5,6 +5,11 @@ import { paths } from "@/utils/paths";
 
 let mainWindow: BrowserWindow | null = null;
 
+export let isQuitting = false;
+export function setIsQuitting(v: boolean): void {
+  isQuitting = v;
+}
+
 const iconPath = !app.isPackaged ? join(paths.projectRoot, "build", "icon.png") : undefined;
 
 export function createMainWindow(): BrowserWindow {
@@ -28,6 +33,13 @@ export function createMainWindow(): BrowserWindow {
     },
     titleBarStyle: "hiddenInset",
     title: "Slime v0.1 (egg)",
+  });
+
+  mainWindow.on("close", (e) => {
+    if (process.platform === "darwin" && !isQuitting) {
+      e.preventDefault();
+      mainWindow?.hide();
+    }
   });
 
   mainWindow.once("ready-to-show", () => {
