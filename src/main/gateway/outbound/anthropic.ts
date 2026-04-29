@@ -32,16 +32,41 @@ export function toAnthropicRequest(req: InternalRequest) {
     max_tokens: req.maxTokens ?? 4096,
   };
 
-  if (system) body.system = system;
+  // system: 优先用 systemParts（数组格式），fallback 到 systemPrompt（字符串）
+  if (req.systemParts) {
+    body.system = req.systemParts.map((p) => {
+      const part: Record<string, unknown> = { type: p.type, text: p.text };
+      if (p.cacheControl) {
+        part.cache_control = { type: p.cacheControl.type };
+        if (p.cacheControl.ttl) part.cache_control.ttl = p.cacheControl.ttl;
+      }
+      return part;
+    });
+  } else if (system) {
+    body.system = system;
+  }
+
   if (req.temperature !== undefined) body.temperature = req.temperature;
   if (req.stream) body.stream = true;
 
   if (req.tools?.length) {
-    body.tools = req.tools.map((t) => ({
-      name: t.name,
-      description: t.description,
-      input_schema: t.inputSchema,
-    }));
+    body.tools = req.tools.map((t) => {
+      const tool: Record<string, unknown> = {
+        name: t.name,
+        description: t.description,
+        input_schema: t.inputSchema,
+      };
+      if (t.cacheControl) {
+        tool.cache_control = { type: t.cacheControl.type };
+        if (t.cacheControl.ttl) tool.cache_control.ttl = t.cacheControl.ttl;
+      }
+      return tool;
+    });
+  }
+
+  if (req.cacheControl) {
+    body.cache_control = { type: req.cacheControl.type };
+    if (req.cacheControl.ttl) body.cache_control.ttl = req.cacheControl.ttl;
   }
 
   return body;
@@ -49,27 +74,37 @@ export function toAnthropicRequest(req: InternalRequest) {
 
 function convertContent(msg: InternalMessage) {
   return msg.content.map((c) => {
+    let result: Record<string, unknown>;
     switch (c.type) {
       case "text":
-        return { type: "text" as const, text: c.text };
+        result = { type: "text" as const, text: c.text };
+        break;
       case "image":
-        return {
+        result = {
           type: "image" as const,
           source:
             c.source.type === "base64"
               ? { type: "base64" as const, media_type: c.source.mediaType, data: c.source.data }
               : { type: "url" as const, url: c.source.url },
         };
+        break;
       case "tool_use":
-        return { type: "tool_use" as const, id: c.id, name: c.name, input: c.input };
+        result = { type: "tool_use" as const, id: c.id, name: c.name, input: c.input };
+        break;
       case "tool_result":
-        return {
+        result = {
           type: "tool_result" as const,
           tool_use_id: c.toolUseId,
           content: c.content,
           is_error: c.isError,
         };
+        break;
     }
+    if (c.cacheControl) {
+      result.cache_control = { type: c.cacheControl.type };
+      if (c.cacheControl.ttl) result.cache_control.ttl = c.cacheControl.ttl;
+    }
+    return result;
   });
 }
 
