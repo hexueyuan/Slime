@@ -171,8 +171,7 @@ export function createOpenAIChatOutbound(): OutboundAdapter {
       });
       if (!res.ok) {
         const text = await res.text();
-        yield { type: "error" as const, error: `OpenAI ${res.status}: ${text}` };
-        return;
+        throw new Error(`OpenAI ${res.status}: ${text}`);
       }
 
       let model = "";
