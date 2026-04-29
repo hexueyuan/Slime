@@ -6,6 +6,8 @@ export interface InternalRequest {
   temperature?: number;
   tools?: InternalTool[];
   systemPrompt?: string;
+  systemParts?: SystemTextPart[];
+  cacheControl?: CacheControl;
   rawHeaders?: Record<string, string>;
   rawBody?: string;
   apiKeyId?: number;
@@ -17,18 +19,37 @@ export interface InternalMessage {
 }
 
 export type InternalContent =
-  | { type: "text"; text: string }
+  | { type: "text"; text: string; cacheControl?: CacheControl }
   | {
       type: "image";
       source: { type: "base64"; mediaType: string; data: string } | { type: "url"; url: string };
+      cacheControl?: CacheControl;
     }
-  | { type: "tool_use"; id: string; name: string; input: unknown }
-  | { type: "tool_result"; toolUseId: string; content: string; isError?: boolean };
+  | { type: "tool_use"; id: string; name: string; input: unknown; cacheControl?: CacheControl }
+  | {
+      type: "tool_result";
+      toolUseId: string;
+      content: string;
+      isError?: boolean;
+      cacheControl?: CacheControl;
+    };
+
+export interface CacheControl {
+  type: "ephemeral";
+  ttl?: string; // "5m" | "1h"，透传用
+}
+
+export interface SystemTextPart {
+  type: "text";
+  text: string;
+  cacheControl?: CacheControl;
+}
 
 export interface InternalTool {
   name: string;
   description?: string;
   inputSchema: unknown;
+  cacheControl?: CacheControl;
 }
 
 export interface InternalResponse {
