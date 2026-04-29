@@ -7,6 +7,8 @@ export async function* parseAnthropicStream(
 ): AsyncGenerator<StreamEvent> {
   // Map from block index to { id, name, accumulated json }
   const toolCalls = new Map<number, { id: string; name: string; json: string }>();
+  // Map from block index to { thinking, signature }
+  const thinkingBlocks = new Map<number, { thinking: string; signature: string }>();
 
   for await (const { event, data } of sseGen) {
     let payload: AnthropicSSEPayload;
@@ -18,11 +20,22 @@ export async function* parseAnthropicStream(
 
     const type = event ?? payload.type;
 
-    if (type === "content_block_start" && payload.content_block?.type === "tool_use") {
-      const { id, name } = payload.content_block;
-      if (id && name) {
-        toolCalls.set(payload.index ?? 0, { id, name, json: "" });
-        yield { type: "tool_call_start", id, name };
+    if (type === "content_block_start") {
+      if (payload.content_block?.type === "tool_use") {
+        const { id, name } = payload.content_block;
+        if (id && name) {
+          toolCalls.set(payload.index ?? 0, { id, name, json: "" });
+          yield { type: "tool_call_start", id, name };
+        }
+      } else if (payload.content_block?.type === "thinking") {
+        thinkingBlocks.set(payload.index ?? 0, { thinking: "", signature: "" });
+        yield { type: "thinking_start" };
+      } else if (payload.content_block?.type === "redacted_thinking") {
+        yield {
+          type: "thinking_end",
+          thinking: "[redacted]",
+          signature: (payload.content_block.data as string) ?? "",
+        };
       }
     } else if (type === "content_block_delta") {
       const delta = payload.delta;
@@ -35,6 +48,18 @@ export async function* parseAnthropicStream(
         if (tc) {
           tc.json += delta.partial_json;
           yield { type: "tool_call_delta", id: tc.id, delta: delta.partial_json };
+        }
+      } else if (delta.type === "thinking_delta" && delta.thinking !== undefined) {
+        const tb = thinkingBlocks.get(payload.index ?? 0);
+        if (tb) {
+          tb.thinking += delta.thinking;
+          yield { type: "thinking_delta", text: delta.thinking };
+        }
+      } else if (delta.type === "signature_delta" && delta.signature !== undefined) {
+        const tb = thinkingBlocks.get(payload.index ?? 0);
+        if (tb) {
+          tb.signature += delta.signature;
+          yield { type: "signature_delta", signature: delta.signature };
         }
       }
     } else if (type === "content_block_stop") {
@@ -53,6 +78,11 @@ export async function* parseAnthropicStream(
         }
         yield { type: "tool_call_end", id: tc.id, input };
         toolCalls.delete(payload.index ?? 0);
+      }
+      const tb = thinkingBlocks.get(payload.index ?? 0);
+      if (tb) {
+        yield { type: "thinking_end", thinking: tb.thinking, signature: tb.signature };
+        thinkingBlocks.delete(payload.index ?? 0);
       }
     } else if (type === "message_delta" && payload.usage) {
       const u = payload.usage;
