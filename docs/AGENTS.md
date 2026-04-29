@@ -93,11 +93,15 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete），ensureBuiltin 创建 HalAI                                                                                                           |
 | AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                        |
 
-### AI SDK v6 类型约定
+### 自研 LLM 客户端
 
-- `tool()` 用 `inputSchema`（不是 `parameters`）
-- `ToolCallPart` 用 `input` 字段（不是 `args`）
-- `ToolResultPart.output` 必须是 `{ type: "text"|"json", value: ... }`
+- 位置: `src/main/llm/`，替代 AI SDK v6 依赖
+- **核心接口** (`core/types.ts`): `LLMClient.chat(messages, tools, options, signal?)` 返回 `AsyncGenerator<StreamEvent>`
+- **StreamEvent 类型**: `text` / `tool_call_start` / `tool_call_delta` / `tool_call_end` / `usage` / `error` / `done`
+- **Tool 定义**: `{ description?, parameters: Record<string, unknown> }`（JSON Schema 格式，`parameters` 字段，不是 `inputSchema`）
+- **工厂函数**: `createLLMClient(provider, { baseURL, apiKey })` — 目前支持 `"anthropic"` provider
+- **AnthropicClient**: 直接 HTTP 调用，SSE 流解析（`sseParser.ts` + `streamParser.ts`），无第三方 SDK 依赖
+- **集成**: AgentChatPresenter 通过 `createLLMClient("anthropic", { baseURL: gatewayUrl, apiKey })` 获取客户端
 
 ### Evolution Workflow
 
