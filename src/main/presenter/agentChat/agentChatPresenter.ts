@@ -1,5 +1,4 @@
-import { streamText } from "ai";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { z } from "zod";
 import { getDb } from "@/db";
 import * as messageDao from "@/db/models/agentMessageDao";
 import * as sessionDao from "@/db/models/agentSessionDao";
@@ -9,11 +8,14 @@ import { eventBus } from "@/eventbus";
 import { CHAT_STREAM_EVENTS } from "@shared/events";
 import { logger } from "@/utils";
 import { buildContext } from "./contextBuilder";
+import type { CoreMessage } from "./contextBuilder";
 import type { AssistantMessageBlock } from "@shared/types/agent";
 import type { CapabilityRequirement } from "@shared/types/gateway";
 import type { GatewayPresenter } from "../gatewayPresenter";
 import type { ToolPresenter } from "../toolPresenter";
 import type { ContentPresenter } from "../contentPresenter";
+import { createLLMClient } from "@/llm";
+import type { LLMClient, Tool } from "@/llm";
 
 const SLIME_REPLY_RE = /<SLIME_REPLY>([\s\S]*?)<\/SLIME_REPLY>/;
 const MAX_STEPS = 128;
@@ -60,12 +62,25 @@ export class AgentChatPresenter {
     return this.sessionStates.get(sessionId) ?? "idle";
   }
 
-  private createModel(groupName: string) {
-    const provider = createAnthropic({
+  private createClient(): LLMClient {
+    return createLLMClient("anthropic", {
+      baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}`,
       apiKey: this.gatewayPresenter.getInternalKey(),
-      baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}/v1/`,
     });
-    return provider(groupName);
+  }
+
+  private convertTools(aiSdkTools: Record<string, any>): Record<string, Tool> {
+    const result: Record<string, Tool> = {};
+    for (const [name, t] of Object.entries(aiSdkTools)) {
+      const jsonSchema = t.inputSchema
+        ? z.toJSONSchema(t.inputSchema)
+        : { type: "object", properties: {} };
+      result[name] = {
+        description: t.description,
+        parameters: jsonSchema as Record<string, unknown>,
+      };
+    }
+    return result;
   }
 
   private pushToRenderer(
@@ -81,7 +96,10 @@ export class AgentChatPresenter {
   }
 
   private async collectStreamResult(
-    result: { textStream: AsyncIterable<string>; toolCalls: PromiseLike<any[]> },
+    client: LLMClient,
+    messages: CoreMessage[],
+    tools: Record<string, Tool>,
+    options: { model: string; maxTokens?: number },
     sessionId: string,
     messageId: string,
     blocks: AssistantMessageBlock[],
@@ -89,23 +107,56 @@ export class AgentChatPresenter {
   ): Promise<{ textContent: string; toolCalls: ToolCall[] }> {
     let textContent = "";
     let currentContentBlock: AssistantMessageBlock | null = null;
+    const pendingToolCalls = new Map<string, { id: string; name: string; inputJson: string }>();
+    const completedToolCalls: ToolCall[] = [];
 
-    for await (const chunk of result.textStream) {
+    const stream = client.chat(messages, tools, options, abortSignal);
+
+    for await (const event of stream) {
       if (abortSignal.aborted) break;
-      if (!chunk) continue;
 
-      textContent += chunk;
-      if (!currentContentBlock) {
-        currentContentBlock = {
-          type: "content",
-          content: "",
-          status: "loading",
-          timestamp: Date.now(),
-        };
-        blocks.push(currentContentBlock);
+      if (event.type === "text") {
+        textContent += event.text;
+        if (!currentContentBlock) {
+          currentContentBlock = {
+            type: "content",
+            content: "",
+            status: "loading",
+            timestamp: Date.now(),
+          };
+          blocks.push(currentContentBlock);
+        }
+        currentContentBlock.content = (currentContentBlock.content || "") + event.text;
+        this.pushToRenderer(sessionId, messageId, blocks);
+      } else if (event.type === "tool_call_start") {
+        pendingToolCalls.set(event.id, { id: event.id, name: event.name, inputJson: "" });
+      } else if (event.type === "tool_call_delta") {
+        const tc = pendingToolCalls.get(event.id);
+        if (tc) tc.inputJson += event.delta;
+      } else if (event.type === "tool_call_end") {
+        const tc = pendingToolCalls.get(event.id);
+        if (tc) {
+          let argsObj: unknown;
+          try {
+            argsObj = event.input ?? JSON.parse(tc.inputJson || "{}");
+          } catch {
+            argsObj = {};
+          }
+          const argsStr = JSON.stringify(argsObj);
+          completedToolCalls.push({ id: tc.id, name: tc.name, args: argsStr });
+          blocks.push({
+            type: "tool_call",
+            id: tc.id,
+            content: "",
+            status: "loading",
+            timestamp: Date.now(),
+            tool_call: { id: tc.id, name: tc.name, input: argsObj },
+          });
+          pendingToolCalls.delete(event.id);
+        }
+      } else if (event.type === "error") {
+        throw new Error(event.error);
       }
-      currentContentBlock.content = (currentContentBlock.content || "") + chunk;
-      this.pushToRenderer(sessionId, messageId, blocks);
     }
 
     if (currentContentBlock) {
@@ -113,28 +164,11 @@ export class AgentChatPresenter {
       this.pushToRenderer(sessionId, messageId, blocks);
     }
 
-    const rawToolCalls = await result.toolCalls;
-    const toolCalls: ToolCall[] = [];
-
-    for (const tc of rawToolCalls || []) {
-      const argsObj = tc.input ?? tc.args ?? {};
-      const argsStr = JSON.stringify(argsObj);
-      toolCalls.push({ id: tc.toolCallId, name: tc.toolName, args: argsStr });
-      blocks.push({
-        type: "tool_call",
-        id: tc.toolCallId,
-        content: "",
-        status: "loading",
-        timestamp: Date.now(),
-        tool_call: { id: tc.toolCallId, name: tc.toolName, input: argsObj },
-      });
-    }
-
-    if (toolCalls.length > 0) {
+    if (completedToolCalls.length > 0) {
       this.pushToRenderer(sessionId, messageId, blocks);
     }
 
-    return { textContent, toolCalls };
+    return { textContent, toolCalls: completedToolCalls };
   }
 
   private async executeTool(
@@ -242,18 +276,21 @@ export class AgentChatPresenter {
     });
 
     // Build context — contextBuilder deduplicates newUserContent from history
-    const messages: any[] = buildContext(sessionId, content, db, {
+    const messages: CoreMessage[] = buildContext(sessionId, content, db, {
       agentSystemPrompt: agent?.config?.systemPrompt,
     });
-    const model = this.createModel(groupName);
+    const client = this.createClient();
 
     // Filter disabled tools
     const disabledTools = agent?.config?.disabledTools ?? [];
-    const allTools = this.toolPresenter.getToolSet(sessionId);
-    const tools =
+    const allAiSdkTools = this.toolPresenter.getToolSet(sessionId);
+    const filteredAiSdkTools =
       disabledTools.length > 0
-        ? Object.fromEntries(Object.entries(allTools).filter(([k]) => !disabledTools.includes(k)))
-        : allTools;
+        ? Object.fromEntries(
+            Object.entries(allAiSdkTools).filter(([k]) => !disabledTools.includes(k)),
+          )
+        : allAiSdkTools;
+    const tools = this.convertTools(filteredAiSdkTools);
 
     const blocks: AssistantMessageBlock[] = [];
     const assistantMessageId = crypto.randomUUID();
@@ -264,16 +301,14 @@ export class AgentChatPresenter {
         if (abortController.signal.aborted) break;
         stepCount++;
 
-        const result = streamText({
-          model,
-          messages: messages as any,
-          tools: tools as any,
-          abortSignal: abortController.signal,
-          maxOutputTokens: config?.maxTokens ?? agent?.config?.maxTokens ?? undefined,
-        });
-
         const { textContent, toolCalls } = await this.collectStreamResult(
-          result,
+          client,
+          messages,
+          tools,
+          {
+            model: groupName,
+            maxTokens: config?.maxTokens ?? agent?.config?.maxTokens ?? undefined,
+          },
           sessionId,
           assistantMessageId,
           blocks,
