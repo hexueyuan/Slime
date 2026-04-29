@@ -149,6 +149,71 @@ describe("anthropic outbound", () => {
         source: { type: "url", url: "https://img.com/a.png" },
       });
     });
+
+    it("adds top-level cache_control", () => {
+      const body = toAnthropicRequest(baseRequest({ cacheControl: { type: "ephemeral" } }));
+      expect(body.cache_control).toEqual({ type: "ephemeral" });
+    });
+
+    it("adds cache_control on content blocks", () => {
+      const body = toAnthropicRequest(
+        baseRequest({
+          messages: [
+            {
+              role: "user",
+              content: [{ type: "text", text: "hello", cacheControl: { type: "ephemeral" } }],
+            },
+          ],
+        }),
+      );
+      const msgs = body.messages as Array<{ content: Array<Record<string, unknown>> }>;
+      expect(msgs[0].content[0]).toMatchObject({
+        type: "text",
+        text: "hello",
+        cache_control: { type: "ephemeral" },
+      });
+    });
+
+    it("adds cache_control on tools", () => {
+      const body = toAnthropicRequest(
+        baseRequest({
+          tools: [
+            {
+              name: "read",
+              description: "read file",
+              inputSchema: { type: "object" },
+              cacheControl: { type: "ephemeral" },
+            },
+          ],
+        }),
+      );
+      expect((body.tools as Array<Record<string, unknown>>)[0]).toMatchObject({
+        name: "read",
+        cache_control: { type: "ephemeral" },
+      });
+    });
+
+    it("outputs array-format system when systemParts present", () => {
+      const body = toAnthropicRequest(
+        baseRequest({
+          systemParts: [
+            { type: "text", text: "you are helpful" },
+            { type: "text", text: "more context", cacheControl: { type: "ephemeral" } },
+          ],
+        }),
+      );
+      expect(body.system).toEqual([
+        { type: "text", text: "you are helpful" },
+        { type: "text", text: "more context", cache_control: { type: "ephemeral" } },
+      ]);
+    });
+
+    it("cache_control with ttl passes through", () => {
+      const body = toAnthropicRequest(
+        baseRequest({ cacheControl: { type: "ephemeral", ttl: "1h" } }),
+      );
+      expect(body.cache_control).toEqual({ type: "ephemeral", ttl: "1h" });
+    });
   });
 
   describe("fromAnthropicResponse", () => {
