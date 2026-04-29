@@ -160,8 +160,7 @@ export function createGeminiOutbound(): OutboundAdapter {
       });
       if (!res.ok) {
         const text = await res.text();
-        yield { type: "error" as const, error: `Gemini ${res.status}: ${text}` };
-        return;
+        throw new Error(`Gemini ${res.status}: ${text}`);
       }
 
       let lastText = "";
