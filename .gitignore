@@ -15,6 +15,7 @@ yarn.lock
 .npmrc
 .claude/settings.local.json
 .superpowers/
+.worktrees/
 .slime/
 .tmp/
 .evo-preview/
