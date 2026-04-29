@@ -62,6 +62,19 @@ describe("parseSSE", () => {
     expect(events).toEqual([{ data: '{"msg":"first"}' }]);
   });
 
+  it("should handle incomplete data at stream end", async () => {
+    const response = createMockResponse([
+      'data: {"text":"你好', // 故意没有 \n\n
+    ]);
+
+    const events = [];
+    for await (const event of parseSSE(response)) {
+      events.push(event);
+    }
+
+    expect(events).toEqual([{ data: '{"text":"你好', event: undefined }]);
+  });
+
   it("should handle UTF-8 multibyte characters", async () => {
     // Test UTF-8 multibyte character handling
     const response = createMockResponse(['data: {"text":"你好"}\n\n']);

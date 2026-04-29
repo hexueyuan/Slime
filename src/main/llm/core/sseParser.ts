@@ -25,7 +25,18 @@ export async function* parseSSE(response: Response): AsyncGenerator<SSEEvent> {
   try {
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        if (buffer.trim()) {
+          const trimmedLine = buffer.trim();
+          if (trimmedLine.startsWith("data: ")) {
+            const data = trimmedLine.slice(6);
+            if (data !== "[DONE]") {
+              yield { event: currentEvent, data };
+            }
+          }
+        }
+        break;
+      }
 
       buffer += value;
       const lines = buffer.split("\n");
