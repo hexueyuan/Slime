@@ -1,0 +1,120 @@
+import { describe, expect, it } from "vitest";
+import { parseAnthropicStream } from "../streamParser";
+import type { SSEEvent } from "../../../core/sseParser";
+import type { StreamEvent } from "../../../core/types";
+
+async function collect(gen: AsyncGenerator<StreamEvent>): Promise<StreamEvent[]> {
+  const events: StreamEvent[] = [];
+  for await (const e of gen) events.push(e);
+  return events;
+}
+
+async function* makeSSE(events: SSEEvent[]): AsyncGenerator<SSEEvent> {
+  for (const e of events) yield e;
+}
+
+describe("parseAnthropicStream", () => {
+  it("text delta → text event", async () => {
+    const sse = makeSSE([
+      {
+        event: "content_block_delta",
+        data: JSON.stringify({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: "hello" },
+        }),
+      },
+    ]);
+    const events = await collect(parseAnthropicStream(sse));
+    expect(events).toEqual([{ type: "text", text: "hello" }]);
+  });
+
+  it("tool_use blocks accumulate and emit tool_call_start/delta/end", async () => {
+    const sse = makeSSE([
+      {
+        event: "content_block_start",
+        data: JSON.stringify({
+          type: "content_block_start",
+          index: 0,
+          content_block: { type: "tool_use", id: "id1", name: "my_tool" },
+        }),
+      },
+      {
+        event: "content_block_delta",
+        data: JSON.stringify({
+          type: "content_block_delta",
+          index: 0,
+          delta: { type: "input_json_delta", partial_json: '{"k"' },
+        }),
+      },
+      {
+        event: "content_block_delta",
+        data: JSON.stringify({
+          type: "content_block_delta",
+          index: 0,
+          delta: { type: "input_json_delta", partial_json: ':"v"}' },
+        }),
+      },
+      {
+        event: "content_block_stop",
+        data: JSON.stringify({ type: "content_block_stop", index: 0 }),
+      },
+    ]);
+    const events = await collect(parseAnthropicStream(sse));
+    expect(events[0]).toEqual({ type: "tool_call_start", id: "id1", name: "my_tool" });
+    expect(events[1]).toEqual({ type: "tool_call_delta", id: "id1", delta: '{"k"' });
+    expect(events[2]).toEqual({ type: "tool_call_delta", id: "id1", delta: ':"v"}' });
+    expect(events[3]).toEqual({ type: "tool_call_end", id: "id1", input: { k: "v" } });
+  });
+
+  it("invalid JSON in tool_call_end → tool_call_end with null input", async () => {
+    const sse = makeSSE([
+      {
+        event: "content_block_start",
+        data: JSON.stringify({
+          type: "content_block_start",
+          index: 0,
+          content_block: { type: "tool_use", id: "id2", name: "bad_tool" },
+        }),
+      },
+      {
+        event: "content_block_delta",
+        data: JSON.stringify({
+          type: "content_block_delta",
+          index: 0,
+          delta: { type: "input_json_delta", partial_json: "{INVALID" },
+        }),
+      },
+      {
+        event: "content_block_stop",
+        data: JSON.stringify({ type: "content_block_stop", index: 0 }),
+      },
+    ]);
+    const events = await collect(parseAnthropicStream(sse));
+    const end = events.find((e) => e.type === "tool_call_end");
+    expect(end).toEqual({ type: "tool_call_end", id: "id2", input: null });
+  });
+
+  it("message_delta usage → usage event with camelCase fields", async () => {
+    const sse = makeSSE([
+      {
+        event: "message_delta",
+        data: JSON.stringify({
+          type: "message_delta",
+          usage: {
+            input_tokens: 10,
+            output_tokens: 20,
+            cache_read_input_tokens: 5,
+            cache_creation_input_tokens: 3,
+          },
+        }),
+      },
+      { event: "message_stop", data: JSON.stringify({ type: "message_stop" }) },
+    ]);
+    const events = await collect(parseAnthropicStream(sse));
+    expect(events[0]).toEqual({
+      type: "usage",
+      usage: { inputTokens: 10, outputTokens: 20, cacheReadTokens: 5, cacheWriteTokens: 3 },
+    });
+    expect(events[1]).toEqual({ type: "done" });
+  });
+});
