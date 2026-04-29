@@ -195,8 +195,7 @@ export function createAnthropicOutbound(): OutboundAdapter {
       });
       if (!res.ok) {
         const text = await res.text();
-        yield { type: "error" as const, error: `Anthropic ${res.status}: ${text}` };
-        return;
+        throw new Error(`Anthropic ${res.status}: ${text}`);
       }
 
       let model = "";
