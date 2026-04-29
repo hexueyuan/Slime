@@ -2,7 +2,8 @@ export type AgentType = "builtin" | "custom";
 
 export type AgentAvatar =
   | { kind: "lucide"; icon: string; color?: string }
-  | { kind: "monogram"; text: string; backgroundColor?: string };
+  | { kind: "monogram"; text: string; backgroundColor?: string }
+  | { kind: "image"; path: string };
 
 export type UserProfile = {
   name?: string;

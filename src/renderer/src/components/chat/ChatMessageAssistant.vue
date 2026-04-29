@@ -118,14 +118,14 @@ function regenerate() {
 <template>
   <div class="group mb-4 flex items-start gap-2">
     <!-- Avatar -->
-    <AgentAvatarComp :avatar="agentAvatar" size="sm" />
+    <AgentAvatarComp :avatar="agentAvatar" size="lg" />
 
     <!-- Bubble column -->
     <div class="flex max-w-[85%] flex-col items-start">
       <!-- Name + time -->
       <div
         v-if="showTimestamp"
-        class="mb-1 flex items-center gap-1.5 text-xs text-muted-foreground"
+        class="mb-1 flex items-center gap-1.5 text-sm text-muted-foreground"
       >
         <span>{{ agentName }}</span>
         <span v-if="message">·</span>

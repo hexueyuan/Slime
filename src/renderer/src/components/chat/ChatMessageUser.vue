@@ -35,7 +35,7 @@ async function copyMessage() {
       <!-- Name + time -->
       <div
         v-if="showTimestamp"
-        class="mb-1 flex flex-row-reverse items-center gap-1.5 text-xs text-muted-foreground"
+        class="mb-1 flex flex-row-reverse items-center gap-1.5 text-sm text-muted-foreground"
       >
         <span>{{ userName }}</span>
         <span>·</span>
@@ -59,6 +59,6 @@ async function copyMessage() {
     </div>
 
     <!-- Avatar -->
-    <AgentAvatarComp :avatar="userAvatar" size="sm" />
+    <AgentAvatarComp :avatar="userAvatar" size="lg" />
   </div>
 </template>

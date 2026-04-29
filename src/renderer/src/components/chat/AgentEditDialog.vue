@@ -2,6 +2,7 @@
 import { ref, watch, computed } from "vue";
 import { Icon } from "@iconify/vue";
 import { useAgentStore } from "@/stores/agent";
+import { usePresenter } from "@/composables/usePresenter";
 import type { Agent, AgentAvatar, AgentConfig } from "@shared/types/agent";
 
 const props = defineProps<{
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 }>();
 
 const agentStore = useAgentStore();
+const agentConfig = usePresenter("agentConfigPresenter");
 
 const isEdit = computed(() => !!props.agentId);
 const isProtected = ref(false);
@@ -22,11 +24,13 @@ const isProtected = ref(false);
 // Form state
 const name = ref("");
 const description = ref("");
-const avatarType = ref<"icon" | "monogram">("icon");
+const avatarType = ref<"icon" | "monogram" | "image">("icon");
 const avatarIcon = ref("lucide:bot");
 const avatarColor = ref("#a855f7");
 const avatarText = ref("");
 const avatarBgColor = ref("#7c3aed");
+const avatarImagePath = ref<string | null>(null);
+const pickingImage = ref(false);
 const systemPrompt = ref("");
 const capabilities = ref<string[]>(["reasoning"]);
 const temperature = ref(0.7);
@@ -75,16 +79,18 @@ watch(
         name.value = agent.name;
         description.value = agent.description ?? "";
         if (agent.avatar) {
-          avatarType.value = agent.avatar.kind === "lucide" ? "icon" : "monogram";
-          avatarIcon.value =
-            agent.avatar.kind === "lucide" ? (agent.avatar.icon ?? "lucide:bot") : "lucide:bot";
-          avatarColor.value =
-            agent.avatar.kind === "lucide" ? (agent.avatar.color ?? "#a855f7") : "#a855f7";
-          avatarText.value = agent.avatar.kind === "monogram" ? (agent.avatar.text ?? "") : "";
-          avatarBgColor.value =
-            agent.avatar.kind === "monogram"
-              ? (agent.avatar.backgroundColor ?? "#7c3aed")
-              : "#7c3aed";
+          if (agent.avatar.kind === "image") {
+            avatarType.value = "image";
+            avatarImagePath.value = agent.avatar.path;
+          } else if (agent.avatar.kind === "lucide") {
+            avatarType.value = "icon";
+            avatarIcon.value = agent.avatar.icon ?? "lucide:bot";
+            avatarColor.value = agent.avatar.color ?? "#a855f7";
+          } else {
+            avatarType.value = "monogram";
+            avatarText.value = agent.avatar.text ?? "";
+            avatarBgColor.value = agent.avatar.backgroundColor ?? "#7c3aed";
+          }
         }
         const cfg = agent.config;
         systemPrompt.value = cfg?.systemPrompt ?? "";
@@ -106,6 +112,7 @@ watch(
       avatarColor.value = "#a855f7";
       avatarText.value = "";
       avatarBgColor.value = "#7c3aed";
+      avatarImagePath.value = null;
       systemPrompt.value = "";
       capabilities.value = ["reasoning"];
       temperature.value = 0.7;
@@ -136,16 +143,34 @@ function toggleTool(tool: string) {
   }
 }
 
+async function onPickImage() {
+  pickingImage.value = true;
+  try {
+    const path = (await agentConfig.pickAvatar()) as string | null;
+    if (path) avatarImagePath.value = path;
+  } finally {
+    pickingImage.value = false;
+  }
+}
+
 async function onSave() {
   if (!name.value.trim()) {
     nameError.value = "名称不能为空";
     return;
   }
 
-  const avatar: AgentAvatar =
-    avatarType.value === "icon"
-      ? { kind: "lucide", icon: avatarIcon.value, color: avatarColor.value }
-      : { kind: "monogram", text: avatarText.value || "?", backgroundColor: avatarBgColor.value };
+  let avatar: AgentAvatar;
+  if (avatarType.value === "image" && avatarImagePath.value) {
+    avatar = { kind: "image", path: avatarImagePath.value };
+  } else if (avatarType.value === "icon") {
+    avatar = { kind: "lucide", icon: avatarIcon.value, color: avatarColor.value };
+  } else {
+    avatar = {
+      kind: "monogram",
+      text: avatarText.value || "?",
+      backgroundColor: avatarBgColor.value,
+    };
+  }
 
   const config: AgentConfig = {
     capabilityRequirements: capabilities.value,
@@ -256,6 +281,17 @@ async function onSave() {
               >
                 文字
               </button>
+              <button
+                :class="[
+                  'rounded px-2 py-1 text-xs',
+                  avatarType === 'image'
+                    ? 'bg-violet-500/20 text-violet-400'
+                    : 'text-muted-foreground hover:bg-muted',
+                ]"
+                @click="avatarType = 'image'"
+              >
+                图片
+              </button>
             </div>
             <!-- Icon mode -->
             <div v-if="avatarType === 'icon'">
@@ -288,7 +324,7 @@ async function onSave() {
               </div>
             </div>
             <!-- Monogram mode -->
-            <div v-else class="flex items-center gap-3">
+            <div v-else-if="avatarType === 'monogram'" class="flex items-center gap-3">
               <input
                 v-model="avatarText"
                 type="text"
@@ -308,6 +344,20 @@ async function onSave() {
                   @click="avatarBgColor = color"
                 />
               </div>
+            </div>
+            <!-- Image mode -->
+            <div v-else class="flex items-center gap-3">
+              <button
+                class="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+                :disabled="pickingImage"
+                @click="onPickImage"
+              >
+                <Icon icon="lucide:upload" class="h-3.5 w-3.5" />
+                {{ pickingImage ? "选择中..." : avatarImagePath ? "重新选择" : "选择图片" }}
+              </button>
+              <span v-if="avatarImagePath" class="truncate text-xs text-muted-foreground">
+                {{ avatarImagePath.split("/").pop() }}
+              </span>
             </div>
           </div>
 

@@ -22,6 +22,10 @@ export const paths = {
     return join(this.slimeDir, "data");
   },
 
+  get avatarsDir() {
+    return join(this.slimeDir, "avatars");
+  },
+
   get logsDir() {
     return join(this.userData, "logs");
   },

@@ -6,4 +6,6 @@ export interface IAgentConfigPresenter {
   createAgent(data: Partial<Agent>): Promise<Agent>;
   updateAgent(id: string, data: Partial<Agent>): Promise<Agent>;
   deleteAgent(id: string): Promise<void>;
+  pickAvatar(): Promise<string | null>;
+  getAvatarUrl(relativePath: string): Promise<string>;
 }

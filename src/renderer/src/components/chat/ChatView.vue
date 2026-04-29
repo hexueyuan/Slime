@@ -48,10 +48,10 @@ function onStop() {
   <div v-if="session" class="relative flex h-full flex-col">
     <!-- Top bar -->
     <div class="flex items-center gap-2 border-b border-border px-4 py-2">
-      <AgentAvatar v-if="agent" :avatar="agent.avatar" size="sm" />
+      <AgentAvatar v-if="agent" :avatar="agent.avatar" size="lg" />
       <div class="flex-1 truncate">
         <span class="text-sm font-medium text-foreground">{{ session.title }}</span>
-        <span v-if="agent" class="ml-2 text-xs text-muted-foreground">{{ agent.name }}</span>
+        <span v-if="agent" class="ml-2 text-sm text-muted-foreground">{{ agent.name }}</span>
       </div>
       <button
         v-if="agent"
