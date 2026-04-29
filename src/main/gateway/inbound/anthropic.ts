@@ -25,6 +25,9 @@ interface AnthropicContentBlock {
   is_error?: boolean;
   source?: { type: string; media_type?: string; data?: string; url?: string };
   cache_control?: { type: string; ttl?: string };
+  thinking?: string;
+  signature?: string;
+  data?: string;
 }
 
 interface AnthropicToolDef {
@@ -103,6 +106,16 @@ function toInternalContent(block: AnthropicContentBlock): InternalContent {
         isError: block.is_error,
       };
       break;
+    case "thinking":
+      result = {
+        type: "thinking",
+        thinking: block.thinking ?? "",
+        signature: block.signature ?? "",
+      };
+      break;
+    case "redacted_thinking":
+      result = { type: "redacted_thinking", data: block.data ?? "" };
+      break;
     default:
       result = { type: "text", text: "" };
   }
@@ -141,6 +154,10 @@ function toAnthropicContent(c: InternalContent) {
       return { type: "text", text: c.text };
     case "tool_use":
       return { type: "tool_use", id: c.id, name: c.name, input: c.input };
+    case "thinking":
+      return { type: "thinking", thinking: c.thinking, signature: c.signature };
+    case "redacted_thinking":
+      return { type: "redacted_thinking", data: c.data };
     default:
       return { type: "text", text: "" };
   }
@@ -226,11 +243,13 @@ export function registerAnthropicInbound(
     let outputTokens = 0;
     let activeBlockType: string | undefined;
     let currentToolUseId: string | undefined;
+    let thinkingOpened = false;
 
     function closeCurrentBlock() {
       if (blockIndex >= 0 && activeBlockType) {
         write("content_block_stop", { type: "content_block_stop", index: blockIndex });
         activeBlockType = undefined;
+        thinkingOpened = false;
       }
     }
 
@@ -242,6 +261,7 @@ export function registerAnthropicInbound(
               closeCurrentBlock();
               blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
               activeBlockType = "text";
+              thinkingOpened = false;
               write("content_block_start", {
                 type: "content_block_start",
                 index: blockIndex,
@@ -259,6 +279,7 @@ export function registerAnthropicInbound(
               blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
               activeBlockType = "tool_use";
               currentToolUseId = event.delta.id;
+              thinkingOpened = false;
               write("content_block_start", {
                 type: "content_block_start",
                 index: blockIndex,
@@ -275,6 +296,32 @@ export function registerAnthropicInbound(
                 type: "content_block_delta",
                 index: blockIndex,
                 delta: { type: "input_json_delta", partial_json: event.delta.input_json_delta },
+              });
+            }
+          } else if (event.delta.type === "thinking") {
+            if (!thinkingOpened) {
+              closeCurrentBlock();
+              blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
+              activeBlockType = "thinking";
+              thinkingOpened = true;
+              write("content_block_start", {
+                type: "content_block_start",
+                index: blockIndex,
+                content_block: { type: "thinking", thinking: "", signature: "" },
+              });
+            }
+            if (event.delta.thinking) {
+              write("content_block_delta", {
+                type: "content_block_delta",
+                index: blockIndex,
+                delta: { type: "thinking_delta", thinking: event.delta.thinking },
+              });
+            }
+            if (event.delta.signature) {
+              write("content_block_delta", {
+                type: "content_block_delta",
+                index: blockIndex,
+                delta: { type: "signature_delta", signature: event.delta.signature },
               });
             }
           }
