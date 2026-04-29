@@ -32,7 +32,9 @@ export type InternalContent =
       content: string;
       isError?: boolean;
       cacheControl?: CacheControl;
-    };
+    }
+  | { type: "thinking"; thinking: string; signature: string }
+  | { type: "redacted_thinking"; data: string };
 
 export interface CacheControl {
   type: "ephemeral";
@@ -69,7 +71,8 @@ export type StreamEvent =
       type: "content_delta";
       delta:
         | { type: "text"; text: string }
-        | { type: "tool_use"; id: string; name: string; input_json_delta: string };
+        | { type: "tool_use"; id: string; name: string; input_json_delta: string }
+        | { type: "thinking"; thinking: string; signature: string };
     }
   | { type: "usage"; usage: InternalResponse["usage"] }
   | { type: "stop"; stopReason: string; model: string }
