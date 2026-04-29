@@ -154,6 +154,35 @@ export class AgentChatPresenter {
           });
           pendingToolCalls.delete(event.id);
         }
+      } else if (event.type === "thinking_start") {
+        blocks.push({
+          type: "thinking",
+          thinking: "",
+          signature: "",
+          status: "loading",
+          timestamp: Date.now(),
+        });
+        this.pushToRenderer(sessionId, messageId, blocks);
+      } else if (event.type === "thinking_delta") {
+        const lastThinking = [...blocks].reverse().find((b) => b.type === "thinking");
+        if (lastThinking && lastThinking.thinking !== undefined) {
+          lastThinking.thinking += event.text;
+          this.pushToRenderer(sessionId, messageId, blocks);
+        }
+      } else if (event.type === "signature_delta") {
+        const lastThinking = [...blocks].reverse().find((b) => b.type === "thinking");
+        if (lastThinking && lastThinking.signature !== undefined) {
+          lastThinking.signature += event.signature;
+          this.pushToRenderer(sessionId, messageId, blocks);
+        }
+      } else if (event.type === "thinking_end") {
+        const lastThinking = [...blocks].reverse().find((b) => b.type === "thinking");
+        if (lastThinking) {
+          lastThinking.thinking = event.thinking;
+          lastThinking.signature = event.signature;
+          lastThinking.status = "success";
+          this.pushToRenderer(sessionId, messageId, blocks);
+        }
       } else if (event.type === "error") {
         throw new Error(event.error);
       }
@@ -320,6 +349,15 @@ export class AgentChatPresenter {
         // Append assistant message to context
         const assistantParts: any[] = [];
         if (textContent) assistantParts.push({ type: "text", text: textContent });
+        for (const b of blocks) {
+          if (b.type === "thinking" && b.thinking !== undefined) {
+            assistantParts.push({
+              type: "thinking",
+              thinking: b.thinking,
+              signature: b.signature ?? "",
+            });
+          }
+        }
         for (const tc of toolCalls) {
           assistantParts.push({
             type: "tool-call",
