@@ -73,6 +73,13 @@ function convertMessage(m: CoreMessage): AnthropicMessage {
   }
 
   const blocks: AnthropicContentBlock[] = m.content.map((part) => {
+    if (part.type === "thinking") {
+      return {
+        type: "thinking" as const,
+        thinking: part.thinking as string,
+        signature: part.signature as string,
+      };
+    }
     if (part.type === "tool-call") {
       return {
         type: "tool_use" as const,
