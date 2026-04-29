@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心假设：软件可以通过 AI Agent 实现自我迭代进化。v0.2 (brave) 引入内置 LLM Gateway，统一多渠道路由、负载均衡、熔断、协议转换和统计。v0.3 (brave) 引入 Agent 对话系统，Chatroom 为默认视图，EvoLab 隐藏。
+Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心假设：软件可以通过 AI Agent 实现自我迭代进化。v0.2 (brave) 引入内置 LLM Gateway，统一多供应商路由、负载均衡、熔断、协议转换和统计。v0.3 (brave) 引入 Agent 对话系统，Chatroom 为默认视图，EvoLab 隐藏。
 
 ## 项目结构
 
@@ -89,8 +89,8 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | EvolutionPresenter        | 进化状态机（idle→discuss→coding→applying）+ CHANGELOG + apply(打包+自替换) + archive CRUD + AI 语义回滚 + build verification                                                      |
 | ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                      |
 | WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                  |
-| GatewayPresenter          | LLM Gateway 生命周期管理：渠道/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                                |
-| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                                |
+| GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                                |
+| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                              |
 | AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                        |
 
 ### 自研 LLM 客户端
@@ -158,9 +158,9 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - 条件渲染链: `loading → onboarding → WorkspaceSetup → main layout`
 - 判断: `configPresenter.get("app.onboarded")` 为 falsy 显示向导
 - 4 步: Welcome → AddChannelStep → CapabilityTagStep → IdentityCompleteStep
-- AddChannelStep: 选择渠道类型（anthropic/openai/gemini/deepseek/volcengine/custom），输入 baseUrl + API Key，testChannel 验证
-- CapabilityTagStep: 为渠道模型标记能力标签（reasoning/vision/image_gen/tool_call）
-- 完成后写入: `app.userProfile`（含 name/avatar），`app.onboarded`；渠道/分组/Slot 通过 GatewayPresenter 持久化到 SQLite
+- AddChannelStep: 选择供应商类型（anthropic/openai/gemini/deepseek/volcengine/custom），输入 baseUrl + API Key，testChannel 验证
+- CapabilityTagStep: 为供应商模型标记能力标签（reasoning/vision/image_gen/tool_call）
+- 完成后写入: `app.userProfile`（含 name/avatar），`app.onboarded`；供应商/分组/Slot 通过 GatewayPresenter 持久化到 SQLite
 - 组件: `src/renderer/src/components/onboarding/`
 
 ### 聊天区 Streaming 状态
@@ -189,7 +189,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - **Stats**: 内存缓冲 30s flush → relay_logs → 每小时聚合 stats_hourly → 每日聚合 stats_daily，定时清理
 - **Capability Selection**: 基于能力的模型选择（ModelType: chat; Capability: reasoning/vision/image_gen/tool_call），`select(requirements)` 按 CapabilityRequirement 匹配 models 表中的注册模型，"chat" 作为特殊分组从 model.type 填充
 - **AgentPresenter 集成**: 通过 `createAnthropic({ baseURL: "http://127.0.0.1:{port}/" })` 连接本地 Gateway，selector.select 获取模型名
-- **Gateway UI**: GatewayPanel（4 tab: 渠道/分组/接入/日志）+ SettingsDialog Gateway tab（端口/熔断/保留）
+- **Gateway UI**: GatewayPanel（4 tab: 供应商/分组/接入/日志）+ SettingsDialog Gateway tab（端口/熔断/保留）
 - **Pinia Store**: `useGatewayStore()` 管理 channels/groups/apiKeys/stats/logs
 
 ### Agent 对话系统 (v0.3)

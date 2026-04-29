@@ -218,14 +218,22 @@ async function toggleModelEnabled(model: Model) {
   if (selectedChannelId.value) await store.loadModelsByChannel(selectedChannelId.value);
 }
 
+const addModelError = ref("");
+
 async function addModelToChannel(channelId: number, modelName: string) {
-  await gw.createModel({
-    channelId,
-    modelName,
-    type: "chat",
-    capabilities: [],
-    enabled: true,
-  });
+  addModelError.value = "";
+  try {
+    await gw.createModel({
+      channelId,
+      modelName,
+      type: "chat",
+      capabilities: [],
+      enabled: true,
+    });
+    if (selectedChannelId.value) await store.loadModelsByChannel(selectedChannelId.value);
+  } catch (e: any) {
+    addModelError.value = e?.message ?? String(e);
+  }
 }
 
 async function removeModelFromChannel(modelId: number) {
@@ -270,12 +278,12 @@ async function refreshModels() {
     <!-- Header -->
     <div class="shrink-0 border-b border-border px-4 py-3">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium">渠道</h3>
+        <h3 class="text-sm font-medium">供应商</h3>
         <button
           class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
           @click="openCreate"
         >
-          + 新增渠道
+          + 新增供应商
         </button>
       </div>
     </div>
@@ -313,7 +321,7 @@ async function refreshModels() {
             </div>
           </div>
         </template>
-        <div v-else class="py-12 text-center text-xs text-muted-foreground">暂无渠道</div>
+        <div v-else class="py-12 text-center text-xs text-muted-foreground">暂无供应商</div>
       </div>
 
       <!-- Right: model management -->
@@ -381,7 +389,7 @@ async function refreshModels() {
           <div class="flex items-center gap-1">
             <button
               class="flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-              title="从渠道拉取模型列表"
+              title="从供应商拉取模型列表"
               :disabled="refreshingModels"
               @click="refreshModels"
             >
@@ -474,38 +482,41 @@ async function refreshModels() {
         <div v-else class="py-8 text-center text-xs text-muted-foreground">暂无模型</div>
 
         <!-- Inline add model (toggled by + button) -->
-        <div v-if="showAddModel" class="mt-3 flex items-center gap-2">
-          <input
-            v-model="newCapModelName"
-            class="min-w-0 flex-1 rounded border border-input-border bg-input px-2.5 py-1 text-xs text-foreground outline-none focus:border-violet-500"
-            placeholder="输入模型名称..."
-            @keydown.enter.prevent="
-              if (newCapModelName.trim() && selectedChannelId) {
-                addModelToChannel(selectedChannelId, newCapModelName.trim());
+        <div v-if="showAddModel" class="mt-3">
+          <div class="flex items-center gap-2">
+            <input
+              v-model="newCapModelName"
+              class="min-w-0 flex-1 rounded border border-input-border bg-input px-2.5 py-1 text-xs text-foreground outline-none focus:border-violet-500"
+              placeholder="输入模型名称..."
+              @keydown.enter.prevent="
+                if (newCapModelName.trim() && selectedChannelId) {
+                  addModelToChannel(selectedChannelId, newCapModelName.trim());
+                  newCapModelName = '';
+                }
+              "
+            />
+            <button
+              class="rounded bg-violet-600 px-2.5 py-1 text-xs text-white transition-colors hover:bg-violet-500"
+              @click="
+                if (newCapModelName.trim() && selectedChannelId) {
+                  addModelToChannel(selectedChannelId, newCapModelName.trim());
+                  newCapModelName = '';
+                }
+              "
+            >
+              确认
+            </button>
+            <button
+              class="rounded px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
+              @click="
+                showAddModel = false;
                 newCapModelName = '';
-              }
-            "
-          />
-          <button
-            class="rounded bg-violet-600 px-2.5 py-1 text-xs text-white transition-colors hover:bg-violet-500"
-            @click="
-              if (newCapModelName.trim() && selectedChannelId) {
-                addModelToChannel(selectedChannelId, newCapModelName.trim());
-                newCapModelName = '';
-              }
-            "
-          >
-            确认
-          </button>
-          <button
-            class="rounded px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
-            @click="
-              showAddModel = false;
-              newCapModelName = '';
-            "
-          >
-            取消
-          </button>
+              "
+            >
+              取消
+            </button>
+          </div>
+          <div v-if="addModelError" class="mt-1 text-xs text-red-400">{{ addModelError }}</div>
         </div>
       </div>
 
@@ -514,13 +525,13 @@ async function refreshModels() {
         v-else-if="!store.channels.length"
         class="flex min-w-0 flex-1 items-center justify-center text-sm text-muted-foreground"
       >
-        暂无渠道
+        暂无供应商
       </div>
       <div
         v-else
         class="flex min-w-0 flex-1 items-center justify-center text-sm text-muted-foreground"
       >
-        选择一个渠道
+        选择一个供应商
       </div>
     </div>
 
@@ -532,7 +543,7 @@ async function refreshModels() {
           class="relative w-[480px] max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-xl"
         >
           <h3 class="mb-4 text-sm font-medium">
-            {{ editingChannel ? "编辑渠道" : "新增渠道" }}
+            {{ editingChannel ? "编辑供应商" : "新增供应商" }}
           </h3>
 
           <!-- Name -->
@@ -541,7 +552,7 @@ async function refreshModels() {
             <input
               v-model="form.name"
               class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-              placeholder="渠道名称"
+              placeholder="供应商名称"
             />
           </label>
 

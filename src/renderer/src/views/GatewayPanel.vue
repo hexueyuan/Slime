@@ -34,7 +34,7 @@ const cleanup = window.electron.ipcRenderer.on(GATEWAY_EVENTS.LOG_ADDED, () => {
 onUnmounted(() => cleanup?.());
 
 const tabs = [
-  { key: "channels" as const, label: "渠道" },
+  { key: "channels" as const, label: "供应商" },
   { key: "groups" as const, label: "分组" },
   { key: "apikeys" as const, label: "接入" },
   { key: "logs" as const, label: "日志" },

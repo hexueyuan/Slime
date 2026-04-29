@@ -80,7 +80,7 @@ function formatNum(n: number): string {
           ]"
           @click="activeTab = tab"
         >
-          {{ tab === "channels" ? "渠道" : "模型" }}
+          {{ tab === "channels" ? "供应商" : "模型" }}
         </button>
       </div>
       <div class="flex gap-1">

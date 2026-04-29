@@ -104,12 +104,12 @@ function toggleModel(model: string) {
 
 <template>
   <div data-testid="add-channel-step" class="flex w-full max-w-[360px] flex-col items-center gap-4">
-    <h2 class="text-[17px] font-semibold text-slate-200">添加首个渠道</h2>
-    <p class="text-sm text-slate-400">配置一个 AI 服务渠道，通过内置网关统一管理。</p>
+    <h2 class="text-[17px] font-semibold text-slate-200">添加首个供应商</h2>
+    <p class="text-sm text-slate-400">配置一个 AI 服务供应商，通过内置网关统一管理。</p>
 
     <!-- Channel Type -->
     <div class="flex w-full flex-col gap-1.5">
-      <label class="text-xs font-medium uppercase tracking-wider text-slate-400">渠道类型</label>
+      <label class="text-xs font-medium uppercase tracking-wider text-slate-400">供应商类型</label>
       <select
         data-testid="onboard-channel-type"
         :value="channelType"
@@ -124,12 +124,12 @@ function toggleModel(model: string) {
 
     <!-- Channel Name -->
     <div class="flex w-full flex-col gap-1.5">
-      <label class="text-xs font-medium uppercase tracking-wider text-slate-400">渠道名称</label>
+      <label class="text-xs font-medium uppercase tracking-wider text-slate-400">供应商名称</label>
       <input
         data-testid="onboard-channel-name"
         type="text"
         :value="channelName"
-        placeholder="我的渠道"
+        placeholder="我的供应商"
         class="w-full rounded-lg border border-violet-500/20 bg-violet-500/5 px-3.5 py-2.5 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-violet-500/50"
         @input="emit('update:channelName', ($event.target as HTMLInputElement).value)"
       />

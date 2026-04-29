@@ -330,19 +330,36 @@ export function getChannelStabilityHourly(
 ): StabilityPoint[] {
   const rows = db
     .prepare(
-      `SELECT
-        date || 'T' || printf('%02d', hour) AS hour,
-        SUM(success_count) AS success_count,
-        SUM(fail_count) AS fail_count,
-        SUM(avg_latency_ms * (success_count + fail_count)) /
-          NULLIF(SUM(success_count + fail_count), 0) AS avg_latency_ms
-      FROM stats_hourly
-      WHERE channel_id = ? AND date >= ? AND date < ?
-        AND (success_count + fail_count) > 0
-      GROUP BY date, hour
-      ORDER BY date, hour`,
+      `SELECT hour,
+              SUM(success_count) AS success_count,
+              SUM(fail_count) AS fail_count,
+              SUM(avg_latency_ms * (success_count + fail_count)) /
+                NULLIF(SUM(success_count + fail_count), 0) AS avg_latency_ms
+       FROM (
+         SELECT date || 'T' || printf('%02d', hour) AS hour,
+                success_count,
+                fail_count,
+                avg_latency_ms
+         FROM stats_hourly
+         WHERE channel_id = ? AND date >= ? AND date < ?
+           AND (success_count + fail_count) > 0
+         UNION ALL
+         SELECT date(created_at) || 'T' || printf('%02d', CAST(strftime('%H', created_at) AS INTEGER)),
+                CASE WHEN status = 'success' THEN 1 ELSE 0 END,
+                CASE WHEN status = 'error' THEN 1 ELSE 0 END,
+                duration_ms
+         FROM relay_logs
+         WHERE channel_id = ? AND date(created_at) >= ? AND date(created_at) < ?
+           AND (date(created_at) || '_' || CAST(strftime('%H', created_at) AS INTEGER))
+             NOT IN (SELECT date || '_' || hour FROM stats_hourly WHERE channel_id = ? AND date >= ? AND date < ?)
+       )
+       GROUP BY hour
+       HAVING SUM(success_count) + SUM(fail_count) > 0
+       ORDER BY hour`,
     )
-    .all(channelId, from, to) as Array<Record<string, unknown>>;
+    .all(channelId, from, to, channelId, from, to, channelId, from, to) as Array<
+    Record<string, unknown>
+  >;
 
   return rows.map((r) => ({
     hour: r.hour as string,

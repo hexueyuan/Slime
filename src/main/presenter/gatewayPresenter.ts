@@ -318,6 +318,10 @@ export class GatewayPresenter implements IGatewayPresenter {
   }
 
   createModel(data: Omit<Model, "id" | "type" | "createdAt" | "updatedAt">): Model {
+    const existing = modelDao.listModelsByChannel(getDb(), data.channelId);
+    if (existing.some((m) => m.modelName === data.modelName)) {
+      throw new Error(`模型 "${data.modelName}" 已存在于此供应商`);
+    }
     const result = modelDao.createModel(getDb(), data);
     this.syncAndReload();
     return result;

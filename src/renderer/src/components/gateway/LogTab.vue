@@ -219,7 +219,7 @@ function copyCurrentTab() {
                 </span>
               </div>
               <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
-                <div>渠道: {{ drawerLog.channelName ?? "-" }}</div>
+                <div>供应商: {{ drawerLog.channelName ?? "-" }}</div>
                 <div>耗时: {{ formatDuration(drawerLog.durationMs) }}</div>
                 <div>Tokens: {{ drawerLog.inputTokens }} in / {{ drawerLog.outputTokens }} out</div>
                 <div>费用: {{ formatCost(drawerLog.cost) }}</div>
