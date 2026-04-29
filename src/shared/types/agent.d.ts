@@ -80,7 +80,13 @@ export interface ChatMessageRecord {
   updatedAt: number;
 }
 
-export type AssistantBlockType = "content" | "reasoning_content" | "error" | "tool_call" | "image";
+export type AssistantBlockType =
+  | "content"
+  | "reasoning_content"
+  | "error"
+  | "tool_call"
+  | "image"
+  | "thinking";
 
 export interface AssistantMessageBlock {
   id?: string;
@@ -90,6 +96,8 @@ export interface AssistantMessageBlock {
   timestamp: number;
   tool_call?: ToolCallBlockData;
   image_data?: { data: string; mimeType: string };
+  thinking?: string;
+  signature?: string;
   is_final?: boolean;
 }
 
