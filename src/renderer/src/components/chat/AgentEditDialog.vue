@@ -4,6 +4,7 @@ import { Icon } from "@iconify/vue";
 import { useAgentStore } from "@/stores/agent";
 import { usePresenter } from "@/composables/usePresenter";
 import type { Agent, AgentAvatar, AgentConfig } from "@shared/types/agent";
+import type { SkillInfo } from "@shared/types/skills";
 import MCPToolChecklist from "@/components/mcp/MCPToolChecklist.vue";
 
 const props = defineProps<{
@@ -39,6 +40,8 @@ const contextLength = ref<number | undefined>(undefined);
 const maxTokens = ref<number | undefined>(undefined);
 const disabledTools = ref<string[]>([]);
 const mcpTools = ref<string[]>([]);
+const skills = ref<string[]>([]);
+const availableSkills = ref<SkillInfo[]>([]);
 const subagentEnabled = ref(false);
 const enabled = ref(true);
 
@@ -102,9 +105,13 @@ watch(
         maxTokens.value = cfg?.maxTokens;
         disabledTools.value = cfg?.disabledTools ?? [];
         mcpTools.value = cfg?.mcpTools ?? [];
+        skills.value = cfg?.skills ?? [];
         subagentEnabled.value = cfg?.subagentEnabled ?? false;
         enabled.value = agent.enabled;
       }
+      agentConfig.listLocalSkills().then((s: SkillInfo[]) => {
+        availableSkills.value = s;
+      });
     } else {
       // Create mode: reset
       isProtected.value = false;
@@ -123,8 +130,12 @@ watch(
       maxTokens.value = undefined;
       disabledTools.value = [];
       mcpTools.value = [];
+      skills.value = [];
       subagentEnabled.value = false;
       enabled.value = true;
+      agentConfig.listLocalSkills().then((s: SkillInfo[]) => {
+        availableSkills.value = s;
+      });
     }
   },
 );
@@ -184,6 +195,7 @@ async function onSave() {
     maxTokens: maxTokens.value,
     disabledTools: disabledTools.value.length > 0 ? disabledTools.value : undefined,
     mcpTools: mcpTools.value.length > 0 ? mcpTools.value : undefined,
+    skills: skills.value.length > 0 ? skills.value : undefined,
     subagentEnabled: subagentEnabled.value,
   };
 
@@ -459,6 +471,38 @@ async function onSave() {
           <div>
             <label class="mb-1 block text-xs text-muted-foreground">MCP 工具（勾选启用）</label>
             <MCPToolChecklist v-model="mcpTools" />
+          </div>
+
+          <!-- Skills -->
+          <div>
+            <label class="mb-1 block text-xs text-muted-foreground">Skills（勾选启用）</label>
+            <div v-if="availableSkills.length === 0" class="text-xs text-muted-foreground">
+              暂无本地 Skill。请将 Skill 目录放入 workspace/skills/
+            </div>
+            <div v-else class="space-y-1">
+              <label
+                v-for="sk in availableSkills"
+                :key="sk.name"
+                class="flex items-center gap-2 rounded px-2 py-1 text-sm text-foreground hover:bg-muted/50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  :checked="skills.includes(sk.name)"
+                  class="accent-violet-500"
+                  @change="
+                    () => {
+                      const idx = skills.indexOf(sk.name);
+                      if (idx >= 0) skills.splice(idx, 1);
+                      else skills.push(sk.name);
+                    }
+                  "
+                />
+                <div>
+                  <span>{{ sk.name }}</span>
+                  <span class="ml-2 text-xs text-muted-foreground">{{ sk.description }}</span>
+                </div>
+              </label>
+            </div>
           </div>
 
           <!-- Toggles -->
