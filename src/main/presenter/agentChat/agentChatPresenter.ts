@@ -7,13 +7,14 @@ import * as agentDao from "@/db/models/agentDao";
 import { eventBus } from "@/eventbus";
 import { CHAT_STREAM_EVENTS } from "@shared/events";
 import { logger } from "@/utils";
-import { buildContext } from "./contextBuilder";
+import { buildContext, buildSkillListXML } from "./contextBuilder";
 import type { CoreMessage } from "./contextBuilder";
 import type { AssistantMessageBlock } from "@shared/types/agent";
 import type { CapabilityRequirement } from "@shared/types/gateway";
 import type { GatewayPresenter } from "../gatewayPresenter";
 import type { ToolPresenter } from "../toolPresenter";
 import type { ContentPresenter } from "../contentPresenter";
+import type { SkillPresenter } from "../skillPresenter";
 import { createLLMClient } from "@/llm";
 import type { LLMClient, Tool } from "@/llm";
 
@@ -56,6 +57,7 @@ export class AgentChatPresenter {
     private gatewayPresenter: GatewayPresenter,
     private toolPresenter: ToolPresenter,
     private contentPresenter: ContentPresenter,
+    private skillPresenter?: SkillPresenter,
   ) {}
 
   getSessionState(sessionId: string): "idle" | "generating" | "error" {
@@ -304,9 +306,15 @@ export class AgentChatPresenter {
       status: "sent",
     });
 
+    // Build skill list for this agent
+    const skillListXML = this.skillPresenter
+      ? buildSkillListXML(this.skillPresenter.getSkillList(session.agentId, agent?.config?.skills))
+      : null;
+
     // Build context — contextBuilder deduplicates newUserContent from history
     const messages: CoreMessage[] = buildContext(sessionId, content, db, {
       agentSystemPrompt: agent?.config?.systemPrompt,
+      skillListXML,
     });
     const client = this.createClient();
 

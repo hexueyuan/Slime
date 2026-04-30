@@ -7,6 +7,7 @@ import type { EvolutionPresenter } from "./evolutionPresenter";
 import { logger, paths } from "@/utils";
 import type { BrowserSession } from "@/browser/browserSession";
 import type { MCPToolBridge } from "./mcpToolBridge";
+import type { SkillPresenter } from "./skillPresenter";
 import {
   makeBrowserNavigateTool,
   makeBrowserScreenshotTool,
@@ -57,6 +58,7 @@ export class ToolPresenter {
     private evolutionPresenter: EvolutionPresenter,
     private browserSession: BrowserSession,
     private mcpBridge?: MCPToolBridge,
+    private skillPresenter?: SkillPresenter,
   ) {}
 
   async getToolSet(sessionId: string) {
@@ -227,6 +229,36 @@ export class ToolPresenter {
       browser_wait: createTool(makeBrowserWaitTool(this.browserSession)),
       browser_close: createTool(makeBrowserCloseTool(this.browserSession)),
       web_fetch: createTool(makeWebFetchTool()),
+      Skill: createTool({
+        description: `Execute a skill within the main conversation.
+
+When users ask you to perform tasks, check if any of the available skills match. Skills provide specialized capabilities and domain knowledge.
+
+How to invoke:
+- Set \`skill\` to the exact name of an available skill.
+
+Important:
+- Available skills are listed in a <system-reminder> tag in the system prompt.
+- Only invoke a skill that appears in the available skills list.
+- When a skill matches the user's request, invoke BEFORE generating any response.
+- NEVER mention a skill without actually calling this tool.
+- Do not invoke a skill that is already running.`,
+        parameters: z.object({
+          skill: z.string().describe("Exact name of the skill to invoke"),
+          args: z.string().optional().describe("Optional arguments for the skill"),
+        }),
+        execute: async ({ skill, args }: { skill: string; args?: string }) => {
+          if (!this.skillPresenter) {
+            return "Skills are not available.";
+          }
+          try {
+            const content = this.skillPresenter.loadSkill(skill);
+            return `<system-reminder>\n${content}\n</system-reminder>`;
+          } catch (e) {
+            return `Skill "${skill}" not found.`;
+          }
+        },
+      }),
     };
 
     // Merge MCP tools

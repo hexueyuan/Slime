@@ -16,12 +16,14 @@ import { AgentChatPresenter } from "./agentChat/agentChatPresenter";
 import { AgentChatPresenterAdapter } from "./agentChatPresenterAdapter";
 import { buildRollbackPrompt } from "./rollbackPrompt";
 import type { EvolutionContext } from "@shared/types/evolution";
+import { join } from "path";
 import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
 import { browserSession } from "@/browser/browserSession";
 import { MCPServerPresenter } from "./mcpServerPresenter";
 import { MCPToolBridge } from "./mcpToolBridge";
+import { SkillPresenter } from "./skillPresenter";
 
 type DispatchableKey = Exclude<keyof IPresenter, "init" | "destroy">;
 
@@ -58,19 +60,26 @@ export class Presenter implements IPresenter {
     this.evolutionPresenter = new EvolutionPresenter(this.gitPresenter);
     this.mcpServerPresenter = new MCPServerPresenter();
     const mcpBridge = new MCPToolBridge(this.mcpServerPresenter);
+    const skillPresenter = new SkillPresenter(
+      paths.builtinSkillsDir,
+      join(paths.effectiveProjectRoot, "skills"),
+    );
     this.toolPresenter = new ToolPresenter(
       this.filePresenter,
       this.contentPresenter,
       this.evolutionPresenter,
       browserSession,
       mcpBridge,
+      skillPresenter,
     );
     this.gatewayPresenter = new GatewayPresenter();
     this.agentConfigPresenter = new AgentConfigPresenter();
+    this.agentConfigPresenter.setSkillPresenter(skillPresenter);
     this.agentChatEngine = new AgentChatPresenter(
       this.gatewayPresenter,
       this.toolPresenter,
       this.contentPresenter,
+      skillPresenter,
     );
     this.agentChatPresenter = new AgentChatPresenterAdapter(
       this.agentChatEngine,

@@ -52,7 +52,7 @@ describe("ToolPresenter", () => {
     rmSync(testRoot, { recursive: true, force: true });
   });
 
-  it("should return a ToolSet with all 19 tools", async () => {
+  it("should return a ToolSet with all 20 tools", async () => {
     const tools = await tp.getToolSet("s1");
     expect(Object.keys(tools)).toEqual(
       expect.arrayContaining([
@@ -75,15 +75,16 @@ describe("ToolPresenter", () => {
         "browser_wait",
         "browser_close",
         "web_fetch",
+        "Skill",
       ]),
     );
-    expect(Object.keys(tools)).toHaveLength(19);
+    expect(Object.keys(tools)).toHaveLength(20);
   });
 
   it("should include ask_user tool in toolset", async () => {
     const tools = await tp.getToolSet("s1");
     expect(Object.keys(tools)).toContain("ask_user");
-    expect(Object.keys(tools)).toHaveLength(19);
+    expect(Object.keys(tools)).toHaveLength(20);
   });
 
   it("should execute read tool", async () => {
