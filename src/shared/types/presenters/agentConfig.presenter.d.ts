@@ -1,4 +1,5 @@
 import type { Agent } from "../agent";
+import type { SkillInfo } from "../skills";
 
 export interface IAgentConfigPresenter {
   listAgents(): Promise<Agent[]>;
@@ -8,4 +9,5 @@ export interface IAgentConfigPresenter {
   deleteAgent(id: string): Promise<void>;
   pickAvatar(): Promise<string | null>;
   getAvatarUrl(relativePath: string): Promise<string>;
+  listLocalSkills(): Promise<SkillInfo[]>;
 }

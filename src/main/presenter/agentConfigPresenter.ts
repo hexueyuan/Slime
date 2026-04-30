@@ -9,9 +9,21 @@ import { eventBus } from "@/eventbus";
 import { AGENT_EVENTS } from "@shared/events";
 import { paths } from "@/utils";
 import type { Agent } from "@shared/types/agent";
+import type { SkillInfo } from "@shared/types/skills";
 import type { IAgentConfigPresenter } from "@shared/types/presenters/agentConfig.presenter";
+import type { SkillPresenter } from "./skillPresenter";
 
 export class AgentConfigPresenter implements IAgentConfigPresenter {
+  private skillPresenter?: SkillPresenter;
+
+  setSkillPresenter(sp: SkillPresenter): void {
+    this.skillPresenter = sp;
+  }
+
+  async listLocalSkills(): Promise<SkillInfo[]> {
+    return this.skillPresenter?.listLocalSkills() ?? [];
+  }
+
   init(): void {
     agentDao.ensureBuiltin(getDb());
   }
