@@ -247,7 +247,7 @@ Important:
           skill: z.string().describe("Exact name of the skill to invoke"),
           args: z.string().optional().describe("Optional arguments for the skill"),
         }),
-        execute: async ({ skill, args }: { skill: string; args?: string }) => {
+        execute: async ({ skill }: { skill: string; args?: string }) => {
           if (!this.skillPresenter) {
             return "Skills are not available.";
           }

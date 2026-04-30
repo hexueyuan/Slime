@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync, existsSync } from "fs";
+import type { Dirent } from "fs";
 import { join } from "path";
 import type { Skill, SkillFrontmatter } from "./types";
 
@@ -48,14 +49,14 @@ export function scanSkills(dir: string): Skill[] {
   if (!existsSync(dir)) return [];
 
   const skills: Skill[] = [];
-  let entries: string[];
+  let dirents: Dirent[];
   try {
-    entries = readdirSync(dir, { withFileTypes: true });
+    dirents = readdirSync(dir, { withFileTypes: true });
   } catch {
     return [];
   }
 
-  for (const entry of entries) {
+  for (const entry of dirents) {
     if (!entry.isDirectory()) continue;
     const skillDir = join(dir, entry.name);
     const mdPath = join(skillDir, "SKILL.md");
