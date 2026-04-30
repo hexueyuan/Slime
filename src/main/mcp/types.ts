@@ -2,7 +2,7 @@ export interface JSONRPCRequest {
   jsonrpc: "2.0";
   method: string;
   params?: unknown;
-  id: number;
+  id?: number; // optional for JSON-RPC notifications
 }
 
 export interface JSONRPCResponse {

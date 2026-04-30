@@ -53,11 +53,11 @@ export class MCPClient {
         clientInfo: { name: "Slime", version: "0.4.0" },
       });
 
+      // Notification must not have id per JSON-RPC 2.0 spec
       await this.transport.send({
-        jsonrpc: "2.0",
+        jsonrpc: "2.0" as const,
         method: "notifications/initialized",
-        id: this.nextId(),
-      });
+      } as JSONRPCRequest);
 
       this.status = "connected";
       logger.info("MCP connected", { name: config.name, serverInfo: result });
@@ -114,7 +114,10 @@ export class MCPClient {
     const request: JSONRPCRequest = { jsonrpc: "2.0", method, params, id };
     return new Promise<unknown>((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.transport!.send(request).catch(reject);
+      this.transport!.send(request).catch((e) => {
+        this.pending.delete(id);
+        reject(e);
+      });
     });
   }
 
