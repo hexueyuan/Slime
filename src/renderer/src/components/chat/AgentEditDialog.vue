@@ -4,6 +4,7 @@ import { Icon } from "@iconify/vue";
 import { useAgentStore } from "@/stores/agent";
 import { usePresenter } from "@/composables/usePresenter";
 import type { Agent, AgentAvatar, AgentConfig } from "@shared/types/agent";
+import MCPToolChecklist from "@/components/mcp/MCPToolChecklist.vue";
 
 const props = defineProps<{
   open: boolean;
@@ -37,6 +38,7 @@ const temperature = ref(0.7);
 const contextLength = ref<number | undefined>(undefined);
 const maxTokens = ref<number | undefined>(undefined);
 const disabledTools = ref<string[]>([]);
+const mcpTools = ref<string[]>([]);
 const subagentEnabled = ref(false);
 const enabled = ref(true);
 
@@ -99,6 +101,7 @@ watch(
         contextLength.value = cfg?.contextLength;
         maxTokens.value = cfg?.maxTokens;
         disabledTools.value = cfg?.disabledTools ?? [];
+        mcpTools.value = cfg?.mcpTools ?? [];
         subagentEnabled.value = cfg?.subagentEnabled ?? false;
         enabled.value = agent.enabled;
       }
@@ -119,6 +122,7 @@ watch(
       contextLength.value = undefined;
       maxTokens.value = undefined;
       disabledTools.value = [];
+      mcpTools.value = [];
       subagentEnabled.value = false;
       enabled.value = true;
     }
@@ -179,6 +183,7 @@ async function onSave() {
     contextLength: contextLength.value,
     maxTokens: maxTokens.value,
     disabledTools: disabledTools.value.length > 0 ? disabledTools.value : undefined,
+    mcpTools: mcpTools.value.length > 0 ? mcpTools.value : undefined,
     subagentEnabled: subagentEnabled.value,
   };
 
@@ -448,6 +453,12 @@ async function onSave() {
                 {{ tool.label }}
               </label>
             </div>
+          </div>
+
+          <!-- MCP Tools -->
+          <div>
+            <label class="mb-1 block text-xs text-muted-foreground">MCP 工具（勾选启用）</label>
+            <MCPToolChecklist v-model="mcpTools" />
           </div>
 
           <!-- Toggles -->
