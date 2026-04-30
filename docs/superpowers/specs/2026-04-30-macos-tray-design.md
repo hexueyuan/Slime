@@ -35,8 +35,8 @@ Slime 关闭窗口时隐藏到 macOS 菜单栏托盘，点击托盘图标重新�
 ```ts
 // 核心接口
 class TrayManager {
-  static init(window: BrowserWindow): void   // 创建 Tray，绑定事件
-  static destroy(): void                      // 销毁 Tray
+  static init(window: BrowserWindow): void; // 创建 Tray，绑定事件
+  static destroy(): void; // 销毁 Tray
 }
 ```
 
@@ -51,12 +51,12 @@ class TrayManager {
 
 ```ts
 // createMainWindow 中新增
-mainWindow.on('close', (e) => {
+mainWindow.on("close", (e) => {
   if (!isQuitting) {
-    e.preventDefault()
-    mainWindow.hide()
+    e.preventDefault();
+    mainWindow.hide();
   }
-})
+});
 ```
 
 **`src/main/index.ts`** — 生命周期
@@ -73,11 +73,11 @@ mainWindow.on('close', (e) => {
 
 ## 影响范围
 
-| 层 | 改动 |
-|----|------|
-| 主进程 | 新建 tray.ts + 修改 window.ts/index.ts 少量代码 |
-| 渲染进程 | 无改动 |
-| 测试 | 新增 tray 单测 |
+| 层       | 改动                                            |
+| -------- | ----------------------------------------------- |
+| 主进程   | 新建 tray.ts + 修改 window.ts/index.ts 少量代码 |
+| 渲染进程 | 无改动                                          |
+| 测试     | 新增 tray 单测                                  |
 
 ## 不做什么
 

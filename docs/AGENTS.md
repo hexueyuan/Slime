@@ -15,6 +15,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
   - `eventbus.ts`: EventBus 单例（主进程事件 + 渲染进程推送）
   - `utils/`: 工具模块（logger, paths, errors）
   - `window.ts`: 窗口管理
+  - `tray.ts`: macOS 状态栏托盘（隐藏窗口到托盘、左键恢复、右键菜单退出）
   - `index.ts`: 入口，bootstrap 流程
 - `src/preload/`: 安全 IPC 桥接（contextIsolation，暴露 `window.electron.ipcRenderer`）
 - `src/renderer/src/`: Vue 3 渲染进程（components/, composables/, stores/, views/）
@@ -89,7 +90,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | EvolutionPresenter        | 进化状态机（idle→discuss→coding→applying）+ CHANGELOG + apply(打包+自替换) + archive CRUD + AI 语义回滚 + build verification                                                      |
 | ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                      |
 | WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                  |
-| GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                                |
+| GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                              |
 | AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                              |
 | AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                        |
 
