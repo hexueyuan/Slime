@@ -196,6 +196,37 @@ CREATE TABLE IF NOT EXISTS agent_messages (
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_agent_messages_session ON agent_messages(session_id, order_seq);
+
+CREATE TABLE IF NOT EXISTS mcp_servers (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  transport TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  command TEXT,
+  args TEXT,
+  env TEXT,
+  url TEXT,
+  http_headers TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS mcp_tools (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  server_id TEXT NOT NULL REFERENCES mcp_servers(id) ON DELETE CASCADE,
+  tool_name TEXT NOT NULL,
+  description TEXT,
+  input_schema TEXT NOT NULL,
+  UNIQUE(server_id, tool_name)
+);
+
+CREATE TABLE IF NOT EXISTS session_mcp_state (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT NOT NULL REFERENCES agent_sessions(id) ON DELETE CASCADE,
+  tool_id INTEGER NOT NULL REFERENCES mcp_tools(id) ON DELETE CASCADE,
+  disabled INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(session_id, tool_id)
+);
 `;
 
 function migrate(instance: BetterSqlite3.Database): void {
