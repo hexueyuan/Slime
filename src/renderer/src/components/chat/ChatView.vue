@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import ChatMessageList from "./ChatMessageList.vue";
 import ChatInput from "./ChatInput.vue";
 import AgentAvatar from "./AgentAvatar.vue";
+import SessionMcpSettings from "./SessionMcpSettings.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
@@ -21,6 +22,7 @@ const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
 const chatStore = useAgentChatStore();
 const messageListRef = ref<InstanceType<typeof ChatMessageList> | null>(null);
+const showMcpSettings = ref(false);
 
 onMounted(() => {
   chatStore.fetchUserProfile();
@@ -54,6 +56,13 @@ function onStop() {
         <span v-if="agent" class="ml-2 text-sm text-muted-foreground">{{ agent.name }}</span>
       </div>
       <button
+        class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+        title="MCP 工具"
+        @click="showMcpSettings = true"
+      >
+        <Icon icon="lucide:plug" class="h-4 w-4" />
+      </button>
+      <button
         v-if="agent"
         class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
         title="Agent 设置"
@@ -79,6 +88,14 @@ function onStop() {
       @stop="onStop"
       @dismiss-error="chatStore.clearError()"
       @retry="chatStore.retryLast(session!.id)"
+    />
+
+    <!-- MCP Settings Dialog -->
+    <SessionMcpSettings
+      :open="showMcpSettings"
+      :session-id="session.id"
+      :agent-id="session.agentId"
+      @update:open="showMcpSettings = $event"
     />
   </div>
 </template>
