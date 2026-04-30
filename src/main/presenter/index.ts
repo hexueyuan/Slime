@@ -20,6 +20,8 @@ import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
 import { browserSession } from "@/browser/browserSession";
+import { MCPServerPresenter } from "./mcpServerPresenter";
+import { MCPToolBridge } from "./mcpToolBridge";
 
 type DispatchableKey = Exclude<keyof IPresenter, "init" | "destroy">;
 
@@ -35,6 +37,7 @@ export class Presenter implements IPresenter {
   gatewayPresenter: GatewayPresenter;
   agentConfigPresenter: AgentConfigPresenter;
   agentChatPresenter: AgentChatPresenterAdapter;
+  mcpServerPresenter: MCPServerPresenter;
 
   evolutionPresenter: EvolutionPresenter;
 
@@ -53,11 +56,14 @@ export class Presenter implements IPresenter {
     this.contentPresenter = new ContentPresenter();
     this.gitPresenter = new GitPresenter(paths.effectiveProjectRoot);
     this.evolutionPresenter = new EvolutionPresenter(this.gitPresenter);
+    this.mcpServerPresenter = new MCPServerPresenter();
+    const mcpBridge = new MCPToolBridge(this.mcpServerPresenter);
     this.toolPresenter = new ToolPresenter(
       this.filePresenter,
       this.contentPresenter,
       this.evolutionPresenter,
       browserSession,
+      mcpBridge,
     );
     this.gatewayPresenter = new GatewayPresenter();
     this.agentConfigPresenter = new AgentConfigPresenter();
@@ -105,6 +111,7 @@ export class Presenter implements IPresenter {
     "gatewayPresenter",
     "agentConfigPresenter",
     "agentChatPresenter",
+    "mcpServerPresenter",
   ]);
 
   async init(): Promise<void> {
@@ -114,6 +121,7 @@ export class Presenter implements IPresenter {
     }
     const port = (await this.configPresenter.get("gateway.port")) as number | null;
     await this.gatewayPresenter.init(port ?? undefined);
+    await this.mcpServerPresenter.init();
     this.agentConfigPresenter.init();
     logger.info("Presenter initialized");
   }

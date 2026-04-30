@@ -10,6 +10,7 @@ import type { IEvolutionPresenter } from "./evolution.presenter";
 import type { IGatewayPresenter } from "./gateway.presenter";
 import type { IAgentConfigPresenter } from "./agentConfig.presenter";
 import type { IAgentChatPresenter } from "./agentChat.presenter";
+import type { IMCPServerPresenter } from "./mcpServer.presenter";
 
 export type { IAppPresenter } from "./app.presenter";
 export type { IConfigPresenter } from "./config.presenter";
@@ -38,6 +39,7 @@ export interface IPresenter {
   gatewayPresenter: IGatewayPresenter;
   agentConfigPresenter: IAgentConfigPresenter;
   agentChatPresenter: IAgentChatPresenter;
+  mcpServerPresenter: IMCPServerPresenter;
   init(): void | Promise<void>;
   destroy(): Promise<void>;
 }
