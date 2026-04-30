@@ -312,7 +312,7 @@ export class AgentChatPresenter {
 
     // Filter disabled tools
     const disabledTools = agent?.config?.disabledTools ?? [];
-    const allAiSdkTools = this.toolPresenter.getToolSet(sessionId);
+    const allAiSdkTools = await this.toolPresenter.getToolSet(sessionId);
     const filteredAiSdkTools =
       disabledTools.length > 0
         ? Object.fromEntries(
