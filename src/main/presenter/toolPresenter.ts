@@ -254,7 +254,7 @@ Important:
           try {
             const content = this.skillPresenter.loadSkill(skill);
             return `<system-reminder>\n${content}\n</system-reminder>`;
-          } catch (e) {
+          } catch {
             return `Skill "${skill}" not found.`;
           }
         },
