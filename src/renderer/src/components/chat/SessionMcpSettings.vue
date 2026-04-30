@@ -28,7 +28,7 @@ watch(
         class="relative w-[400px] max-h-[70vh] overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-xl"
       >
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-semibold">会话 MCP 工具</h2>
+          <h2 class="text-sm font-semibold text-foreground">会话 MCP 工具</h2>
           <button
             class="rounded p-1 text-muted-foreground hover:text-foreground"
             @click="$emit('update:open', false)"

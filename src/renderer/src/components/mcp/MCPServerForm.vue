@@ -82,13 +82,15 @@ function onSave() {
     <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center">
       <div class="absolute inset-0 bg-black/50" @click="$emit('update:open', false)" />
       <div class="relative w-[480px] rounded-lg border border-border bg-card p-5 shadow-xl">
-        <h2 class="text-sm font-semibold mb-4">{{ server ? "编辑" : "添加" }} MCP Server</h2>
+        <h2 class="text-sm font-semibold mb-4 text-foreground">
+          {{ server ? "编辑" : "添加" }} MCP Server
+        </h2>
         <div class="space-y-3">
           <div>
             <label class="text-xs text-muted-foreground">名称</label>
             <input
               v-model="name"
-              class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+              class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground"
               placeholder="My Server"
             />
           </div>
@@ -124,7 +126,7 @@ function onSave() {
               <label class="text-xs text-muted-foreground">Command</label>
               <input
                 v-model="command"
-                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground"
                 placeholder="npx"
               />
             </div>
@@ -132,7 +134,7 @@ function onSave() {
               <label class="text-xs text-muted-foreground">Arguments</label>
               <input
                 v-model="args"
-                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground"
                 placeholder="-y @anthropic/mcp-github"
               />
             </div>
@@ -141,7 +143,7 @@ function onSave() {
               <textarea
                 v-model="env"
                 rows="2"
-                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm resize-none"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground resize-none"
                 placeholder="GITHUB_TOKEN=ghp_xxx"
               />
             </div>
@@ -151,7 +153,7 @@ function onSave() {
               <label class="text-xs text-muted-foreground">URL</label>
               <input
                 v-model="url"
-                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground"
                 placeholder="https://mcp.example.com"
               />
             </div>
@@ -159,7 +161,7 @@ function onSave() {
               <label class="text-xs text-muted-foreground">Headers (JSON)</label>
               <input
                 v-model="httpHeaders"
-                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground"
                 placeholder='{"Authorization":"Bearer xxx"}'
               />
             </div>

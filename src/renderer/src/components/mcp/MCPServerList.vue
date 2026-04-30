@@ -45,7 +45,7 @@ function statusBadge(status: string) {
 <template>
   <div>
     <div class="flex items-center justify-between mb-3">
-      <h3 class="text-sm font-semibold">MCP Servers</h3>
+      <h3 class="text-sm font-semibold text-foreground">MCP Servers</h3>
       <button
         class="rounded-md bg-violet-600 px-3 py-1 text-xs text-white hover:bg-violet-500"
         @click="onAdd"
