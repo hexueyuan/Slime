@@ -15,7 +15,7 @@ const disabledToolIds = ref<Set<number>>(new Set());
 onMounted(async () => {
   await store.loadServers();
   for (const s of store.servers) {
-    if (s.status === "connected") await store.loadServerTools(s.id);
+    await store.loadServerTools(s.id);
   }
   if (props.sessionId) {
     const ids = await store.getSessionDisabledTools(props.sessionId);
@@ -67,7 +67,10 @@ async function toggleSessionDisable(toolId: number) {
       <span class="text-xs font-medium text-foreground">{{ s.name }}</span>
       <span class="text-[10px] text-muted-foreground">{{ s.toolsCount }} tools</span>
     </div>
-    <div v-if="s.status === 'connected'" class="grid grid-cols-2 gap-1">
+    <div v-if="store.getServerToolsCached(s.id).length > 0" class="grid grid-cols-2 gap-1">
+      <div v-if="s.status !== 'connected'" class="col-span-2 text-[10px] text-amber-400 mb-0.5">
+        Server {{ s.status }}，以下为缓存的工具列表
+      </div>
       <label
         v-for="t in store.getServerToolsCached(s.id)"
         :key="t.id"
@@ -89,6 +92,8 @@ async function toggleSessionDisable(toolId: number) {
         />
       </label>
     </div>
-    <div v-else class="text-[11px] text-muted-foreground">Server unavailable</div>
+    <div v-else class="text-[11px] text-muted-foreground">
+      {{ s.status === "connected" ? "No tools" : "Server unavailable, no cached tools" }}
+    </div>
   </div>
 </template>
