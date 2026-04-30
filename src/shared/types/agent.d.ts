@@ -19,6 +19,7 @@ export interface AgentConfig {
   disabledTools?: string[];
   subagentEnabled?: boolean;
   mcpTools?: string[]; // "{server_id}/{tool_name}"[]
+  skills?: string[]; // enabled local skill names
 }
 
 export interface Agent {
