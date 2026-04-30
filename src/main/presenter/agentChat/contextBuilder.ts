@@ -20,6 +20,12 @@ export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
+export function buildSkillListXML(skills: { name: string; description: string }[]): string | null {
+  if (skills.length === 0) return null;
+  const lines = skills.map((s) => `- ${s.name}: ${s.description}`);
+  return `<system-reminder>\nThe following skills are available for use with the Skill tool:\n${lines.join("\n")}\n</system-reminder>`;
+}
+
 export function recordToCoreMessages(records: ChatMessageRecord[]): CoreMessage[] {
   const messages: CoreMessage[] = [];
 
@@ -140,7 +146,7 @@ export function buildContext(
   sessionId: string,
   newUserContent: string,
   db: BetterSqlite3.Database,
-  options?: { reserveTokens?: number; agentSystemPrompt?: string },
+  options?: { reserveTokens?: number; agentSystemPrompt?: string; skillListXML?: string | null },
 ): CoreMessage[] {
   const reserve = options?.reserveTokens ?? 4096;
   const config = configDao.getConfigById(db, sessionId);
@@ -148,7 +154,10 @@ export function buildContext(
 
   const systemPrompt =
     config?.systemPrompt || options?.agentSystemPrompt || "You are a helpful AI assistant.";
-  const systemMsg: CoreMessage = { role: "system", content: systemPrompt };
+  const finalSystemPrompt = options?.skillListXML
+    ? systemPrompt + "\n\n" + options.skillListXML
+    : systemPrompt;
+  const systemMsg: CoreMessage = { role: "system", content: finalSystemPrompt };
 
   const allMessages = messageDao.listBySession(db, sessionId);
   const cursor = config?.summaryCursorSeq ?? 0;
@@ -167,7 +176,7 @@ export function buildContext(
     historyMessages.pop();
   }
 
-  const systemTokens = estimateTokens(systemPrompt);
+  const systemTokens = estimateTokens(finalSystemPrompt);
   const newUserTokens = estimateTokens(newUserContent);
   let summaryTokens = 0;
   const summaryMessages: CoreMessage[] = [];

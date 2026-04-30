@@ -4,6 +4,7 @@ import {
   recordToCoreMessages,
   selectTurnHistory,
   buildContext,
+  buildSkillListXML,
 } from "@/presenter/agentChat/contextBuilder";
 import type { ChatMessageRecord, AssistantMessageBlock } from "@shared/types/agent";
 
@@ -399,5 +400,23 @@ describe("buildContext", () => {
         typeof m.content === "string" ? m.content.length : JSON.stringify(m.content).length;
       expect(len).toBeLessThan(400);
     }
+  });
+});
+
+describe("buildSkillListXML", () => {
+  it("returns null for empty skills", () => {
+    expect(buildSkillListXML([])).toBeNull();
+  });
+
+  it("formats skills in XML", () => {
+    const result = buildSkillListXML([
+      { name: "debug", description: "Debug errors." },
+      { name: "review", description: "Review code." },
+    ]);
+    expect(result).toContain("<system-reminder>");
+    expect(result).toContain("Skill tool");
+    expect(result).toContain("- debug: Debug errors.");
+    expect(result).toContain("- review: Review code.");
+    expect(result).toContain("</system-reminder>");
   });
 });
