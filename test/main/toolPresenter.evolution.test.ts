@@ -36,28 +36,28 @@ describe("ToolPresenter evolution tools", () => {
     tp = new ToolPresenter(mockFile(), mockContent(), mockEvolution());
   });
 
-  it("has evolution_start tool", () => {
-    const tools = tp.getToolSet("s1");
+  it("has evolution_start tool", async () => {
+    const tools = await tp.getToolSet("s1");
     expect(tools).toHaveProperty("evolution_start");
   });
 
-  it("has evolution_plan tool", () => {
-    const tools = tp.getToolSet("s1");
+  it("has evolution_plan tool", async () => {
+    const tools = await tp.getToolSet("s1");
     expect(tools).toHaveProperty("evolution_plan");
   });
 
-  it("has evolution_complete tool", () => {
-    const tools = tp.getToolSet("s1");
+  it("has evolution_complete tool", async () => {
+    const tools = await tp.getToolSet("s1");
     expect(tools).toHaveProperty("evolution_complete");
   });
 
-  it("does NOT have workflow_edit tool", () => {
-    const tools = tp.getToolSet("s1");
+  it("does NOT have workflow_edit tool", async () => {
+    const tools = await tp.getToolSet("s1");
     expect(tools).not.toHaveProperty("workflow_edit");
   });
 
-  it("does NOT have step_update tool", () => {
-    const tools = tp.getToolSet("s1");
+  it("does NOT have step_update tool", async () => {
+    const tools = await tp.getToolSet("s1");
     expect(tools).not.toHaveProperty("step_update");
   });
 
