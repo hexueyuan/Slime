@@ -18,6 +18,7 @@ export interface AgentConfig {
   maxTokens?: number;
   disabledTools?: string[];
   subagentEnabled?: boolean;
+  mcpTools?: string[]; // "{server_id}/{tool_name}"[]
 }
 
 export interface Agent {

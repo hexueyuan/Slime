@@ -58,3 +58,9 @@ export const CHAT_STREAM_EVENTS = {
   END: "chat:stream:end",
   ERROR: "chat:stream:error",
 } as const;
+
+export const MCP_EVENTS = {
+  SERVERS_CHANGED: "mcp:servers-changed",
+  SERVER_STATUS: "mcp:server-status",
+  TOOLS_CHANGED: "mcp:tools-changed",
+} as const;
