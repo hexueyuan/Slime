@@ -288,7 +288,7 @@ export class GatewayPresenter implements IGatewayPresenter {
     expiresAt?: string;
     allowedModels?: string[];
   }): GatewayApiKey {
-    const key = `sk-gw-${randomHex(24)}`;
+    const key = `sk-slime-${randomHex(16)}`;
     return apiKeyDao.createApiKey(getDb(), {
       name: data.name,
       key,

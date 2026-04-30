@@ -12,29 +12,16 @@ const showEditor = ref(false);
 const justCreatedKey = ref<string | null>(null);
 const copied = ref(false);
 
-const form = ref({
-  name: "",
-  expiresAt: "",
-  allowedModels: "",
-});
+const form = ref({ name: "" });
 
 function openCreate() {
   justCreatedKey.value = null;
-  form.value = { name: "", expiresAt: "", allowedModels: "" };
+  form.value = { name: "" };
   showEditor.value = true;
 }
 
 async function save() {
-  const allowedModels = form.value.allowedModels
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  const ak = await gw.createApiKey({
-    name: form.value.name,
-    expiresAt: form.value.expiresAt || undefined,
-    allowedModels: allowedModels.length ? allowedModels : undefined,
-  });
+  const ak = await gw.createApiKey({ name: form.value.name });
 
   justCreatedKey.value = ak.key;
   await store.loadApiKeys();
@@ -59,23 +46,18 @@ async function copyKey(key: string) {
 function maskKey(key: string): string {
   return key.length > 8 ? `${key.slice(0, 4)}...${key.slice(-4)}` : key;
 }
-
-function formatDate(d?: string): string {
-  if (!d) return "-";
-  return new Date(d).toLocaleDateString();
-}
 </script>
 
 <template>
   <div class="p-4">
     <!-- Header -->
     <div class="mb-4 flex items-center justify-between">
-      <h3 class="text-sm font-medium">接入 Key</h3>
+      <h3 class="text-sm font-medium text-foreground">渠道</h3>
       <button
         class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
         @click="openCreate"
       >
-        + 新增 Key
+        + 新增渠道
       </button>
     </div>
 
@@ -104,7 +86,6 @@ function formatDate(d?: string): string {
           </div>
           <div class="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
             <span class="font-mono">{{ maskKey(ak.key) }}</span>
-            <span v-if="ak.expiresAt">过期: {{ formatDate(ak.expiresAt) }}</span>
           </div>
         </div>
         <div class="flex shrink-0 items-center gap-1">
@@ -138,7 +119,7 @@ function formatDate(d?: string): string {
     </div>
 
     <!-- Empty -->
-    <div v-else class="py-12 text-center text-sm text-muted-foreground">暂无 Key</div>
+    <div v-else class="py-12 text-center text-sm text-muted-foreground">暂无渠道</div>
 
     <!-- Editor overlay -->
     <Teleport to="body">
@@ -149,12 +130,14 @@ function formatDate(d?: string): string {
         >
           <!-- Created key display -->
           <template v-if="justCreatedKey">
-            <h3 class="mb-3 text-sm font-medium">Key 已创建</h3>
+            <h3 class="mb-3 text-sm font-medium text-foreground">渠道已创建</h3>
             <p class="mb-2 text-xs text-muted-foreground">
-              请立即复制，关闭后将无法再次查看完整 Key。
+              请复制并妥善保管，关闭后将无法再次查看。
             </p>
             <div class="mb-4 flex items-center gap-2 rounded border border-border bg-muted/50 p-2">
-              <code class="min-w-0 flex-1 break-all text-xs">{{ justCreatedKey }}</code>
+              <code class="min-w-0 flex-1 break-all text-xs text-foreground">{{
+                justCreatedKey
+              }}</code>
               <button
                 class="shrink-0 rounded p-1.5 text-muted-foreground hover:text-foreground"
                 @click="copyKey(justCreatedKey!)"
@@ -174,34 +157,14 @@ function formatDate(d?: string): string {
 
           <!-- Create form -->
           <template v-else>
-            <h3 class="mb-4 text-sm font-medium">新增 Key</h3>
+            <h3 class="mb-4 text-sm font-medium text-foreground">新增渠道</h3>
 
-            <label class="mb-3 block">
+            <label class="mb-4 block">
               <span class="mb-1 block text-xs text-muted-foreground">名称</span>
               <input
                 v-model="form.name"
                 class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
                 placeholder="My Key"
-              />
-            </label>
-
-            <label class="mb-3 block">
-              <span class="mb-1 block text-xs text-muted-foreground">过期时间（可选）</span>
-              <input
-                v-model="form.expiresAt"
-                type="date"
-                class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-              />
-            </label>
-
-            <label class="mb-4 block">
-              <span class="mb-1 block text-xs text-muted-foreground"
-                >模型白名单（可选，逗号分隔）</span
-              >
-              <input
-                v-model="form.allowedModels"
-                class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-                placeholder="gpt-4o, claude-3-opus"
               />
             </label>
 

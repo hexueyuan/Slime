@@ -36,7 +36,7 @@ onUnmounted(() => cleanup?.());
 const tabs = [
   { key: "channels" as const, label: "供应商" },
   { key: "groups" as const, label: "分组" },
-  { key: "apikeys" as const, label: "接入" },
+  { key: "apikeys" as const, label: "渠道" },
   { key: "logs" as const, label: "日志" },
 ];
 
@@ -187,7 +187,7 @@ const metricOptions: { key: MetricKey; label: string }[] = [
     </div>
 
     <!-- Tab content -->
-    <div class="min-h-0 flex-1 overflow-hidden">
+    <div class="min-h-0 flex-1 overflow-y-auto">
       <ChannelTab v-if="store.activeTab === 'channels'" />
       <GroupTab v-else-if="store.activeTab === 'groups'" />
       <ApiKeyTab v-else-if="store.activeTab === 'apikeys'" />

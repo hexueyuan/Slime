@@ -116,7 +116,7 @@ describe("Group CRUD + router reload", () => {
 describe("API Key CRUD", () => {
   it("创建/列表/更新/删除", () => {
     const key = gw.createApiKey({ name: "user-key" });
-    expect(key.key).toMatch(/^sk-gw-/);
+    expect(key.key).toMatch(/^sk-slime-/);
     expect(key.isInternal).toBe(false);
 
     // 列表包含 internal + user key

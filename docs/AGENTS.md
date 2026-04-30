@@ -190,7 +190,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - **Stats**: 内存缓冲 30s flush → relay_logs → 每小时聚合 stats_hourly → 每日聚合 stats_daily，定时清理
 - **Capability Selection**: 基于能力的模型选择（ModelType: chat; Capability: reasoning/vision/image_gen/tool_call），`select(requirements)` 按 CapabilityRequirement 匹配 models 表中的注册模型，"chat" 作为特殊分组从 model.type 填充
 - **AgentPresenter 集成**: 通过 `createAnthropic({ baseURL: "http://127.0.0.1:{port}/" })` 连接本地 Gateway，selector.select 获取模型名
-- **Gateway UI**: GatewayPanel（4 tab: 供应商/分组/接入/日志）+ SettingsDialog Gateway tab（端口/熔断/保留）
+- **Gateway UI**: GatewayPanel（4 tab: 供应商/分组/渠道/日志）+ SettingsDialog Gateway tab（端口/熔断/保留）
 - **Pinia Store**: `useGatewayStore()` 管理 channels/groups/apiKeys/stats/logs
 
 ### Agent 对话系统 (v0.3)
