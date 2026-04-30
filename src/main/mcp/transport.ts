@@ -65,6 +65,11 @@ export class StdioTransport implements MCPTransport {
   }
 
   async stop(): Promise<void> {
+    this.dead = true;
+    if (this.resolveNext) {
+      this.resolveNext({ value: {} as JSONRPCResponse, done: true });
+      this.resolveNext = null;
+    }
     if (this.process) {
       this.process.kill();
       this.process = null;
@@ -158,6 +163,10 @@ export class SSETransport implements MCPTransport {
 
   async stop(): Promise<void> {
     this.alive = false;
+    if (this.resolveNext) {
+      this.resolveNext({ value: {} as JSONRPCResponse, done: true });
+      this.resolveNext = null;
+    }
     this.abortController?.abort();
     this.abortController = null;
   }
