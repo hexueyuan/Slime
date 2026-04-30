@@ -4,6 +4,7 @@ import { join, extname } from "path";
 import { mkdir, copyFile, unlink, readFile } from "fs/promises";
 import { getDb } from "@/db";
 import * as agentDao from "@/db/models/agentDao";
+import * as mcpDao from "@/db/models/mcpDao";
 import { eventBus } from "@/eventbus";
 import { AGENT_EVENTS } from "@shared/events";
 import { paths } from "@/utils";
@@ -44,6 +45,25 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
       const old = agentDao.getAgentById(getDb(), id);
       if (old?.avatar?.kind === "image") {
         this.cleanupAvatarFile(old.avatar.path).catch(() => {});
+      }
+    }
+    // Cleanup: if mcpTools changed, remove session_mcp_state for removed tools
+    if (data.config?.mcpTools !== undefined) {
+      const oldAgent = agentDao.getAgentById(getDb(), id);
+      const oldTools = oldAgent?.config?.mcpTools ?? [];
+      const newTools = data.config.mcpTools ?? [];
+      const removed = oldTools.filter((t) => !newTools.includes(t));
+      if (removed.length > 0) {
+        const removedToolIds: number[] = [];
+        for (const entry of removed) {
+          const slashIdx = entry.indexOf("/");
+          if (slashIdx === -1) continue;
+          const serverId = entry.slice(0, slashIdx);
+          const toolName = entry.slice(slashIdx + 1);
+          const tool = mcpDao.getToolByServerAndName(getDb(), serverId, toolName);
+          if (tool) removedToolIds.push(tool.id);
+        }
+        mcpDao.removeSessionStateByAgentToolIds(getDb(), id, removedToolIds);
       }
     }
     agentDao.updateAgent(getDb(), id, data);
