@@ -6,6 +6,7 @@ import type { ContentPresenter } from "./contentPresenter";
 import type { EvolutionPresenter } from "./evolutionPresenter";
 import { logger, paths } from "@/utils";
 import type { BrowserSession } from "@/browser/browserSession";
+import type { MCPToolBridge } from "./mcpToolBridge";
 import {
   makeBrowserNavigateTool,
   makeBrowserScreenshotTool,
@@ -55,10 +56,11 @@ export class ToolPresenter {
     private contentPresenter: ContentPresenter,
     private evolutionPresenter: EvolutionPresenter,
     private browserSession: BrowserSession,
+    private mcpBridge?: MCPToolBridge,
   ) {}
 
-  getToolSet(sessionId: string) {
-    return {
+  async getToolSet(sessionId: string) {
+    const tools: Record<string, any> = {
       read: createTool({
         description: "Read a file. Path is relative to project root.",
         parameters: z.object({
@@ -226,11 +228,22 @@ export class ToolPresenter {
       browser_close: createTool(makeBrowserCloseTool(this.browserSession)),
       web_fetch: createTool(makeWebFetchTool()),
     };
+
+    // Merge MCP tools
+    if (this.mcpBridge) {
+      const mcpTools = await this.mcpBridge.getMcpTools(sessionId);
+      Object.assign(tools, mcpTools);
+    }
+
+    return tools;
   }
 
   async callTool(sessionId: string, name: string, args: Record<string, unknown>): Promise<unknown> {
     logger.debug("tool:call", { sessionId, name, args });
-    const tools = this.getToolSet(sessionId);
+    if (name.startsWith("mcp_") && this.mcpBridge) {
+      return this.mcpBridge.executeTool(name, args);
+    }
+    const tools = await this.getToolSet(sessionId);
     const t = tools[name as keyof typeof tools];
     if (!t) throw new Error(`Unknown tool: ${name}`);
     return (t as any).execute(args, { toolCallId: "manual", messages: [] });
