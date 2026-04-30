@@ -11,6 +11,8 @@ files:
   - "!test/*"
   - "!docs/*"
   - "!**/{.DS_Store,Thumbs.db}"
+extraResources:
+  - build/icon.png
 asarUnpack:
   - "node_modules/better-sqlite3/**"
 mac:

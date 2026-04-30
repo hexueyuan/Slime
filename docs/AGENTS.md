@@ -8,9 +8,10 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 
 - `src/main/`: Electron 主进程
   - `presenter/`: Presenter 单例 + 子 Presenter（通过 `presenter:call` IPC 分发）
-  - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages, agent_usage_stats）
+  - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state）
   - `gateway/`: LLM Gateway 核心（router, balancer, circuit, keypool, relay, server, outbound adapters, inbound handlers, stats, auth）
   - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool）
+  - `mcp/`: MCP Client（types, transport/stdio+SSE, mcpClient, healthChecker）
   - `browser/`: 浏览器自动化（browserSession.ts 封装 playwright-core，browserTools.ts 定义 10 个工具）
   - `eventbus.ts`: EventBus 单例（主进程事件 + 渲染进程推送）
   - `utils/`: 工具模块（logger, paths, errors）
@@ -86,13 +87,14 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | FilePresenter             | 文件读写+目录列表（resolveSafe 路径安全）                                                                                                                                         |
 | GitPresenter              | Git 操作（spawn，tag/commit/rollback/diff）                                                                                                                                       |
 | AgentPresenter            | AI 对话、工具调用、阶段感知 systemPrompt；通过 Gateway 本地代理调用 LLM                                                                                                           |
-| ToolPresenter             | 19 tools（read/write/edit/exec/ask*user/open + 3 evolution + 9 browser*_ + web*fetch）；browser*_ 基于 playwright-core + 系统 Chrome（auto-detect）；web_fetch 基于 Node.js fetch |
+| ToolPresenter             | 19 built-in tools（read/write/edit/exec/ask*user/open + 3 evolution + 9 browser*_ + web*fetch）+ MCP tools 动态合并；browser*_ 基于 playwright-core + 系统 Chrome（auto-detect）；web_fetch 基于 Node.js fetch |
 | EvolutionPresenter        | 进化状态机（idle→discuss→coding→applying）+ CHANGELOG + apply(打包+自替换) + archive CRUD + AI 语义回滚 + build verification                                                      |
 | ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                      |
 | WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                  |
 | GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                              |
 | AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                              |
 | AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                        |
+| MCPServerPresenter        | MCP Server 生命周期管理：连接/发现工具/健康检查/CRUD + 会话工具状态；客户端 Map 管理                                                                                                      |
 
 ### 自研 LLM 客户端
 
@@ -103,6 +105,22 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - **工厂函数**: `createLLMClient(provider, { baseURL, apiKey })` — 目前支持 `"anthropic"` provider
 - **AnthropicClient**: 直接 HTTP 调用，SSE 流解析（`sseParser.ts` + `streamParser.ts`），无第三方 SDK 依赖
 - **集成**: AgentChatPresenter 通过 `createLLMClient("anthropic", { baseURL: gatewayUrl, apiKey })` 获取客户端
+
+### MCP Client 架构 (v0.4)
+
+- **位置**: `src/main/mcp/`，自研 MCP Client 实现（JSON-RPC 2.0 手工实现，无 `@modelcontextprotocol/sdk` 依赖）
+- **传输层** (`transport.ts`): stdio（child_process.spawn + 行分隔 JSON） + SSE HTTP（fetch POST + GET /sse EventSource）
+- **MCPClient** (`mcpClient.ts`): 连接生命周期（initialize → initialized notification → tools/list → tools/call），60s 超时，AbortSignal 支持
+- **HealthChecker** (`healthChecker.ts`): 每 30s ping（tools/list），指数退避重试（1s → 2s → 4s → ... → max 60s）
+- **MCPServerPresenter**: 启动时加载所有 enabled Server + 逐一 connect + 发现工具写入 mcp_tools 表；CRUD + 会话工具状态管理
+- **MCPToolBridge**: Agent（config.mcpTools 白名单） + 会话级（session_mcp_state）工具过滤，`getMcpTools(sessionId)` → `Record<name, Tool>`
+- **工具命名**: `mcp_{sanitized_server_name}_{tool_name}`（如 `mcp_github_search_issues`），ToolPresenter.callTool 按 `mcp_` 前缀路由
+- **ToolPresenter 集成**: `getToolSet(sessionId)` → `{ ...builtinTools, ...mcpTools }`，AgentChatPresenter 零感知
+- **数据库**: 3 张新表（mcp_servers, mcp_tools, session_mcp_state），联动删除（ON DELETE CASCADE + AgentConfigPresenter 检测 mcpTools 变更清理）
+- **UI**: Settings MCP tab（Server CRUD + 状态）+ AgentEditDialog MCP tab（工具勾选）+ 会话 MCP 工具禁用对话框
+- **三级配置**: 全局（Server 接入）→ Agent（mcpTools 白名单）→ 会话（session_mcp_state 临时禁用）
+- **事件**: `MCP_EVENTS.SERVERS_CHANGED` / `SERVER_STATUS` / `TOOLS_CHANGED` 推送到渲染进程
+- **Pinia Store**: `useMcpStore()` 管理 servers/serverTools + session 工具状态
 
 ### Evolution Workflow
 
@@ -195,7 +213,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 
 ### Agent 对话系统 (v0.3)
 
-- **数据层**: 5 张新表（agents, agent_sessions, agent_session_configs, agent_messages, agent_usage_stats），整数时间戳（Date.now() ms）
+- **数据层**: 5 张表（agents, agent_sessions, agent_session_configs, agent_messages），整数时间戳（Date.now() ms）
 - **Agent**: id=TEXT PK, name, type(builtin/custom), enabled, protected, config_json(AgentConfig), avatar_json(AgentAvatar)
 - **双层 Session**: agent_sessions(会话元数据) + agent_session_configs(1:1 LLM 参数)，session_kind(regular/subagent)
 - **JSON Block 消息**: assistant content 存为 `AssistantMessageBlock[]` JSON，types: content/reasoning_content/tool_call/error/image
