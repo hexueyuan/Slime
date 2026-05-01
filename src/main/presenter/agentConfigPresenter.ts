@@ -28,10 +28,11 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
     this.configPresenter = cp;
   }
 
-  async listLocalSkills(): Promise<SkillInfo[]> {
-    // TODO(Task5): implement per-agent skill listing
-    void this.skillPresenter;
-    return [];
+  async listLocalSkills(agentId: string): Promise<SkillInfo[]> {
+    if (!this.skillPresenter) return [];
+    const skillsDir = await this.getAgentSkillsDir(agentId);
+    if (!skillsDir) return [];
+    return this.skillPresenter.listLocalSkillsForAgent(agentId, skillsDir);
   }
 
   init(): void {

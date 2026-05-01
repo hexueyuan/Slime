@@ -109,7 +109,7 @@ watch(
         subagentEnabled.value = cfg?.subagentEnabled ?? false;
         enabled.value = agent.enabled;
       }
-      agentConfig.listLocalSkills().then((s: SkillInfo[]) => {
+      agentConfig.listLocalSkills(props.agentId!).then((s: SkillInfo[]) => {
         availableSkills.value = s;
       });
     } else {
@@ -133,7 +133,7 @@ watch(
       skills.value = [];
       subagentEnabled.value = false;
       enabled.value = true;
-      agentConfig.listLocalSkills().then((s: SkillInfo[]) => {
+      agentConfig.listLocalSkills("").then((s: SkillInfo[]) => {
         availableSkills.value = s;
       });
     }

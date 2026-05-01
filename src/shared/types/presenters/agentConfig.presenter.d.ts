@@ -9,7 +9,7 @@ export interface IAgentConfigPresenter {
   deleteAgent(id: string): Promise<void>;
   pickAvatar(): Promise<string | null>;
   getAvatarUrl(relativePath: string): Promise<string>;
-  listLocalSkills(): Promise<SkillInfo[]>;
+  listLocalSkills(agentId: string): Promise<SkillInfo[]>;
   readSoulMd(agentId: string): Promise<string>;
   getAgentSkillsDir(agentId: string): Promise<string | null>;
 }
