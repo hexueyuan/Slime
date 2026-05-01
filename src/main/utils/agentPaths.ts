@@ -1,10 +1,5 @@
 import { join } from "path";
-
-interface AgentLike {
-  id: string;
-  name: string;
-  type: string;
-}
+import type { Agent } from "@shared/types/agent";
 
 /**
  * 返回 Agent 工作目录。
@@ -13,7 +8,7 @@ interface AgentLike {
  * - 无 vaultPath → {defaultAgentsDir}/{agent.id}/
  */
 export function getAgentDir(
-  agent: AgentLike,
+  agent: Pick<Agent, "id" | "name" | "type">,
   vaultPath: string | null,
   defaultAgentsDir: string,
 ): string | null {
