@@ -60,6 +60,10 @@ export const paths = {
     return join(this.projectRoot, "resources", "skills");
   },
 
+  get agentsDir(): string {
+    return join(this.slimeDir, "agents");
+  },
+
   /** 实际操作的项目根目录：打包后用 sourceDir，开发时用 cwd */
   get effectiveProjectRoot() {
     return app.isPackaged ? this.sourceDir : process.cwd();
