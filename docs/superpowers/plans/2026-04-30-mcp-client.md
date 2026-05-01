@@ -13,6 +13,7 @@
 ### Task 1: MCP 协议类型 + 共享类型 + 事件常量
 
 **Files:**
+
 - Create: `src/main/mcp/types.ts`
 - Modify: `src/shared/types/agent.d.ts`
 - Create: `src/shared/types/mcp.d.ts`
@@ -23,39 +24,44 @@
 
 ```typescript
 export interface JSONRPCRequest {
-  jsonrpc: "2.0"
-  method: string
-  params?: unknown
-  id: number
+  jsonrpc: "2.0";
+  method: string;
+  params?: unknown;
+  id: number;
 }
 
 export interface JSONRPCResponse {
-  jsonrpc: "2.0"
-  result?: unknown
-  error?: { code: number; message: string; data?: unknown }
-  id: number | null
+  jsonrpc: "2.0";
+  result?: unknown;
+  error?: { code: number; message: string; data?: unknown };
+  id: number | null;
 }
 
 export interface MCPToolDef {
-  name: string
-  description?: string
-  inputSchema: Record<string, unknown>
+  name: string;
+  description?: string;
+  inputSchema: Record<string, unknown>;
 }
 
 export interface MCPServerConfig {
-  id: string
-  name: string
-  transport: "stdio" | "http"
-  command?: string
-  args?: string[]
-  env?: Record<string, string>
-  url?: string
-  headers?: Record<string, string>
+  id: string;
+  name: string;
+  transport: "stdio" | "http";
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  headers?: Record<string, string>;
 }
 
 export interface MCPToolCallResult {
-  content: Array<{ type: "text" | "image" | "resource"; text?: string; data?: string; mimeType?: string }>
-  isError?: boolean
+  content: Array<{
+    type: "text" | "image" | "resource";
+    text?: string;
+    data?: string;
+    mimeType?: string;
+  }>;
+  isError?: boolean;
 }
 ```
 
@@ -71,31 +77,31 @@ export interface MCPToolCallResult {
 
 ```typescript
 export interface MCPServer {
-  id: string
-  name: string
-  transport: "stdio" | "http"
-  enabled: boolean
-  command?: string | null
-  args?: string[] | null
-  env?: Record<string, string> | null
-  url?: string | null
-  httpHeaders?: Record<string, string> | null
-  createdAt: number
-  updatedAt: number
+  id: string;
+  name: string;
+  transport: "stdio" | "http";
+  enabled: boolean;
+  command?: string | null;
+  args?: string[] | null;
+  env?: Record<string, string> | null;
+  url?: string | null;
+  httpHeaders?: Record<string, string> | null;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface MCPServerDashboard extends MCPServer {
-  status: "disconnected" | "connecting" | "connected" | "error"
-  toolsCount: number
-  error?: string | null
+  status: "disconnected" | "connecting" | "connected" | "error";
+  toolsCount: number;
+  error?: string | null;
 }
 
 export interface MCPToolRecord {
-  id: number
-  serverId: string
-  toolName: string
-  description: string | null
-  inputSchema: Record<string, unknown>
+  id: number;
+  serverId: string;
+  toolName: string;
+  description: string | null;
+  inputSchema: Record<string, unknown>;
 }
 ```
 
@@ -105,13 +111,16 @@ export interface MCPToolRecord {
 import type { MCPServer, MCPServerDashboard, MCPToolRecord } from "../mcp";
 
 export interface IMCPServerPresenter {
-  listServers(): Promise<MCPServerDashboard[]>
-  createServer(config: Omit<MCPServer, "createdAt" | "updatedAt">): Promise<MCPServer>
-  updateServer(id: string, config: Partial<Omit<MCPServer, "id" | "createdAt" | "updatedAt">>): Promise<MCPServer>
-  deleteServer(id: string): Promise<void>
-  getServerTools(id: string): Promise<MCPToolRecord[]>
-  getSessionDisabledTools(sessionId: string): Promise<number[]>
-  setSessionToolState(sessionId: string, toolId: number, disabled: boolean): Promise<void>
+  listServers(): Promise<MCPServerDashboard[]>;
+  createServer(config: Omit<MCPServer, "createdAt" | "updatedAt">): Promise<MCPServer>;
+  updateServer(
+    id: string,
+    config: Partial<Omit<MCPServer, "id" | "createdAt" | "updatedAt">>,
+  ): Promise<MCPServer>;
+  deleteServer(id: string): Promise<void>;
+  getServerTools(id: string): Promise<MCPToolRecord[]>;
+  getSessionDisabledTools(sessionId: string): Promise<number[]>;
+  setSessionToolState(sessionId: string, toolId: number, disabled: boolean): Promise<void>;
 }
 ```
 
@@ -139,6 +148,7 @@ git commit -m "feat(mcp): add MCP types, shared interfaces, and events"
 ### Task 2: 数据库表 + DAO
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 - Create: `src/main/db/models/mcpDao.ts`
 
@@ -214,41 +224,78 @@ function rowToTool(row: Record<string, unknown>): MCPToolRecord {
 // --- Server CRUD ---
 
 export function listServers(db: BetterSqlite3.Database): MCPServer[] {
-  return (db.prepare("SELECT * FROM mcp_servers ORDER BY created_at").all() as Record<string, unknown>[]).map(rowToServer);
+  return (
+    db.prepare("SELECT * FROM mcp_servers ORDER BY created_at").all() as Record<string, unknown>[]
+  ).map(rowToServer);
 }
 
 export function getServer(db: BetterSqlite3.Database, id: string): MCPServer | undefined {
-  const row = db.prepare("SELECT * FROM mcp_servers WHERE id = ?").get(id) as Record<string, unknown> | undefined;
+  const row = db.prepare("SELECT * FROM mcp_servers WHERE id = ?").get(id) as
+    | Record<string, unknown>
+    | undefined;
   return row ? rowToServer(row) : undefined;
 }
 
-export function createServer(db: BetterSqlite3.Database, server: Omit<MCPServer, "createdAt" | "updatedAt">): MCPServer {
+export function createServer(
+  db: BetterSqlite3.Database,
+  server: Omit<MCPServer, "createdAt" | "updatedAt">,
+): MCPServer {
   const now = Date.now();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO mcp_servers (id, name, transport, enabled, command, args, env, url, http_headers, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    server.id, server.name, server.transport, server.enabled ? 1 : 0,
-    server.command ?? null, server.args ? JSON.stringify(server.args) : null,
-    server.env ? JSON.stringify(server.env) : null, server.url ?? null,
-    server.httpHeaders ? JSON.stringify(server.httpHeaders) : null, now, now,
+  `,
+  ).run(
+    server.id,
+    server.name,
+    server.transport,
+    server.enabled ? 1 : 0,
+    server.command ?? null,
+    server.args ? JSON.stringify(server.args) : null,
+    server.env ? JSON.stringify(server.env) : null,
+    server.url ?? null,
+    server.httpHeaders ? JSON.stringify(server.httpHeaders) : null,
+    now,
+    now,
   );
   return getServer(db, server.id)!;
 }
 
-export function updateServer(db: BetterSqlite3.Database, id: string, data: Partial<Omit<MCPServer, "id" | "createdAt" | "updatedAt">>): MCPServer | undefined {
+export function updateServer(
+  db: BetterSqlite3.Database,
+  id: string,
+  data: Partial<Omit<MCPServer, "id" | "createdAt" | "updatedAt">>,
+): MCPServer | undefined {
   const fields: string[] = ["updated_at = ?"];
   const vals: unknown[] = [Date.now()];
   for (const [col, key] of [
-    ["name", "name"], ["transport", "transport"],
-    ["command", "command"], ["url", "url"],
+    ["name", "name"],
+    ["transport", "transport"],
+    ["command", "command"],
+    ["url", "url"],
   ] as const) {
-    if (data[key] !== undefined) { fields.push(`${col} = ?`); vals.push(data[key]); }
+    if (data[key] !== undefined) {
+      fields.push(`${col} = ?`);
+      vals.push(data[key]);
+    }
   }
-  if (data.enabled !== undefined) { fields.push("enabled = ?"); vals.push(data.enabled ? 1 : 0); }
-  if (data.args !== undefined) { fields.push("args = ?"); vals.push(JSON.stringify(data.args)); }
-  if (data.env !== undefined) { fields.push("env = ?"); vals.push(JSON.stringify(data.env)); }
-  if (data.httpHeaders !== undefined) { fields.push("http_headers = ?"); vals.push(JSON.stringify(data.httpHeaders)); }
+  if (data.enabled !== undefined) {
+    fields.push("enabled = ?");
+    vals.push(data.enabled ? 1 : 0);
+  }
+  if (data.args !== undefined) {
+    fields.push("args = ?");
+    vals.push(JSON.stringify(data.args));
+  }
+  if (data.env !== undefined) {
+    fields.push("env = ?");
+    vals.push(JSON.stringify(data.env));
+  }
+  if (data.httpHeaders !== undefined) {
+    fields.push("http_headers = ?");
+    vals.push(JSON.stringify(data.httpHeaders));
+  }
   vals.push(id);
   db.prepare(`UPDATE mcp_servers SET ${fields.join(", ")} WHERE id = ?`).run(...vals);
   return getServer(db, id);
@@ -261,54 +308,104 @@ export function deleteServer(db: BetterSqlite3.Database, id: string): void {
 // --- Tool CRUD ---
 
 export function listToolsByServer(db: BetterSqlite3.Database, serverId: string): MCPToolRecord[] {
-  return (db.prepare("SELECT * FROM mcp_tools WHERE server_id = ? ORDER BY tool_name").all(serverId) as Record<string, unknown>[]).map(rowToTool);
+  return (
+    db
+      .prepare("SELECT * FROM mcp_tools WHERE server_id = ? ORDER BY tool_name")
+      .all(serverId) as Record<string, unknown>[]
+  ).map(rowToTool);
 }
 
-export function getToolByServerAndName(db: BetterSqlite3.Database, serverId: string, toolName: string): MCPToolRecord | undefined {
-  const row = db.prepare("SELECT * FROM mcp_tools WHERE server_id = ? AND tool_name = ?").get(serverId, toolName) as Record<string, unknown> | undefined;
+export function getToolByServerAndName(
+  db: BetterSqlite3.Database,
+  serverId: string,
+  toolName: string,
+): MCPToolRecord | undefined {
+  const row = db
+    .prepare("SELECT * FROM mcp_tools WHERE server_id = ? AND tool_name = ?")
+    .get(serverId, toolName) as Record<string, unknown> | undefined;
   return row ? rowToTool(row) : undefined;
 }
 
 export function getToolById(db: BetterSqlite3.Database, id: number): MCPToolRecord | undefined {
-  const row = db.prepare("SELECT * FROM mcp_tools WHERE id = ?").get(id) as Record<string, unknown> | undefined;
+  const row = db.prepare("SELECT * FROM mcp_tools WHERE id = ?").get(id) as
+    | Record<string, unknown>
+    | undefined;
   return row ? rowToTool(row) : undefined;
 }
 
-export function upsertTool(db: BetterSqlite3.Database, serverId: string, toolName: string, description: string | undefined, inputSchema: Record<string, unknown>): MCPToolRecord {
+export function upsertTool(
+  db: BetterSqlite3.Database,
+  serverId: string,
+  toolName: string,
+  description: string | undefined,
+  inputSchema: Record<string, unknown>,
+): MCPToolRecord {
   const existing = getToolByServerAndName(db, serverId, toolName);
   if (existing) {
-    db.prepare("UPDATE mcp_tools SET description = ?, input_schema = ? WHERE id = ?").run(description ?? null, JSON.stringify(inputSchema), existing.id);
+    db.prepare("UPDATE mcp_tools SET description = ?, input_schema = ? WHERE id = ?").run(
+      description ?? null,
+      JSON.stringify(inputSchema),
+      existing.id,
+    );
     return { ...existing, description: description ?? null, inputSchema };
   }
-  const result = db.prepare("INSERT INTO mcp_tools (server_id, tool_name, description, input_schema) VALUES (?, ?, ?, ?)").run(serverId, toolName, description ?? null, JSON.stringify(inputSchema));
-  return { id: result.lastInsertRowid as number, serverId, toolName, description: description ?? null, inputSchema };
+  const result = db
+    .prepare(
+      "INSERT INTO mcp_tools (server_id, tool_name, description, input_schema) VALUES (?, ?, ?, ?)",
+    )
+    .run(serverId, toolName, description ?? null, JSON.stringify(inputSchema));
+  return {
+    id: result.lastInsertRowid as number,
+    serverId,
+    toolName,
+    description: description ?? null,
+    inputSchema,
+  };
 }
 
 export function deleteToolsByServer(db: BetterSqlite3.Database, serverId: string): void {
   db.prepare("DELETE FROM mcp_tools WHERE server_id = ?").run(serverId);
 }
 
-export function deleteStaleTools(db: BetterSqlite3.Database, serverId: string, currentNames: string[]): void {
+export function deleteStaleTools(
+  db: BetterSqlite3.Database,
+  serverId: string,
+  currentNames: string[],
+): void {
   if (currentNames.length === 0) {
     deleteToolsByServer(db, serverId);
     return;
   }
   const placeholders = currentNames.map(() => "?").join(",");
-  db.prepare(`DELETE FROM mcp_tools WHERE server_id = ? AND tool_name NOT IN (${placeholders})`).run(serverId, ...currentNames);
+  db.prepare(
+    `DELETE FROM mcp_tools WHERE server_id = ? AND tool_name NOT IN (${placeholders})`,
+  ).run(serverId, ...currentNames);
 }
 
 // --- Session state ---
 
 export function getSessionDisabledToolIds(db: BetterSqlite3.Database, sessionId: string): number[] {
-  const rows = db.prepare("SELECT tool_id FROM session_mcp_state WHERE session_id = ? AND disabled = 1").all(sessionId) as { tool_id: number }[];
+  const rows = db
+    .prepare("SELECT tool_id FROM session_mcp_state WHERE session_id = ? AND disabled = 1")
+    .all(sessionId) as { tool_id: number }[];
   return rows.map((r) => r.tool_id);
 }
 
-export function setSessionToolState(db: BetterSqlite3.Database, sessionId: string, toolId: number, disabled: boolean): void {
+export function setSessionToolState(
+  db: BetterSqlite3.Database,
+  sessionId: string,
+  toolId: number,
+  disabled: boolean,
+): void {
   if (disabled) {
-    db.prepare("INSERT OR REPLACE INTO session_mcp_state (session_id, tool_id, disabled) VALUES (?, ?, 1)").run(sessionId, toolId);
+    db.prepare(
+      "INSERT OR REPLACE INTO session_mcp_state (session_id, tool_id, disabled) VALUES (?, ?, 1)",
+    ).run(sessionId, toolId);
   } else {
-    db.prepare("DELETE FROM session_mcp_state WHERE session_id = ? AND tool_id = ?").run(sessionId, toolId);
+    db.prepare("DELETE FROM session_mcp_state WHERE session_id = ? AND tool_id = ?").run(
+      sessionId,
+      toolId,
+    );
   }
 }
 
@@ -316,10 +413,16 @@ export function removeSessionStateByToolId(db: BetterSqlite3.Database, toolId: n
   db.prepare("DELETE FROM session_mcp_state WHERE tool_id = ?").run(toolId);
 }
 
-export function removeSessionStateByAgentToolIds(db: BetterSqlite3.Database, agentId: string, removedToolIds: number[]): void {
+export function removeSessionStateByAgentToolIds(
+  db: BetterSqlite3.Database,
+  agentId: string,
+  removedToolIds: number[],
+): void {
   if (removedToolIds.length === 0) return;
   const placeholders = removedToolIds.map(() => "?").join(",");
-  db.prepare(`DELETE FROM session_mcp_state WHERE tool_id IN (${placeholders}) AND session_id IN (SELECT id FROM agent_sessions WHERE agent_id = ?)`).run(...removedToolIds, agentId);
+  db.prepare(
+    `DELETE FROM session_mcp_state WHERE tool_id IN (${placeholders}) AND session_id IN (SELECT id FROM agent_sessions WHERE agent_id = ?)`,
+  ).run(...removedToolIds, agentId);
 }
 ```
 
@@ -335,6 +438,7 @@ git commit -m "feat(mcp): add mcp_servers, mcp_tools, session_mcp_state tables a
 ### Task 3: MCP Transport 层
 
 **Files:**
+
 - Create: `src/main/mcp/transport.ts`
 
 - [x] **Step 1: 创建 transport.ts**
@@ -528,7 +632,10 @@ export class SSETransport implements MCPTransport {
       } else {
         yield await new Promise<JSONRPCResponse>((resolve, reject) => {
           const timeout = setTimeout(() => reject(new Error("Receive timeout")), 30000);
-          this.resolveNext = (v) => { clearTimeout(timeout); resolve(v.value); };
+          this.resolveNext = (v) => {
+            clearTimeout(timeout);
+            resolve(v.value);
+          };
         });
       }
     }
@@ -552,12 +659,19 @@ git commit -m "feat(mcp): add stdio and SSE transport layer"
 ### Task 4: MCP Client
 
 **Files:**
+
 - Create: `src/main/mcp/mcpClient.ts`
 
 - [x] **Step 1: 创建 mcpClient.ts**
 
 ```typescript
-import type { JSONRPCRequest, JSONRPCResponse, MCPToolDef, MCPServerConfig, MCPToolCallResult } from "./types";
+import type {
+  JSONRPCRequest,
+  JSONRPCResponse,
+  MCPToolDef,
+  MCPServerConfig,
+  MCPToolCallResult,
+} from "./types";
 import { StdioTransport, SSETransport } from "./transport";
 import type { MCPTransport } from "./transport";
 import { logger } from "@/utils";
@@ -565,7 +679,10 @@ import { logger } from "@/utils";
 export class MCPClient {
   private transport: MCPTransport | null = null;
   private requestId = 0;
-  private pending = new Map<number, { resolve: (v: JSONRPCResponse["result"]) => void; reject: (e: Error) => void }>();
+  private pending = new Map<
+    number,
+    { resolve: (v: JSONRPCResponse["result"]) => void; reject: (e: Error) => void }
+  >();
   private receiveLoop: Promise<void> | null = null;
   private status: "disconnected" | "connecting" | "connected" | "error" = "disconnected";
   private lastError: string | null = null;
@@ -607,7 +724,11 @@ export class MCPClient {
       });
 
       // Send initialized notification
-      await this.transport.send({ jsonrpc: "2.0", method: "notifications/initialized", id: this.nextId() });
+      await this.transport.send({
+        jsonrpc: "2.0",
+        method: "notifications/initialized",
+        id: this.nextId(),
+      });
 
       this.status = "connected";
       logger.info("MCP connected", { name: config.name, serverInfo: result });
@@ -632,16 +753,25 @@ export class MCPClient {
   }
 
   async listTools(): Promise<MCPToolDef[]> {
-    const result = await this.rpc("tools/list") as { tools: MCPToolDef[] };
+    const result = (await this.rpc("tools/list")) as { tools: MCPToolDef[] };
     return result.tools;
   }
 
   async callTool(name: string, args: unknown, signal?: AbortSignal): Promise<string> {
     const timeout = new Promise<never>((_, reject) => {
-      const timer = setTimeout(() => reject(new Error(`MCP tool '${name}' timed out after 60s`)), 60000);
-      signal?.addEventListener("abort", () => { clearTimeout(timer); reject(new Error(`MCP tool '${name}' aborted`)); });
+      const timer = setTimeout(
+        () => reject(new Error(`MCP tool '${name}' timed out after 60s`)),
+        60000,
+      );
+      signal?.addEventListener("abort", () => {
+        clearTimeout(timer);
+        reject(new Error(`MCP tool '${name}' aborted`));
+      });
     });
-    const result = await Promise.race([this.rpc("tools/call", { name, arguments: args }), timeout]) as MCPToolCallResult;
+    const result = (await Promise.race([
+      this.rpc("tools/call", { name, arguments: args }),
+      timeout,
+    ])) as MCPToolCallResult;
     if (result.isError) {
       throw new Error(result.content.map((c) => c.text ?? "").join("\n") || "Tool returned error");
     }
@@ -701,6 +831,7 @@ git commit -m "feat(mcp): add MCPClient with initialize, listTools, callTool"
 ### Task 5: 健康检查器
 
 **Files:**
+
 - Create: `src/main/mcp/healthChecker.ts`
 
 - [x] **Step 1: 创建 healthChecker.ts**
@@ -750,7 +881,10 @@ export class HealthChecker {
   }
 
   private scheduleRetry(): void {
-    this.retryDelay = Math.min(this.retryDelay === 0 ? 1000 : this.retryDelay * 2, this.MAX_BACKOFF);
+    this.retryDelay = Math.min(
+      this.retryDelay === 0 ? 1000 : this.retryDelay * 2,
+      this.MAX_BACKOFF,
+    );
     this.retryTimer = setTimeout(() => this.retry(), this.retryDelay);
   }
 
@@ -792,6 +926,7 @@ git commit -m "feat(mcp): add health checker with ping and exponential backoff r
 ### Task 6: MCPServerPresenter
 
 **Files:**
+
 - Create: `src/main/presenter/mcpServerPresenter.ts`
 
 - [x] **Step 1: 创建 mcpServerPresenter.ts**
@@ -831,7 +966,9 @@ export class MCPServerPresenter implements IMCPServerPresenter {
   }
 
   async destroy(): Promise<void> {
-    for (const [id, hc] of this.healthCheckers) { hc.stop(); }
+    for (const [id, hc] of this.healthCheckers) {
+      hc.stop();
+    }
     this.healthCheckers.clear();
     for (const [id, client] of this.clients) {
       await client.disconnect().catch(() => {});
@@ -851,7 +988,10 @@ export class MCPServerPresenter implements IMCPServerPresenter {
   }
 
   async createServer(config: Omit<MCPServer, "createdAt" | "updatedAt">): Promise<MCPServer> {
-    const server = mcpDao.createServer(this.getDb(), { ...config, id: config.id || crypto.randomUUID() });
+    const server = mcpDao.createServer(this.getDb(), {
+      ...config,
+      id: config.id || crypto.randomUUID(),
+    });
     if (server.enabled) {
       this.connectServer(server).catch(() => {});
     }
@@ -859,7 +999,10 @@ export class MCPServerPresenter implements IMCPServerPresenter {
     return server;
   }
 
-  async updateServer(id: string, data: Partial<Omit<MCPServer, "id" | "createdAt" | "updatedAt">>): Promise<MCPServer> {
+  async updateServer(
+    id: string,
+    data: Partial<Omit<MCPServer, "id" | "createdAt" | "updatedAt">>,
+  ): Promise<MCPServer> {
     // Disconnect old
     await this.disconnectServer(id);
     const updated = mcpDao.updateServer(this.getDb(), id, data);
@@ -919,7 +1062,11 @@ export class MCPServerPresenter implements IMCPServerPresenter {
 
     // Discover tools
     const tools = await client.listTools();
-    mcpDao.deleteStaleTools(this.getDb(), server.id, tools.map((t) => t.name));
+    mcpDao.deleteStaleTools(
+      this.getDb(),
+      server.id,
+      tools.map((t) => t.name),
+    );
     for (const t of tools) {
       mcpDao.upsertTool(this.getDb(), server.id, t.name, t.description, t.inputSchema);
     }
@@ -930,7 +1077,11 @@ export class MCPServerPresenter implements IMCPServerPresenter {
     const hc = new HealthChecker(client, server.id, server.name, eventBus, async () => {
       // On reconnect: re-discover tools
       const ts = await client.listTools();
-      mcpDao.deleteStaleTools(this.getDb(), server.id, ts.map((t) => t.name));
+      mcpDao.deleteStaleTools(
+        this.getDb(),
+        server.id,
+        ts.map((t) => t.name),
+      );
       for (const t of ts) {
         mcpDao.upsertTool(this.getDb(), server.id, t.name, t.description, t.inputSchema);
       }
@@ -948,9 +1099,15 @@ export class MCPServerPresenter implements IMCPServerPresenter {
 
   private async disconnectServer(id: string): Promise<void> {
     const hc = this.healthCheckers.get(id);
-    if (hc) { hc.stop(); this.healthCheckers.delete(id); }
+    if (hc) {
+      hc.stop();
+      this.healthCheckers.delete(id);
+    }
     const client = this.clients.get(id);
-    if (client) { await client.disconnect().catch(() => {}); this.clients.delete(id); }
+    if (client) {
+      await client.disconnect().catch(() => {});
+      this.clients.delete(id);
+    }
   }
 }
 ```
@@ -967,6 +1124,7 @@ git commit -m "feat(mcp): add MCPServerPresenter with lifecycle, CRUD, and healt
 ### Task 7: MCPToolBridge
 
 **Files:**
+
 - Create: `src/main/presenter/mcpToolBridge.ts`
 
 - [x] **Step 1: 创建 mcpToolBridge.ts**
@@ -981,7 +1139,10 @@ import type { Tool } from "@/llm";
 import { logger } from "@/utils";
 
 function serverNameToPrefix(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
 }
 
 export class MCPToolBridge {
@@ -1076,6 +1237,7 @@ git commit -m "feat(mcp): add MCPToolBridge for agent/session-level tool filteri
 ### Task 8: ToolPresenter 集成 — getToolSet 异步化
 
 **Files:**
+
 - Modify: `src/main/presenter/toolPresenter.ts`
 
 - [x] **Step 1: 添加 MCPToolBridge 依赖并异步化 getToolSet**
@@ -1142,6 +1304,7 @@ git commit -m "feat(mcp): integrate MCP tools into ToolPresenter.getToolSet"
 ### Task 9: AgentChatPresenter 集成 — await getToolSet
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentChatPresenter.ts`
 
 - [x] **Step 1: 两处 await getToolSet**
@@ -1149,16 +1312,14 @@ git commit -m "feat(mcp): integrate MCP tools into ToolPresenter.getToolSet"
 在 `chat()` 方法中（约 line 315），将同步调用改为 await：
 
 ```typescript
-    // Filter disabled tools
-    const disabledTools = agent?.config?.disabledTools ?? [];
-    const allAiSdkTools = await this.toolPresenter.getToolSet(sessionId);
-    const filteredAiSdkTools =
-      disabledTools.length > 0
-        ? Object.fromEntries(
-            Object.entries(allAiSdkTools).filter(([k]) => !disabledTools.includes(k)),
-          )
-        : allAiSdkTools;
-    const tools = this.convertTools(filteredAiSdkTools);
+// Filter disabled tools
+const disabledTools = agent?.config?.disabledTools ?? [];
+const allAiSdkTools = await this.toolPresenter.getToolSet(sessionId);
+const filteredAiSdkTools =
+  disabledTools.length > 0
+    ? Object.fromEntries(Object.entries(allAiSdkTools).filter(([k]) => !disabledTools.includes(k)))
+    : allAiSdkTools;
+const tools = this.convertTools(filteredAiSdkTools);
 ```
 
 在 `callTool` / `executeTool` 方法中也需要 await（如果内部调用了 getToolSet）。搜索所有 `this.toolPresenter.getToolSet(` 调用并添加 `await`。
@@ -1183,6 +1344,7 @@ git commit -m "feat(mcp): await getToolSet in AgentChatPresenter for MCP tools"
 ### Task 10: Presenter 注册 + IPresenter 接口
 
 **Files:**
+
 - Modify: `src/shared/types/presenters/index.d.ts`
 - Modify: `src/main/presenter/index.ts`
 
@@ -1211,7 +1373,10 @@ import { MCPToolBridge } from "./mcpToolBridge";
 this.mcpServerPresenter = new MCPServerPresenter();
 const mcpBridge = new MCPToolBridge(this.mcpServerPresenter);
 this.toolPresenter = new ToolPresenter(
-  this.filePresenter, this.contentPresenter, this.evolutionPresenter, browserSession,
+  this.filePresenter,
+  this.contentPresenter,
+  this.evolutionPresenter,
+  browserSession,
   mcpBridge,
 );
 ```
@@ -1252,6 +1417,7 @@ git commit -m "feat(mcp): register MCPServerPresenter in Presenter and IPresente
 ### Task 11: AgentConfigPresenter 联动清理
 
 **Files:**
+
 - Modify: `src/main/presenter/agentConfigPresenter.ts`
 
 - [x] **Step 1: updateAgent 中检测 mcpTools 变更并清理 session_mcp_state**
@@ -1309,6 +1475,7 @@ git commit -m "feat(mcp): cascade cleanup session_mcp_state on mcpTools removal"
 ### Task 12: Pinia Store
 
 **Files:**
+
 - Create: `src/renderer/src/stores/mcp.ts`
 
 - [x] **Step 1: 创建 useMcpStore**
@@ -1362,10 +1529,15 @@ export const useMcpStore = defineStore("mcp", () => {
   }
 
   return {
-    servers, serverTools,
-    loadServers, loadServerTools,
-    createServer, updateServer, deleteServer,
-    getSessionDisabledTools, setSessionToolState,
+    servers,
+    serverTools,
+    loadServers,
+    loadServerTools,
+    createServer,
+    updateServer,
+    deleteServer,
+    getSessionDisabledTools,
+    setSessionToolState,
     getServerToolsCached,
   };
 });
@@ -1383,6 +1555,7 @@ git commit -m "feat(mcp): add useMcpStore Pinia store"
 ### Task 13: MCP UI 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/mcp/MCPServerList.vue`
 - Create: `src/renderer/src/components/mcp/MCPServerForm.vue`
 - Create: `src/renderer/src/components/mcp/MCPToolChecklist.vue`
@@ -1405,26 +1578,33 @@ const env = ref("");
 const url = ref("");
 const httpHeaders = ref("");
 
-watch(() => props.open, (val) => {
-  if (!val) return;
-  if (props.server) {
-    name.value = props.server.name;
-    transport.value = props.server.transport;
-    command.value = props.server.command ?? "";
-    args.value = props.server.args?.join(" ") ?? "";
-    env.value = props.server.env ? Object.entries(props.server.env).map(([k, v]) => `${k}=${v}`).join("\n") : "";
-    url.value = props.server.url ?? "";
-    httpHeaders.value = props.server.httpHeaders ? JSON.stringify(props.server.httpHeaders) : "";
-  } else {
-    name.value = "";
-    transport.value = "stdio";
-    command.value = "";
-    args.value = "";
-    env.value = "";
-    url.value = "";
-    httpHeaders.value = "";
-  }
-});
+watch(
+  () => props.open,
+  (val) => {
+    if (!val) return;
+    if (props.server) {
+      name.value = props.server.name;
+      transport.value = props.server.transport;
+      command.value = props.server.command ?? "";
+      args.value = props.server.args?.join(" ") ?? "";
+      env.value = props.server.env
+        ? Object.entries(props.server.env)
+            .map(([k, v]) => `${k}=${v}`)
+            .join("\n")
+        : "";
+      url.value = props.server.url ?? "";
+      httpHeaders.value = props.server.httpHeaders ? JSON.stringify(props.server.httpHeaders) : "";
+    } else {
+      name.value = "";
+      transport.value = "stdio";
+      command.value = "";
+      args.value = "";
+      env.value = "";
+      url.value = "";
+      httpHeaders.value = "";
+    }
+  },
+);
 
 function onSave() {
   if (!name.value.trim()) return;
@@ -1438,15 +1618,23 @@ function onSave() {
     config.command = command.value.trim();
     config.args = args.value.trim() ? args.value.trim().split(/\s+/) : [];
     if (env.value.trim()) {
-      config.env = Object.fromEntries(env.value.trim().split("\n").filter(Boolean).map((l) => {
-        const idx = l.indexOf("=");
-        return idx >= 0 ? [l.slice(0, idx).trim(), l.slice(idx + 1).trim()] : [l.trim(), ""];
-      }));
+      config.env = Object.fromEntries(
+        env.value
+          .trim()
+          .split("\n")
+          .filter(Boolean)
+          .map((l) => {
+            const idx = l.indexOf("=");
+            return idx >= 0 ? [l.slice(0, idx).trim(), l.slice(idx + 1).trim()] : [l.trim(), ""];
+          }),
+      );
     }
   } else {
     config.url = url.value.trim();
     if (httpHeaders.value.trim()) {
-      try { config.httpHeaders = JSON.parse(httpHeaders.value.trim()); } catch {}
+      try {
+        config.httpHeaders = JSON.parse(httpHeaders.value.trim());
+      } catch {}
     }
   }
   emit("saved", config);
@@ -1459,47 +1647,102 @@ function onSave() {
     <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center">
       <div class="absolute inset-0 bg-black/50" @click="$emit('update:open', false)" />
       <div class="relative w-[480px] rounded-lg border border-border bg-card p-5 shadow-xl">
-        <h2 class="text-sm font-semibold mb-4">{{ server ? '编辑' : '添加' }} MCP Server</h2>
+        <h2 class="text-sm font-semibold mb-4">{{ server ? "编辑" : "添加" }} MCP Server</h2>
         <div class="space-y-3">
           <div>
             <label class="text-xs text-muted-foreground">名称</label>
-            <input v-model="name" class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm" placeholder="My Server" />
+            <input
+              v-model="name"
+              class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+              placeholder="My Server"
+            />
           </div>
           <div>
             <label class="text-xs text-muted-foreground mb-1 block">传输类型</label>
             <div class="flex gap-2">
-              <button :class="['rounded px-3 py-1 text-xs', transport === 'stdio' ? 'bg-violet-500/20 text-violet-400' : 'bg-muted text-muted-foreground']" @click="transport = 'stdio'">stdio</button>
-              <button :class="['rounded px-3 py-1 text-xs', transport === 'http' ? 'bg-violet-500/20 text-violet-400' : 'bg-muted text-muted-foreground']" @click="transport = 'http'">HTTP</button>
+              <button
+                :class="[
+                  'rounded px-3 py-1 text-xs',
+                  transport === 'stdio'
+                    ? 'bg-violet-500/20 text-violet-400'
+                    : 'bg-muted text-muted-foreground',
+                ]"
+                @click="transport = 'stdio'"
+              >
+                stdio
+              </button>
+              <button
+                :class="[
+                  'rounded px-3 py-1 text-xs',
+                  transport === 'http'
+                    ? 'bg-violet-500/20 text-violet-400'
+                    : 'bg-muted text-muted-foreground',
+                ]"
+                @click="transport = 'http'"
+              >
+                HTTP
+              </button>
             </div>
           </div>
           <template v-if="transport === 'stdio'">
             <div>
               <label class="text-xs text-muted-foreground">Command</label>
-              <input v-model="command" class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm" placeholder="npx" />
+              <input
+                v-model="command"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+                placeholder="npx"
+              />
             </div>
             <div>
               <label class="text-xs text-muted-foreground">Arguments</label>
-              <input v-model="args" class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm" placeholder="-y @anthropic/mcp-github" />
+              <input
+                v-model="args"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+                placeholder="-y @anthropic/mcp-github"
+              />
             </div>
             <div>
               <label class="text-xs text-muted-foreground">环境变量（KEY=VALUE 每行一个）</label>
-              <textarea v-model="env" rows="2" class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm resize-none" placeholder="GITHUB_TOKEN=ghp_xxx" />
+              <textarea
+                v-model="env"
+                rows="2"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm resize-none"
+                placeholder="GITHUB_TOKEN=ghp_xxx"
+              />
             </div>
           </template>
           <template v-else>
             <div>
               <label class="text-xs text-muted-foreground">URL</label>
-              <input v-model="url" class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm" placeholder="https://mcp.example.com" />
+              <input
+                v-model="url"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+                placeholder="https://mcp.example.com"
+              />
             </div>
             <div>
               <label class="text-xs text-muted-foreground">Headers (JSON)</label>
-              <input v-model="httpHeaders" class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm" placeholder='{"Authorization":"Bearer xxx"}' />
+              <input
+                v-model="httpHeaders"
+                class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm"
+                placeholder='{"Authorization":"Bearer xxx"}'
+              />
             </div>
           </template>
         </div>
         <div class="flex justify-end gap-2 mt-4">
-          <button class="rounded-md px-4 py-1.5 text-sm text-muted-foreground hover:bg-muted" @click="$emit('update:open', false)">取消</button>
-          <button class="rounded-md bg-violet-600 px-4 py-1.5 text-sm text-white hover:bg-violet-500" @click="onSave">保存</button>
+          <button
+            class="rounded-md px-4 py-1.5 text-sm text-muted-foreground hover:bg-muted"
+            @click="$emit('update:open', false)"
+          >
+            取消
+          </button>
+          <button
+            class="rounded-md bg-violet-600 px-4 py-1.5 text-sm text-white hover:bg-violet-500"
+            @click="onSave"
+          >
+            保存
+          </button>
         </div>
       </div>
     </div>
@@ -1535,7 +1778,11 @@ function onEdit(server: any) {
 
 async function onDelete(id: string) {
   deletingId.value = id;
-  try { await store.deleteServer(id); } finally { deletingId.value = null; }
+  try {
+    await store.deleteServer(id);
+  } finally {
+    deletingId.value = null;
+  }
 }
 
 async function onSaved(config: any) {
@@ -1558,18 +1805,29 @@ function statusBadge(status: string) {
   <div>
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-sm font-semibold">MCP Servers</h3>
-      <button class="rounded-md bg-violet-600 px-3 py-1 text-xs text-white hover:bg-violet-500" @click="onAdd">+ 添加</button>
+      <button
+        class="rounded-md bg-violet-600 px-3 py-1 text-xs text-white hover:bg-violet-500"
+        @click="onAdd"
+      >
+        + 添加
+      </button>
     </div>
 
     <div v-if="store.servers.length === 0" class="text-xs text-muted-foreground py-4 text-center">
       暂无 MCP Server，点击"添加"开始
     </div>
 
-    <div v-for="s in store.servers" :key="s.id" class="flex items-center justify-between rounded-md border border-border p-3 mb-2">
+    <div
+      v-for="s in store.servers"
+      :key="s.id"
+      class="flex items-center justify-between rounded-md border border-border p-3 mb-2"
+    >
       <div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-foreground">{{ s.name }}</span>
-          <span :class="['rounded px-1.5 py-0.5 text-[10px]', statusBadge(s.status)]">{{ s.status }}</span>
+          <span :class="['rounded px-1.5 py-0.5 text-[10px]', statusBadge(s.status)]">{{
+            s.status
+          }}</span>
         </div>
         <div class="text-[11px] text-muted-foreground mt-0.5">
           {{ s.transport }} · {{ s.toolsCount }} tools
@@ -1580,13 +1838,21 @@ function statusBadge(status: string) {
         <button class="rounded p-1 text-muted-foreground hover:text-foreground" @click="onEdit(s)">
           <Icon icon="lucide:pencil" class="h-3.5 w-3.5" />
         </button>
-        <button class="rounded p-1 text-muted-foreground hover:text-red-400" @click="onDelete(s.id)">
+        <button
+          class="rounded p-1 text-muted-foreground hover:text-red-400"
+          @click="onDelete(s.id)"
+        >
           <Icon icon="lucide:trash-2" class="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
 
-    <MCPServerForm :open="showForm" :server="editingServer" @update:open="showForm = $event" @saved="onSaved" />
+    <MCPServerForm
+      :open="showForm"
+      :server="editingServer"
+      @update:open="showForm = $event"
+      @saved="onSaved"
+    />
   </div>
 </template>
 ```
@@ -1600,8 +1866,8 @@ import { useMcpStore } from "@/stores/mcp";
 import type { MCPToolRecord } from "@shared/types/mcp";
 
 const props = defineProps<{
-  modelValue: string[]  // "{server_id}/{tool_name}"[]
-  sessionId?: string    // if set, shows session disable toggles
+  modelValue: string[]; // "{server_id}/{tool_name}"[]
+  sessionId?: string; // if set, shows session disable toggles
 }>();
 
 const emit = defineEmits<{ "update:modelValue": [value: string[]] }>();
@@ -1651,15 +1917,31 @@ async function toggleSessionDisable(toolId: number) {
   </div>
   <div v-for="s in store.servers" :key="s.id" class="mb-3">
     <div class="flex items-center gap-2 mb-1">
-      <span :class="['rounded px-1.5 py-0.5 text-[10px]', s.status === 'connected' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400']">
+      <span
+        :class="[
+          'rounded px-1.5 py-0.5 text-[10px]',
+          s.status === 'connected'
+            ? 'bg-emerald-500/20 text-emerald-400'
+            : 'bg-red-500/20 text-red-400',
+        ]"
+      >
         {{ s.status }}
       </span>
       <span class="text-xs font-medium text-foreground">{{ s.name }}</span>
       <span class="text-[10px] text-muted-foreground">{{ s.toolsCount }} tools</span>
     </div>
     <div v-if="s.status === 'connected'" class="grid grid-cols-2 gap-1">
-      <label v-for="t in store.getServerToolsCached(s.id)" :key="t.id" class="flex items-center gap-1.5 text-xs text-foreground py-0.5">
-        <input type="checkbox" :checked="isChecked(s.id, t.toolName)" class="accent-violet-500" @change="toggle(s.id, t.toolName)" />
+      <label
+        v-for="t in store.getServerToolsCached(s.id)"
+        :key="t.id"
+        class="flex items-center gap-1.5 text-xs text-foreground py-0.5"
+      >
+        <input
+          type="checkbox"
+          :checked="isChecked(s.id, t.toolName)"
+          class="accent-violet-500"
+          @change="toggle(s.id, t.toolName)"
+        />
         {{ t.toolName }}
         <input
           v-if="sessionId && isChecked(s.id, t.toolName)"
@@ -1687,6 +1969,7 @@ git commit -m "feat(mcp): add MCPServerList, MCPServerForm, MCPToolChecklist Vue
 ### Task 14: SettingsDialog MCP Tab
 
 **Files:**
+
 - Create: `src/renderer/src/components/settings/MCPSettings.vue`
 - Modify: `src/renderer/src/components/settings/SettingsDialog.vue`
 
@@ -1710,9 +1993,7 @@ import MCPServerList from "@/components/mcp/MCPServerList.vue";
 <button
   :class="[
     'rounded-md px-3 py-1.5 text-left text-sm',
-    activeTab === 'mcp'
-      ? 'bg-muted text-foreground'
-      : 'text-muted-foreground hover:bg-muted/50',
+    activeTab === 'mcp' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50',
   ]"
   @click="activeTab = 'mcp'"
 >
@@ -1745,6 +2026,7 @@ git commit -m "feat(mcp): add MCP tab to SettingsDialog"
 ### Task 15: AgentEditDialog MCP Tools Tab
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/AgentEditDialog.vue`
 
 - [x] **Step 1: 添加 mcpTools 表单状态和 MCPToolChecklist**
@@ -1797,6 +2079,7 @@ git commit -m "feat(mcp): add MCP Tools tab to AgentEditDialog"
 ### Task 16: Session MCP 工具控制
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatView.vue`（添加 session 工具栏入口）
 - Create: `src/renderer/src/components/chat/SessionMcpSettings.vue`
 
@@ -1814,26 +2097,36 @@ const emit = defineEmits<{ "update:open": [boolean] }>();
 const agentStore = useAgentStore();
 const mcpTools = ref<string[]>([]);
 
-watch(() => props.open, (val) => {
-  if (val) {
-    const agent = agentStore.agents.find((a) => a.id === props.agentId);
-    mcpTools.value = agent?.config?.mcpTools ?? [];
-  }
-});
+watch(
+  () => props.open,
+  (val) => {
+    if (val) {
+      const agent = agentStore.agents.find((a) => a.id === props.agentId);
+      mcpTools.value = agent?.config?.mcpTools ?? [];
+    }
+  },
+);
 </script>
 
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center">
       <div class="absolute inset-0 bg-black/50" @click="$emit('update:open', false)" />
-      <div class="relative w-[400px] max-h-[70vh] overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-xl">
+      <div
+        class="relative w-[400px] max-h-[70vh] overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-xl"
+      >
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-semibold">会话 MCP 工具</h2>
-          <button class="rounded p-1 text-muted-foreground hover:text-foreground" @click="$emit('update:open', false)">
+          <button
+            class="rounded p-1 text-muted-foreground hover:text-foreground"
+            @click="$emit('update:open', false)"
+          >
             <span class="text-sm">✕</span>
           </button>
         </div>
-        <p class="text-[11px] text-muted-foreground mb-3">仅影响当前会话。新会话使用 Agent 默认设置。勾选 = 启用（默认），取消 = 禁用。</p>
+        <p class="text-[11px] text-muted-foreground mb-3">
+          仅影响当前会话。新会话使用 Agent 默认设置。勾选 = 启用（默认），取消 = 禁用。
+        </p>
         <MCPToolChecklist v-model="mcpTools" :session-id="sessionId" />
       </div>
     </div>
@@ -1855,6 +2148,7 @@ git commit -m "feat(mcp): add session-level MCP tool disable dialog"
 ### Task 17: 测试
 
 **Files:**
+
 - Create: `test/main/mcp/transport.test.ts`
 - Create: `test/main/mcp/mcpClient.test.ts`
 - Create: `test/main/mcp/mcpToolBridge.test.ts`
@@ -1914,14 +2208,18 @@ vi.mock("@/mcp/transport", () => ({
     async stop() {}
     async send() {}
     async *receive() {}
-    isAlive() { return true }
+    isAlive() {
+      return true;
+    }
   },
   SSETransport: class {
     async start() {}
     async stop() {}
     async send() {}
     async *receive() {}
-    isAlive() { return true }
+    isAlive() {
+      return true;
+    }
   },
 }));
 
@@ -1940,7 +2238,10 @@ import { describe, it, expect, vi } from "vitest";
 
 // Unit test tool name prefix conversion
 function serverNameToPrefix(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
 }
 
 describe("serverNameToPrefix", () => {

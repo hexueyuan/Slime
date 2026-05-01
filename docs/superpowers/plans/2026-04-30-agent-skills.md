@@ -12,29 +12,30 @@
 
 ## File Structure
 
-| File | Create/Modify | Responsibility |
-|------|---------------|----------------|
-| `src/shared/types/skills.ts` | Create | Shared Skill type, shared between main and renderer |
-| `src/main/skills/types.ts` | Create | Internal Skill types (Skill, SkillFrontmatter) |
-| `src/main/skills/loader.ts` | Create | Directory scan + YAML frontmatter parse |
-| `src/main/presenter/skillPresenter.ts` | Create | Cache, filter (agentIds/AgentConfig), loadSkill, init |
-| `src/shared/types/agent.d.ts` | Modify | Add `skills?: string[]` to AgentConfig |
-| `src/main/utils/paths.ts` | Modify | Add `builtinSkillsDir` getter |
-| `src/main/presenter/agentChat/contextBuilder.ts` | Modify | Accept `skillListXML`, inject into system prompt |
-| `src/main/presenter/toolPresenter.ts` | Modify | Register `Skill` tool in `getToolSet`, execute via skillPresenter |
-| `src/main/presenter/index.ts` | Modify | Create SkillPresenter, inject into ToolPresenter and AgentChatPresenter |
-| `src/main/presenter/agentChat/agentChatPresenter.ts` | Modify | Accept skillPresenter, pass skillList to contextBuilder |
-| `electron-builder.yml` | Modify | Add `resources/skills/` to extraResources |
-| `src/renderer/src/components/chat/AgentEditDialog.vue` | Modify | Add Skills tab with checkbox list |
-| `src/main/presenter/agentConfigPresenter.ts` | Modify | Add `listLocalSkills()` method for renderer |
-| `test/main/skills/loader.test.ts` | Create | Loader unit tests |
-| `test/main/skills/skillPresenter.test.ts` | Create | SkillPresenter unit tests |
+| File                                                   | Create/Modify | Responsibility                                                          |
+| ------------------------------------------------------ | ------------- | ----------------------------------------------------------------------- |
+| `src/shared/types/skills.ts`                           | Create        | Shared Skill type, shared between main and renderer                     |
+| `src/main/skills/types.ts`                             | Create        | Internal Skill types (Skill, SkillFrontmatter)                          |
+| `src/main/skills/loader.ts`                            | Create        | Directory scan + YAML frontmatter parse                                 |
+| `src/main/presenter/skillPresenter.ts`                 | Create        | Cache, filter (agentIds/AgentConfig), loadSkill, init                   |
+| `src/shared/types/agent.d.ts`                          | Modify        | Add `skills?: string[]` to AgentConfig                                  |
+| `src/main/utils/paths.ts`                              | Modify        | Add `builtinSkillsDir` getter                                           |
+| `src/main/presenter/agentChat/contextBuilder.ts`       | Modify        | Accept `skillListXML`, inject into system prompt                        |
+| `src/main/presenter/toolPresenter.ts`                  | Modify        | Register `Skill` tool in `getToolSet`, execute via skillPresenter       |
+| `src/main/presenter/index.ts`                          | Modify        | Create SkillPresenter, inject into ToolPresenter and AgentChatPresenter |
+| `src/main/presenter/agentChat/agentChatPresenter.ts`   | Modify        | Accept skillPresenter, pass skillList to contextBuilder                 |
+| `electron-builder.yml`                                 | Modify        | Add `resources/skills/` to extraResources                               |
+| `src/renderer/src/components/chat/AgentEditDialog.vue` | Modify        | Add Skills tab with checkbox list                                       |
+| `src/main/presenter/agentConfigPresenter.ts`           | Modify        | Add `listLocalSkills()` method for renderer                             |
+| `test/main/skills/loader.test.ts`                      | Create        | Loader unit tests                                                       |
+| `test/main/skills/skillPresenter.test.ts`              | Create        | SkillPresenter unit tests                                               |
 
 ---
 
 ### Task 1: Define Skill Types
 
 **Files:**
+
 - Create: `src/shared/types/skills.ts`
 - Create: `src/main/skills/types.ts`
 
@@ -45,9 +46,9 @@ Write `src/shared/types/skills.ts`:
 ```typescript
 /** Skill info exposed to renderer (for UI) */
 export interface SkillInfo {
-  name: string
-  description: string
-  source: "builtin" | "local"
+  name: string;
+  description: string;
+  source: "builtin" | "local";
 }
 ```
 
@@ -57,18 +58,18 @@ Write `src/main/skills/types.ts`:
 
 ```typescript
 export interface SkillFrontmatter {
-  name: string
-  description: string
-  agentIds?: string[]
+  name: string;
+  description: string;
+  agentIds?: string[];
 }
 
 export interface Skill {
-  name: string
-  description: string
-  source: "builtin" | "local"
-  baseDir: string
-  filePath: string
-  agentIds?: string[]
+  name: string;
+  description: string;
+  source: "builtin" | "local";
+  baseDir: string;
+  filePath: string;
+  agentIds?: string[];
 }
 ```
 
@@ -84,6 +85,7 @@ git commit -m "feat(skills): add Skill type definitions"
 ### Task 2: Implement Skill Loader
 
 **Files:**
+
 - Create: `src/main/skills/loader.ts`
 - Create: `test/main/skills/loader.test.ts`
 
@@ -92,104 +94,113 @@ git commit -m "feat(skills): add Skill type definitions"
 Write `test/main/skills/loader.test.ts`:
 
 ```typescript
-import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { mkdirSync, rmSync, writeFileSync } from "fs"
-import { join } from "path"
-import { tmpdir } from "os"
-import { scanSkills, loadSkillContent } from "@/skills/loader"
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { join } from "path";
+import { tmpdir } from "os";
+import { scanSkills, loadSkillContent } from "@/skills/loader";
 
-const testRoot = join(tmpdir(), `slime-skills-loader-${Date.now()}`)
-const skillsDir = join(testRoot, "skills")
+const testRoot = join(tmpdir(), `slime-skills-loader-${Date.now()}`);
+const skillsDir = join(testRoot, "skills");
 
 beforeEach(() => {
-  mkdirSync(skillsDir, { recursive: true })
-})
+  mkdirSync(skillsDir, { recursive: true });
+});
 
 afterEach(() => {
-  rmSync(testRoot, { recursive: true, force: true })
-})
+  rmSync(testRoot, { recursive: true, force: true });
+});
 
 describe("scanSkills", () => {
   it("returns empty array for empty/nonexistent dir", () => {
-    const result = scanSkills("/nonexistent/dir")
-    expect(result).toEqual([])
-  })
+    const result = scanSkills("/nonexistent/dir");
+    expect(result).toEqual([]);
+  });
 
   it("scans a single skill directory", () => {
-    mkdirSync(join(skillsDir, "debugging"), { recursive: true })
+    mkdirSync(join(skillsDir, "debugging"), { recursive: true });
     writeFileSync(
       join(skillsDir, "debugging", "SKILL.md"),
       `---\nname: debugging\ndescription: Debug errors.\n---\n\n# Debugging\n`,
-    )
+    );
 
-    const result = scanSkills(skillsDir)
-    expect(result).toHaveLength(1)
-    expect(result[0].name).toBe("debugging")
-    expect(result[0].description).toBe("Debug errors.")
-    expect(result[0].filePath).toBe(join(skillsDir, "debugging", "SKILL.md"))
-    expect(result[0].baseDir).toBe(join(skillsDir, "debugging"))
-  })
+    const result = scanSkills(skillsDir);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("debugging");
+    expect(result[0].description).toBe("Debug errors.");
+    expect(result[0].filePath).toBe(join(skillsDir, "debugging", "SKILL.md"));
+    expect(result[0].baseDir).toBe(join(skillsDir, "debugging"));
+  });
 
   it("scans multiple skills", () => {
-    mkdirSync(join(skillsDir, "a"), { recursive: true })
-    writeFileSync(join(skillsDir, "a", "SKILL.md"), `---\nname: a\ndescription: Skill A.\n---\n\n# A\n`)
-    mkdirSync(join(skillsDir, "b"), { recursive: true })
-    writeFileSync(join(skillsDir, "b", "SKILL.md"), `---\nname: b\ndescription: Skill B.\n---\n\n# B\n`)
+    mkdirSync(join(skillsDir, "a"), { recursive: true });
+    writeFileSync(
+      join(skillsDir, "a", "SKILL.md"),
+      `---\nname: a\ndescription: Skill A.\n---\n\n# A\n`,
+    );
+    mkdirSync(join(skillsDir, "b"), { recursive: true });
+    writeFileSync(
+      join(skillsDir, "b", "SKILL.md"),
+      `---\nname: b\ndescription: Skill B.\n---\n\n# B\n`,
+    );
 
-    const result = scanSkills(skillsDir)
-    expect(result).toHaveLength(2)
-  })
+    const result = scanSkills(skillsDir);
+    expect(result).toHaveLength(2);
+  });
 
   it("skips directories without SKILL.md", () => {
-    mkdirSync(join(skillsDir, "no-skill"), { recursive: true })
-    writeFileSync(join(skillsDir, "no-skill", "README.md"), "not a skill")
+    mkdirSync(join(skillsDir, "no-skill"), { recursive: true });
+    writeFileSync(join(skillsDir, "no-skill", "README.md"), "not a skill");
 
-    const result = scanSkills(skillsDir)
-    expect(result).toHaveLength(0)
-  })
+    const result = scanSkills(skillsDir);
+    expect(result).toHaveLength(0);
+  });
 
   it("parses agentIds from frontmatter", () => {
-    mkdirSync(join(skillsDir, "guide"), { recursive: true })
+    mkdirSync(join(skillsDir, "guide"), { recursive: true });
     writeFileSync(
       join(skillsDir, "guide", "SKILL.md"),
       `---\nname: guide\ndescription: Guide.\nagentIds:\n  - hal-ai\n  - another-agent\n---\n\n# Guide\n`,
-    )
+    );
 
-    const result = scanSkills(skillsDir)
-    expect(result[0].agentIds).toEqual(["hal-ai", "another-agent"])
-  })
+    const result = scanSkills(skillsDir);
+    expect(result[0].agentIds).toEqual(["hal-ai", "another-agent"]);
+  });
 
   it("skips skills with invalid frontmatter", () => {
-    mkdirSync(join(skillsDir, "bad"), { recursive: true })
-    writeFileSync(join(skillsDir, "bad", "SKILL.md"), `not frontmatter\n\n# Bad\n`)
+    mkdirSync(join(skillsDir, "bad"), { recursive: true });
+    writeFileSync(join(skillsDir, "bad", "SKILL.md"), `not frontmatter\n\n# Bad\n`);
 
-    const result = scanSkills(skillsDir)
-    expect(result).toHaveLength(0)
-  })
+    const result = scanSkills(skillsDir);
+    expect(result).toHaveLength(0);
+  });
 
   it("skips skills missing required name or description", () => {
-    mkdirSync(join(skillsDir, "no-name"), { recursive: true })
-    writeFileSync(join(skillsDir, "no-name", "SKILL.md"), `---\ndescription: Missing name.\n---\n\n# No Name\n`)
+    mkdirSync(join(skillsDir, "no-name"), { recursive: true });
+    writeFileSync(
+      join(skillsDir, "no-name", "SKILL.md"),
+      `---\ndescription: Missing name.\n---\n\n# No Name\n`,
+    );
 
-    const result = scanSkills(skillsDir)
-    expect(result).toHaveLength(0)
-  })
-})
+    const result = scanSkills(skillsDir);
+    expect(result).toHaveLength(0);
+  });
+});
 
 describe("loadSkillContent", () => {
   it("reads SKILL.md content", () => {
-    const content = `---\nname: test\ndescription: Test skill.\n---\n\n# Test Skill\n\nInstructions here.`
-    mkdirSync(join(skillsDir, "test"), { recursive: true })
-    writeFileSync(join(skillsDir, "test", "SKILL.md"), content)
+    const content = `---\nname: test\ndescription: Test skill.\n---\n\n# Test Skill\n\nInstructions here.`;
+    mkdirSync(join(skillsDir, "test"), { recursive: true });
+    writeFileSync(join(skillsDir, "test", "SKILL.md"), content);
 
-    const result = loadSkillContent(join(skillsDir, "test", "SKILL.md"))
-    expect(result).toBe(content)
-  })
+    const result = loadSkillContent(join(skillsDir, "test", "SKILL.md"));
+    expect(result).toBe(content);
+  });
 
   it("throws for nonexistent file", () => {
-    expect(() => loadSkillContent("/nonexistent/skill/SKILL.md")).toThrow()
-  })
-})
+    expect(() => loadSkillContent("/nonexistent/skill/SKILL.md")).toThrow();
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify failure**
@@ -197,6 +208,7 @@ describe("loadSkillContent", () => {
 ```bash
 pnpm test test/main/skills/loader.test.ts --run
 ```
+
 Expected: FAIL — module not found
 
 - [ ] **Step 3: Implement loader**
@@ -204,78 +216,78 @@ Expected: FAIL — module not found
 Write `src/main/skills/loader.ts`:
 
 ```typescript
-import { readFileSync, readdirSync, existsSync } from "fs"
-import { join } from "path"
-import type { Skill, SkillFrontmatter } from "./types"
+import { readFileSync, readdirSync, existsSync } from "fs";
+import { join } from "path";
+import type { Skill, SkillFrontmatter } from "./types";
 
 function parseFrontmatter(content: string): SkillFrontmatter | null {
-  const match = content.match(/^---\n([\s\S]*?)\n---/)
-  if (!match) return null
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return null;
 
-  const raw = match[1]
-  const result: Record<string, unknown> = {}
-  let currentKey: string | null = null
-  let currentArray: string[] | null = null
+  const raw = match[1];
+  const result: Record<string, unknown> = {};
+  let currentKey: string | null = null;
+  let currentArray: string[] | null = null;
 
   for (const line of raw.split("\n")) {
-    const arrayMatch = line.match(/^\s*-\s+(.+)/)
+    const arrayMatch = line.match(/^\s*-\s+(.+)/);
     if (currentKey && currentArray && arrayMatch) {
-      currentArray.push(arrayMatch[1].trim())
-      continue
+      currentArray.push(arrayMatch[1].trim());
+      continue;
     }
 
-    const kvMatch = line.match(/^(\w[\w-]*):\s*(.*)/)
+    const kvMatch = line.match(/^(\w[\w-]*):\s*(.*)/);
     if (kvMatch) {
       if (currentKey && currentArray) {
-        result[currentKey] = currentArray
-        currentArray = null
+        result[currentKey] = currentArray;
+        currentArray = null;
       }
-      currentKey = kvMatch[1]
-      const value = kvMatch[2].trim()
+      currentKey = kvMatch[1];
+      const value = kvMatch[2].trim();
       if (value === "") {
-        currentArray = []
+        currentArray = [];
       } else {
-        result[currentKey] = value
-        currentKey = null
+        result[currentKey] = value;
+        currentKey = null;
       }
     }
   }
 
   if (currentKey && currentArray) {
-    result[currentKey] = currentArray
+    result[currentKey] = currentArray;
   }
 
-  const frontmatter = result as unknown as SkillFrontmatter
-  if (!frontmatter.name || !frontmatter.description) return null
-  return frontmatter
+  const frontmatter = result as unknown as SkillFrontmatter;
+  if (!frontmatter.name || !frontmatter.description) return null;
+  return frontmatter;
 }
 
 export function scanSkills(dir: string): Skill[] {
-  if (!existsSync(dir)) return []
+  if (!existsSync(dir)) return [];
 
-  const skills: Skill[] = []
-  let entries: string[]
+  const skills: Skill[] = [];
+  let entries: string[];
   try {
-    entries = readdirSync(dir, { withFileTypes: true })
+    entries = readdirSync(dir, { withFileTypes: true });
   } catch {
-    return []
+    return [];
   }
 
   for (const entry of entries) {
-    if (!entry.isDirectory()) continue
-    const skillDir = join(dir, entry.name)
-    const mdPath = join(skillDir, "SKILL.md")
-    if (!existsSync(mdPath)) continue
+    if (!entry.isDirectory()) continue;
+    const skillDir = join(dir, entry.name);
+    const mdPath = join(skillDir, "SKILL.md");
+    if (!existsSync(mdPath)) continue;
 
-    let content: string
+    let content: string;
     try {
-      content = readFileSync(mdPath, "utf-8")
+      content = readFileSync(mdPath, "utf-8");
     } catch {
-      continue
+      continue;
     }
 
-    const fm = parseFrontmatter(content)
-    if (!fm) continue
+    const fm = parseFrontmatter(content);
+    if (!fm) continue;
 
     skills.push({
       name: fm.name,
@@ -284,14 +296,14 @@ export function scanSkills(dir: string): Skill[] {
       baseDir: skillDir,
       filePath: mdPath,
       agentIds: fm.agentIds,
-    })
+    });
   }
 
-  return skills
+  return skills;
 }
 
 export function loadSkillContent(filePath: string): string {
-  return readFileSync(filePath, "utf-8")
+  return readFileSync(filePath, "utf-8");
 }
 ```
 
@@ -300,6 +312,7 @@ export function loadSkillContent(filePath: string): string {
 ```bash
 pnpm test test/main/skills/loader.test.ts --run
 ```
+
 Expected: all PASS
 
 - [ ] **Step 5: Commit**
@@ -314,6 +327,7 @@ git commit -m "feat(skills): add skill loader with directory scan and frontmatte
 ### Task 3: Add builtinSkillsDir to paths.ts
 
 **Files:**
+
 - Modify: `src/main/utils/paths.ts`
 
 - [ ] **Step 1: Add builtinSkillsDir getter**
@@ -355,6 +369,7 @@ git commit -m "feat(skills): add builtin skills dir path and electron-builder co
 ### Task 4: Implement SkillPresenter
 
 **Files:**
+
 - Create: `src/main/presenter/skillPresenter.ts`
 - Create: `test/main/skills/skillPresenter.test.ts`
 
@@ -363,131 +378,131 @@ git commit -m "feat(skills): add builtin skills dir path and electron-builder co
 Write `test/main/skills/skillPresenter.test.ts`:
 
 ```typescript
-import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { mkdirSync, rmSync, writeFileSync } from "fs"
-import { join } from "path"
-import { tmpdir } from "os"
-import { SkillPresenter } from "@/presenter/skillPresenter"
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { join } from "path";
+import { tmpdir } from "os";
+import { SkillPresenter } from "@/presenter/skillPresenter";
 
-const testRoot = join(tmpdir(), `slime-skills-pres-${Date.now()}`)
-const builtinDir = join(testRoot, "builtin")
-const localDir = join(testRoot, "local")
+const testRoot = join(tmpdir(), `slime-skills-pres-${Date.now()}`);
+const builtinDir = join(testRoot, "builtin");
+const localDir = join(testRoot, "local");
 
 function writeSkill(dir: string, name: string, description: string, agentIds?: string[]) {
-  const skillDir = join(dir, name)
-  mkdirSync(skillDir, { recursive: true })
-  const lines = [`---`, `name: ${name}`, `description: ${description}`]
+  const skillDir = join(dir, name);
+  mkdirSync(skillDir, { recursive: true });
+  const lines = [`---`, `name: ${name}`, `description: ${description}`];
   if (agentIds) {
-    lines.push("agentIds:")
-    agentIds.forEach((id) => lines.push(`  - ${id}`))
+    lines.push("agentIds:");
+    agentIds.forEach((id) => lines.push(`  - ${id}`));
   }
-  lines.push("---", "", `# ${name}`, "", "Content here.")
-  writeFileSync(join(skillDir, "SKILL.md"), lines.join("\n"))
+  lines.push("---", "", `# ${name}`, "", "Content here.");
+  writeFileSync(join(skillDir, "SKILL.md"), lines.join("\n"));
 }
 
 beforeEach(() => {
-  mkdirSync(builtinDir, { recursive: true })
-  mkdirSync(localDir, { recursive: true })
-})
+  mkdirSync(builtinDir, { recursive: true });
+  mkdirSync(localDir, { recursive: true });
+});
 
 afterEach(() => {
-  rmSync(testRoot, { recursive: true, force: true })
-})
+  rmSync(testRoot, { recursive: true, force: true });
+});
 
 describe("SkillPresenter", () => {
   it("loads builtin skills filtered by agentId", () => {
-    writeSkill(builtinDir, "guide", "Guide skill.", ["hal-ai"])
-    writeSkill(builtinDir, "secret", "Secret skill.", ["other-agent"])
+    writeSkill(builtinDir, "guide", "Guide skill.", ["hal-ai"]);
+    writeSkill(builtinDir, "secret", "Secret skill.", ["other-agent"]);
 
-    const sp = new SkillPresenter(builtinDir, localDir)
-    const list = sp.getSkillList("hal-ai")
+    const sp = new SkillPresenter(builtinDir, localDir);
+    const list = sp.getSkillList("hal-ai");
 
-    expect(list).toHaveLength(1)
-    expect(list[0].name).toBe("guide")
-  })
+    expect(list).toHaveLength(1);
+    expect(list[0].name).toBe("guide");
+  });
 
   it("loads local skills enabled in AgentConfig", () => {
-    writeSkill(localDir, "debugging", "Debug.")
-    writeSkill(localDir, "review", "Review.")
+    writeSkill(localDir, "debugging", "Debug.");
+    writeSkill(localDir, "review", "Review.");
 
-    const sp = new SkillPresenter(builtinDir, localDir)
-    const list = sp.getSkillList("agent-1", ["debugging"])
+    const sp = new SkillPresenter(builtinDir, localDir);
+    const list = sp.getSkillList("agent-1", ["debugging"]);
 
-    expect(list).toHaveLength(1)
-    expect(list[0].name).toBe("debugging")
-  })
+    expect(list).toHaveLength(1);
+    expect(list[0].name).toBe("debugging");
+  });
 
   it("merges builtin and local skills (builtin first)", () => {
-    writeSkill(builtinDir, "guide", "Guide.", ["hal-ai"])
-    writeSkill(localDir, "debugging", "Debug.")
+    writeSkill(builtinDir, "guide", "Guide.", ["hal-ai"]);
+    writeSkill(localDir, "debugging", "Debug.");
 
-    const sp = new SkillPresenter(builtinDir, localDir)
-    const list = sp.getSkillList("hal-ai", ["debugging"])
+    const sp = new SkillPresenter(builtinDir, localDir);
+    const list = sp.getSkillList("hal-ai", ["debugging"]);
 
-    expect(list).toHaveLength(2)
-    expect(list[0].name).toBe("guide")
-    expect(list[1].name).toBe("debugging")
-  })
+    expect(list).toHaveLength(2);
+    expect(list[0].name).toBe("guide");
+    expect(list[1].name).toBe("debugging");
+  });
 
   it("builtin overrides local with same name", () => {
-    writeSkill(builtinDir, "debugging", "Builtin debug.", ["hal-ai"])
-    writeSkill(localDir, "debugging", "Local debug.")
+    writeSkill(builtinDir, "debugging", "Builtin debug.", ["hal-ai"]);
+    writeSkill(localDir, "debugging", "Local debug.");
 
-    const sp = new SkillPresenter(builtinDir, localDir)
-    const list = sp.getSkillList("hal-ai", ["debugging"])
+    const sp = new SkillPresenter(builtinDir, localDir);
+    const list = sp.getSkillList("hal-ai", ["debugging"]);
 
-    expect(list).toHaveLength(1)
-    expect(list[0].description).toBe("Builtin debug.")
-  })
+    expect(list).toHaveLength(1);
+    expect(list[0].description).toBe("Builtin debug.");
+  });
 
   it("returns empty array when no skills match", () => {
-    const sp = new SkillPresenter(builtinDir, localDir)
-    const list = sp.getSkillList("unknown-agent")
-    expect(list).toEqual([])
-  })
+    const sp = new SkillPresenter(builtinDir, localDir);
+    const list = sp.getSkillList("unknown-agent");
+    expect(list).toEqual([]);
+  });
 
   it("getSkillList returns SkillInfo array (no filePath exposed)", () => {
-    writeSkill(builtinDir, "guide", "Guide.", ["hal-ai"])
+    writeSkill(builtinDir, "guide", "Guide.", ["hal-ai"]);
 
-    const sp = new SkillPresenter(builtinDir, localDir)
-    const list = sp.getSkillList("hal-ai")
+    const sp = new SkillPresenter(builtinDir, localDir);
+    const list = sp.getSkillList("hal-ai");
 
-    expect(list[0]).not.toHaveProperty("filePath")
-    expect(list[0]).not.toHaveProperty("baseDir")
-    expect(list[0]).not.toHaveProperty("agentIds")
-    expect(list[0]).toHaveProperty("name")
-    expect(list[0]).toHaveProperty("description")
-    expect(list[0]).toHaveProperty("source")
-  })
+    expect(list[0]).not.toHaveProperty("filePath");
+    expect(list[0]).not.toHaveProperty("baseDir");
+    expect(list[0]).not.toHaveProperty("agentIds");
+    expect(list[0]).toHaveProperty("name");
+    expect(list[0]).toHaveProperty("description");
+    expect(list[0]).toHaveProperty("source");
+  });
 
   it("loadSkill returns full SKILL.md content", () => {
-    writeSkill(localDir, "debugging", "Debug skill.")
+    writeSkill(localDir, "debugging", "Debug skill.");
 
-    const sp = new SkillPresenter(builtinDir, localDir)
-    sp.getSkillList("agent-1", ["debugging"])
-    const content = sp.loadSkill("debugging")
+    const sp = new SkillPresenter(builtinDir, localDir);
+    sp.getSkillList("agent-1", ["debugging"]);
+    const content = sp.loadSkill("debugging");
 
-    expect(content).toContain("---")
-    expect(content).toContain("name: debugging")
-    expect(content).toContain("# debugging")
-  })
+    expect(content).toContain("---");
+    expect(content).toContain("name: debugging");
+    expect(content).toContain("# debugging");
+  });
 
   it("loadSkill throws for unknown skill", () => {
-    const sp = new SkillPresenter(builtinDir, localDir)
-    expect(() => sp.loadSkill("nonexistent")).toThrow('Skill "nonexistent" not found')
-  })
+    const sp = new SkillPresenter(builtinDir, localDir);
+    expect(() => sp.loadSkill("nonexistent")).toThrow('Skill "nonexistent" not found');
+  });
 
   it("listLocalSkills returns all local skills", () => {
-    writeSkill(localDir, "a", "A.")
-    writeSkill(localDir, "b", "B.")
+    writeSkill(localDir, "a", "A.");
+    writeSkill(localDir, "b", "B.");
 
-    const sp = new SkillPresenter(builtinDir, localDir)
-    const list = sp.listLocalSkills()
+    const sp = new SkillPresenter(builtinDir, localDir);
+    const list = sp.listLocalSkills();
 
-    expect(list).toHaveLength(2)
-    expect(list.map((s) => s.name).sort()).toEqual(["a", "b"])
-  })
-})
+    expect(list).toHaveLength(2);
+    expect(list.map((s) => s.name).sort()).toEqual(["a", "b"]);
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify failure**
@@ -495,6 +510,7 @@ describe("SkillPresenter", () => {
 ```bash
 pnpm test test/main/skills/skillPresenter.test.ts --run
 ```
+
 Expected: FAIL — module not found
 
 - [ ] **Step 3: Implement SkillPresenter**
@@ -502,12 +518,12 @@ Expected: FAIL — module not found
 Write `src/main/presenter/skillPresenter.ts`:
 
 ```typescript
-import type { SkillInfo } from "@shared/types/skills"
-import type { Skill } from "@/skills/types"
-import { scanSkills, loadSkillContent } from "@/skills/loader"
+import type { SkillInfo } from "@shared/types/skills";
+import type { Skill } from "@/skills/types";
+import { scanSkills, loadSkillContent } from "@/skills/loader";
 
 export class SkillPresenter {
-  private cache: Skill[] | null = null
+  private cache: Skill[] | null = null;
 
   constructor(
     private builtinDir: string,
@@ -515,53 +531,53 @@ export class SkillPresenter {
   ) {}
 
   private loadCache(): Skill[] {
-    if (this.cache) return this.cache
+    if (this.cache) return this.cache;
 
-    const builtin = scanSkills(this.builtinDir).map((s) => ({ ...s, source: "builtin" as const }))
-    const local = scanSkills(this.localDir).map((s) => ({ ...s, source: "local" as const }))
+    const builtin = scanSkills(this.builtinDir).map((s) => ({ ...s, source: "builtin" as const }));
+    const local = scanSkills(this.localDir).map((s) => ({ ...s, source: "local" as const }));
 
     // builtin overrides local with same name
-    const builtinNames = new Set(builtin.map((s) => s.name))
-    const filteredLocal = local.filter((s) => !builtinNames.has(s.name))
+    const builtinNames = new Set(builtin.map((s) => s.name));
+    const filteredLocal = local.filter((s) => !builtinNames.has(s.name));
 
-    this.cache = [...builtin, ...filteredLocal]
-    return this.cache
+    this.cache = [...builtin, ...filteredLocal];
+    return this.cache;
   }
 
   getSkillList(agentId: string, enabledSkills?: string[]): SkillInfo[] {
-    const all = this.loadCache()
-    const enabledSet = enabledSkills ? new Set(enabledSkills) : null
+    const all = this.loadCache();
+    const enabledSet = enabledSkills ? new Set(enabledSkills) : null;
 
     const filtered = all.filter((s) => {
       if (s.source === "builtin") {
-        return s.agentIds?.includes(agentId)
+        return s.agentIds?.includes(agentId);
       }
       // local: must be explicitly enabled
       if (enabledSet) {
-        return enabledSet.has(s.name)
+        return enabledSet.has(s.name);
       }
-      return false
-    })
+      return false;
+    });
 
     return filtered.map((s) => ({
       name: s.name,
       description: s.description,
       source: s.source,
-    }))
+    }));
   }
 
   loadSkill(name: string): string {
-    const all = this.loadCache()
-    const skill = all.find((s) => s.name === name)
-    if (!skill) throw new Error(`Skill "${name}" not found`)
-    return loadSkillContent(skill.filePath)
+    const all = this.loadCache();
+    const skill = all.find((s) => s.name === name);
+    if (!skill) throw new Error(`Skill "${name}" not found`);
+    return loadSkillContent(skill.filePath);
   }
 
   listLocalSkills(): SkillInfo[] {
-    const all = this.loadCache()
+    const all = this.loadCache();
     return all
       .filter((s) => s.source === "local")
-      .map((s) => ({ name: s.name, description: s.description, source: s.source }))
+      .map((s) => ({ name: s.name, description: s.description, source: s.source }));
   }
 }
 ```
@@ -571,6 +587,7 @@ export class SkillPresenter {
 ```bash
 pnpm test test/main/skills/skillPresenter.test.ts --run
 ```
+
 Expected: all PASS
 
 - [ ] **Step 5: Commit**
@@ -585,6 +602,7 @@ git commit -m "feat(skills): add SkillPresenter with caching, filtering, and loa
 ### Task 5: Extend AgentConfig with skills field
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 
 - [ ] **Step 1: Add skills field to AgentConfig**
@@ -593,15 +611,15 @@ Modify `src/shared/types/agent.d.ts`, add `skills` to `AgentConfig` interface:
 
 ```typescript
 export interface AgentConfig {
-  capabilityRequirements?: string[]
-  systemPrompt?: string
-  temperature?: number
-  contextLength?: number
-  maxTokens?: number
-  disabledTools?: string[]
-  subagentEnabled?: boolean
-  mcpTools?: string[]
-  skills?: string[]  // enabled local skill names
+  capabilityRequirements?: string[];
+  systemPrompt?: string;
+  temperature?: number;
+  contextLength?: number;
+  maxTokens?: number;
+  disabledTools?: string[];
+  subagentEnabled?: boolean;
+  mcpTools?: string[];
+  skills?: string[]; // enabled local skill names
 }
 ```
 
@@ -617,6 +635,7 @@ git commit -m "feat(skills): add skills field to AgentConfig"
 ### Task 6: Wire AgentConfigPresenter to expose listLocalSkills
 
 **Files:**
+
 - Modify: `src/main/presenter/agentConfigPresenter.ts`
 - Modify: `src/main/presenter/index.ts`
 - Modify: `src/shared/types/presenters/agentConfig.presenter.d.ts`
@@ -626,11 +645,11 @@ git commit -m "feat(skills): add skills field to AgentConfig"
 Modify `src/shared/types/presenters/agentConfig.presenter.d.ts`, add method:
 
 ```typescript
-import type { SkillInfo } from "../skills"
+import type { SkillInfo } from "../skills";
 
 export interface IAgentConfigPresenter {
   // ... existing methods
-  listLocalSkills(): Promise<SkillInfo[]>
+  listLocalSkills(): Promise<SkillInfo[]>;
 }
 ```
 
@@ -639,8 +658,8 @@ export interface IAgentConfigPresenter {
 Modify `src/main/presenter/agentConfigPresenter.ts`. Import SkillInfo and SkillPresenter:
 
 ```typescript
-import type { SkillInfo } from "@shared/types/skills"
-import type { SkillPresenter } from "./skillPresenter"
+import type { SkillInfo } from "@shared/types/skills";
+import type { SkillPresenter } from "./skillPresenter";
 ```
 
 Add constructor and method to `AgentConfigPresenter`:
@@ -663,13 +682,13 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
 In `src/main/presenter/index.ts`, after creating skillPresenter, inject it into agentConfigPresenter:
 
 ```typescript
-this.agentConfigPresenter = new AgentConfigPresenter()
-this.agentConfigPresenter.setSkillPresenter(skillPresenter)
+this.agentConfigPresenter = new AgentConfigPresenter();
+this.agentConfigPresenter.setSkillPresenter(skillPresenter);
 ```
 
 - [ ] **Step 2: Commit**
 
-```bash
+````bash
 git add src/main/presenter/agentConfigPresenter.ts src/main/presenter/index.ts
 git commit -m "feat(skills): add listLocalSkills to AgentConfigPresenter"
 
@@ -690,7 +709,7 @@ export function buildSkillListXML(skills: { name: string; description: string }[
   const lines = skills.map((s) => `- ${s.name}: ${s.description}`)
   return `<system-reminder>\nThe following skills are available for use with the Skill tool:\n${lines.join("\n")}\n</system-reminder>`
 }
-```
+````
 
 Modify `buildContext` to accept `options.skills`, and append skill list to system prompt:
 
@@ -700,17 +719,18 @@ export function buildContext(
   newUserContent: string,
   db: BetterSqlite3.Database,
   options?: {
-    reserveTokens?: number
-    agentSystemPrompt?: string
-    skillListXML?: string | null
+    reserveTokens?: number;
+    agentSystemPrompt?: string;
+    skillListXML?: string | null;
   },
 ): CoreMessage[] {
   // ... existing code ...
-  const systemPrompt = config?.systemPrompt || options?.agentSystemPrompt || "You are a helpful AI assistant."
+  const systemPrompt =
+    config?.systemPrompt || options?.agentSystemPrompt || "You are a helpful AI assistant.";
   const finalSystemPrompt = options?.skillListXML
     ? systemPrompt + "\n\n" + options.skillListXML
-    : systemPrompt
-  const systemMsg: CoreMessage = { role: "system", content: finalSystemPrompt }
+    : systemPrompt;
+  const systemMsg: CoreMessage = { role: "system", content: finalSystemPrompt };
   // ... rest unchanged ...
 }
 ```
@@ -720,25 +740,25 @@ export function buildContext(
 Modify `test/main/agentChat/contextBuilder.test.ts` to test the new function:
 
 ```typescript
-import { buildSkillListXML } from "@/presenter/agentChat/contextBuilder"
+import { buildSkillListXML } from "@/presenter/agentChat/contextBuilder";
 
 describe("buildSkillListXML", () => {
   it("returns null for empty skills", () => {
-    expect(buildSkillListXML([])).toBeNull()
-  })
+    expect(buildSkillListXML([])).toBeNull();
+  });
 
   it("formats skills in XML", () => {
     const result = buildSkillListXML([
       { name: "debug", description: "Debug errors." },
       { name: "review", description: "Review code." },
-    ])
-    expect(result).toContain("<system-reminder>")
-    expect(result).toContain("Skill tool")
-    expect(result).toContain("- debug: Debug errors.")
-    expect(result).toContain("- review: Review code.")
-    expect(result).toContain("</system-reminder>")
-  })
-})
+    ]);
+    expect(result).toContain("<system-reminder>");
+    expect(result).toContain("Skill tool");
+    expect(result).toContain("- debug: Debug errors.");
+    expect(result).toContain("- review: Review code.");
+    expect(result).toContain("</system-reminder>");
+  });
+});
 ```
 
 - [ ] **Step 3: Run tests**
@@ -746,6 +766,7 @@ describe("buildSkillListXML", () => {
 ```bash
 pnpm test test/main/agentChat/contextBuilder.test.ts --run
 ```
+
 Expected: all PASS
 
 - [ ] **Step 4: Commit**
@@ -760,6 +781,7 @@ git commit -m "feat(skills): add buildSkillListXML and integrate into buildConte
 ### Task 8: Integrate Skill tool into ToolPresenter
 
 **Files:**
+
 - Modify: `src/main/presenter/toolPresenter.ts`
 - Modify: `src/main/presenter/index.ts`
 
@@ -823,14 +845,17 @@ Important:
 Modify `src/main/presenter/index.ts`. Import and create SkillPresenter:
 
 ```typescript
-import { SkillPresenter } from "./skillPresenter"
-import { paths } from "@/utils"
+import { SkillPresenter } from "./skillPresenter";
+import { paths } from "@/utils";
 ```
 
 In the constructor, before creating the ToolPresenter:
 
 ```typescript
-const skillPresenter = new SkillPresenter(paths.builtinSkillsDir, join(paths.effectiveProjectRoot, "skills"))
+const skillPresenter = new SkillPresenter(
+  paths.builtinSkillsDir,
+  join(paths.effectiveProjectRoot, "skills"),
+);
 ```
 
 Then pass it to ToolPresenter:
@@ -843,7 +868,7 @@ this.toolPresenter = new ToolPresenter(
   browserSession,
   mcpBridge,
   skillPresenter,
-)
+);
 ```
 
 And to AgentChatPresenter (see next task).
@@ -853,17 +878,31 @@ And to AgentChatPresenter (see next task).
 Modify `test/main/toolPresenter.test.ts`. The test with 19 tools should now expect 20 (including "Skill"). Update:
 
 ```typescript
-expect(Object.keys(tools)).toHaveLength(20)
+expect(Object.keys(tools)).toHaveLength(20);
 expect(Object.keys(tools)).toEqual(
   expect.arrayContaining([
-    "read", "write", "edit", "exec", "ask_user", "open",
-    "evolution_start", "evolution_plan", "evolution_complete",
-    "browser_navigate", "browser_screenshot", "browser_snapshot",
-    "browser_click", "browser_type", "browser_scroll",
-    "browser_evaluate", "browser_wait", "browser_close", "web_fetch",
+    "read",
+    "write",
+    "edit",
+    "exec",
+    "ask_user",
+    "open",
+    "evolution_start",
+    "evolution_plan",
+    "evolution_complete",
+    "browser_navigate",
+    "browser_screenshot",
+    "browser_snapshot",
+    "browser_click",
+    "browser_type",
+    "browser_scroll",
+    "browser_evaluate",
+    "browser_wait",
+    "browser_close",
+    "web_fetch",
     "Skill",
   ]),
-)
+);
 ```
 
 - [ ] **Step 5: Run tests**
@@ -871,6 +910,7 @@ expect(Object.keys(tools)).toEqual(
 ```bash
 pnpm test test/main/toolPresenter.test.ts --run
 ```
+
 Expected: all PASS
 
 - [ ] **Step 6: Commit**
@@ -885,6 +925,7 @@ git commit -m "feat(skills): add Skill tool to ToolPresenter and wire SkillPrese
 ### Task 9: Integrate skillList into AgentChatPresenter
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentChatPresenter.ts`
 
 - [ ] **Step 1: Accept SkillPresenter and pass skillList to contextBuilder**
@@ -910,12 +951,12 @@ In the `chat()` method, update the `buildContext` call to include the skill list
 ```typescript
 const skillListXML = this.skillPresenter
   ? buildSkillListXML(this.skillPresenter.getSkillList(session.agentId, agent?.config?.skills))
-  : null
+  : null;
 
 const messages: CoreMessage[] = buildContext(sessionId, content, db, {
   agentSystemPrompt: agent?.config?.systemPrompt,
   skillListXML,
-})
+});
 ```
 
 - [ ] **Step 3: Update Presenter wiring in index.ts**
@@ -928,7 +969,7 @@ this.agentChatEngine = new AgentChatPresenter(
   this.toolPresenter,
   this.contentPresenter,
   skillPresenter,
-)
+);
 ```
 
 - [ ] **Step 4: Update agentChatPresenter tests**
@@ -936,7 +977,7 @@ this.agentChatEngine = new AgentChatPresenter(
 Modify `test/main/agentChat/agentChatPresenter.test.ts` to pass `undefined` as the 4th arg to AgentChatPresenter constructor (existing tests don't test skills):
 
 ```typescript
-const acp = new AgentChatPresenter(gateway, toolPresenter, contentPresenter)
+const acp = new AgentChatPresenter(gateway, toolPresenter, contentPresenter);
 // stays the same since skillPresenter is optional
 ```
 
@@ -945,6 +986,7 @@ const acp = new AgentChatPresenter(gateway, toolPresenter, contentPresenter)
 ```bash
 pnpm test test/main/agentChat/agentChatPresenter.test.ts --run
 ```
+
 Expected: all PASS
 
 - [ ] **Step 6: Commit**
@@ -959,6 +1001,7 @@ git commit -m "feat(skills): pass skillList to contextBuilder in AgentChatPresen
 ### Task 10: Add Skills tab to AgentEditDialog
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/AgentEditDialog.vue`
 
 - [ ] **Step 1: Add skills form state and IPC**
@@ -966,22 +1009,22 @@ git commit -m "feat(skills): pass skillList to contextBuilder in AgentChatPresen
 In the script section, add a `skills` reactive property and loading logic inside the `watch`:
 
 ```typescript
-const agentConfig = usePresenter("agentConfigPresenter")
+const agentConfig = usePresenter("agentConfigPresenter");
 // Add after other reactive declarations:
-const skills = ref<string[]>([])
-const availableSkills = ref<SkillInfo[]>([])
+const skills = ref<string[]>([]);
+const availableSkills = ref<SkillInfo[]>([]);
 
 // In the watch(open) handler, add after mcpTools load:
-skills.value = cfg?.skills ?? []
+skills.value = cfg?.skills ?? [];
 agentConfig.listLocalSkills().then((s: SkillInfo[]) => {
-  availableSkills.value = s
-})
+  availableSkills.value = s;
+});
 ```
 
 Import SkillInfo:
 
 ```typescript
-import type { SkillInfo } from "@shared/types/skills"
+import type { SkillInfo } from "@shared/types/skills";
 ```
 
 - [ ] **Step 2: Add Skills section to template**
@@ -1030,7 +1073,7 @@ const config: AgentConfig = {
   mcpTools: mcpTools.value.length > 0 ? mcpTools.value : undefined,
   skills: skills.value.length > 0 ? skills.value : undefined,
   subagentEnabled: subagentEnabled.value,
-}
+};
 ```
 
 - [ ] **Step 4: Commit**
@@ -1049,6 +1092,7 @@ git commit -m "feat(skills): add Skills tab to AgentEditDialog for local skill s
 ```bash
 pnpm test --run
 ```
+
 Expected: all tests PASS
 
 - [ ] **Step 2: Run type check**
@@ -1056,11 +1100,13 @@ Expected: all tests PASS
 ```bash
 pnpm run typecheck
 ```
+
 Expected: no errors
 
 - [ ] **Step 3: Manual verification**
 
 Start dev server and verify:
+
 1. Create a local skill: `mkdir -p skills/test-skill && echo '---\nname: test-skill\ndescription: A test skill.\n---\n\n# Test\n\nDo something.' > skills/test-skill/SKILL.md`
 2. Open AgentEditDialog → Skills tab shows "test-skill"
 3. Enable it for an Agent → start chat → system prompt includes skill list XML

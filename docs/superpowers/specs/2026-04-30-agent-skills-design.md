@@ -13,7 +13,6 @@
 name: skill-name
 description: Description of when to use this skill.
 ---
-
 # Skill Title
 
 Markdown 正文（格式无关，Agent 自行理解）
@@ -23,24 +22,24 @@ Markdown 正文（格式无关，Agent 自行理解）
 
 ## Skill 类型
 
-| 属性 | Builtin | Local |
-|------|---------|-------|
-| 来源 | app 资源内（只读） | workspace `skills/` |
+| 属性     | Builtin                    | Local                          |
+| -------- | -------------------------- | ------------------------------ |
+| 来源     | app 资源内（只读）         | workspace `skills/`            |
 | 可见范围 | 仅绑定 Agent（`agentIds`） | 所有 Agent（AgentConfig 配置） |
-| 用户可见 | 完全透明 | 可见可配置 |
-| 用户可改 | 不可 | 可启用/禁用 |
+| 用户可见 | 完全透明                   | 可见可配置                     |
+| 用户可改 | 不可                       | 可启用/禁用                    |
 
 ## 内部类型
 
 ```typescript
 interface Skill {
-  name: string
-  description: string
-  source: "builtin" | "local"
-  baseDir: string
-  filePath: string
-  agentIds?: string[]   // builtin 必填
-  enabled?: boolean     // local
+  name: string;
+  description: string;
+  source: "builtin" | "local";
+  baseDir: string;
+  filePath: string;
+  agentIds?: string[]; // builtin 必填
+  enabled?: boolean; // local
 }
 ```
 
@@ -64,23 +63,23 @@ workspace/skills/
 
 ### 新增
 
-| 文件 | 职责 |
-|------|------|
-| `src/main/skills/types.ts` | Skill 类型定义 |
-| `src/main/skills/loader.ts` | 目录扫描 + YAML frontmatter 解析 |
-| `src/main/presenter/skillPresenter.ts` | 缓存、过滤、loadSkill、文件监控 |
-| `src/shared/types/skills.ts` | 共享类型 |
+| 文件                                   | 职责                             |
+| -------------------------------------- | -------------------------------- |
+| `src/main/skills/types.ts`             | Skill 类型定义                   |
+| `src/main/skills/loader.ts`            | 目录扫描 + YAML frontmatter 解析 |
+| `src/main/presenter/skillPresenter.ts` | 缓存、过滤、loadSkill、文件监控  |
+| `src/shared/types/skills.ts`           | 共享类型                         |
 
 ### 修改
 
-| 文件 | 改动 |
-|------|------|
-| `contextBuilder.ts` | 接收 skillList 注入 system prompt |
-| `toolPresenter.ts` | 注册 `Skill` 工具 |
-| `agentChatPresenter.ts` | 传 skillList 给 contextBuilder，Skill 工具处理 |
-| `agent.d.ts` (AgentConfig) | 加 `skills?: string[]` |
-| `agentDao.ts` | 无需改（config_json 自动包含新字段） |
-| AgentEditDialog | 加 Skills tab（勾选 local skills） |
+| 文件                       | 改动                                           |
+| -------------------------- | ---------------------------------------------- |
+| `contextBuilder.ts`        | 接收 skillList 注入 system prompt              |
+| `toolPresenter.ts`         | 注册 `Skill` 工具                              |
+| `agentChatPresenter.ts`    | 传 skillList 给 contextBuilder，Skill 工具处理 |
+| `agent.d.ts` (AgentConfig) | 加 `skills?: string[]`                         |
+| `agentDao.ts`              | 无需改（config_json 自动包含新字段）           |
+| AgentEditDialog            | 加 Skills tab（勾选 local skills）             |
 
 ## 架构和数据流
 
@@ -138,8 +137,8 @@ Important:
 
 ```typescript
 if (name === "Skill") {
-  const content = await this.skillPresenter.loadSkill(parsedArgs.skill)
-  result = `<system-reminder>\n${content}\n</system-reminder>`
+  const content = await this.skillPresenter.loadSkill(parsedArgs.skill);
+  result = `<system-reminder>\n${content}\n</system-reminder>`;
 }
 ```
 
@@ -161,7 +160,7 @@ skillPresenter.getSkillList(agentId)
 ```typescript
 interface AgentConfig {
   // ... 现有字段
-  skills?: string[]  // 启用的 local skill 名称列表
+  skills?: string[]; // 启用的 local skill 名称列表
 }
 ```
 

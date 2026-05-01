@@ -79,22 +79,22 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 
 ### 已实现 Presenter
 
-| Presenter                 | 职责                                                                                                                                                                              |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AppPresenter              | 应用信息                                                                                                                                                                          |
-| ConfigPresenter           | 配置持久化                                                                                                                                                                        |
-| SessionPresenter          | 会话/消息管理                                                                                                                                                                     |
-| FilePresenter             | 文件读写+目录列表（resolveSafe 路径安全）                                                                                                                                         |
-| GitPresenter              | Git 操作（spawn，tag/commit/rollback/diff）                                                                                                                                       |
-| AgentPresenter            | AI 对话、工具调用、阶段感知 systemPrompt；通过 Gateway 本地代理调用 LLM                                                                                                           |
+| Presenter                 | 职责                                                                                                                                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AppPresenter              | 应用信息                                                                                                                                                                                                       |
+| ConfigPresenter           | 配置持久化                                                                                                                                                                                                     |
+| SessionPresenter          | 会话/消息管理                                                                                                                                                                                                  |
+| FilePresenter             | 文件读写+目录列表（resolveSafe 路径安全）                                                                                                                                                                      |
+| GitPresenter              | Git 操作（spawn，tag/commit/rollback/diff）                                                                                                                                                                    |
+| AgentPresenter            | AI 对话、工具调用、阶段感知 systemPrompt；通过 Gateway 本地代理调用 LLM                                                                                                                                        |
 | ToolPresenter             | 19 built-in tools（read/write/edit/exec/ask*user/open + 3 evolution + 9 browser*_ + web*fetch）+ MCP tools 动态合并；browser*_ 基于 playwright-core + 系统 Chrome（auto-detect）；web_fetch 基于 Node.js fetch |
-| EvolutionPresenter        | 进化状态机（idle→discuss→coding→applying）+ CHANGELOG + apply(打包+自替换) + archive CRUD + AI 语义回滚 + build verification                                                      |
-| ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                      |
-| WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                  |
-| GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                              |
-| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                              |
-| AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                        |
-| MCPServerPresenter        | MCP Server 生命周期管理：连接/发现工具/健康检查/CRUD + 会话工具状态；客户端 Map 管理                                                                                                      |
+| EvolutionPresenter        | 进化状态机（idle→discuss→coding→applying）+ CHANGELOG + apply(打包+自替换) + archive CRUD + AI 语义回滚 + build verification                                                                                   |
+| ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                                                   |
+| WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                                               |
+| GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                                                           |
+| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                                                           |
+| AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                                                     |
+| MCPServerPresenter        | MCP Server 生命周期管理：连接/发现工具/健康检查/CRUD + 会话工具状态；客户端 Map 管理                                                                                                                           |
 
 ### 自研 LLM 客户端
 

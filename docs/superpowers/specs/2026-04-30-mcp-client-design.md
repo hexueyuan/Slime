@@ -145,18 +145,18 @@ CREATE TABLE session_mcp_state (
 
 ```typescript
 class MCPServerPresenter {
-  private clients: Map<string, MCPClient>
-  private healthCheckers: Map<string, HealthChecker>
+  private clients: Map<string, MCPClient>;
+  private healthCheckers: Map<string, HealthChecker>;
 
-  init(): Promise<void>           // 加载所有 enabled server → 逐一 connect()
-  destroy(): Promise<void>        // 断开所有连接
+  init(): Promise<void>; // 加载所有 enabled server → 逐一 connect()
+  destroy(): Promise<void>; // 断开所有连接
 
   // CRUD（IPC 方法）
-  listServers(): MCPDashboard[]    // 含 status, tools_count, error
-  createServer(config): void       // 写 DB + connect + 发现工具
-  updateServer(id, config): void   // 断旧连新 + 重新发现
-  deleteServer(id): void           // 断开 + 删 DB + emit 事件
-  getServerTools(id): MCPTool[]    // 查看某 Server 工具列表
+  listServers(): MCPDashboard[]; // 含 status, tools_count, error
+  createServer(config): void; // 写 DB + connect + 发现工具
+  updateServer(id, config): void; // 断旧连新 + 重新发现
+  deleteServer(id): void; // 断开 + 删 DB + emit 事件
+  getServerTools(id): MCPTool[]; // 查看某 Server 工具列表
 }
 ```
 
@@ -166,14 +166,15 @@ class MCPServerPresenter {
 
 ```typescript
 class MCPToolBridge {
-  constructor(mcpPresenter: MCPServerPresenter, db: Database)
+  constructor(mcpPresenter: MCPServerPresenter, db: Database);
 
-  async getMcpTools(sessionId: string): Promise<Record<string, Tool>>
-  async executeTool(fullName: string, args: unknown): Promise<string>
+  async getMcpTools(sessionId: string): Promise<Record<string, Tool>>;
+  async executeTool(fullName: string, args: unknown): Promise<string>;
 }
 ```
 
 `getMcpTools` 逻辑：
+
 1. sessionId → session.agentId → agent.config_json.mcpTools[]
 2. 查 mcp_tools 表获取 input_schema
 3. 查 session_mcp_state 过滤 disabled 工具
@@ -233,11 +234,11 @@ Presenter.init()
 
 新增 `MCP_EVENTS`：
 
-| 事件 | 触发时机 |
-|------|----------|
-| `mcp:servers-changed` | Server CRUD |
-| `mcp:server-status` | 单个 Server 连接状态变化 |
-| `mcp:tools-changed` | 某 Server 工具列表变更 |
+| 事件                  | 触发时机                 |
+| --------------------- | ------------------------ |
+| `mcp:servers-changed` | Server CRUD              |
+| `mcp:server-status`   | 单个 Server 连接状态变化 |
+| `mcp:tools-changed`   | 某 Server 工具列表变更   |
 
 ## UI
 
