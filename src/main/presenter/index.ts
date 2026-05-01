@@ -77,6 +77,7 @@ export class Presenter implements IPresenter {
       this.toolPresenter,
       this.contentPresenter,
       skillPresenter,
+      this.agentConfigPresenter,
     );
     this.agentChatPresenter = new AgentChatPresenterAdapter(
       this.agentChatEngine,

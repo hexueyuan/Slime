@@ -15,6 +15,7 @@ import type { GatewayPresenter } from "../gatewayPresenter";
 import type { ToolPresenter } from "../toolPresenter";
 import type { ContentPresenter } from "../contentPresenter";
 import type { SkillPresenter } from "../skillPresenter";
+import type { AgentConfigPresenter } from "../agentConfigPresenter";
 import { createLLMClient } from "@/llm";
 import type { LLMClient, Tool } from "@/llm";
 
@@ -73,6 +74,7 @@ export class AgentChatPresenter {
     private toolPresenter: ToolPresenter,
     private contentPresenter: ContentPresenter,
     private skillPresenter?: SkillPresenter,
+    private agentConfigPresenter?: AgentConfigPresenter,
   ) {}
 
   getSessionState(sessionId: string): "idle" | "generating" | "error" {
@@ -322,19 +324,33 @@ export class AgentChatPresenter {
     });
 
     // Build skill list for this agent
-    const skillListXML = this.skillPresenter
-      ? buildSkillListXML(
-          this.skillPresenter.getSkillList(
-            session.agentId,
-            undefined,
-            agent?.config?.disabledSkills,
-          ),
-        )
-      : null;
+    const skillListXML =
+      this.skillPresenter && this.agentConfigPresenter
+        ? buildSkillListXML(
+            this.skillPresenter.getSkillList(
+              session.agentId,
+              (await this.agentConfigPresenter.getAgentSkillsDir(session.agentId)) ?? undefined,
+              agent?.config?.disabledSkills ?? [],
+            ),
+          )
+        : this.skillPresenter
+          ? buildSkillListXML(
+              this.skillPresenter.getSkillList(
+                session.agentId,
+                undefined,
+                agent?.config?.disabledSkills,
+              ),
+            )
+          : null;
+
+    // Read systemPrompt from SOUL.md if available
+    const agentSystemPrompt = this.agentConfigPresenter
+      ? await this.agentConfigPresenter.readSoulMd(session.agentId)
+      : (agent?.config?.systemPrompt ?? "");
 
     // Build context — contextBuilder deduplicates newUserContent from history
     const messages: CoreMessage[] = buildContext(sessionId, content, db, {
-      agentSystemPrompt: agent?.config?.systemPrompt,
+      agentSystemPrompt,
       skillListXML,
     });
     const client = this.createClient();
