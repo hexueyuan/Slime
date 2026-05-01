@@ -1,5 +1,33 @@
 <template>
-  <div class="flex h-full flex-col">
+  <div class="flex h-full flex-col gap-4">
+    <!-- Obsidian Vault 路径 -->
+    <div class="space-y-2">
+      <label class="text-sm font-medium text-foreground">Obsidian Vault 路径</label>
+      <div class="flex gap-2">
+        <input
+          v-model="vaultPath"
+          type="text"
+          placeholder="未设置，使用默认目录 (~/.slime/agents/)"
+          class="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-violet-500"
+          @blur="saveVaultPath"
+        />
+        <button
+          class="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
+          @click="selectVaultDir"
+        >
+          选择目录
+        </button>
+        <button
+          v-if="vaultPath"
+          class="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
+          @click="clearVaultPath"
+        >
+          清除
+        </button>
+      </div>
+      <p class="text-xs text-muted-foreground">修改路径后，已有 Agent 目录不会自动迁移。</p>
+    </div>
+
     <div class="rounded-md border border-red-800/50 p-4">
       <h3 class="mb-3 text-sm font-semibold text-red-500">危险区域</h3>
       <div class="flex items-start justify-between gap-4">
@@ -52,10 +80,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 
 const appPresenter = usePresenter("appPresenter");
+const configPresenter = usePresenter("configPresenter");
+
+const vaultPath = ref<string>("");
+
+onMounted(async () => {
+  const saved = await configPresenter.get("obsidian.vaultPath");
+  vaultPath.value = typeof saved === "string" ? saved : "";
+});
+
+async function selectVaultDir() {
+  const result = await window.electron.ipcRenderer.invoke("dialog:openDirectory");
+  if (result) {
+    vaultPath.value = result as string;
+    await configPresenter.set("obsidian.vaultPath", result);
+  }
+}
+
+async function clearVaultPath() {
+  vaultPath.value = "";
+  await configPresenter.set("obsidian.vaultPath", "");
+}
+
+async function saveVaultPath() {
+  await configPresenter.set("obsidian.vaultPath", vaultPath.value);
+}
 
 const showConfirm = ref(false);
 const resetting = ref(false);
