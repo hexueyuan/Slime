@@ -23,7 +23,8 @@ export const useAgentSessionStore = defineStore("agentSession", () => {
   );
 
   async function fetchSessions(agentId?: string) {
-    sessions.value = (await chatPresenter.getSessions(agentId)) as SessionRecord[];
+    const result = await chatPresenter.getSessions(agentId);
+    sessions.value = (Array.isArray(result) ? result : []) as SessionRecord[];
   }
 
   function setActiveSession(id: string | null) {

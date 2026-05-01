@@ -179,7 +179,7 @@ describe("relay", () => {
     expect(statsCalls).toHaveLength(1);
     const call = statsCalls[0] as { requestBody?: string; responseBody?: string };
     expect(call.requestBody).toBeDefined();
-    expect(JSON.parse(call.requestBody!).model).toBe("gpt-4o");
+    expect(JSON.parse(call.requestBody!).model).toBe("gpt-4o-2024");
     expect(call.responseBody).toBeDefined();
     expect(JSON.parse(call.responseBody!).content).toEqual(baseResponse.content);
   });
@@ -339,7 +339,7 @@ describe("relayStream", () => {
     expect(statsCalls).toHaveLength(1);
     const call = statsCalls[0] as { requestBody?: string; responseBody?: string };
     expect(call.requestBody).toBeDefined();
-    expect(JSON.parse(call.requestBody!).model).toBe("gpt-4o");
+    expect(JSON.parse(call.requestBody!).model).toBe("gpt-4o-2024");
     expect(call.responseBody).toBeDefined();
     const respBody = JSON.parse(call.responseBody!);
     expect(respBody.content).toEqual([{ type: "text", text: "hello world" }]);

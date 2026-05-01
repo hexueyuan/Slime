@@ -76,6 +76,7 @@ describe("App", () => {
         if (presenter === "configPresenter" && method === "get" && key === "app.onboarded")
           return true;
         if (presenter === "workspacePresenter" && method === "needsInit") return true;
+        if (presenter === "agentChatPresenter" && method === "getSessions") return [];
         if (presenter === "sessionPresenter" && method === "getSessions") return [];
         if (presenter === "sessionPresenter" && method === "createSession")
           return { id: "s1", title: "test", createdAt: Date.now(), updatedAt: Date.now() };
@@ -86,6 +87,6 @@ describe("App", () => {
     const wrapper = mount(App);
     await flushPromises();
     expect(wrapper.findComponent({ name: "OnboardingWizard" }).exists()).toBe(false);
-    expect(wrapper.findComponent({ name: "WorkspaceSetup" }).exists()).toBe(true);
+    expect(wrapper.findComponent({ name: "ChatroomPanel" }).exists()).toBe(true);
   });
 });

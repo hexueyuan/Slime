@@ -15,7 +15,8 @@ export const useAgentStore = defineStore("agent", () => {
   );
 
   async function fetchAgents() {
-    agents.value = (await agentConfig.listAgents()) as Agent[];
+    const result = await agentConfig.listAgents();
+    agents.value = (Array.isArray(result) ? result : []) as Agent[];
   }
 
   function setSelectedAgent(id: string | null) {

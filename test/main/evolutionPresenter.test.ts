@@ -52,6 +52,7 @@ function mockGit() {
     tag: vi.fn().mockResolvedValue(true),
     listTags: vi.fn().mockResolvedValue([]),
     getCurrentCommit: vi.fn().mockResolvedValue("abc123"),
+    getCurrentBranch: vi.fn().mockResolvedValue("main"),
     rollbackToRef: vi.fn().mockResolvedValue(true),
     addAndCommit: vi.fn().mockResolvedValue(true),
     stageAll: vi.fn().mockResolvedValue(true),
