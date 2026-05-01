@@ -29,7 +29,9 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
   }
 
   async listLocalSkills(): Promise<SkillInfo[]> {
-    return this.skillPresenter?.listLocalSkills() ?? [];
+    // TODO(Task5): implement per-agent skill listing
+    void this.skillPresenter;
+    return [];
   }
 
   init(): void {

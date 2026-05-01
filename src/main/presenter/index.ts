@@ -16,7 +16,6 @@ import { AgentChatPresenter } from "./agentChat/agentChatPresenter";
 import { AgentChatPresenterAdapter } from "./agentChatPresenterAdapter";
 import { buildRollbackPrompt } from "./rollbackPrompt";
 import type { EvolutionContext } from "@shared/types/evolution";
-import { join } from "path";
 import { EVOLUTION_EVENTS } from "@shared/events";
 import { eventBus } from "@/eventbus";
 import { logger, paths } from "@/utils";
@@ -60,10 +59,7 @@ export class Presenter implements IPresenter {
     this.evolutionPresenter = new EvolutionPresenter(this.gitPresenter);
     this.mcpServerPresenter = new MCPServerPresenter();
     const mcpBridge = new MCPToolBridge(this.mcpServerPresenter);
-    const skillPresenter = new SkillPresenter(
-      paths.builtinSkillsDir,
-      join(paths.effectiveProjectRoot, "skills"),
-    );
+    const skillPresenter = new SkillPresenter(paths.builtinSkillsDir, paths.agentsDir);
     this.toolPresenter = new ToolPresenter(
       this.filePresenter,
       this.contentPresenter,

@@ -323,7 +323,13 @@ export class AgentChatPresenter {
 
     // Build skill list for this agent
     const skillListXML = this.skillPresenter
-      ? buildSkillListXML(this.skillPresenter.getSkillList(session.agentId, agent?.config?.skills))
+      ? buildSkillListXML(
+          this.skillPresenter.getSkillList(
+            session.agentId,
+            undefined,
+            agent?.config?.disabledSkills,
+          ),
+        )
       : null;
 
     // Build context — contextBuilder deduplicates newUserContent from history
