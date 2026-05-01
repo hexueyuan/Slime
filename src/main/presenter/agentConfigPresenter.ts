@@ -8,6 +8,7 @@ import * as mcpDao from "@/db/models/mcpDao";
 import { eventBus } from "@/eventbus";
 import { AGENT_EVENTS } from "@shared/events";
 import { paths } from "@/utils";
+import { logger } from "@/utils/logger";
 import { getAgentDir, getSoulPath, getSkillsDir } from "@/utils/agentPaths";
 import type { ConfigPresenter } from "./configPresenter";
 import type { Agent } from "@shared/types/agent";
@@ -56,18 +57,19 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
       config: data.config,
     });
     eventBus.sendToRenderer(AGENT_EVENTS.CHANGED);
-    // 创建文件目录和 SOUL.md
+    // 创建文件目录和 SOUL.md（best-effort，失败不阻断）
     const agentDir = await this.getAgentDirForAgent(agent);
     if (agentDir) {
-      await fs.mkdir(agentDir, { recursive: true });
-      await fs.mkdir(getSkillsDir(agentDir), { recursive: true });
-      await fs.writeFile(
-        getSoulPath(agentDir),
-        "<!-- 在此编写 Agent 的系统提示词（System Prompt） -->\n",
-        {
-          flag: "wx",
-        },
-      );
+      try {
+        await fs.mkdir(agentDir, { recursive: true });
+        await fs.mkdir(getSkillsDir(agentDir), { recursive: true });
+        await fs.writeFile(
+          getSoulPath(agentDir),
+          "<!-- 在此编写 Agent 的系统提示词（System Prompt） -->\n",
+        );
+      } catch (e) {
+        logger.warn("createAgent: failed to initialize agent directory", { error: e });
+      }
     }
     return agent;
   }
@@ -107,7 +109,9 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
         const oldDir = getAgentDir(oldAgent, vaultPath, paths.agentsDir);
         const newDir = getAgentDir(updated, vaultPath, paths.agentsDir);
         if (oldDir && newDir && oldDir !== newDir) {
-          await fs.rename(oldDir, newDir).catch(() => {});
+          await fs.rename(oldDir, newDir).catch((e) => {
+            logger.warn("updateAgent: failed to rename agent directory", { error: e });
+          });
         }
       }
     }
