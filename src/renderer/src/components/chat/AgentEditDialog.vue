@@ -40,8 +40,9 @@ const contextLength = ref<number | undefined>(undefined);
 const maxTokens = ref<number | undefined>(undefined);
 const disabledTools = ref<string[]>([]);
 const mcpTools = ref<string[]>([]);
-const skills = ref<string[]>([]);
 const availableSkills = ref<SkillInfo[]>([]);
+const disabledSkills = ref<string[]>([]);
+const agentSkillsDir = ref<string | null>(null);
 const subagentEnabled = ref(false);
 const enabled = ref(true);
 
@@ -105,12 +106,15 @@ watch(
         maxTokens.value = cfg?.maxTokens;
         disabledTools.value = cfg?.disabledTools ?? [];
         mcpTools.value = cfg?.mcpTools ?? [];
-        skills.value = cfg?.skills ?? [];
+        disabledSkills.value = cfg?.disabledSkills ?? [];
         subagentEnabled.value = cfg?.subagentEnabled ?? false;
         enabled.value = agent.enabled;
       }
       agentConfig.listLocalSkills(props.agentId!).then((s: SkillInfo[]) => {
         availableSkills.value = s;
+      });
+      agentConfig.getAgentSkillsDir(props.agentId!).then((d: string | null) => {
+        agentSkillsDir.value = d;
       });
     } else {
       // Create mode: reset
@@ -130,12 +134,11 @@ watch(
       maxTokens.value = undefined;
       disabledTools.value = [];
       mcpTools.value = [];
-      skills.value = [];
+      disabledSkills.value = [];
       subagentEnabled.value = false;
       enabled.value = true;
-      agentConfig.listLocalSkills("").then((s: SkillInfo[]) => {
-        availableSkills.value = s;
-      });
+      availableSkills.value = [];
+      agentSkillsDir.value = null;
     }
   },
 );
@@ -168,6 +171,11 @@ async function onPickImage() {
   }
 }
 
+function showInFinder(filePath: string | null) {
+  if (!filePath) return;
+  window.electron.ipcRenderer.invoke("shell:showItemInFolder", filePath);
+}
+
 async function onSave() {
   if (!name.value.trim()) {
     nameError.value = "名称不能为空";
@@ -195,7 +203,7 @@ async function onSave() {
     maxTokens: maxTokens.value,
     disabledTools: disabledTools.value.length > 0 ? disabledTools.value : undefined,
     mcpTools: mcpTools.value.length > 0 ? mcpTools.value : undefined,
-    skills: skills.value.length > 0 ? skills.value : undefined,
+    disabledSkills: disabledSkills.value.length > 0 ? disabledSkills.value : undefined,
     subagentEnabled: subagentEnabled.value,
   };
 
@@ -474,35 +482,49 @@ async function onSave() {
           </div>
 
           <!-- Skills -->
-          <div>
-            <label class="mb-1 block text-xs text-muted-foreground">Skills（勾选启用）</label>
-            <div v-if="availableSkills.length === 0" class="text-xs text-muted-foreground">
-              暂无本地 Skill。请将 Skill 目录放入 workspace/skills/
+          <div class="space-y-2">
+            <label class="mb-1 block text-xs text-muted-foreground">Skills</label>
+            <div v-if="!agentSkillsDir" class="text-xs text-muted-foreground">
+              保存 Agent 后可在此管理 Skills。
             </div>
-            <div v-else class="space-y-1">
-              <label
-                v-for="sk in availableSkills"
-                :key="sk.name"
-                class="flex items-center gap-2 rounded px-2 py-1 text-sm text-foreground hover:bg-muted/50 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  :checked="skills.includes(sk.name)"
-                  class="accent-violet-500"
-                  @change="
-                    () => {
-                      const idx = skills.indexOf(sk.name);
-                      if (idx >= 0) skills.splice(idx, 1);
-                      else skills.push(sk.name);
-                    }
-                  "
-                />
-                <div>
-                  <span>{{ sk.name }}</span>
-                  <span class="ml-2 text-xs text-muted-foreground">{{ sk.description }}</span>
-                </div>
-              </label>
-            </div>
+            <template v-else>
+              <div v-if="availableSkills.length === 0" class="text-xs text-muted-foreground">
+                暂无 Skill。请将 Skill 目录放入 Agent 的 skills 子目录。
+              </div>
+              <div v-else class="space-y-1">
+                <label
+                  v-for="sk in availableSkills"
+                  :key="sk.name"
+                  class="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm text-foreground hover:bg-muted/50"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="!disabledSkills.includes(sk.name)"
+                    class="accent-violet-500"
+                    @change="
+                      () => {
+                        const idx = disabledSkills.indexOf(sk.name);
+                        if (idx >= 0) disabledSkills.splice(idx, 1);
+                        else disabledSkills.push(sk.name);
+                      }
+                    "
+                  />
+                  <div>
+                    <span>{{ sk.name }}</span>
+                    <span class="ml-2 text-xs text-muted-foreground">{{ sk.description }}</span>
+                  </div>
+                </label>
+              </div>
+              <div class="mt-2 flex items-center gap-2">
+                <span class="truncate text-xs text-muted-foreground">{{ agentSkillsDir }}</span>
+                <button
+                  class="shrink-0 text-xs text-violet-500 hover:underline"
+                  @click="showInFinder(agentSkillsDir)"
+                >
+                  在 Finder 中显示
+                </button>
+              </div>
+            </template>
           </div>
 
           <!-- Toggles -->

@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from "electron";
+import { ipcMain, dialog, shell } from "electron";
 import type { IPresenter } from "@shared/types/presenters";
 import { AppPresenter } from "./appPresenter";
 import { ConfigPresenter } from "./configPresenter";
@@ -322,4 +322,8 @@ ipcMain.handle("evolution:skip-package", () => {
 ipcMain.handle("dialog:openDirectory", async () => {
   const result = await dialog.showOpenDialog({ properties: ["openDirectory"] });
   return result.canceled ? null : result.filePaths[0];
+});
+
+ipcMain.handle("shell:showItemInFolder", (_event, filePath: string) => {
+  shell.showItemInFolder(filePath);
 });
