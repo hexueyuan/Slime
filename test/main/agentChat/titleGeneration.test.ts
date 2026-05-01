@@ -60,10 +60,16 @@ function makeSession(overrides?: Partial<Record<string, any>>) {
   };
 }
 
-function mockFetchTitle(title: string) {
+function mockFetchTitle(title: string, withThinking = false) {
+  const content = withThinking
+    ? [
+        { type: "thinking", thinking: "..." },
+        { type: "text", text: title },
+      ]
+    : [{ type: "text", text: title }];
   globalThis.fetch = vi.fn().mockResolvedValue({
     ok: true,
-    json: async () => ({ content: [{ text: title }] }),
+    json: async () => ({ content }),
   } as any);
 }
 
@@ -123,6 +129,18 @@ describe("AgentChatPresenterAdapter generateTitle", () => {
       expect.objectContaining({ titleGeneratedCount: 1 }),
     );
     expect(eventBus.sendToRenderer).toHaveBeenCalledWith(SESSION_EVENTS.LIST_UPDATED, null);
+  });
+
+  it("extracts text block when thinking block precedes it", async () => {
+    mockFetchTitle("思考后的标题", true);
+
+    await (adapter as any).generateTitle("sess-1", "hello");
+
+    expect(sessionDao.updateTitle).toHaveBeenCalledWith(
+      expect.anything(),
+      "sess-1",
+      "思考后的标题",
+    );
   });
 
   it("skips when no chat model matched", async () => {

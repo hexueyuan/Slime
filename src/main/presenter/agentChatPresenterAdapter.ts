@@ -8,6 +8,7 @@ import { SESSION_EVENTS } from "@shared/events";
 import type { SessionRecord, ChatMessageRecord, SessionMetadata } from "@shared/types/agent";
 import type { AgentChatPresenter } from "./agentChat/agentChatPresenter";
 import type { GatewayPresenter } from "./gatewayPresenter";
+import { logger } from "@/utils";
 
 export class AgentChatPresenterAdapter {
   constructor(
@@ -97,9 +98,24 @@ export class AgentChatPresenterAdapter {
       .map((m) => m.content);
     const allUserMessages = [...existingMessages, content].slice(0, 3);
 
-    const selectResult = this.gatewayPresenter.select(["chat"] as any);
-    const groupName = selectResult.matched["chat"]?.groupName;
-    if (!groupName) return;
+    // Use "chat" group for title generation (simple text task, no special capability needed)
+    // Fallback to session's capabilityRequirements if "chat" group is not configured
+    let selectResult = this.gatewayPresenter.select(["chat"] as any);
+    let groupName = selectResult.matched["chat"]?.groupName;
+    if (!groupName) {
+      const config = configDao.getConfigById(db, sessionId);
+      const agent = agentDao.getAgentById(db, session.agentId);
+      const capReqs = (config?.capabilityRequirements ??
+        agent?.config?.capabilityRequirements ?? ["reasoning"]) as any;
+      selectResult = this.gatewayPresenter.select(capReqs);
+      const firstCap = capReqs[0];
+      const capKey = Array.isArray(firstCap) ? firstCap[0] : (firstCap ?? "reasoning");
+      groupName = selectResult.matched[capKey]?.groupName;
+    }
+    if (!groupName) {
+      logger.warn("[generateTitle] no model matched");
+      return;
+    }
 
     try {
       const port = this.gatewayPresenter.getPort();
@@ -118,17 +134,21 @@ export class AgentChatPresenterAdapter {
           messages: [{ role: "user", content: prompt }],
         }),
       });
-      if (!resp.ok) return;
+      if (!resp.ok) {
+        logger.warn("[generateTitle] request failed", { status: resp.status });
+        return;
+      }
       const data = (await resp.json()) as any;
-      const newTitle = (data?.content?.[0]?.text ?? "").trim();
+      const textBlock = (data?.content as any[])?.find((b: any) => b.type === "text");
+      const newTitle = (textBlock?.text ?? "").trim();
       if (newTitle) {
         sessionDao.updateTitle(db, sessionId, newTitle);
         metadata.titleGeneratedCount = (metadata.titleGeneratedCount ?? 0) + 1;
         sessionDao.updateMetadata(db, sessionId, metadata);
         eventBus.sendToRenderer(SESSION_EVENTS.LIST_UPDATED, null);
       }
-    } catch {
-      // Silently ignore
+    } catch (e) {
+      logger.warn("[generateTitle] error", { err: String(e) });
     }
   }
 

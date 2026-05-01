@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { Icon } from "@iconify/vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
@@ -49,10 +49,16 @@ const contextMenuSessionId = ref<string | null>(null);
 const contextMenuPos = ref({ x: 0, y: 0 });
 const showContextMenu = ref(false);
 
+const MENU_WIDTH = 160;
+const MENU_HEIGHT = 100;
+
 function onContextMenu(e: MouseEvent, sessionId: string) {
   e.preventDefault();
+  e.stopPropagation();
   contextMenuSessionId.value = sessionId;
-  contextMenuPos.value = { x: e.clientX, y: e.clientY };
+  const x = Math.min(e.clientX, window.innerWidth - MENU_WIDTH - 8);
+  const y = Math.min(e.clientY, window.innerHeight - MENU_HEIGHT - 8);
+  contextMenuPos.value = { x, y };
   showContextMenu.value = true;
 }
 
@@ -60,6 +66,9 @@ function closeContextMenu() {
   showContextMenu.value = false;
   contextMenuSessionId.value = null;
 }
+
+onMounted(() => document.addEventListener("click", closeContextMenu, true));
+onUnmounted(() => document.removeEventListener("click", closeContextMenu, true));
 
 async function onPin() {
   if (contextMenuSessionId.value) {
@@ -98,7 +107,7 @@ async function onRenameConfirm() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col" @click="closeContextMenu">
+  <div class="flex h-full flex-col">
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-border px-3 py-2">
       <span class="text-sm font-medium text-foreground">会话</span>
@@ -175,7 +184,7 @@ async function onRenameConfirm() {
     <Teleport to="body">
       <div
         v-if="showContextMenu"
-        class="fixed z-50 rounded-md border border-border bg-popover py-1 shadow-md"
+        class="fixed z-50 min-w-[140px] rounded-md border border-border bg-neutral-900 py-1 shadow-lg"
         :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
       >
         <button

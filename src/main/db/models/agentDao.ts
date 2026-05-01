@@ -143,10 +143,9 @@ export function ensureBuiltin(db: BetterSqlite3.Database): void {
   db.prepare(
     `INSERT OR IGNORE INTO agents (id, name, type, enabled, protected, config_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run("hal-ai", "HalAI", "builtin", 1, 1, configJson, now, now);
+  ).run("hal-ai", "哈尔", "builtin", 1, 1, configJson, now, now);
   // Update existing record to sync latest config (INSERT OR IGNORE skips if already exists)
-  db.prepare(`UPDATE agents SET config_json = ?, updated_at = ? WHERE id = 'hal-ai'`).run(
-    configJson,
-    now,
-  );
+  db.prepare(
+    `UPDATE agents SET name = '哈尔', config_json = ?, updated_at = ? WHERE id = 'hal-ai'`,
+  ).run(configJson, now);
 }
