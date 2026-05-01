@@ -12,6 +12,7 @@ export type UserProfile = {
 
 export interface AgentConfig {
   capabilityRequirements?: string[];
+  /** @deprecated 改从 SOUL.md 文件读取，此字段不再使用 */
   systemPrompt?: string;
   temperature?: number;
   contextLength?: number;
@@ -19,7 +20,10 @@ export interface AgentConfig {
   disabledTools?: string[];
   subagentEnabled?: boolean;
   mcpTools?: string[]; // "{server_id}/{tool_name}"[]
-  skills?: string[]; // enabled local skill names
+  /** @deprecated 改为 disabledSkills 黑名单 */
+  skills?: string[];
+  /** 禁用的 skill 名称列表，目录下存在的 skill 默认启用 */
+  disabledSkills?: string[];
 }
 
 export interface Agent {
