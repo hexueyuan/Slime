@@ -75,6 +75,7 @@ export class Presenter implements IPresenter {
     this.gatewayPresenter = new GatewayPresenter();
     this.agentConfigPresenter = new AgentConfigPresenter();
     this.agentConfigPresenter.setSkillPresenter(skillPresenter);
+    this.agentConfigPresenter.setConfigPresenter(this.configPresenter);
     this.agentChatEngine = new AgentChatPresenter(
       this.gatewayPresenter,
       this.toolPresenter,
