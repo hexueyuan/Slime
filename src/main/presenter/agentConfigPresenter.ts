@@ -68,7 +68,7 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
         await fs.mkdir(getSkillsDir(agentDir), { recursive: true });
         await fs.writeFile(
           getSoulPath(agentDir),
-          "<!-- 在此编写 Agent 的系统提示词（System Prompt） -->\n",
+          `你是${agent.name}，一个人工智能，你的任务是帮助用户解决问题。`,
         );
       } catch (e) {
         logger.warn("createAgent: failed to initialize agent directory", { error: e });
@@ -185,6 +185,12 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
     const agentDir = await this.getAgentDirForAgent(agent);
     if (!agentDir) return null;
     return getSkillsDir(agentDir);
+  }
+
+  async getAgentDir(agentId: string): Promise<string | null> {
+    const agent = agentDao.getAgentById(getDb(), agentId);
+    if (!agent) return null;
+    return this.getAgentDirForAgent(agent);
   }
 
   private async getVaultPath(): Promise<string | null> {

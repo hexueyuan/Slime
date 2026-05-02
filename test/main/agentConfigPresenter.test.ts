@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockDb, mockAgentDao, mockEventBus } = vi.hoisted(() => {
+const { mockDb, mockAgentDao, mockEventBus, mockFs } = vi.hoisted(() => {
   const mockDb = {} as unknown;
   const mockAgentDao = {
     ensureBuiltin: vi.fn(),
@@ -13,9 +13,14 @@ const { mockDb, mockAgentDao, mockEventBus } = vi.hoisted(() => {
   const mockEventBus = {
     sendToRenderer: vi.fn(),
   };
-  return { mockDb, mockAgentDao, mockEventBus };
+  const mockFs = {
+    mkdir: vi.fn().mockResolvedValue(undefined),
+    writeFile: vi.fn().mockResolvedValue(undefined),
+    readFile: vi.fn().mockResolvedValue(""),
+    rename: vi.fn().mockResolvedValue(undefined),
+  };
+  return { mockDb, mockAgentDao, mockEventBus, mockFs };
 });
-
 vi.mock("@/db", () => ({
   getDb: () => mockDb,
 }));
@@ -26,6 +31,14 @@ vi.mock("@/eventbus", () => ({
   eventBus: mockEventBus,
 }));
 
+vi.mock("fs/promises", () => ({
+  default: mockFs,
+  mkdir: mockFs.mkdir,
+  writeFile: mockFs.writeFile,
+  readFile: mockFs.readFile,
+  rename: mockFs.rename,
+}));
+
 import { AgentConfigPresenter } from "@/presenter/agentConfigPresenter";
 import { AGENT_EVENTS } from "@shared/events";
 
@@ -33,6 +46,8 @@ let p: AgentConfigPresenter;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockFs.mkdir.mockResolvedValue(undefined);
+  mockFs.writeFile.mockResolvedValue(undefined);
   p = new AgentConfigPresenter();
 });
 
@@ -69,6 +84,29 @@ describe("AgentConfigPresenter", () => {
     expect(callArgs.id).toBeTruthy();
     expect(result).toEqual({ id: "gen-id", name: "New Agent" });
     expect(mockEventBus.sendToRenderer).toHaveBeenCalledWith(AGENT_EVENTS.CHANGED);
+  });
+
+  it("createAgent writes default SOUL.md with agent name", async () => {
+    const agentName = "MyBot";
+    mockAgentDao.createAgent.mockReturnValue({ id: "gen-id", name: agentName, type: "custom" });
+    await p.createAgent({ name: agentName });
+    expect(mockFs.writeFile).toHaveBeenCalledWith(
+      expect.stringContaining("SOUL.md"),
+      `你是${agentName}，一个人工智能，你的任务是帮助用户解决问题。`,
+    );
+  });
+
+  it("getAgentDir returns dir for custom agent", async () => {
+    mockAgentDao.getAgentById.mockReturnValue({ id: "a1", name: "Bot", type: "custom" });
+    const dir = await p.getAgentDir("a1");
+    expect(dir).toBeTruthy();
+    expect(typeof dir).toBe("string");
+  });
+
+  it("getAgentDir returns null for builtin agent", async () => {
+    mockAgentDao.getAgentById.mockReturnValue({ id: "hal-ai", name: "哈尔", type: "builtin" });
+    const dir = await p.getAgentDir("hal-ai");
+    expect(dir).toBeNull();
   });
 
   it("createAgent uses provided id", async () => {

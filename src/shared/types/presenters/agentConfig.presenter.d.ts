@@ -12,4 +12,5 @@ export interface IAgentConfigPresenter {
   listLocalSkills(agentId: string): Promise<SkillInfo[]>;
   readSoulMd(agentId: string): Promise<string>;
   getAgentSkillsDir(agentId: string): Promise<string | null>;
+  getAgentDir(agentId: string): Promise<string | null>;
 }
