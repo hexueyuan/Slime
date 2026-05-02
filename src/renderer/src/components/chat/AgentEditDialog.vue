@@ -274,7 +274,7 @@ async function onSave() {
           </div>
 
           <!-- Description -->
-          <div>
+          <div v-if="!isProtected">
             <label class="mb-1 block text-xs text-muted-foreground">描述</label>
             <input
               v-model="description"
@@ -285,7 +285,7 @@ async function onSave() {
           </div>
 
           <!-- Avatar -->
-          <div>
+          <div v-if="!isProtected">
             <label class="mb-1 block text-xs text-muted-foreground">头像</label>
             <div class="flex gap-2 mb-2">
               <button
@@ -391,7 +391,7 @@ async function onSave() {
           </div>
 
           <!-- Agent 目录 -->
-          <div v-if="isEdit">
+          <div v-if="isEdit && !isProtected">
             <label class="mb-1 block text-xs text-muted-foreground">系统提示词</label>
             <p class="mb-1.5 text-xs text-muted-foreground">
               通过编辑 Agent 目录下的
@@ -408,7 +408,7 @@ async function onSave() {
           </div>
 
           <!-- Capabilities -->
-          <div>
+          <div v-if="!isProtected">
             <label class="mb-1 block text-xs text-muted-foreground">能力需求</label>
             <div class="flex flex-wrap gap-1.5">
               <button
@@ -428,7 +428,7 @@ async function onSave() {
           </div>
 
           <!-- Temperature -->
-          <div>
+          <div v-if="!isProtected">
             <label class="mb-1 flex items-center justify-between text-xs text-muted-foreground">
               <span>温度</span>
               <span class="text-foreground">{{ temperature.toFixed(1) }}</span>
@@ -444,7 +444,7 @@ async function onSave() {
           </div>
 
           <!-- Number inputs row -->
-          <div class="grid grid-cols-3 gap-3">
+          <div v-if="!isProtected" class="grid grid-cols-3 gap-3">
             <div>
               <label class="mb-1 block text-xs text-muted-foreground">上下文长度</label>
               <input
@@ -466,7 +466,7 @@ async function onSave() {
           </div>
 
           <!-- Tools -->
-          <div>
+          <div v-if="!isProtected">
             <label class="mb-1 block text-xs text-muted-foreground">工具（取消勾选则禁用）</label>
             <div class="space-y-1">
               <label
@@ -486,13 +486,13 @@ async function onSave() {
           </div>
 
           <!-- MCP Tools -->
-          <div>
+          <div v-if="!isProtected">
             <label class="mb-1 block text-xs text-muted-foreground">MCP 工具（勾选启用）</label>
             <MCPToolChecklist v-model="mcpTools" />
           </div>
 
           <!-- Skills -->
-          <div class="space-y-2">
+          <div v-if="!isProtected" class="space-y-2">
             <label class="mb-1 block text-xs text-muted-foreground">Skills</label>
             <div v-if="!agentSkillsDir" class="text-xs text-muted-foreground">
               保存 Agent 后可在此管理 Skills。
@@ -538,7 +538,7 @@ async function onSave() {
           </div>
 
           <!-- Toggles -->
-          <div class="flex items-center justify-between">
+          <div v-if="!isProtected" class="flex items-center justify-between">
             <span class="text-sm text-foreground">子 Agent 调度</span>
             <button
               :class="[
@@ -556,7 +556,7 @@ async function onSave() {
             </button>
           </div>
 
-          <div class="flex items-center justify-between">
+          <div v-if="!isProtected" class="flex items-center justify-between">
             <span class="text-sm text-foreground">启用</span>
             <button
               :class="[
