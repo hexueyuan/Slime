@@ -8,6 +8,7 @@ import type {
   LatencyPercentiles,
   StabilityPoint,
   TrendPoint,
+  MinutePoint,
 } from "@shared/types/gateway";
 
 export function aggregateToHourly(db: BetterSqlite3.Database, beforeDate: string): number {
@@ -366,6 +367,34 @@ export function getChannelStabilityHourly(
     successCount: r.success_count as number,
     failCount: r.fail_count as number,
     avgLatencyMs: (r.avg_latency_ms as number) ?? 0,
+  }));
+}
+
+export function getChannelStabilityMinute(
+  db: BetterSqlite3.Database,
+  channelId: number,
+): MinutePoint[] {
+  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString().replace("T", " ").slice(0, 19);
+  const rows = db
+    .prepare(
+      `SELECT
+        strftime('%Y-%m-%dT%H:%M', created_at) AS minute,
+        SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
+        SUM(CASE WHEN status != 'success' THEN 1 ELSE 0 END) AS fail_count,
+        AVG(CASE WHEN status = 'success' THEN duration_ms END) AS avg_latency_ms
+      FROM relay_logs
+      WHERE channel_id = ?
+        AND created_at >= ?
+      GROUP BY minute
+      ORDER BY minute`,
+    )
+    .all(channelId, since) as Array<Record<string, unknown>>;
+
+  return rows.map((r) => ({
+    minute: r.minute as string,
+    successCount: r.success_count as number,
+    failCount: r.fail_count as number,
+    avgLatencyMs: r.avg_latency_ms !== null ? (r.avg_latency_ms as number) : null,
   }));
 }
 

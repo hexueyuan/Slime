@@ -218,6 +218,60 @@ describe("statsDao 稳定性查询", () => {
     expect(rows[0].failCount).toBe(1);
     expect(rows[0].hour).toBe("2026-04-15T10");
   });
+
+  it("getChannelStabilityMinute 返回最近30分钟按分钟聚合数据", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T14:35:00Z"));
+    const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
+
+    // 插入 14:32 两条（1 success, 1 error）
+    db.prepare(`
+      INSERT INTO relay_logs
+        (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+         cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
+      VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 200, ?, ?)
+    `).run("success", "2026-05-03 14:32:00");
+    db.prepare(`
+      INSERT INTO relay_logs
+        (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+         cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
+      VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 400, ?, ?)
+    `).run("error", "2026-05-03 14:32:30");
+
+    // 插入 14:04（超出30分钟范围，不应出现）
+    db.prepare(`
+      INSERT INTO relay_logs
+        (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+         cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
+      VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 100, ?, ?)
+    `).run("success", "2026-05-03 14:04:00");
+
+    const rows = getChannelStabilityMinute(db, 1);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].minute).toBe("2026-05-03T14:32");
+    expect(rows[0].successCount).toBe(1);
+    expect(rows[0].failCount).toBe(1);
+    expect(rows[0].avgLatencyMs).toBeCloseTo(200); // avg 只取 success 的 duration_ms
+    vi.useRealTimers();
+  });
+
+  it("getChannelStabilityMinute channel_id 隔离", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T14:35:00Z"));
+    const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
+
+    // channel_id=2 的日志
+    db.prepare(`
+      INSERT INTO relay_logs
+        (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+         cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
+      VALUES ('g', 'gpt-4o', 2, 'ch2', 100, 50, 0, 0, 0.001, 100, 'success', '2026-05-03 14:32:00')
+    `).run();
+
+    const rows = getChannelStabilityMinute(db, 1);
+    expect(rows).toHaveLength(0); // channel 1 无数据
+    vi.useRealTimers();
+  });
 });
 
 describe("ScheduledTasks", () => {
