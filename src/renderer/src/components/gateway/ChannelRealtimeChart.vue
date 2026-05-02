@@ -13,27 +13,28 @@ const props = defineProps<{
   points: MinutePoint[];
 }>();
 
-// 生成最近 30 个整分钟的时间串 ["2026-05-03T14:06", ..., "2026-05-03T14:35"]
+// 生成最近 30 个整分钟的时间串（UTC），与 relay_logs.created_at datetime('now') 对齐
 function getLast30Minutes(): string[] {
   const result: string[] = [];
   const now = new Date();
-  // 从当前整分钟往前推 29 分钟
   const base = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    now.getHours(),
-    now.getMinutes(),
-    0,
-    0,
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      0,
+      0,
+    ),
   );
   for (let i = 29; i >= 0; i--) {
     const t = new Date(base.getTime() - i * 60 * 1000);
-    const mm = String(t.getMinutes()).padStart(2, "0");
-    const hh = String(t.getHours()).padStart(2, "0");
-    const yyyy = t.getFullYear();
-    const mo = String(t.getMonth() + 1).padStart(2, "0");
-    const dd = String(t.getDate()).padStart(2, "0");
+    const mm = String(t.getUTCMinutes()).padStart(2, "0");
+    const hh = String(t.getUTCHours()).padStart(2, "0");
+    const yyyy = t.getUTCFullYear();
+    const mo = String(t.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(t.getUTCDate()).padStart(2, "0");
     result.push(`${yyyy}-${mo}-${dd}T${hh}:${mm}`);
   }
   return result;
@@ -52,7 +53,15 @@ const filledPoints = computed(() => {
 
 const hasData = computed(() => props.points.some((p) => p.successCount + p.failCount > 0));
 
-const xLabels = computed(() => filledPoints.value.map((p) => p.minute.slice(11))); // "HH:MM"
+// minute key 是 UTC，转为本地时间显示
+const xLabels = computed(() =>
+  filledPoints.value.map((p) => {
+    const d = new Date(p.minute + "Z"); // append Z to parse as UTC
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }),
+);
 
 const availabilityData = computed(() =>
   filledPoints.value.map((p) => {
