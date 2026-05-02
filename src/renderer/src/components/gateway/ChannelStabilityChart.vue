@@ -13,11 +13,9 @@ const props = defineProps<{
   points: StabilityPoint[];
 }>();
 
-const todayUtc = (() => {
+const todayLocal = (() => {
   const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-    .toISOString()
-    .slice(0, 10);
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 })();
 
 const filledPoints = computed(() => {
@@ -25,10 +23,10 @@ const filledPoints = computed(() => {
   for (const p of props.points) {
     byHour.set(p.hour, p);
   }
-  // Pick the fill date: prefer today UTC, else the date with most data
+  // Pick the fill date: prefer today local, else the date with most data
   const dates = [...new Set(props.points.map((p) => p.hour.slice(0, 10)))];
-  let fillDate = todayUtc;
-  if (dates.length > 0 && !dates.includes(todayUtc)) {
+  let fillDate = todayLocal;
+  if (dates.length > 0 && !dates.includes(todayLocal)) {
     let maxCount = 0;
     for (const d of dates) {
       const count = props.points.filter((p) => p.hour.startsWith(d)).length;

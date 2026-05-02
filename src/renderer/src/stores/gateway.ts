@@ -45,8 +45,10 @@ export const useGatewayStore = defineStore("gateway", () => {
 
   const cacheRate = computed(() => {
     const input = stats.value.inputTokens;
-    if (input === 0) return 0;
-    return stats.value.cacheReadTokens / input;
+    const cacheRead = stats.value.cacheReadTokens;
+    const total = input + cacheRead;
+    if (total === 0) return 0;
+    return cacheRead / total;
   });
 
   async function loadChannels() {
@@ -105,12 +107,10 @@ export const useGatewayStore = defineStore("gateway", () => {
 
   async function loadChannelStability(channelId: number) {
     const now = new Date();
-    const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1))
-      .toISOString()
-      .slice(0, 10);
-    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1))
-      .toISOString()
-      .slice(0, 10);
+    const fmt = (dt: Date) =>
+      `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+    const to = fmt(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+    const from = fmt(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
     const points = await gw.getChannelStability(channelId, from, to);
     channelStability.value = new Map(channelStability.value).set(channelId, points);
   }
@@ -164,22 +164,19 @@ export const useGatewayStore = defineStore("gateway", () => {
 
 function getDateRange(range: "today" | "7d" | "30d") {
   const now = new Date();
-  // Use UTC dates to match relay_logs.created_at which uses datetime('now') (UTC)
-  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1))
-    .toISOString()
-    .slice(0, 10);
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  const fmt = (dt: Date) =>
+    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+  const to = fmt(new Date(y, m, d + 1));
   let from: string;
   if (range === "today") {
-    from = todayUtc.toISOString().slice(0, 10);
+    from = fmt(new Date(y, m, d));
   } else if (range === "7d") {
-    from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 7))
-      .toISOString()
-      .slice(0, 10);
+    from = fmt(new Date(y, m, d - 7));
   } else {
-    from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30))
-      .toISOString()
-      .slice(0, 10);
+    from = fmt(new Date(y, m, d - 30));
   }
   return { from, to };
 }

@@ -32,9 +32,10 @@ const filledPoints = computed(() => {
     const dates: string[] = [];
     const now = new Date();
     for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      dates.push(d.toISOString().slice(0, 10));
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      dates.push(
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+      );
     }
     const map = new Map(props.points.map((p) => [p.date, p]));
     return dates.map((date) => map.get(date) ?? null);
@@ -49,9 +50,10 @@ const xLabels = computed(() => {
     const dates: string[] = [];
     const now = new Date();
     for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      dates.push(d.toISOString().slice(5, 10));
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      dates.push(
+        `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+      );
     }
     return dates;
   }
