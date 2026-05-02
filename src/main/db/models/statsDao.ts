@@ -30,7 +30,7 @@ export function aggregateToHourly(db: BetterSqlite3.Database, beforeDate: string
         SUM(cost),
         SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END),
         SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END),
-        AVG(duration_ms)
+        AVG(ttft_ms)
       FROM relay_logs
       WHERE created_at < ?
       GROUP BY date, hour, model_name, COALESCE(channel_id, 0)`,
@@ -92,10 +92,11 @@ export function getStatsRange(db: BetterSqlite3.Database, from: string, to: stri
         FROM stats_daily WHERE date >= ? AND date < ?
         UNION ALL
         SELECT 1, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost,
-               duration_ms AS weighted, 1 AS cnt
+               ttft_ms AS weighted, 1 AS cnt
         FROM relay_logs
         WHERE date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') < ?
           AND date(created_at, 'localtime') NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
+          AND ttft_ms IS NOT NULL
       )`,
     )
     .get(from, to, from, to, from, to) as Record<string, number>;
@@ -214,10 +215,11 @@ export function getChannelRanking(
                CASE WHEN l.status = 'success' THEN 1 ELSE 0 END,
                CASE WHEN l.status = 'error' THEN 1 ELSE 0 END,
                l.cache_read_tokens, l.cache_write_tokens,
-               l.duration_ms, l.cost
+               l.ttft_ms, l.cost
         FROM relay_logs l LEFT JOIN channels c ON c.id = l.channel_id
         WHERE date(l.created_at, 'localtime') >= ? AND date(l.created_at, 'localtime') < ?
           AND date(l.created_at, 'localtime') NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
+          AND l.ttft_ms IS NOT NULL
       )
       GROUP BY channel_id
       ORDER BY requests DESC`,
@@ -348,7 +350,7 @@ export function getChannelStabilityHourly(
          SELECT date(created_at, 'localtime') || 'T' || printf('%02d', CAST(strftime('%H', created_at, 'localtime') AS INTEGER)),
                 CASE WHEN status = 'success' THEN 1 ELSE 0 END,
                 CASE WHEN status = 'error' THEN 1 ELSE 0 END,
-                duration_ms
+                ttft_ms
          FROM relay_logs
          WHERE channel_id = ? AND date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') < ?
            AND (date(created_at, 'localtime') || '_' || CAST(strftime('%H', created_at, 'localtime') AS INTEGER))
@@ -381,7 +383,7 @@ export function getChannelStabilityMinute(
         strftime('%Y-%m-%dT%H:%M', created_at) AS minute,
         SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
         SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS fail_count,
-        AVG(CASE WHEN status = 'success' THEN duration_ms END) AS avg_latency_ms
+        AVG(ttft_ms) AS avg_latency_ms
       FROM relay_logs
       WHERE channel_id = ?
         AND created_at >= ?
