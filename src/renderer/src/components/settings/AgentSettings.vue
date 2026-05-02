@@ -68,6 +68,7 @@ async function onDelete(id: string) {
         </div>
         <div class="flex shrink-0 items-center gap-1">
           <button
+            v-if="!agent.protected"
             data-testid="edit-btn"
             class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
             @click="openEdit(agent.id)"
