@@ -12,14 +12,14 @@
           @blur="saveVaultPath"
         />
         <button
-          class="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
+          class="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground hover:bg-muted"
           @click="selectVaultDir"
         >
           选择目录
         </button>
         <button
           v-if="vaultPath"
-          class="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
+          class="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground hover:bg-muted"
           @click="clearVaultPath"
         >
           清除

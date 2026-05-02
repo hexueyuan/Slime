@@ -7,56 +7,44 @@ const props = defineProps<{
   modelRanking: ModelRankItem[];
 }>();
 
-type Tab = "channels" | "models";
 type SortKey = "requests" | "cost" | "tokens";
-
-const activeTab = ref<Tab>("channels");
-const sortKey = ref<SortKey>("requests");
-
-function successRateClass(item: ChannelRankItem): string {
-  const total = item.successCount + item.failCount;
-  if (total === 0) return "text-muted-foreground";
-  const rate = item.successCount / total;
-  if (rate >= 0.95) return "text-emerald-400";
-  if (rate >= 0.8) return "text-amber-400";
-  return "text-red-400";
-}
-
-function successRateText(item: ChannelRankItem): string {
-  const total = item.successCount + item.failCount;
-  if (total === 0) return "-";
-  return `${((item.successCount / total) * 100).toFixed(1)}%`;
-}
-
-const maxChannelVal = computed(() => {
-  if (props.channelRanking.length === 0) return 1;
-  return Math.max(...props.channelRanking.map((r) => r.requests));
-});
+const channelSortKey = ref<SortKey>("requests");
+const modelSortKey = ref<SortKey>("requests");
 
 const sortedChannels = computed(() => {
   return [...props.channelRanking].sort((a, b) => {
-    if (sortKey.value === "cost") return b.cost - a.cost;
-    if (sortKey.value === "tokens") return 0; // channels don't have direct token field
+    if (channelSortKey.value === "cost") return b.cost - a.cost;
+    if (channelSortKey.value === "tokens")
+      return b.cacheReadTokens + b.cacheWriteTokens - (a.cacheReadTokens + a.cacheWriteTokens);
     return b.requests - a.requests;
   });
-});
-
-const maxModelVal = computed(() => {
-  if (props.modelRanking.length === 0) return 1;
-  if (sortKey.value === "cost") return Math.max(...props.modelRanking.map((r) => r.cost));
-  if (sortKey.value === "tokens")
-    return Math.max(...props.modelRanking.map((r) => r.inputTokens + r.outputTokens));
-  return Math.max(...props.modelRanking.map((r) => r.requests));
 });
 
 const sortedModels = computed(() => {
   return [...props.modelRanking].sort((a, b) => {
-    if (sortKey.value === "cost") return b.cost - a.cost;
-    if (sortKey.value === "tokens")
+    if (modelSortKey.value === "cost") return b.cost - a.cost;
+    if (modelSortKey.value === "tokens")
       return b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens);
     return b.requests - a.requests;
   });
 });
+
+function channelVal(item: ChannelRankItem): string {
+  if (channelSortKey.value === "cost") return `$${item.cost.toFixed(3)}`;
+  if (channelSortKey.value === "tokens")
+    return formatNum(item.cacheReadTokens + item.cacheWriteTokens);
+  return formatNum(item.requests);
+}
+
+function modelVal(item: ModelRankItem): string {
+  if (modelSortKey.value === "cost") return `$${item.cost.toFixed(3)}`;
+  if (modelSortKey.value === "tokens") return formatNum(item.inputTokens + item.outputTokens);
+  return formatNum(item.requests);
+}
+
+function sortLabel(key: SortKey): string {
+  return key === "requests" ? "请求" : key === "cost" ? "费用" : "Token";
+}
 
 function formatNum(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -66,125 +54,114 @@ function formatNum(n: number): string {
 </script>
 
 <template>
-  <div>
-    <div class="mb-2 flex items-center justify-between">
-      <div class="flex gap-1">
-        <button
-          v-for="tab in ['channels', 'models'] as Tab[]"
-          :key="tab"
-          :class="[
-            'rounded border px-2 py-0.5 text-xs',
-            activeTab === tab
-              ? 'border-violet-500/50 bg-violet-500/10 text-violet-400'
-              : 'border-border text-muted-foreground',
-          ]"
-          @click="activeTab = tab"
-        >
-          {{ tab === "channels" ? "供应商" : "模型" }}
-        </button>
-      </div>
-      <div class="flex gap-1">
-        <button
-          v-for="key in ['requests', 'cost', 'tokens'] as SortKey[]"
-          :key="key"
-          :class="[
-            'rounded px-2 py-0.5 text-xs',
-            sortKey === key ? 'bg-violet-500/20 text-violet-400' : 'text-muted-foreground/60',
-          ]"
-          @click="sortKey = key"
-        >
-          {{ key === "requests" ? "请求" : key === "cost" ? "费用" : "Token" }}
-        </button>
-      </div>
+  <div class="flex h-full flex-col">
+    <!-- Header row: 渠道排名 | 模型排名 -->
+    <div class="mb-1 flex shrink-0 items-center">
+      <span class="flex-1 text-xs text-muted-foreground">渠道排名</span>
+      <span class="text-xs text-muted-foreground">模型排名</span>
     </div>
 
-    <!-- Channel ranking -->
-    <template v-if="activeTab === 'channels'">
-      <div
-        v-for="(item, idx) in sortedChannels.slice(0, 5)"
-        :key="item.channelId"
-        class="mb-1.5 flex items-center gap-2"
-      >
-        <span
-          :class="[
-            'w-4 text-xs',
-            idx === 0 ? 'font-bold text-amber-400' : 'text-muted-foreground/50',
-          ]"
+    <!-- Two columns -->
+    <div class="flex min-h-0 flex-1 gap-3 overflow-y-auto">
+      <!-- Channel ranking -->
+      <div class="min-w-0 flex-1">
+        <!-- Sort tabs -->
+        <div class="mb-1 flex justify-center gap-1">
+          <button
+            v-for="key in ['requests', 'cost', 'tokens'] as SortKey[]"
+            :key="key"
+            :class="[
+              'rounded px-1.5 py-0 text-[10px] transition-colors',
+              channelSortKey === key
+                ? 'text-violet-400'
+                : 'text-muted-foreground/40 hover:text-muted-foreground/70',
+            ]"
+            @click="channelSortKey = key"
+          >
+            {{ sortLabel(key) }}{{ channelSortKey === key ? "↓" : "" }}
+          </button>
+        </div>
+        <!-- Column header -->
+        <div class="mb-1.5 flex items-center border-b border-border/30 pb-1">
+          <span class="flex-1 text-[10px] text-muted-foreground/50">名称</span>
+          <span class="text-[10px] text-muted-foreground/50">{{ sortLabel(channelSortKey) }}↓</span>
+        </div>
+        <div
+          v-for="(item, idx) in sortedChannels.slice(0, 5)"
+          :key="item.channelId"
+          class="mb-1.5 flex items-center gap-1.5"
         >
-          {{ idx + 1 }}
-        </span>
-        <div class="min-w-0 flex-1">
-          <div class="mb-0.5 flex items-center justify-between gap-1">
-            <span class="truncate text-xs text-foreground/80">{{ item.channelName }}</span>
-            <span class="shrink-0 text-xs text-muted-foreground">{{
-              formatNum(item.requests)
-            }}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="h-1 flex-1 rounded-full bg-muted/50">
-              <div
-                class="h-1 rounded-full bg-violet-500/60"
-                :style="{ width: `${(item.requests / maxChannelVal) * 100}%` }"
-              />
-            </div>
-            <span :class="['text-xs', successRateClass(item)]">{{ successRateText(item) }}</span>
-          </div>
+          <span
+            :class="[
+              'w-4 shrink-0 text-xs',
+              idx === 0 ? 'font-bold text-amber-400' : 'text-muted-foreground/50',
+            ]"
+          >
+            {{ idx + 1 }}
+          </span>
+          <span class="min-w-0 flex-1 truncate text-xs text-foreground/80">{{
+            item.channelName
+          }}</span>
+          <span class="shrink-0 text-xs text-muted-foreground">{{ channelVal(item) }}</span>
+        </div>
+        <div
+          v-if="sortedChannels.length === 0"
+          class="py-4 text-center text-xs text-muted-foreground"
+        >
+          暂无数据
         </div>
       </div>
-      <div
-        v-if="sortedChannels.length === 0"
-        class="py-4 text-center text-xs text-muted-foreground"
-      >
-        暂无数据
-      </div>
-    </template>
 
-    <!-- Model ranking -->
-    <template v-else>
-      <div
-        v-for="(item, idx) in sortedModels.slice(0, 5)"
-        :key="item.modelName"
-        class="mb-1.5 flex items-center gap-2"
-      >
-        <span
-          :class="[
-            'w-4 text-xs',
-            idx === 0 ? 'font-bold text-amber-400' : 'text-muted-foreground/50',
-          ]"
+      <div class="w-px shrink-0 bg-border/40" />
+
+      <!-- Model ranking -->
+      <div class="min-w-0 flex-1">
+        <!-- Sort tabs -->
+        <div class="mb-1 flex justify-center gap-1">
+          <button
+            v-for="key in ['requests', 'cost', 'tokens'] as SortKey[]"
+            :key="key"
+            :class="[
+              'rounded px-1.5 py-0 text-[10px] transition-colors',
+              modelSortKey === key
+                ? 'text-violet-400'
+                : 'text-muted-foreground/40 hover:text-muted-foreground/70',
+            ]"
+            @click="modelSortKey = key"
+          >
+            {{ sortLabel(key) }}{{ modelSortKey === key ? "↓" : "" }}
+          </button>
+        </div>
+        <!-- Column header -->
+        <div class="mb-1.5 flex items-center border-b border-border/30 pb-1">
+          <span class="flex-1 text-[10px] text-muted-foreground/50">名称</span>
+          <span class="text-[10px] text-muted-foreground/50">{{ sortLabel(modelSortKey) }}↓</span>
+        </div>
+        <div
+          v-for="(item, idx) in sortedModels.slice(0, 5)"
+          :key="item.modelName"
+          class="mb-1.5 flex items-center gap-1.5"
         >
-          {{ idx + 1 }}
-        </span>
-        <div class="min-w-0 flex-1">
-          <div class="mb-0.5 flex items-center justify-between gap-1">
-            <span class="truncate text-xs text-foreground/80">{{ item.modelName }}</span>
-            <span class="shrink-0 text-xs text-muted-foreground">
-              {{
-                sortKey === "cost"
-                  ? `$${item.cost.toFixed(3)}`
-                  : sortKey === "tokens"
-                    ? `${formatNum(item.inputTokens + item.outputTokens)}`
-                    : formatNum(item.requests)
-              }}
-              <template v-if="sortKey === 'tokens' && item.cacheReadTokens > 0">
-                <span class="text-muted-foreground/50">
-                  | 缓存 {{ formatNum(item.cacheReadTokens) }}</span
-                >
-              </template>
-            </span>
-          </div>
-          <div class="h-1 flex-1 rounded-full bg-muted/50">
-            <div
-              class="h-1 rounded-full bg-blue-500/60"
-              :style="{
-                width: `${((sortKey === 'cost' ? item.cost : sortKey === 'tokens' ? item.inputTokens + item.outputTokens : item.requests) / maxModelVal) * 100}%`,
-              }"
-            />
-          </div>
+          <span
+            :class="[
+              'w-4 shrink-0 text-xs',
+              idx === 0 ? 'font-bold text-amber-400' : 'text-muted-foreground/50',
+            ]"
+          >
+            {{ idx + 1 }}
+          </span>
+          <span class="min-w-0 flex-1 truncate text-xs text-foreground/80">{{
+            item.modelName
+          }}</span>
+          <span class="shrink-0 text-xs text-muted-foreground">{{ modelVal(item) }}</span>
+        </div>
+        <div
+          v-if="sortedModels.length === 0"
+          class="py-4 text-center text-xs text-muted-foreground"
+        >
+          暂无数据
         </div>
       </div>
-      <div v-if="sortedModels.length === 0" class="py-4 text-center text-xs text-muted-foreground">
-        暂无数据
-      </div>
-    </template>
+    </div>
   </div>
 </template>

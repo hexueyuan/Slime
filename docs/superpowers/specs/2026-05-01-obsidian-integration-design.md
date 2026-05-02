@@ -34,6 +34,7 @@
 ```
 
 说明：
+
 - 默认目录用 `agent-id` 命名（唯一，防重名）
 - Obsidian 目录用 `agent-name`（人类可读）
 - 内置 Agent 不创建目录，返回 `null`
@@ -56,14 +57,14 @@
 // 返回 Agent 工作目录，内置 Agent 返回 null
 function getAgentDir(
   agent: { id: string; name: string; type: string },
-  vaultPath: string | null
-): string | null
+  vaultPath: string | null,
+): string | null;
 
 // SOUL.md 路径
-function getSoulPath(agentDir: string): string  // agentDir/SOUL.md
+function getSoulPath(agentDir: string): string; // agentDir/SOUL.md
 
 // skills 子目录
-function getSkillsDir(agentDir: string): string  // agentDir/skills/
+function getSkillsDir(agentDir: string): string; // agentDir/skills/
 ```
 
 ---
@@ -103,10 +104,10 @@ function getSkillsDir(agentDir: string): string  // agentDir/skills/
 
 ### 扫描来源
 
-| 类型 | 路径 | 过滤方式 |
-|------|------|---------|
-| builtin | `projectRoot/resources/skills/` | `agentIds` 白名单（现有） |
-| local | `agentDir/skills/` | `disabledSkills` 黑名单（新增） |
+| 类型    | 路径                            | 过滤方式                        |
+| ------- | ------------------------------- | ------------------------------- |
+| builtin | `projectRoot/resources/skills/` | `agentIds` 白名单（现有）       |
+| local   | `agentDir/skills/`              | `disabledSkills` 黑名单（新增） |
 
 ### 启用/禁用逻辑
 
@@ -126,16 +127,16 @@ function getSkillsDir(agentDir: string): string  // agentDir/skills/
 
 ```typescript
 interface AgentConfig {
-  capabilityRequirements?: string[]
+  capabilityRequirements?: string[];
   // systemPrompt?: string        // 废弃，改从 SOUL.md 读
-  temperature?: number
-  contextLength?: number
-  maxTokens?: number
-  disabledTools?: string[]
-  subagentEnabled?: boolean
-  mcpTools?: string[]
+  temperature?: number;
+  contextLength?: number;
+  maxTokens?: number;
+  disabledTools?: string[];
+  subagentEnabled?: boolean;
+  mcpTools?: string[];
   // skills?: string[]            // 废弃，改为黑名单
-  disabledSkills?: string[]       // 新增：禁用的 skill 名称
+  disabledSkills?: string[]; // 新增：禁用的 skill 名称
 }
 ```
 
@@ -167,17 +168,17 @@ Obsidian Vault 路径
 
 ## 变更模块汇总
 
-| 模块 | 变更内容 |
-|------|---------|
-| 新增 `src/main/utils/agentPaths.ts` | Agent 目录路径解析 |
-| `src/shared/types/agent.d.ts` | `systemPrompt` 废弃；`skills` 废弃；新增 `disabledSkills` |
-| `src/main/presenter/configPresenter.ts` | 读写 `obsidian.vaultPath` |
-| `src/main/presenter/agentConfigPresenter.ts` | 创建/重命名 Agent 时操作目录文件 |
-| `src/main/presenter/skillPresenter.ts` | 按 agentId 扫描各自 skills 目录；黑名单过滤；按 agentId 缓存 |
-| `src/main/presenter/agentChat/agentChatPresenter.ts` | systemPrompt 从 SOUL.md 读取 |
-| `src/main/presenter/agentChat/contextBuilder.ts` | 接收文件读取的 systemPrompt |
-| Settings UI（General tab） | 新增 Obsidian vault 路径配置项 |
-| `AgentEditDialog` Skills tab | 改为目录 skill 列表 + 黑名单禁用控制 |
+| 模块                                                 | 变更内容                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------ |
+| 新增 `src/main/utils/agentPaths.ts`                  | Agent 目录路径解析                                           |
+| `src/shared/types/agent.d.ts`                        | `systemPrompt` 废弃；`skills` 废弃；新增 `disabledSkills`    |
+| `src/main/presenter/configPresenter.ts`              | 读写 `obsidian.vaultPath`                                    |
+| `src/main/presenter/agentConfigPresenter.ts`         | 创建/重命名 Agent 时操作目录文件                             |
+| `src/main/presenter/skillPresenter.ts`               | 按 agentId 扫描各自 skills 目录；黑名单过滤；按 agentId 缓存 |
+| `src/main/presenter/agentChat/agentChatPresenter.ts` | systemPrompt 从 SOUL.md 读取                                 |
+| `src/main/presenter/agentChat/contextBuilder.ts`     | 接收文件读取的 systemPrompt                                  |
+| Settings UI（General tab）                           | 新增 Obsidian vault 路径配置项                               |
+| `AgentEditDialog` Skills tab                         | 改为目录 skill 列表 + 黑名单禁用控制                         |
 
 ---
 

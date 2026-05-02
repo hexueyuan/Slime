@@ -12,19 +12,20 @@
 
 ## File Map
 
-| 操作 | 文件 |
-|------|------|
+| 操作   | 文件                                                 |
+| ------ | ---------------------------------------------------- |
 | Modify | `src/renderer/src/components/gateway/StatsChart.vue` |
-| Modify | `src/renderer/src/views/GatewayPanel.vue` |
+| Modify | `src/renderer/src/views/GatewayPanel.vue`            |
 
 ---
 
 ### Task 1: 改造 StatsChart.vue
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/StatsChart.vue`
 
-- [ ] **Step 1: 完整替换 StatsChart.vue**
+- [x] **Step 1: 完整替换 StatsChart.vue**
 
 将文件内容替换为以下（移除 `metric` prop，固定 4 线，Y 轴无数字，tooltip 带单位）：
 
@@ -115,11 +116,11 @@ const option = computed(() => ({
 </template>
 ```
 
-- [ ] **Step 2: 确认类型兼容**
+- [x] **Step 2: 确认类型兼容**
 
 检查 `TrendPoint` 类型包含 `requests`、`cost`、`inputTokens`、`outputTokens`、`date`、`hour?` 字段（在 `src/shared/types/gateway.d.ts` 中已有，无需修改）。
 
-- [ ] **Step 3: 运行类型检查**
+- [x] **Step 3: 运行类型检查**
 
 ```bash
 pnpm run typecheck
@@ -127,7 +128,7 @@ pnpm run typecheck
 
 期望：无错误（或仅有其他无关错误）。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/renderer/src/components/gateway/StatsChart.vue
@@ -139,9 +140,10 @@ git commit -m "feat(gateway): refactor StatsChart to 4-line combined chart"
 ### Task 2: 更新 GatewayPanel.vue — 卡片颜色 + 移除 metric tab + 布局调整
 
 **Files:**
+
 - Modify: `src/renderer/src/views/GatewayPanel.vue`
 
-- [ ] **Step 1: 移除 script 中的 metric 相关代码**
+- [x] **Step 1: 移除 script 中的 metric 相关代码**
 
 删除以下行（约第 68-78 行）：
 
@@ -170,7 +172,7 @@ const trendGranularity = computed(() =>
 
 同时从 `import` 中移除 `ref`（如果 `activeMetric` 是唯一用到 `ref` 的地方；检查其他 ref 用法，若有则保留）。
 
-- [ ] **Step 2: 更新 6 个统计卡片数值的颜色类**
+- [x] **Step 2: 更新 6 个统计卡片数值的颜色类**
 
 在 template 中，将 6 个卡片的 `text-lg font-semibold` 分别改为带颜色的版本：
 
@@ -185,7 +187,9 @@ const trendGranularity = computed(() =>
 <div class="text-lg font-semibold text-blue-400">{{ formatNumber(store.stats.inputTokens) }}</div>
 
 <!-- Output Token -->
-<div class="text-lg font-semibold text-emerald-400">{{ formatNumber(store.stats.outputTokens) }}</div>
+<div class="text-lg font-semibold text-emerald-400">
+  {{ formatNumber(store.stats.outputTokens) }}
+</div>
 
 <!-- 缓存率 -->
 <div class="text-lg font-semibold text-cyan-400">{{ formatPercent(store.cacheRate) }}</div>
@@ -194,7 +198,7 @@ const trendGranularity = computed(() =>
 <div class="text-lg font-semibold text-rose-400">{{ formatLatency(store.stats.avgLatencyMs) }}</div>
 ```
 
-- [ ] **Step 3: 替换趋势图区域 + RankBoard 为同行布局**
+- [x] **Step 3: 替换趋势图区域 + RankBoard 为同行布局**
 
 将原来的两个独立区块：
 
@@ -204,21 +208,12 @@ const trendGranularity = computed(() =>
   <div class="mb-1 flex items-center justify-between">
     <span class="text-xs text-muted-foreground">趋势</span>
     <div class="flex gap-1">
-      <button
-        v-for="m in metricOptions"
-        :key="m.key"
-        :class="[...]"
-        @click="activeMetric = m.key"
-      >
+      <button v-for="m in metricOptions" :key="m.key" :class="[...]" @click="activeMetric = m.key">
         {{ m.label }}
       </button>
     </div>
   </div>
-  <StatsChart
-    :points="store.statsTrend"
-    :metric="activeMetric"
-    :granularity="trendGranularity"
-  />
+  <StatsChart :points="store.statsTrend" :metric="activeMetric" :granularity="trendGranularity" />
 </div>
 
 <!-- Rank board -->
@@ -235,10 +230,7 @@ const trendGranularity = computed(() =>
   <div class="flex min-w-0 flex-1 flex-col">
     <span class="mb-1 shrink-0 text-xs text-muted-foreground">趋势</span>
     <div class="min-h-0 flex-1">
-      <StatsChart
-        :points="store.statsTrend"
-        :granularity="trendGranularity"
-      />
+      <StatsChart :points="store.statsTrend" :granularity="trendGranularity" />
     </div>
   </div>
   <div class="w-[220px] shrink-0 overflow-y-auto">
@@ -247,7 +239,7 @@ const trendGranularity = computed(() =>
 </div>
 ```
 
-- [ ] **Step 4: 运行类型检查**
+- [x] **Step 4: 运行类型检查**
 
 ```bash
 pnpm run typecheck
@@ -255,13 +247,13 @@ pnpm run typecheck
 
 期望：无新增错误。
 
-- [ ] **Step 5: 运行 lint + format**
+- [x] **Step 5: 运行 lint + format**
 
 ```bash
 pnpm run lint && pnpm run format
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/renderer/src/views/GatewayPanel.vue

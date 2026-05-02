@@ -146,7 +146,7 @@ const trendGranularity = computed(() =>
             <StatsChart :points="store.statsTrend" :granularity="trendGranularity" />
           </div>
         </div>
-        <div class="w-[220px] shrink-0 overflow-y-auto">
+        <div class="w-[40%] shrink-0 overflow-y-auto">
           <RankBoard :channel-ranking="store.channelRanking" :model-ranking="store.modelRanking" />
         </div>
       </div>
