@@ -21,6 +21,7 @@ import type {
   LatencyPercentiles,
   StabilityPoint,
   TrendPoint,
+  MinutePoint,
 } from "@shared/types/gateway";
 import { initDb, getDb, closeDb } from "@/db";
 import * as channelDao from "@/db/models/channelDao";
@@ -395,6 +396,10 @@ export class GatewayPresenter implements IGatewayPresenter {
 
   getChannelStability(channelId: number, from: string, to: string): StabilityPoint[] {
     return statsDao.getChannelStabilityHourly(getDb(), channelId, from, to);
+  }
+
+  getChannelMinuteStability(channelId: number): MinutePoint[] {
+    return statsDao.getChannelStabilityMinute(getDb(), channelId);
   }
 
   getStatsDailyTrend(from: string, to: string): TrendPoint[] {
