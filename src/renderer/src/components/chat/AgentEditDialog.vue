@@ -33,7 +33,6 @@ const avatarText = ref("");
 const avatarBgColor = ref("#7c3aed");
 const avatarImagePath = ref<string | null>(null);
 const pickingImage = ref(false);
-const systemPrompt = ref("");
 const capabilities = ref<string[]>(["reasoning"]);
 const temperature = ref(0.7);
 const contextLength = ref<number | undefined>(undefined);
@@ -99,7 +98,6 @@ watch(
           }
         }
         const cfg = agent.config;
-        systemPrompt.value = cfg?.systemPrompt ?? "";
         capabilities.value = cfg?.capabilityRequirements ?? ["reasoning"];
         temperature.value = cfg?.temperature ?? 0.7;
         contextLength.value = cfg?.contextLength;
@@ -127,7 +125,6 @@ watch(
       avatarText.value = "";
       avatarBgColor.value = "#7c3aed";
       avatarImagePath.value = null;
-      systemPrompt.value = "";
       capabilities.value = ["reasoning"];
       temperature.value = 0.7;
       contextLength.value = undefined;
@@ -176,6 +173,14 @@ function showInFinder(filePath: string | null) {
   window.electron.ipcRenderer.invoke("shell:showItemInFolder", filePath);
 }
 
+async function openAgentDir() {
+  if (!props.agentId) return;
+  const dir = (await agentConfig.getAgentDir(props.agentId)) as string | null;
+  if (dir) {
+    window.electron.ipcRenderer.invoke("shell:openPath", dir);
+  }
+}
+
 async function onSave() {
   if (!name.value.trim()) {
     nameError.value = "名称不能为空";
@@ -197,7 +202,6 @@ async function onSave() {
 
   const config: AgentConfig = {
     capabilityRequirements: capabilities.value,
-    systemPrompt: systemPrompt.value || undefined,
     temperature: temperature.value,
     contextLength: contextLength.value,
     maxTokens: maxTokens.value,
@@ -386,15 +390,21 @@ async function onSave() {
             </div>
           </div>
 
-          <!-- System Prompt -->
-          <div>
+          <!-- Agent 目录 -->
+          <div v-if="isEdit">
             <label class="mb-1 block text-xs text-muted-foreground">系统提示词</label>
-            <textarea
-              v-model="systemPrompt"
-              rows="3"
-              class="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none resize-none"
-              placeholder="自定义系统提示词..."
-            />
+            <p class="mb-1.5 text-xs text-muted-foreground">
+              通过编辑 Agent 目录下的
+              <code class="rounded bg-muted px-1">SOUL.md</code> 文件设置系统提示词。
+            </p>
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+              @click="openAgentDir"
+            >
+              <Icon icon="lucide:folder-open" class="h-3.5 w-3.5" />
+              打开 Agent 目录
+            </button>
           </div>
 
           <!-- Capabilities -->

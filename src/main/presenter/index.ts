@@ -327,3 +327,7 @@ ipcMain.handle("dialog:openDirectory", async () => {
 ipcMain.handle("shell:showItemInFolder", (_event, filePath: string) => {
   shell.showItemInFolder(filePath);
 });
+
+ipcMain.handle("shell:openPath", (_event, path: string) => {
+  shell.openPath(path);
+});
