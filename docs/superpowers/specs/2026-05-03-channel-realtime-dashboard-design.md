@@ -19,10 +19,10 @@
 
 ```typescript
 interface MinutePoint {
-  minute: string        // "2026-05-03T14:32"
-  successCount: number
-  failCount: number
-  avgLatencyMs: number | null
+  minute: string; // "2026-05-03T14:32"
+  successCount: number;
+  failCount: number;
+  avgLatencyMs: number | null;
 }
 ```
 
@@ -86,14 +86,14 @@ async loadChannelMinuteStability(channelId: number): Promise<void>
 
 ## 改动文件清单
 
-| 文件 | 变更类型 |
-|------|---------|
-| `src/shared/types/gateway.d.ts` | 新增 `MinutePoint` 类型 |
-| `src/main/db/models/statsDao.ts` | 新增 `getChannelStabilityMinute()` |
-| `src/main/presenter/gatewayPresenter.ts` | 新增 `getChannelMinuteStability()` |
-| `src/renderer/src/stores/gateway.ts` | 新增 state + action |
-| `src/renderer/src/components/gateway/ChannelRealtimeChart.vue` | 新增组件 |
-| `src/renderer/src/components/gateway/ChannelTab.vue` | 替换图表组件 + 监听逻辑 |
+| 文件                                                           | 变更类型                           |
+| -------------------------------------------------------------- | ---------------------------------- |
+| `src/shared/types/gateway.d.ts`                                | 新增 `MinutePoint` 类型            |
+| `src/main/db/models/statsDao.ts`                               | 新增 `getChannelStabilityMinute()` |
+| `src/main/presenter/gatewayPresenter.ts`                       | 新增 `getChannelMinuteStability()` |
+| `src/renderer/src/stores/gateway.ts`                           | 新增 state + action                |
+| `src/renderer/src/components/gateway/ChannelRealtimeChart.vue` | 新增组件                           |
+| `src/renderer/src/components/gateway/ChannelTab.vue`           | 替换图表组件 + 监听逻辑            |
 
 ## 不涉及的改动
 

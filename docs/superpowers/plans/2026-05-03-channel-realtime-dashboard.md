@@ -12,22 +12,23 @@
 
 ## 文件变更清单
 
-| 文件 | 类型 |
-|------|------|
-| `src/shared/types/gateway.d.ts` | 修改——新增 `MinutePoint` 接口 |
-| `src/shared/types/presenters/gateway.presenter.d.ts` | 修改——新增 `getChannelMinuteStability` 方法签名 |
-| `src/main/db/models/statsDao.ts` | 修改——新增 `getChannelStabilityMinute` 函数 |
-| `src/main/presenter/gatewayPresenter.ts` | 修改——新增 `getChannelMinuteStability` 方法 |
-| `src/renderer/src/stores/gateway.ts` | 修改——新增 state + action |
-| `src/renderer/src/components/gateway/ChannelRealtimeChart.vue` | 新建——30分钟实时图表组件 |
-| `src/renderer/src/components/gateway/ChannelTab.vue` | 修改——替换图表组件，监听 LOG_ADDED |
-| `test/main/gateway-stats.test.ts` | 修改——新增 `getChannelStabilityMinute` 测试 |
+| 文件                                                           | 类型                                            |
+| -------------------------------------------------------------- | ----------------------------------------------- |
+| `src/shared/types/gateway.d.ts`                                | 修改——新增 `MinutePoint` 接口                   |
+| `src/shared/types/presenters/gateway.presenter.d.ts`           | 修改——新增 `getChannelMinuteStability` 方法签名 |
+| `src/main/db/models/statsDao.ts`                               | 修改——新增 `getChannelStabilityMinute` 函数     |
+| `src/main/presenter/gatewayPresenter.ts`                       | 修改——新增 `getChannelMinuteStability` 方法     |
+| `src/renderer/src/stores/gateway.ts`                           | 修改——新增 state + action                       |
+| `src/renderer/src/components/gateway/ChannelRealtimeChart.vue` | 新建——30分钟实时图表组件                        |
+| `src/renderer/src/components/gateway/ChannelTab.vue`           | 修改——替换图表组件，监听 LOG_ADDED              |
+| `test/main/gateway-stats.test.ts`                              | 修改——新增 `getChannelStabilityMinute` 测试     |
 
 ---
 
 ## Task 1: 新增 MinutePoint 类型和 Presenter 接口
 
 **Files:**
+
 - Modify: `src/shared/types/gateway.d.ts`
 - Modify: `src/shared/types/presenters/gateway.presenter.d.ts`
 
@@ -37,10 +38,10 @@
 
 ```typescript
 export interface MinutePoint {
-  minute: string // "2026-05-03T14:32"
-  successCount: number
-  failCount: number
-  avgLatencyMs: number | null
+  minute: string; // "2026-05-03T14:32"
+  successCount: number;
+  failCount: number;
+  avgLatencyMs: number | null;
 }
 ```
 
@@ -49,6 +50,7 @@ export interface MinutePoint {
 在 `src/shared/types/presenters/gateway.presenter.d.ts` 中：
 
 1. 在顶部 import 语句中加入 `MinutePoint`：
+
 ```typescript
 import type {
   // ...现有 imports...
@@ -59,6 +61,7 @@ import type {
 ```
 
 2. 在 `getChannelStability` 方法后面添加：
+
 ```typescript
   getChannelMinuteStability(channelId: number): MinutePoint[];
 ```
@@ -83,6 +86,7 @@ git commit -m "feat(gateway): add MinutePoint type and presenter interface"
 ## Task 2: 新增 DAO 函数 getChannelStabilityMinute
 
 **Files:**
+
 - Modify: `src/main/db/models/statsDao.ts`
 - Test: `test/main/gateway-stats.test.ts`
 
@@ -91,59 +95,67 @@ git commit -m "feat(gateway): add MinutePoint type and presenter interface"
 在 `test/main/gateway-stats.test.ts` 的 `describe("statsDao 稳定性查询", ...)` 块末尾（第 221 行 `});` 之前）新增：
 
 ```typescript
-  it("getChannelStabilityMinute 返回最近30分钟按分钟聚合数据", async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date("2026-05-03T14:35:00Z"))
-    const { getChannelStabilityMinute } = await import("@/db/models/statsDao")
+it("getChannelStabilityMinute 返回最近30分钟按分钟聚合数据", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-05-03T14:35:00Z"));
+  const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
 
-    // 插入 14:32 两条（1 success, 1 error）
-    db.prepare(`
+  // 插入 14:32 两条（1 success, 1 error）
+  db.prepare(
+    `
       INSERT INTO relay_logs
         (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
          cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
       VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 200, ?, ?)
-    `).run("success", "2026-05-03 14:32:00")
-    db.prepare(`
+    `,
+  ).run("success", "2026-05-03 14:32:00");
+  db.prepare(
+    `
       INSERT INTO relay_logs
         (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
          cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
       VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 400, ?, ?)
-    `).run("error", "2026-05-03 14:32:30")
+    `,
+  ).run("error", "2026-05-03 14:32:30");
 
-    // 插入 14:05（超出30分钟范围，不应出现）
-    db.prepare(`
+  // 插入 14:05（超出30分钟范围，不应出现）
+  db.prepare(
+    `
       INSERT INTO relay_logs
         (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
          cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
       VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 100, ?, ?)
-    `).run("success", "2026-05-03 14:04:00")
+    `,
+  ).run("success", "2026-05-03 14:04:00");
 
-    const rows = getChannelStabilityMinute(db, 1)
-    expect(rows).toHaveLength(1)
-    expect(rows[0].minute).toBe("2026-05-03T14:32")
-    expect(rows[0].successCount).toBe(1)
-    expect(rows[0].failCount).toBe(1)
-    expect(rows[0].avgLatencyMs).toBeCloseTo(200) // avg 只取 success 的 duration_ms
-    vi.useRealTimers()
-  })
+  const rows = getChannelStabilityMinute(db, 1);
+  expect(rows).toHaveLength(1);
+  expect(rows[0].minute).toBe("2026-05-03T14:32");
+  expect(rows[0].successCount).toBe(1);
+  expect(rows[0].failCount).toBe(1);
+  expect(rows[0].avgLatencyMs).toBeCloseTo(200); // avg 只取 success 的 duration_ms
+  vi.useRealTimers();
+});
 
-  it("getChannelStabilityMinute channel_id 隔离", async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date("2026-05-03T14:35:00Z"))
-    const { getChannelStabilityMinute } = await import("@/db/models/statsDao")
+it("getChannelStabilityMinute channel_id 隔离", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-05-03T14:35:00Z"));
+  const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
 
-    // channel_id=2 的日志
-    db.prepare(`
+  // channel_id=2 的日志
+  db.prepare(
+    `
       INSERT INTO relay_logs
         (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
          cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at)
       VALUES ('g', 'gpt-4o', 2, 'ch2', 100, 50, 0, 0, 0.001, 100, 'success', '2026-05-03 14:32:00')
-    `).run()
+    `,
+  ).run();
 
-    const rows = getChannelStabilityMinute(db, 1)
-    expect(rows).toHaveLength(0) // channel 1 无数据
-    vi.useRealTimers()
-  })
+  const rows = getChannelStabilityMinute(db, 1);
+  expect(rows).toHaveLength(0); // channel 1 无数据
+  vi.useRealTimers();
+});
 ```
 
 - [ ] **Step 2: 运行测试，确认失败**
@@ -192,14 +204,14 @@ export function getChannelStabilityMinute(
       GROUP BY minute
       ORDER BY minute`,
     )
-    .all(channelId) as Array<Record<string, unknown>>
+    .all(channelId) as Array<Record<string, unknown>>;
 
   return rows.map((r) => ({
     minute: r.minute as string,
     successCount: r.success_count as number,
     failCount: r.fail_count as number,
     avgLatencyMs: r.avg_latency_ms !== null ? (r.avg_latency_ms as number) : null,
-  }))
+  }));
 }
 ```
 
@@ -223,6 +235,7 @@ git commit -m "feat(gateway): add getChannelStabilityMinute DAO"
 ## Task 3: GatewayPresenter 新增 getChannelMinuteStability 方法
 
 **Files:**
+
 - Modify: `src/main/presenter/gatewayPresenter.ts`
 
 - [ ] **Step 1: 在 gatewayPresenter.ts 中新增 import 和方法**
@@ -266,6 +279,7 @@ git commit -m "feat(gateway): expose getChannelMinuteStability in presenter"
 ## Task 4: Gateway Store 新增 channelMinuteStability state 和 action
 
 **Files:**
+
 - Modify: `src/renderer/src/stores/gateway.ts`
 
 - [ ] **Step 1: 更新 gateway store**
@@ -295,26 +309,26 @@ import type {
 2. 在 `channelStability` state 后添加新 state（约第 41 行）：
 
 ```typescript
-  const channelMinuteStability = ref<Map<number, MinutePoint[]>>(new Map())
+const channelMinuteStability = ref<Map<number, MinutePoint[]>>(new Map());
 ```
 
 3. 在 `loadChannelStability` 函数后添加新 action（约第 114 行）：
 
 ```typescript
-  async function loadChannelMinuteStability(channelId: number) {
-    const points = await gw.getChannelMinuteStability(channelId)
-    channelMinuteStability.value = new Map(channelMinuteStability.value).set(channelId, points)
-  }
+async function loadChannelMinuteStability(channelId: number) {
+  const points = await gw.getChannelMinuteStability(channelId);
+  channelMinuteStability.value = new Map(channelMinuteStability.value).set(channelId, points);
+}
 ```
 
 4. 在 `return` 对象中加入新增的 state 和 action：
 
 ```typescript
-  return {
-    // ...现有 return 字段...
-    channelMinuteStability,
-    loadChannelMinuteStability,
-  }
+return {
+  // ...现有 return 字段...
+  channelMinuteStability,
+  loadChannelMinuteStability,
+};
 ```
 
 - [ ] **Step 2: 运行类型检查**
@@ -337,6 +351,7 @@ git commit -m "feat(gateway): add channelMinuteStability state and action to sto
 ## Task 5: 新建 ChannelRealtimeChart.vue 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/ChannelRealtimeChart.vue`
 
 - [ ] **Step 1: 创建组件文件**
@@ -345,81 +360,93 @@ git commit -m "feat(gateway): add channelMinuteStability state and action to sto
 
 ```vue
 <script setup lang="ts">
-import { computed } from "vue"
-import { use } from "echarts/core"
-import { CanvasRenderer } from "echarts/renderers"
-import { LineChart } from "echarts/charts"
-import { GridComponent, TooltipComponent } from "echarts/components"
-import VChart from "vue-echarts"
-import type { MinutePoint } from "@shared/types/gateway"
+import { computed } from "vue";
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { LineChart } from "echarts/charts";
+import { GridComponent, TooltipComponent } from "echarts/components";
+import VChart from "vue-echarts";
+import type { MinutePoint } from "@shared/types/gateway";
 
-use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent]);
 
 const props = defineProps<{
-  points: MinutePoint[]
-}>()
+  points: MinutePoint[];
+}>();
 
 // 生成最近 30 个整分钟的时间串 ["2026-05-03T14:06", ..., "2026-05-03T14:35"]
 function getLast30Minutes(): string[] {
-  const result: string[] = []
-  const now = new Date()
+  const result: string[] = [];
+  const now = new Date();
   // 从当前整分钟往前推 29 分钟
-  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0, 0)
+  const base = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+    0,
+    0,
+  );
   for (let i = 29; i >= 0; i--) {
-    const t = new Date(base.getTime() - i * 60 * 1000)
-    const mm = String(t.getMinutes()).padStart(2, "0")
-    const hh = String(t.getHours()).padStart(2, "0")
-    const yyyy = t.getFullYear()
-    const mo = String(t.getMonth() + 1).padStart(2, "0")
-    const dd = String(t.getDate()).padStart(2, "0")
-    result.push(`${yyyy}-${mo}-${dd}T${hh}:${mm}`)
+    const t = new Date(base.getTime() - i * 60 * 1000);
+    const mm = String(t.getMinutes()).padStart(2, "0");
+    const hh = String(t.getHours()).padStart(2, "0");
+    const yyyy = t.getFullYear();
+    const mo = String(t.getMonth() + 1).padStart(2, "0");
+    const dd = String(t.getDate()).padStart(2, "0");
+    result.push(`${yyyy}-${mo}-${dd}T${hh}:${mm}`);
   }
-  return result
+  return result;
 }
 
 const filledPoints = computed(() => {
-  const byMinute = new Map<string, MinutePoint>()
+  const byMinute = new Map<string, MinutePoint>();
   for (const p of props.points) {
-    byMinute.set(p.minute, p)
+    byMinute.set(p.minute, p);
   }
-  const slots = getLast30Minutes()
-  return slots.map((m) => byMinute.get(m) ?? { minute: m, successCount: 0, failCount: 0, avgLatencyMs: null })
-})
+  const slots = getLast30Minutes();
+  return slots.map(
+    (m) => byMinute.get(m) ?? { minute: m, successCount: 0, failCount: 0, avgLatencyMs: null },
+  );
+});
 
-const hasData = computed(() => props.points.some((p) => p.successCount + p.failCount > 0))
+const hasData = computed(() => props.points.some((p) => p.successCount + p.failCount > 0));
 
-const xLabels = computed(() => filledPoints.value.map((p) => p.minute.slice(11))) // "HH:MM"
+const xLabels = computed(() => filledPoints.value.map((p) => p.minute.slice(11))); // "HH:MM"
 
 const availabilityData = computed(() =>
   filledPoints.value.map((p) => {
-    const total = p.successCount + p.failCount
-    if (total === 0) return null
-    return Number(((p.successCount / total) * 100).toFixed(1))
+    const total = p.successCount + p.failCount;
+    if (total === 0) return null;
+    return Number(((p.successCount / total) * 100).toFixed(1));
   }),
-)
+);
 
 const latencyData = computed(() =>
   filledPoints.value.map((p) =>
     p.successCount + p.failCount > 0 && p.avgLatencyMs !== null ? Math.round(p.avgLatencyMs) : null,
   ),
-)
+);
 
 const summaryAvailability = computed(() => {
-  const valid = props.points.filter((p) => p.successCount + p.failCount > 0)
-  if (valid.length === 0) return null
-  const totalSuccess = valid.reduce((s, p) => s + p.successCount, 0)
-  const totalAll = valid.reduce((s, p) => s + p.successCount + p.failCount, 0)
-  return ((totalSuccess / totalAll) * 100).toFixed(1)
-})
+  const valid = props.points.filter((p) => p.successCount + p.failCount > 0);
+  if (valid.length === 0) return null;
+  const totalSuccess = valid.reduce((s, p) => s + p.successCount, 0);
+  const totalAll = valid.reduce((s, p) => s + p.successCount + p.failCount, 0);
+  return ((totalSuccess / totalAll) * 100).toFixed(1);
+});
 
 const summaryAvgLatency = computed(() => {
-  const valid = props.points.filter((p) => p.avgLatencyMs !== null && p.successCount + p.failCount > 0)
-  if (valid.length === 0) return 0
-  return Math.round(valid.reduce((s, p) => s + (p.avgLatencyMs as number), 0) / valid.length)
-})
+  const valid = props.points.filter(
+    (p) => p.avgLatencyMs !== null && p.successCount + p.failCount > 0,
+  );
+  if (valid.length === 0) return 0;
+  return Math.round(valid.reduce((s, p) => s + (p.avgLatencyMs as number), 0) / valid.length);
+});
 
 function formatLatency(ms: number): string {
-  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
 }
 
 const availOption = computed(() => ({
@@ -448,7 +475,9 @@ const availOption = computed(() => ({
     borderColor: "#333",
     textStyle: { color: "#ccc", fontSize: 11 },
     formatter: (params: Array<{ value: number | null; axisValue: string }>) =>
-      params[0].value !== null ? `${params[0].axisValue}  ${params[0].value}%` : `${params[0].axisValue}  无流量`,
+      params[0].value !== null
+        ? `${params[0].axisValue}  ${params[0].value}%`
+        : `${params[0].axisValue}  无流量`,
   },
   series: [
     {
@@ -465,7 +494,7 @@ const availOption = computed(() => ({
       connectNulls: false,
     },
   ],
-}))
+}));
 
 const latencyOption = computed(() => ({
   backgroundColor: "transparent",
@@ -503,7 +532,7 @@ const latencyOption = computed(() => ({
       connectNulls: false,
     },
   ],
-}))
+}));
 </script>
 
 <template>
@@ -569,6 +598,7 @@ git commit -m "feat(gateway): add ChannelRealtimeChart component"
 ## Task 6: 改造 ChannelTab.vue
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/ChannelTab.vue`
 
 - [ ] **Step 1: 更新 ChannelTab.vue 的 script 部分**
@@ -576,82 +606,81 @@ git commit -m "feat(gateway): add ChannelRealtimeChart component"
 在 `src/renderer/src/components/gateway/ChannelTab.vue` 中做以下修改：
 
 1. 替换 import（第 2 行）：将 `import { ref, computed, watch, onMounted } from "vue"` 改为：
+
 ```typescript
-import { ref, computed, watch, onMounted, onUnmounted } from "vue"
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 ```
 
 2. 替换图表组件 import（第 8 行）：将
+
 ```typescript
-import ChannelStabilityChart from "@/components/gateway/ChannelStabilityChart.vue"
+import ChannelStabilityChart from "@/components/gateway/ChannelStabilityChart.vue";
 ```
+
 改为：
+
 ```typescript
-import ChannelRealtimeChart from "@/components/gateway/ChannelRealtimeChart.vue"
+import ChannelRealtimeChart from "@/components/gateway/ChannelRealtimeChart.vue";
 ```
 
 3. 在 script setup 顶部添加 IPC 事件监听相关 import：
+
 ```typescript
-import { GATEWAY_EVENTS } from "@shared/events"
+import { GATEWAY_EVENTS } from "@shared/events";
 ```
 
 4. 将 `selectedStabilityPoints` computed（约第 199 行）替换为 `selectedMinutePoints`：
+
 ```typescript
 const selectedMinutePoints = computed(() => {
-  if (!selectedChannelId.value) return []
-  return store.channelMinuteStability.get(selectedChannelId.value) ?? []
-})
+  if (!selectedChannelId.value) return [];
+  return store.channelMinuteStability.get(selectedChannelId.value) ?? [];
+});
 ```
 
 5. 将 `selectChannel` 函数中的 `store.loadChannelStability(ch.id)` 替换为 `store.loadChannelMinuteStability(ch.id)`（约第 178 行）：
+
 ```typescript
 async function selectChannel(ch: Channel) {
-  showAddModel.value = false
-  newCapModelName.value = ""
-  selectedChannelId.value = ch.id
-  await store.loadModelsByChannel(ch.id)
-  store.loadChannelMinuteStability(ch.id)
+  showAddModel.value = false;
+  newCapModelName.value = "";
+  selectedChannelId.value = ch.id;
+  await store.loadModelsByChannel(ch.id);
+  store.loadChannelMinuteStability(ch.id);
 }
 ```
 
 6. 在 `onMounted(() => autoSelectFirst(store.channels))` 之后添加 LOG_ADDED 监听（带 debounce）：
 
 ```typescript
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-const cleanupLogAdded = window.electron.ipcRenderer.on(
-  GATEWAY_EVENTS.LOG_ADDED,
-  () => {
-    if (!selectedChannelId.value) return
-    if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
-      store.loadChannelMinuteStability(selectedChannelId.value!)
-    }, 1000)
-  },
-)
+const cleanupLogAdded = window.electron.ipcRenderer.on(GATEWAY_EVENTS.LOG_ADDED, () => {
+  if (!selectedChannelId.value) return;
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    store.loadChannelMinuteStability(selectedChannelId.value!);
+  }, 1000);
+});
 
 onUnmounted(() => {
-  cleanupLogAdded?.()
-  if (debounceTimer) clearTimeout(debounceTimer)
-})
+  cleanupLogAdded?.();
+  if (debounceTimer) clearTimeout(debounceTimer);
+});
 ```
 
 - [ ] **Step 2: 更新 template 部分**
 
 在 template 中（约第 385 行），将：
+
 ```html
-<ChannelStabilityChart
-  v-if="selectedChannel"
-  :points="selectedStabilityPoints"
-  class="mb-4"
-/>
+<ChannelStabilityChart v-if="selectedChannel" :points="selectedStabilityPoints" class="mb-4" />
 ```
+
 替换为：
+
 ```html
-<ChannelRealtimeChart
-  v-if="selectedChannel"
-  :points="selectedMinutePoints"
-  class="mb-4"
-/>
+<ChannelRealtimeChart v-if="selectedChannel" :points="selectedMinutePoints" class="mb-4" />
 ```
 
 - [ ] **Step 3: 运行类型检查和 lint**
