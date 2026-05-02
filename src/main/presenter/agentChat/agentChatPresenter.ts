@@ -346,7 +346,7 @@ export class AgentChatPresenter {
     // Read systemPrompt from SOUL.md if available
     const agentSystemPrompt = this.agentConfigPresenter
       ? await this.agentConfigPresenter.readSoulMd(session.agentId)
-      : (agent?.config?.systemPrompt ?? "");
+      : "";
 
     // Build context — contextBuilder deduplicates newUserContent from history
     const messages: CoreMessage[] = buildContext(sessionId, content, db, {
