@@ -174,6 +174,13 @@ export interface StabilityPoint {
   avgLatencyMs: number;
 }
 
+export interface MinutePoint {
+  minute: string; // "2026-05-03T14:32"
+  successCount: number;
+  failCount: number;
+  avgLatencyMs: number | null;
+}
+
 export interface ChannelRankItem {
   channelId: number;
   channelName: string;

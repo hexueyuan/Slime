@@ -18,6 +18,7 @@ import type {
   ModelRankItem,
   LatencyPercentiles,
   StabilityPoint,
+  MinutePoint,
   TrendPoint,
 } from "../gateway";
 
@@ -83,6 +84,7 @@ export interface IGatewayPresenter {
   getModelRanking(from: string, to: string): ModelRankItem[];
   getLatencyPercentiles(from: string, to: string, channelId?: number): LatencyPercentiles;
   getChannelStability(channelId: number, from: string, to: string): StabilityPoint[];
+  getChannelMinuteStability(channelId: number): MinutePoint[];
   getStatsDailyTrend(from: string, to: string): TrendPoint[];
   getStatsHourlyTrend(from: string, to: string): TrendPoint[];
 
