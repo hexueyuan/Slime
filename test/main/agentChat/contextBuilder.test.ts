@@ -401,6 +401,26 @@ describe("buildContext", () => {
       expect(len).toBeLessThan(400);
     }
   });
+
+  it("omits system message when agentSystemPrompt is empty and no config", () => {
+    vi.mocked(configDao.getConfigById).mockReturnValue(undefined);
+    const result = buildContext("sess-1", "Hello!", fakeDb, { agentSystemPrompt: "" });
+    const systemMsgs = result.filter((m) => m.role === "system");
+    expect(systemMsgs).toHaveLength(0);
+    expect(result[0]).toEqual({ role: "user", content: "Hello!" });
+  });
+
+  it("includes system message when agentSystemPrompt is provided", () => {
+    vi.mocked(configDao.getConfigById).mockReturnValue(undefined);
+    const result = buildContext("sess-1", "Hi", fakeDb, { agentSystemPrompt: "你是小助手" });
+    expect(result[0]).toEqual({ role: "system", content: "你是小助手" });
+  });
+
+  it("falls back to default when no agentSystemPrompt option passed (builtin agent path)", () => {
+    vi.mocked(configDao.getConfigById).mockReturnValue(undefined);
+    const result = buildContext("sess-1", "Hello!", fakeDb);
+    expect(result[0]).toEqual({ role: "system", content: "You are a helpful AI assistant." });
+  });
 });
 
 describe("buildSkillListXML", () => {

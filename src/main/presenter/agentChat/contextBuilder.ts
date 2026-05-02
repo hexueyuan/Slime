@@ -152,12 +152,15 @@ export function buildContext(
   const config = configDao.getConfigById(db, sessionId);
   const contextLength = config?.contextLength ?? 128000;
 
-  const systemPrompt =
-    config?.systemPrompt || options?.agentSystemPrompt || "You are a helpful AI assistant.";
+  // 区分：options 中显式传入 agentSystemPrompt（custom agent）vs 未传（builtin/默认路径）
+  const hasAgentSystemPromptOption = options !== undefined && "agentSystemPrompt" in options;
+  const rawSystemPrompt = hasAgentSystemPromptOption
+    ? (options!.agentSystemPrompt ?? "")
+    : config?.systemPrompt || "You are a helpful AI assistant.";
+  const systemPrompt = config?.systemPrompt || rawSystemPrompt;
   const finalSystemPrompt = options?.skillListXML
     ? systemPrompt + "\n\n" + options.skillListXML
     : systemPrompt;
-  const systemMsg: CoreMessage = { role: "system", content: finalSystemPrompt };
 
   const allMessages = messageDao.listBySession(db, sessionId);
   const cursor = config?.summaryCursorSeq ?? 0;
@@ -198,5 +201,10 @@ export function buildContext(
   });
 
   const newUserMsg: CoreMessage = { role: "user", content: newUserContent };
-  return [systemMsg, ...summaryMessages, ...filtered, newUserMsg];
+  // 空 systemPrompt 时不注入 system 消息
+  if (finalSystemPrompt) {
+    const systemMsg: CoreMessage = { role: "system", content: finalSystemPrompt };
+    return [systemMsg, ...summaryMessages, ...filtered, newUserMsg];
+  }
+  return [...summaryMessages, ...filtered, newUserMsg];
 }
