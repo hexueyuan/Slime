@@ -11,9 +11,15 @@ use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent
 
 const props = defineProps<{
   points: TrendPoint[];
-  metric: "requests" | "cost" | "tokens" | "cachedTokens";
   granularity: "hourly" | "daily";
 }>();
+
+const SERIES_CONFIG = [
+  { key: "requests" as const, name: "请求数", color: "#7c3aed" },
+  { key: "cost" as const, name: "费用", color: "#f59e0b" },
+  { key: "inputTokens" as const, name: "Input Token", color: "#3b82f6" },
+  { key: "outputTokens" as const, name: "Output Token", color: "#10b981" },
+];
 
 const xLabels = computed(() =>
   props.points.map((p) =>
@@ -21,28 +27,16 @@ const xLabels = computed(() =>
   ),
 );
 
-const series = computed(() => {
-  if (props.metric === "requests") {
-    return [{ name: "请求数", data: props.points.map((p) => p.requests) }];
-  }
-  if (props.metric === "cost") {
-    return [{ name: "费用($)", data: props.points.map((p) => Number(p.cost.toFixed(4))) }];
-  }
-  if (props.metric === "cachedTokens") {
-    return [
-      { name: "缓存读", data: props.points.map((p) => p.cacheReadTokens) },
-      { name: "缓存写", data: props.points.map((p) => p.cacheWriteTokens) },
-    ];
-  }
-  return [
-    { name: "Input Token", data: props.points.map((p) => p.inputTokens) },
-    { name: "Output Token", data: props.points.map((p) => p.outputTokens) },
-  ];
-});
+function formatVal(key: (typeof SERIES_CONFIG)[number]["key"], val: number): string {
+  if (key === "cost") return `$${val.toFixed(4)}`;
+  if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
+  if (val >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
+  return String(val);
+}
 
 const option = computed(() => ({
   backgroundColor: "transparent",
-  grid: { top: 8, right: 8, bottom: 20, left: 50 },
+  grid: { top: 8, right: 8, bottom: 20, left: 8 },
   xAxis: {
     type: "category",
     data: xLabels.value,
@@ -52,7 +46,7 @@ const option = computed(() => ({
   yAxis: {
     type: "value",
     axisLine: { show: false },
-    axisLabel: { color: "#555", fontSize: 10 },
+    axisLabel: { show: false },
     splitLine: { lineStyle: { color: "#1e1e2e" } },
   },
   tooltip: {
@@ -60,20 +54,31 @@ const option = computed(() => ({
     backgroundColor: "#1a1a2e",
     borderColor: "#333",
     textStyle: { color: "#ccc", fontSize: 12 },
+    formatter(params: { seriesName: string; value: number; color: string }[]) {
+      return params
+        .map((p) => {
+          const cfg = SERIES_CONFIG.find((s) => s.name === p.seriesName)!;
+          const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color};margin-right:4px;"></span>`;
+          return `${dot}${p.seriesName}: ${formatVal(cfg.key, p.value)}`;
+        })
+        .join("<br/>");
+    },
   },
-  series: series.value.map((s, i) => ({
-    name: s.name,
+  series: SERIES_CONFIG.map((cfg) => ({
+    name: cfg.name,
     type: "line",
-    data: s.data,
+    data: props.points.map((p) =>
+      cfg.key === "cost" ? Number(p[cfg.key].toFixed(4)) : p[cfg.key],
+    ),
     smooth: true,
     symbol: "none",
-    areaStyle: { opacity: 0.15 },
-    lineStyle: { width: 1.5, color: i === 0 ? "#7c3aed" : "#3b82f6" },
-    itemStyle: { color: i === 0 ? "#7c3aed" : "#3b82f6" },
+    areaStyle: { opacity: 0.1, color: cfg.color },
+    lineStyle: { width: 1.5, color: cfg.color },
+    itemStyle: { color: cfg.color },
   })),
 }));
 </script>
 
 <template>
-  <v-chart :option="option" :autoresize="true" style="height: 90px; width: 100%" />
+  <v-chart :option="option" :autoresize="true" style="height: 100%; width: 100%" />
 </template>
