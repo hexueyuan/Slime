@@ -4,6 +4,8 @@ import { usePresenter } from "@/composables/usePresenter";
 import { useAgentChatStore } from "./agentChat";
 import type { SessionRecord } from "@shared/types/agent";
 
+const ARCHIVE_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000;
+
 export const useAgentSessionStore = defineStore("agentSession", () => {
   const chatPresenter = usePresenter("agentChatPresenter");
 
@@ -14,12 +16,19 @@ export const useAgentSessionStore = defineStore("agentSession", () => {
     () => sessions.value.find((s) => s.id === activeSessionId.value) ?? null,
   );
 
-  const sortedSessions = computed(() =>
-    [...sessions.value].sort((a, b) => {
-      // Pinned first, then by updatedAt DESC
-      if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-      return b.updatedAt - a.updatedAt;
-    }),
+  const activeSessions = computed(() =>
+    [...sessions.value]
+      .filter((s) => s.isPinned || s.updatedAt > Date.now() - ARCHIVE_THRESHOLD_MS)
+      .sort((a, b) => {
+        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        return b.updatedAt - a.updatedAt;
+      }),
+  );
+
+  const archivedSessions = computed(() =>
+    [...sessions.value]
+      .filter((s) => !s.isPinned && s.updatedAt <= Date.now() - ARCHIVE_THRESHOLD_MS)
+      .sort((a, b) => b.updatedAt - a.updatedAt),
   );
 
   async function fetchSessions(agentId?: string) {
@@ -61,7 +70,8 @@ export const useAgentSessionStore = defineStore("agentSession", () => {
     sessions,
     activeSessionId,
     activeSession,
-    sortedSessions,
+    activeSessions,
+    archivedSessions,
     fetchSessions,
     setActiveSession,
     createSession,
