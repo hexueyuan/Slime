@@ -13,6 +13,7 @@ import type {
   ModelRankItem,
   LatencyPercentiles,
   StabilityPoint,
+  MinutePoint,
   TrendPoint,
 } from "@shared/types/gateway";
 
@@ -39,6 +40,7 @@ export const useGatewayStore = defineStore("gateway", () => {
   const modelRanking = ref<ModelRankItem[]>([]);
   const latencyPercentiles = ref<LatencyPercentiles>({ p50: 0, p95: 0, ttftP50: null });
   const channelStability = ref<Map<number, StabilityPoint[]>>(new Map());
+  const channelMinuteStability = ref<Map<number, MinutePoint[]>>(new Map());
   const statsTrend = ref<TrendPoint[]>([]);
 
   const cacheRate = computed(() => {
@@ -113,6 +115,11 @@ export const useGatewayStore = defineStore("gateway", () => {
     channelStability.value = new Map(channelStability.value).set(channelId, points);
   }
 
+  async function loadChannelMinuteStability(channelId: number) {
+    const points = await gw.getChannelMinuteStability(channelId);
+    channelMinuteStability.value = new Map(channelMinuteStability.value).set(channelId, points);
+  }
+
   async function loadStatsTrend() {
     const { from, to } = getDateRange(statsRange.value);
     if (statsRange.value === "today") {
@@ -137,6 +144,7 @@ export const useGatewayStore = defineStore("gateway", () => {
     modelRanking,
     latencyPercentiles,
     channelStability,
+    channelMinuteStability,
     statsTrend,
     loadChannels,
     loadChannelKeys,
@@ -149,6 +157,7 @@ export const useGatewayStore = defineStore("gateway", () => {
     loadRanking,
     loadLatencyPercentiles,
     loadChannelStability,
+    loadChannelMinuteStability,
     loadStatsTrend,
   };
 });
