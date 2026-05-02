@@ -140,12 +140,13 @@ const HAL_CONFIG = {
 export function ensureBuiltin(db: BetterSqlite3.Database): void {
   const now = Date.now();
   const configJson = JSON.stringify(HAL_CONFIG);
+  const halDescription = "你好我是哈尔，有任何使用问题都可以来找我～";
   db.prepare(
-    `INSERT OR IGNORE INTO agents (id, name, type, enabled, protected, config_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run("hal-ai", "哈尔", "builtin", 1, 1, configJson, now, now);
+    `INSERT OR IGNORE INTO agents (id, name, description, type, enabled, protected, config_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run("hal-ai", "哈尔", halDescription, "builtin", 1, 1, configJson, now, now);
   // Update existing record to sync latest config (INSERT OR IGNORE skips if already exists)
   db.prepare(
-    `UPDATE agents SET name = '哈尔', config_json = ?, updated_at = ? WHERE id = 'hal-ai'`,
-  ).run(configJson, now);
+    `UPDATE agents SET name = '哈尔', description = ?, config_json = ?, updated_at = ? WHERE id = 'hal-ai'`,
+  ).run(halDescription, configJson, now);
 }
