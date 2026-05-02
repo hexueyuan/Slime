@@ -36,7 +36,7 @@ onUnmounted(() => cleanup?.());
 const tabs = [
   { key: "channels" as const, label: "供应商" },
   { key: "groups" as const, label: "分组" },
-  { key: "apikeys" as const, label: "渠道" },
+  { key: "apikeys" as const, label: "密钥" },
   { key: "logs" as const, label: "日志" },
 ];
 

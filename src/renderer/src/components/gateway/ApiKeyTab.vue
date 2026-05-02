@@ -52,12 +52,12 @@ function maskKey(key: string): string {
   <div class="p-4">
     <!-- Header -->
     <div class="mb-4 flex items-center justify-between">
-      <h3 class="text-sm font-medium text-foreground">渠道</h3>
+      <h3 class="text-sm font-medium text-foreground">密钥</h3>
       <button
         class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
         @click="openCreate"
       >
-        + 新增渠道
+        + 新增密钥
       </button>
     </div>
 
@@ -119,7 +119,7 @@ function maskKey(key: string): string {
     </div>
 
     <!-- Empty -->
-    <div v-else class="py-12 text-center text-sm text-muted-foreground">暂无渠道</div>
+    <div v-else class="py-12 text-center text-sm text-muted-foreground">暂无密钥</div>
 
     <!-- Editor overlay -->
     <Teleport to="body">
@@ -130,7 +130,7 @@ function maskKey(key: string): string {
         >
           <!-- Created key display -->
           <template v-if="justCreatedKey">
-            <h3 class="mb-3 text-sm font-medium text-foreground">渠道已创建</h3>
+            <h3 class="mb-3 text-sm font-medium text-foreground">密钥已创建</h3>
             <p class="mb-2 text-xs text-muted-foreground">
               请复制并妥善保管，关闭后将无法再次查看。
             </p>
@@ -157,7 +157,7 @@ function maskKey(key: string): string {
 
           <!-- Create form -->
           <template v-else>
-            <h3 class="mb-4 text-sm font-medium text-foreground">新增渠道</h3>
+            <h3 class="mb-4 text-sm font-medium text-foreground">新增密钥</h3>
 
             <label class="mb-4 block">
               <span class="mb-1 block text-xs text-muted-foreground">名称</span>

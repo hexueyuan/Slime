@@ -55,9 +55,9 @@ function formatNum(n: number): string {
 
 <template>
   <div class="flex h-full flex-col">
-    <!-- Header row: 渠道排名 | 模型排名 -->
+    <!-- Header row: 供应商排名 | 模型排名 -->
     <div class="mb-1 flex shrink-0 items-center">
-      <span class="flex-1 text-xs text-muted-foreground">渠道排名</span>
+      <span class="flex-1 text-xs text-muted-foreground">供应商排名</span>
       <span class="text-xs text-muted-foreground">模型排名</span>
     </div>
 
