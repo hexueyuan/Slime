@@ -12,6 +12,7 @@ use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent
 const props = defineProps<{
   points: TrendPoint[];
   granularity: "hourly" | "daily";
+  range: "today" | "7d" | "30d";
 }>();
 
 const SERIES_CONFIG = [
@@ -21,11 +22,40 @@ const SERIES_CONFIG = [
   { key: "outputTokens" as const, name: "Output Token", color: "#10b981" },
 ];
 
-const xLabels = computed(() =>
-  props.points.map((p) =>
-    props.granularity === "hourly" ? `${String(p.hour ?? 0).padStart(2, "0")}:00` : p.date.slice(5),
-  ),
-);
+// 补全完整时间轴，缺失点填 null
+const filledPoints = computed(() => {
+  if (props.granularity === "hourly") {
+    const map = new Map(props.points.map((p) => [p.hour ?? 0, p]));
+    return Array.from({ length: 24 }, (_, h) => map.get(h) ?? null);
+  } else {
+    const days = props.range === "7d" ? 7 : 30;
+    const dates: string[] = [];
+    const now = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().slice(0, 10));
+    }
+    const map = new Map(props.points.map((p) => [p.date, p]));
+    return dates.map((date) => map.get(date) ?? null);
+  }
+});
+
+const xLabels = computed(() => {
+  if (props.granularity === "hourly") {
+    return Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`);
+  } else {
+    const days = props.range === "7d" ? 7 : 30;
+    const dates: string[] = [];
+    const now = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().slice(5, 10));
+    }
+    return dates;
+  }
+});
 
 function formatVal(key: (typeof SERIES_CONFIG)[number]["key"], val: number): string {
   if (key === "cost") return `$${val.toFixed(4)}`;
@@ -70,8 +100,9 @@ const option = computed(() => ({
   series: SERIES_CONFIG.map((cfg) => ({
     name: cfg.name,
     type: "line",
-    data: props.points.map((p) => p[cfg.key]),
+    data: filledPoints.value.map((p) => (p !== null ? p[cfg.key] : null)),
     smooth: true,
+    connectNulls: true,
     symbol: "none",
     areaStyle: { opacity: 0.1, color: cfg.color },
     lineStyle: { width: 1.5, color: cfg.color },

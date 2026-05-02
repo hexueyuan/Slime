@@ -143,7 +143,11 @@ const trendGranularity = computed(() =>
         <div class="flex min-w-0 flex-1 flex-col">
           <span class="mb-1 shrink-0 text-xs text-muted-foreground">趋势</span>
           <div class="min-h-0 flex-1">
-            <StatsChart :points="store.statsTrend" :granularity="trendGranularity" />
+            <StatsChart
+              :points="store.statsTrend"
+              :granularity="trendGranularity"
+              :range="store.statsRange"
+            />
           </div>
         </div>
         <div class="w-[40%] shrink-0 overflow-y-auto">
