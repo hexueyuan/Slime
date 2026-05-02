@@ -2,11 +2,14 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 
 const mockInvoke = vi.fn();
-(globalThis as any).window = {
-  electron: {
-    ipcRenderer: { invoke: mockInvoke, on: vi.fn(() => vi.fn()), removeAllListeners: vi.fn() },
+Object.defineProperty(globalThis, "window", {
+  value: {
+    electron: {
+      ipcRenderer: { invoke: mockInvoke, on: vi.fn(() => vi.fn()) },
+    },
   },
-};
+  writable: true,
+});
 
 import { useAgentSessionStore } from "@/stores/agentSession";
 
