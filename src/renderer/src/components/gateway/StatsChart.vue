@@ -54,12 +54,15 @@ const option = computed(() => ({
     backgroundColor: "#1a1a2e",
     borderColor: "#333",
     textStyle: { color: "#ccc", fontSize: 12 },
-    formatter(params: { seriesName: string; value: number; color: string }[]) {
+    formatter(params: { seriesName: string; value: unknown; color: string }[]) {
       return params
         .map((p) => {
-          const cfg = SERIES_CONFIG.find((s) => s.name === p.seriesName)!;
+          const cfg = SERIES_CONFIG.find((s) => s.name === p.seriesName);
+          if (!cfg) return "";
           const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color};margin-right:4px;"></span>`;
-          return `${dot}${p.seriesName}: ${formatVal(cfg.key, p.value)}`;
+          const val = typeof p.value === "number" ? p.value : null;
+          if (val === null) return `${dot}${p.seriesName}: -`;
+          return `${dot}${p.seriesName}: ${formatVal(cfg.key, val)}`;
         })
         .join("<br/>");
     },
@@ -67,9 +70,7 @@ const option = computed(() => ({
   series: SERIES_CONFIG.map((cfg) => ({
     name: cfg.name,
     type: "line",
-    data: props.points.map((p) =>
-      cfg.key === "cost" ? Number(p[cfg.key].toFixed(4)) : p[cfg.key],
-    ),
+    data: props.points.map((p) => p[cfg.key]),
     smooth: true,
     symbol: "none",
     areaStyle: { opacity: 0.1, color: cfg.color },
