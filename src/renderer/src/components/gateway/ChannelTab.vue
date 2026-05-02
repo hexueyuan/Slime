@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
 import type { Channel, ChannelType, Capability, Model } from "@shared/types/gateway";
 import { Icon } from "@iconify/vue";
 import ModelIcon from "@/components/ModelIcon.vue";
-import ChannelStabilityChart from "@/components/gateway/ChannelStabilityChart.vue";
+import ChannelRealtimeChart from "@/components/gateway/ChannelRealtimeChart.vue";
+import { GATEWAY_EVENTS } from "@shared/events";
 
 const gw = usePresenter("gatewayPresenter");
 const store = useGatewayStore();
@@ -175,7 +176,7 @@ async function selectChannel(ch: Channel) {
   newCapModelName.value = "";
   selectedChannelId.value = ch.id;
   await store.loadModelsByChannel(ch.id);
-  store.loadChannelStability(ch.id);
+  store.loadChannelMinuteStability(ch.id);
 }
 
 function autoSelectFirst(channels: Channel[]) {
@@ -192,18 +193,34 @@ watch(() => store.channels, autoSelectFirst);
 
 onMounted(() => autoSelectFirst(store.channels));
 
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+const cleanupLogAdded = window.electron.ipcRenderer.on(GATEWAY_EVENTS.LOG_ADDED, () => {
+  if (!selectedChannelId.value) return;
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    store.loadChannelMinuteStability(selectedChannelId.value!);
+  }, 1000);
+});
+
+onUnmounted(() => {
+  cleanupLogAdded?.();
+  if (debounceTimer) clearTimeout(debounceTimer);
+});
+
 const selectedChannel = computed(
   () => store.channels.find((ch) => ch.id === selectedChannelId.value) ?? null,
 );
 
-const selectedStabilityPoints = computed(() => {
+const selectedMinutePoints = computed(() => {
   if (!selectedChannelId.value) return [];
-  return store.channelStability.get(selectedChannelId.value) ?? [];
+  return store.channelMinuteStability.get(selectedChannelId.value) ?? [];
 });
 
-const channelModels = computed(() =>
-  selectedChannelId.value ? (store.models.get(selectedChannelId.value) ?? []) : [],
-);
+const channelModels = computed(() => {
+  const models = selectedChannelId.value ? (store.models.get(selectedChannelId.value) ?? []) : [];
+  return [...models].sort((a, b) => Number(b.enabled) - Number(a.enabled));
+});
 
 async function toggleModelCap(model: Model, cap: Capability) {
   const caps = model.capabilities.includes(cap)
@@ -325,96 +342,102 @@ async function refreshModels() {
       </div>
 
       <!-- Right: model management -->
-      <div v-if="selectedChannel" class="min-w-0 flex-1 overflow-y-auto p-4">
-        <!-- Channel detail header -->
-        <div class="mb-3 flex items-center justify-between border-b border-border pb-2">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="text-[14px] font-semibold">{{ selectedChannel.name }}</span>
-              <span
-                :class="[
-                  'inline-block h-1.5 w-1.5 rounded-full',
-                  selectedChannel.enabled ? 'bg-green-500' : 'bg-neutral-500',
-                ]"
-              />
-              <span class="text-xs text-muted-foreground">{{ selectedChannel.type }}</span>
+      <div v-if="selectedChannel" class="flex min-w-0 flex-1 flex-col">
+        <!-- Fixed top section -->
+        <div class="shrink-0 p-4 pb-0">
+          <!-- Channel detail header -->
+          <div class="mb-3 flex items-center justify-between border-b border-border pb-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[14px] font-semibold">{{ selectedChannel.name }}</span>
+                <span
+                  :class="[
+                    'inline-block h-1.5 w-1.5 rounded-full',
+                    selectedChannel.enabled ? 'bg-green-500' : 'bg-neutral-500',
+                  ]"
+                />
+                <span class="text-xs text-muted-foreground">{{ selectedChannel.type }}</span>
+              </div>
+              <!-- Test result -->
+              <div v-if="testResults.get(selectedChannel.id)" class="mt-1 text-xs">
+                <span
+                  v-if="testResults.get(selectedChannel.id)!.loading"
+                  class="text-muted-foreground"
+                  >测试中...</span
+                >
+                <span
+                  v-else-if="testResults.get(selectedChannel.id)!.success"
+                  class="text-green-500"
+                  >连接成功</span
+                >
+                <span v-else class="text-red-400">{{
+                  testResults.get(selectedChannel.id)!.error
+                }}</span>
+              </div>
             </div>
-            <!-- Test result -->
-            <div v-if="testResults.get(selectedChannel.id)" class="mt-1 text-xs">
-              <span
-                v-if="testResults.get(selectedChannel.id)!.loading"
-                class="text-muted-foreground"
-                >测试中...</span
+            <div class="flex shrink-0 items-center gap-2">
+              <button
+                class="rounded border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                @click="testChannel(selectedChannel.id)"
               >
-              <span v-else-if="testResults.get(selectedChannel.id)!.success" class="text-green-500"
-                >连接成功</span
+                测试
+              </button>
+              <button
+                class="rounded border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                @click="openEdit(selectedChannel)"
               >
-              <span v-else class="text-red-400">{{
-                testResults.get(selectedChannel.id)!.error
-              }}</span>
+                编辑
+              </button>
+              <button
+                class="rounded border border-border px-2.5 py-1 text-xs text-red-400 transition-colors hover:bg-red-500/10"
+                @click="deleteChannel(selectedChannel.id)"
+              >
+                删除
+              </button>
             </div>
           </div>
-          <div class="flex shrink-0 items-center gap-2">
-            <button
-              class="rounded border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              @click="testChannel(selectedChannel.id)"
-            >
-              测试
-            </button>
-            <button
-              class="rounded border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              @click="openEdit(selectedChannel)"
-            >
-              编辑
-            </button>
-            <button
-              class="rounded border border-border px-2.5 py-1 text-xs text-red-400 transition-colors hover:bg-red-500/10"
-              @click="deleteChannel(selectedChannel.id)"
-            >
-              删除
-            </button>
+
+          <!-- Stability chart -->
+          <ChannelRealtimeChart
+            v-if="selectedChannel"
+            :points="selectedMinutePoints"
+            class="mb-4"
+          />
+
+          <!-- Model management title -->
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-[13px] text-muted-foreground">模型管理</span>
+            <div class="flex items-center gap-1">
+              <button
+                class="flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                title="从供应商拉取模型列表"
+                :disabled="refreshingModels"
+                @click="refreshModels"
+              >
+                <Icon
+                  icon="lucide:refresh-cw"
+                  class="h-3.5 w-3.5"
+                  :class="refreshingModels && 'animate-spin'"
+                />
+              </button>
+              <button
+                class="flex h-6 w-6 items-center justify-center rounded border border-border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title="添加模型"
+                @click="showAddModel = !showAddModel"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <div v-if="refreshModelsError" class="mb-2 text-xs text-red-400">
+            {{ refreshModelsError }}
           </div>
         </div>
+        <!-- end fixed top section -->
 
-        <!-- Stability chart -->
-        <ChannelStabilityChart
-          v-if="selectedChannel"
-          :points="selectedStabilityPoints"
-          class="mb-4"
-        />
-
-        <!-- Model management title -->
-        <div class="mb-3 flex items-center justify-between">
-          <span class="text-[13px] text-muted-foreground">模型管理</span>
-          <div class="flex items-center gap-1">
-            <button
-              class="flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-              title="从供应商拉取模型列表"
-              :disabled="refreshingModels"
-              @click="refreshModels"
-            >
-              <Icon
-                icon="lucide:refresh-cw"
-                class="h-3.5 w-3.5"
-                :class="refreshingModels && 'animate-spin'"
-              />
-            </button>
-            <button
-              class="flex h-6 w-6 items-center justify-center rounded border border-border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              title="添加模型"
-              @click="showAddModel = !showAddModel"
-            >
-              +
-            </button>
-          </div>
-        </div>
-        <div v-if="refreshModelsError" class="mb-2 text-xs text-red-400">
-          {{ refreshModelsError }}
-        </div>
-
-        <!-- Model list -->
-        <div v-if="channelModels.length" class="h-[220px] overflow-y-auto">
-          <div class="grid grid-cols-2 gap-2">
+        <!-- Scrollable model list -->
+        <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+          <div v-if="channelModels.length" class="grid grid-cols-2 gap-2">
             <div
               v-for="model in channelModels"
               :key="model.id"
@@ -478,45 +501,45 @@ async function refreshModels() {
               </div>
             </div>
           </div>
-        </div>
-        <div v-else class="py-8 text-center text-xs text-muted-foreground">暂无模型</div>
+          <div v-else class="py-8 text-center text-xs text-muted-foreground">暂无模型</div>
 
-        <!-- Inline add model (toggled by + button) -->
-        <div v-if="showAddModel" class="mt-3">
-          <div class="flex items-center gap-2">
-            <input
-              v-model="newCapModelName"
-              class="min-w-0 flex-1 rounded border border-input-border bg-input px-2.5 py-1 text-xs text-foreground outline-none focus:border-violet-500"
-              placeholder="输入模型名称..."
-              @keydown.enter.prevent="
-                if (newCapModelName.trim() && selectedChannelId) {
-                  addModelToChannel(selectedChannelId, newCapModelName.trim());
+          <!-- Inline add model (toggled by + button) -->
+          <div v-if="showAddModel" class="mt-3">
+            <div class="flex items-center gap-2">
+              <input
+                v-model="newCapModelName"
+                class="min-w-0 flex-1 rounded border border-input-border bg-input px-2.5 py-1 text-xs text-foreground outline-none focus:border-violet-500"
+                placeholder="输入模型名称..."
+                @keydown.enter.prevent="
+                  if (newCapModelName.trim() && selectedChannelId) {
+                    addModelToChannel(selectedChannelId, newCapModelName.trim());
+                    newCapModelName = '';
+                  }
+                "
+              />
+              <button
+                class="rounded bg-violet-600 px-2.5 py-1 text-xs text-white transition-colors hover:bg-violet-500"
+                @click="
+                  if (newCapModelName.trim() && selectedChannelId) {
+                    addModelToChannel(selectedChannelId, newCapModelName.trim());
+                    newCapModelName = '';
+                  }
+                "
+              >
+                确认
+              </button>
+              <button
+                class="rounded px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
+                @click="
+                  showAddModel = false;
                   newCapModelName = '';
-                }
-              "
-            />
-            <button
-              class="rounded bg-violet-600 px-2.5 py-1 text-xs text-white transition-colors hover:bg-violet-500"
-              @click="
-                if (newCapModelName.trim() && selectedChannelId) {
-                  addModelToChannel(selectedChannelId, newCapModelName.trim());
-                  newCapModelName = '';
-                }
-              "
-            >
-              确认
-            </button>
-            <button
-              class="rounded px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
-              @click="
-                showAddModel = false;
-                newCapModelName = '';
-              "
-            >
-              取消
-            </button>
+                "
+              >
+                取消
+              </button>
+            </div>
+            <div v-if="addModelError" class="mt-1 text-xs text-red-400">{{ addModelError }}</div>
           </div>
-          <div v-if="addModelError" class="mt-1 text-xs text-red-400">{{ addModelError }}</div>
         </div>
       </div>
 
