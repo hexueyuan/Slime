@@ -380,7 +380,7 @@ export function getChannelStabilityMinute(
       `SELECT
         strftime('%Y-%m-%dT%H:%M', created_at) AS minute,
         SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
-        SUM(CASE WHEN status != 'success' THEN 1 ELSE 0 END) AS fail_count,
+        SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS fail_count,
         AVG(CASE WHEN status = 'success' THEN duration_ms END) AS avg_latency_ms
       FROM relay_logs
       WHERE channel_id = ?
