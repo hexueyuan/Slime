@@ -49,7 +49,9 @@ const filteredChannels = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
   return store.channels
     .map((ch) => {
-      const allModels = (store.models.get(ch.id) ?? []).map((m) => m.modelName);
+      const allModels = (store.models.get(ch.id) ?? [])
+        .filter((m) => m.enabled)
+        .map((m) => m.modelName);
       if (!q || ch.name.toLowerCase().includes(q)) return { ...ch, models: allModels };
       const filtered = allModels.filter((m) => m.toLowerCase().includes(q));
       if (filtered.length === 0) return null;

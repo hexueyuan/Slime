@@ -117,6 +117,21 @@ function copyCurrentTab() {
       </button>
     </div>
 
+    <!-- Table header -->
+    <div class="mb-1 shrink-0">
+      <div class="flex items-center gap-3 px-3 py-1 text-xs text-muted-foreground/60">
+        <span class="w-28 shrink-0">时间</span>
+        <span class="w-40 shrink-0">模型</span>
+        <span class="w-24 shrink-0">供应商</span>
+        <span class="w-20 shrink-0">密钥</span>
+        <span class="w-24 shrink-0">输入/输出 Token</span>
+        <span class="w-16 shrink-0">首 Token</span>
+        <span class="w-16 shrink-0">费用</span>
+        <span class="w-16 shrink-0">耗时</span>
+        <span class="shrink-0">状态</span>
+      </div>
+    </div>
+
     <!-- Log table -->
     <div v-if="logs.length" class="space-y-1">
       <div

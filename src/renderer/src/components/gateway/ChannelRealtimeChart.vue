@@ -159,7 +159,7 @@ const latencyOption = computed(() => ({
   },
   yAxis: {
     type: "value",
-    axisLabel: { color: "#555", fontSize: 9 },
+    axisLabel: { color: "#555", fontSize: 9, formatter: (v: number) => formatLatency(v) },
     splitLine: { lineStyle: { color: "#1a1a2a" } },
   },
   tooltip: {
@@ -167,6 +167,10 @@ const latencyOption = computed(() => ({
     backgroundColor: "#1a1a2e",
     borderColor: "#333",
     textStyle: { color: "#ccc", fontSize: 11 },
+    formatter: (params: Array<{ value: number | null; axisValue: string; seriesName: string }>) =>
+      params[0].value !== null
+        ? `${params[0].axisValue}<br/>${params[0].seriesName} &nbsp; ${formatLatency(params[0].value)}`
+        : `${params[0].axisValue}<br/>无流量`,
   },
   series: [
     {
