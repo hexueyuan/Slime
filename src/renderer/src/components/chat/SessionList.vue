@@ -14,12 +14,38 @@ const emit = defineEmits<{
 }>();
 const searchQuery = ref("");
 
-const filteredSessions = computed(() => {
+// 活跃区：搜索过滤
+const filteredActive = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
-  const sorted = sessionStore.sortedSessions;
-  if (!q) return sorted;
-  return sorted.filter((s) => s.title.toLowerCase().includes(q));
+  if (!q) return sessionStore.activeSessions;
+  return sessionStore.activeSessions.filter((s) => s.title.toLowerCase().includes(q));
 });
+
+// 归档区：搜索过滤
+const filteredArchived = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return sessionStore.archivedSessions;
+  return sessionStore.archivedSessions.filter((s) => s.title.toLowerCase().includes(q));
+});
+
+// 归档区折叠状态：若当前激活会话在归档区则初始展开；搜索命中归档时自动展开
+const _isArchivedExpandedManual = ref(false);
+const isArchivedExpanded = computed({
+  get() {
+    if (searchQuery.value.trim() && filteredArchived.value.length > 0) return true;
+    return (
+      _isArchivedExpandedManual.value ||
+      sessionStore.archivedSessions.some((s) => s.id === sessionStore.activeSessionId)
+    );
+  },
+  set(val: boolean) {
+    _isArchivedExpandedManual.value = val;
+  },
+});
+
+function toggleArchive() {
+  _isArchivedExpandedManual.value = !isArchivedExpanded.value;
+}
 
 function getAgentName(agentId: string): string {
   const agent = agentStore.agents.find((a) => a.id === agentId);
@@ -48,14 +74,16 @@ function onNewSession() {
 const contextMenuSessionId = ref<string | null>(null);
 const contextMenuPos = ref({ x: 0, y: 0 });
 const showContextMenu = ref(false);
+const isContextMenuArchived = ref(false);
 
 const MENU_WIDTH = 160;
 const MENU_HEIGHT = 100;
 
-function onContextMenu(e: MouseEvent, sessionId: string) {
+function onContextMenu(e: MouseEvent, sessionId: string, archived = false) {
   e.preventDefault();
   e.stopPropagation();
   contextMenuSessionId.value = sessionId;
+  isContextMenuArchived.value = archived;
   const x = Math.min(e.clientX, window.innerWidth - MENU_WIDTH - 8);
   const y = Math.min(e.clientY, window.innerHeight - MENU_HEIGHT - 8);
   contextMenuPos.value = { x, y };
@@ -65,6 +93,7 @@ function onContextMenu(e: MouseEvent, sessionId: string) {
 function closeContextMenu() {
   showContextMenu.value = false;
   contextMenuSessionId.value = null;
+  isContextMenuArchived.value = false;
 }
 
 onMounted(() => document.addEventListener("click", closeContextMenu, true));
@@ -133,8 +162,9 @@ async function onRenameConfirm() {
 
     <!-- Session list -->
     <div class="flex-1 overflow-y-auto px-2">
+      <!-- Active sessions -->
       <div
-        v-for="session in filteredSessions"
+        v-for="session in filteredActive"
         :key="session.id"
         data-testid="session-item"
         :class="[
@@ -144,9 +174,8 @@ async function onRenameConfirm() {
             : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
         ]"
         @click="emit('select', session.id)"
-        @contextmenu="onContextMenu($event, session.id)"
+        @contextmenu="onContextMenu($event, session.id, false)"
       >
-        <!-- Renaming -->
         <input
           v-if="renaming === session.id"
           v-model="renameInput"
@@ -173,11 +202,74 @@ async function onRenameConfirm() {
       </div>
 
       <div
-        v-if="filteredSessions.length === 0"
+        v-if="filteredActive.length === 0 && filteredArchived.length === 0"
         class="px-2 py-4 text-center text-xs text-muted-foreground"
       >
         暂无会话
       </div>
+
+      <!-- Archive section (only rendered when there are archived sessions) -->
+      <template v-if="sessionStore.archivedSessions.length > 0">
+        <!-- Archive header -->
+        <button
+          data-testid="archive-header"
+          class="mt-1 flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          @click="toggleArchive"
+        >
+          <Icon
+            :icon="isArchivedExpanded ? 'lucide:chevron-down' : 'lucide:chevron-right'"
+            class="h-3 w-3"
+          />
+          <span>归档 ({{ sessionStore.archivedSessions.length }})</span>
+        </button>
+
+        <!-- Archived sessions list -->
+        <div v-if="isArchivedExpanded" data-testid="archived-session-list">
+          <div
+            v-for="session in filteredArchived"
+            :key="session.id"
+            data-testid="session-item"
+            :class="[
+              'mb-0.5 cursor-pointer rounded-md px-2.5 py-2 transition-colors',
+              session.id === sessionStore.activeSessionId
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+            ]"
+            @click="emit('select', session.id)"
+            @contextmenu="onContextMenu($event, session.id, true)"
+          >
+            <input
+              v-if="renaming === session.id"
+              v-model="renameInput"
+              class="w-full rounded border border-violet-500 bg-transparent px-1 text-sm text-foreground focus:outline-none"
+              @blur="onRenameConfirm"
+              @keydown.enter="onRenameConfirm"
+              @keydown.escape="renaming = null"
+              @click.stop
+            />
+            <template v-else>
+              <div class="flex items-center gap-1.5">
+                <span
+                  class="inline-block max-w-[60px] truncate rounded-sm bg-violet-500/15 px-1 py-0.5 text-[10px] text-violet-400"
+                >
+                  {{ getAgentName(session.agentId) }}
+                </span>
+              </div>
+              <div class="mt-0.5 truncate text-sm">{{ session.title }}</div>
+              <div class="mt-0.5 text-[10px] text-muted-foreground">
+                {{ formatTime(session.updatedAt) }}
+              </div>
+            </template>
+          </div>
+
+          <div
+            v-if="filteredArchived.length === 0 && searchQuery.trim()"
+            class="px-2 py-2 text-center text-xs text-muted-foreground"
+          >
+            无匹配归档会话
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- Context menu -->
@@ -188,6 +280,8 @@ async function onRenameConfirm() {
         :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
       >
         <button
+          v-if="!isContextMenuArchived"
+          data-testid="pin-menu-item"
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
           @click="onPin"
         >
