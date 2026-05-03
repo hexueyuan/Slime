@@ -44,7 +44,7 @@ const isArchivedExpanded = computed({
 });
 
 function toggleArchive() {
-  _isArchivedExpandedManual.value = !isArchivedExpanded.value;
+  _isArchivedExpandedManual.value = !_isArchivedExpandedManual.value;
 }
 
 function getAgentName(agentId: string): string {
@@ -115,6 +115,7 @@ async function onDelete() {
 
 const renaming = ref<string | null>(null);
 const renameInput = ref("");
+const chatPresenter = usePresenter("agentChatPresenter");
 
 function onRename() {
   if (contextMenuSessionId.value) {
@@ -128,7 +129,6 @@ function onRename() {
 async function onRenameConfirm() {
   if (renaming.value && renameInput.value.trim()) {
     await sessionStore.updateTitle(renaming.value, renameInput.value.trim());
-    const chatPresenter = usePresenter("agentChatPresenter");
     await chatPresenter.updateSessionMetadata(renaming.value, { titleManuallyEdited: true });
   }
   renaming.value = null;
