@@ -96,8 +96,8 @@ function closeContextMenu() {
   isContextMenuArchived.value = false;
 }
 
-onMounted(() => document.addEventListener("click", closeContextMenu, true));
-onUnmounted(() => document.removeEventListener("click", closeContextMenu, true));
+onMounted(() => document.addEventListener("click", closeContextMenu));
+onUnmounted(() => document.removeEventListener("click", closeContextMenu));
 
 async function onPin() {
   if (contextMenuSessionId.value) {
@@ -278,26 +278,27 @@ async function onRenameConfirm() {
         v-if="showContextMenu"
         class="fixed z-50 min-w-[140px] rounded-md border border-border bg-neutral-900 py-1 shadow-lg"
         :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
+        @click.stop
       >
         <button
           v-if="!isContextMenuArchived"
           data-testid="pin-menu-item"
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
-          @click.stop="onPin"
+          @click="onPin"
         >
           <Icon icon="lucide:pin" class="h-3 w-3" />
           置顶 / 取消置顶
         </button>
         <button
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
-          @click.stop="onRename"
+          @click="onRename"
         >
           <Icon icon="lucide:pencil" class="h-3 w-3" />
           重命名
         </button>
         <button
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-muted"
-          @click.stop="onDelete"
+          @click="onDelete"
         >
           <Icon icon="lucide:trash-2" class="h-3 w-3" />
           删除
