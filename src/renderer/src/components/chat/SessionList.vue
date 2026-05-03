@@ -283,21 +283,21 @@ async function onRenameConfirm() {
           v-if="!isContextMenuArchived"
           data-testid="pin-menu-item"
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
-          @click="onPin"
+          @click.stop="onPin"
         >
           <Icon icon="lucide:pin" class="h-3 w-3" />
           置顶 / 取消置顶
         </button>
         <button
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
-          @click="onRename"
+          @click.stop="onRename"
         >
           <Icon icon="lucide:pencil" class="h-3 w-3" />
           重命名
         </button>
         <button
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-muted"
-          @click="onDelete"
+          @click.stop="onDelete"
         >
           <Icon icon="lucide:trash-2" class="h-3 w-3" />
           删除
