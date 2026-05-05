@@ -19,39 +19,7 @@ import type { AgentConfigPresenter } from "../agentConfigPresenter";
 import { createLLMClient } from "@/llm";
 import type { LLMClient, Tool } from "@/llm";
 
-const SLIME_REPLY_FULL_RE = /<SLIME_REPLY>([\s\S]*?)<\/SLIME_REPLY>/;
-const SLIME_REPLY_OPEN_RE = /<SLIME_REPLY>([\s\S]*)/;
 const MAX_STEPS = 128;
-
-function stripSlimeReplyTags(text: string): string {
-  return text.replace(/<\/?SLIME_REPLY>/g, "").trim();
-}
-
-function markFinalBlock(blocks: AssistantMessageBlock[]): void {
-  for (const block of blocks) {
-    if (block.type === "content" && block.content) {
-      const full = SLIME_REPLY_FULL_RE.exec(block.content as string);
-      if (full) {
-        block.content = full[1].trim();
-        block.is_final = true;
-        return;
-      }
-      const open = SLIME_REPLY_OPEN_RE.exec(block.content as string);
-      if (open) {
-        block.content = open[1].trim();
-        block.is_final = true;
-        return;
-      }
-    }
-  }
-  // fallback: last content block, strip any stray tags
-  const lastContentIdx = blocks.map((b) => b.type).lastIndexOf("content");
-  if (lastContentIdx !== -1) {
-    const b = blocks[lastContentIdx];
-    if (b.content) b.content = stripSlimeReplyTags(b.content as string);
-    b.is_final = true;
-  }
-}
 
 interface PendingQuestion {
   toolCallId: string;
@@ -436,8 +404,6 @@ export class AgentChatPresenter {
         if (block.status === "loading") block.status = "success";
       }
 
-      markFinalBlock(blocks);
-
       // Save assistant message
       const assistantSeq = messageDao.getNextOrderSeq(db, sessionId);
       messageDao.createMessage(db, {
@@ -460,7 +426,6 @@ export class AgentChatPresenter {
     } catch (err) {
       if (abortController.signal.aborted) {
         for (const block of blocks) if (block.status === "loading") block.status = "success";
-        markFinalBlock(blocks);
         // Save whatever blocks were collected before abort
         if (blocks.length > 0) {
           const assistantSeq = messageDao.getNextOrderSeq(db, sessionId);

@@ -105,7 +105,6 @@ export interface AssistantMessageBlock {
   image_data?: { data: string; mimeType: string };
   thinking?: string;
   signature?: string;
-  is_final?: boolean;
 }
 
 export interface ToolCallBlockData {
