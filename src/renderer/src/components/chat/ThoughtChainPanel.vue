@@ -19,8 +19,30 @@ const emit = defineEmits<{
     </div>
     <div class="flex flex-col gap-2">
       <template v-for="(block, idx) in blocks" :key="idx">
+        <!-- Thinking step -->
+        <details
+          v-if="block.type === 'thinking'"
+          class="rounded-md border border-violet-500/20 bg-violet-500/5"
+        >
+          <summary
+            class="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs text-violet-400 hover:text-violet-300"
+          >
+            <span class="min-w-[20px] text-center">{{ idx + 1 }}</span>
+            <Icon icon="lucide:brain" class="h-3 w-3 shrink-0" />
+            <span>思考过程</span>
+            <span v-if="block.status === 'loading'" class="ml-1 text-[10px] text-violet-400/60"
+              >思考中...</span
+            >
+          </summary>
+          <div
+            class="whitespace-pre-wrap px-3 pb-2 pt-1 text-xs leading-relaxed text-muted-foreground"
+          >
+            {{ block.thinking }}
+          </div>
+        </details>
+
         <!-- Content step -->
-        <div v-if="block.type === 'content'" class="flex items-start gap-3">
+        <div v-else-if="block.type === 'content'" class="flex items-start gap-3">
           <span class="mt-0.5 min-w-[20px] text-center text-xs text-muted-foreground">
             {{ idx + 1 }}
           </span>

@@ -55,6 +55,11 @@ const parsedBlocks = computed<AssistantMessageBlock[]>(() => {
   }
 });
 
+const thinkingBlocks = computed<AssistantMessageBlock[]>(() => {
+  if (props.isStreaming) return [];
+  return parsedBlocks.value.filter((b) => b.type === "thinking");
+});
+
 // 携带原始 idx，使 getBlockContent 的 debouncedContents 下标保持一致
 const visibleBlocks = computed<{ block: AssistantMessageBlock; originalIdx: number }[]>(() => {
   if (props.isStreaming) return [];
@@ -157,6 +162,25 @@ function regenerate() {
 
         <!-- Finished: only visible blocks -->
         <template v-else>
+          <!-- Thinking blocks (折叠) -->
+          <details
+            v-for="(tb, idx) in thinkingBlocks"
+            :key="`thinking-${idx}`"
+            class="mb-2 rounded-md border border-violet-500/20 bg-violet-500/5"
+          >
+            <summary
+              class="flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-xs text-violet-400 hover:text-violet-300"
+            >
+              <Icon icon="lucide:brain" class="h-3 w-3" />
+              思考过程
+            </summary>
+            <div
+              class="whitespace-pre-wrap px-3 pb-2 pt-1 text-xs leading-relaxed text-muted-foreground"
+            >
+              {{ tb.thinking }}
+            </div>
+          </details>
+
           <template v-for="{ block, originalIdx } in visibleBlocks" :key="originalIdx">
             <!-- Content block -->
             <div
@@ -212,6 +236,14 @@ function regenerate() {
           @click="copyMessage"
         >
           <Icon :icon="copied ? 'lucide:check' : 'lucide:copy'" class="h-3.5 w-3.5" />
+        </button>
+        <button
+          v-if="!isStreaming && thinkingBlocks.length > 0"
+          class="rounded p-1 text-muted-foreground hover:text-foreground"
+          title="查看思考链"
+          @click="message && emit('show-thought-chain', message.id)"
+        >
+          <Icon icon="lucide:list-tree" class="h-3.5 w-3.5" />
         </button>
         <button
           v-if="isLast && !isStreaming && !chatStore.isGenerating"
