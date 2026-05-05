@@ -7,6 +7,8 @@ import { Presenter } from "./presenter";
 import { eventBus } from "./eventbus";
 import { logger, paths } from "./utils";
 import { TrayManager } from "./tray";
+import { setupCliWrapper } from "./utils/cliWrapper";
+import { userInfo } from "os";
 
 if (!app.isPackaged) {
   app.setPath("userData", join(app.getPath("appData"), "slime-dev"));
@@ -40,6 +42,11 @@ async function bootstrap(): Promise<void> {
   eventBus.setWindow(mainWindow);
 
   TrayManager.init(mainWindow);
+
+  // Setup CLI wrapper for user terminal access
+  const userName =
+    ((await presenter.configPresenter.get("app.userProfile")) as any)?.name || userInfo().username;
+  setupCliWrapper(userName).catch(() => {});
 
   logger.info("Slime ready");
 }
