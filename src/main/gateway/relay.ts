@@ -56,7 +56,7 @@ export interface Relay {
 }
 
 function filterForLog(request: InternalRequest): string {
-  const { rawBody, rawHeaders, apiKeyId, ...rest } = request;
+  const { rawBody: _rawBody, rawHeaders: _rawHeaders, apiKeyId: _apiKeyId, ...rest } = request;
   const filtered = {
     ...rest,
     messages: request.messages.map((msg) => ({
@@ -135,7 +135,7 @@ export function createRelay(deps: RelayDeps): Relay {
             } else {
               outboundRequestBody = filterForLog(outboundRequest);
             }
-          } catch (logErr) {
+          } catch {
             // 日志构建失败时 fallback 到基本格式
             outboundRequestBody = filterForLog(outboundRequest);
           }
@@ -181,7 +181,7 @@ export function createRelay(deps: RelayDeps): Relay {
             } else {
               outboundRequestBody = filterForLog(outboundRequest);
             }
-          } catch (logErr) {
+          } catch {
             // 日志构建失败时 fallback 到基本格式
             outboundRequestBody = filterForLog(outboundRequest);
           }
@@ -250,7 +250,7 @@ export function createRelay(deps: RelayDeps): Relay {
             } else {
               outboundRequestBody = filterForLog(outboundRequest);
             }
-          } catch (logErr) {
+          } catch {
             // 日志构建失败时 fallback 到基本格式
             outboundRequestBody = filterForLog(outboundRequest);
           }
@@ -392,7 +392,7 @@ export function createRelay(deps: RelayDeps): Relay {
             } else {
               outboundRequestBody = filterForLog(outboundRequest);
             }
-          } catch (logErr) {
+          } catch {
             // 日志构建失败时 fallback 到基本格式
             outboundRequestBody = filterForLog(outboundRequest);
           }
