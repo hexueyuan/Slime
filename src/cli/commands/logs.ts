@@ -42,7 +42,13 @@ export function runLogs(args: string[], ctx: CallerContext): void {
     return;
   }
 
-  const lines = readLogs(ctx.dataDir, { key: opts.key, tail: opts.tail, head: opts.head });
+  let lines: string[];
+  try {
+    lines = readLogs(ctx.dataDir, { key: opts.key, tail: opts.tail, head: opts.head });
+  } catch (err) {
+    process.stdout.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
+    process.exit(1);
+  }
   if (lines.length === 0) {
     process.stdout.write("No logs found for today.\n");
     return;

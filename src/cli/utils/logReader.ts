@@ -25,6 +25,11 @@ export function formatLogLine(raw: string): string {
 }
 
 export function readLogs(dataDir: string, opts: ReadOptions): string[] {
+  const logsDir = join(dataDir, "logs");
+  if (!existsSync(logsDir)) {
+    throw new Error(`data directory not found: ${logsDir}`);
+  }
+
   const logPath = getTodayLogPath(dataDir);
   if (!existsSync(logPath)) return [];
 

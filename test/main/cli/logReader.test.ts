@@ -59,6 +59,10 @@ describe("formatLogLine", () => {
 });
 
 describe("readLogs", () => {
+  it("throws when logs directory does not exist", () => {
+    expect(() => readLogs("/nonexistent/path", {})).toThrow("data directory not found");
+  });
+
   it("returns empty array when log file does not exist", () => {
     const lines = readLogs(testDir, {});
     expect(lines).toEqual([]);
