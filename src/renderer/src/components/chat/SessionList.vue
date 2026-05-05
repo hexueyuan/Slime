@@ -161,70 +161,83 @@ async function onRenameConfirm() {
     </div>
 
     <!-- Session list -->
-    <div class="flex-1 overflow-y-auto px-2">
-      <!-- Active sessions -->
-      <div
-        v-for="session in filteredActive"
-        :key="session.id"
-        data-testid="session-item"
-        :class="[
-          'mb-0.5 cursor-pointer rounded-md px-2.5 py-2 transition-colors',
-          session.id === sessionStore.activeSessionId
-            ? 'bg-muted text-foreground'
-            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-        ]"
-        @click="emit('select', session.id)"
-        @contextmenu="onContextMenu($event, session.id, false)"
-      >
-        <input
-          v-if="renaming === session.id"
-          v-model="renameInput"
-          class="w-full rounded border border-violet-500 bg-transparent px-1 text-sm text-foreground focus:outline-none"
-          @blur="onRenameConfirm"
-          @keydown.enter="onRenameConfirm"
-          @keydown.escape="renaming = null"
-          @click.stop
-        />
-        <template v-else>
-          <div class="flex items-center gap-1.5">
-            <span
-              class="inline-block max-w-[60px] truncate rounded-sm bg-violet-500/15 px-1 py-0.5 text-[10px] text-violet-400"
-            >
-              {{ getAgentName(session.agentId) }}
-            </span>
-            <Icon v-if="session.isPinned" icon="lucide:pin" class="h-3 w-3 text-muted-foreground" />
-          </div>
-          <div class="mt-0.5 truncate text-sm">{{ session.title }}</div>
-          <div class="mt-0.5 text-[10px] text-muted-foreground">
-            {{ formatTime(session.updatedAt) }}
-          </div>
-        </template>
+    <div class="flex min-h-0 flex-1 flex-col">
+      <div class="flex-1 overflow-y-auto px-2">
+        <!-- Active sessions -->
+        <div
+          v-for="session in filteredActive"
+          :key="session.id"
+          data-testid="session-item"
+          :class="[
+            'mb-0.5 cursor-pointer rounded-md px-2.5 py-2 transition-colors',
+            session.id === sessionStore.activeSessionId
+              ? 'bg-muted text-foreground'
+              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+          ]"
+          @click="emit('select', session.id)"
+          @contextmenu="onContextMenu($event, session.id, false)"
+        >
+          <input
+            v-if="renaming === session.id"
+            v-model="renameInput"
+            class="w-full rounded border border-violet-500 bg-transparent px-1 text-sm text-foreground focus:outline-none"
+            @blur="onRenameConfirm"
+            @keydown.enter="onRenameConfirm"
+            @keydown.escape="renaming = null"
+            @click.stop
+          />
+          <template v-else>
+            <div class="flex items-center gap-1.5">
+              <span
+                class="inline-block max-w-[60px] truncate rounded-sm bg-violet-500/15 px-1 py-0.5 text-[10px] text-violet-400"
+              >
+                {{ getAgentName(session.agentId) }}
+              </span>
+              <Icon
+                v-if="session.isPinned"
+                icon="lucide:pin"
+                class="h-3 w-3 text-muted-foreground"
+              />
+            </div>
+            <div class="mt-0.5 truncate text-sm">{{ session.title }}</div>
+            <div class="mt-0.5 text-[10px] text-muted-foreground">
+              {{ formatTime(session.updatedAt) }}
+            </div>
+          </template>
+        </div>
+
+        <div
+          v-if="filteredActive.length === 0 && filteredArchived.length === 0"
+          class="px-2 py-4 text-center text-xs text-muted-foreground"
+        >
+          暂无会话
+        </div>
       </div>
 
+      <!-- Archive section: pinned to bottom, only when archived sessions exist -->
       <div
-        v-if="filteredActive.length === 0 && filteredArchived.length === 0"
-        class="px-2 py-4 text-center text-xs text-muted-foreground"
+        v-if="sessionStore.archivedSessions.length > 0"
+        class="shrink-0 border-t border-border px-2 pb-1"
       >
-        暂无会话
-      </div>
-
-      <!-- Archive section (only rendered when there are archived sessions) -->
-      <template v-if="sessionStore.archivedSessions.length > 0">
         <!-- Archive header -->
         <button
           data-testid="archive-header"
-          class="mt-1 flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          class="flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/50 hover:text-foreground"
           @click="toggleArchive"
         >
           <Icon
             :icon="isArchivedExpanded ? 'lucide:chevron-down' : 'lucide:chevron-right'"
-            class="h-3 w-3"
+            class="h-3.5 w-3.5"
           />
           <span>归档 ({{ sessionStore.archivedSessions.length }})</span>
         </button>
 
         <!-- Archived sessions list -->
-        <div v-if="isArchivedExpanded" data-testid="archived-session-list">
+        <div
+          v-if="isArchivedExpanded"
+          data-testid="archived-session-list"
+          class="max-h-60 overflow-y-auto"
+        >
           <div
             v-for="session in filteredArchived"
             :key="session.id"
@@ -269,7 +282,7 @@ async function onRenameConfirm() {
             无匹配归档会话
           </div>
         </div>
-      </template>
+      </div>
     </div>
 
     <!-- Context menu -->

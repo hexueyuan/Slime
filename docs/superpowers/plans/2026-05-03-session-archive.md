@@ -1,6 +1,6 @@
 # Session Archive Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 在 SessionList 中增加归档区，将三天前无对话（且非置顶）的会话自动归入折叠的归档分组。
 
@@ -12,22 +12,23 @@
 
 ## 文件清单
 
-| 文件 | 变更类型 | 说明 |
-|------|---------|------|
-| `src/renderer/src/stores/agentSession.ts` | Modify | 拆分 `sortedSessions` → `activeSessions` + `archivedSessions` |
-| `src/renderer/src/components/chat/SessionList.vue` | Modify | 分组渲染 + 折叠 toggle + 搜索联动，更新 `sortedSessions` → `activeSessions` 引用 |
-| `test/renderer/stores/agentSession.test.ts` | Create | Store 归档逻辑单元测试 |
-| `test/renderer/components/chat/SessionList.test.ts` | Create | SessionList 归档 UI 测试 |
+| 文件                                                | 变更类型 | 说明                                                                             |
+| --------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| `src/renderer/src/stores/agentSession.ts`           | Modify   | 拆分 `sortedSessions` → `activeSessions` + `archivedSessions`                    |
+| `src/renderer/src/components/chat/SessionList.vue`  | Modify   | 分组渲染 + 折叠 toggle + 搜索联动，更新 `sortedSessions` → `activeSessions` 引用 |
+| `test/renderer/stores/agentSession.test.ts`         | Create   | Store 归档逻辑单元测试                                                           |
+| `test/renderer/components/chat/SessionList.test.ts` | Create   | SessionList 归档 UI 测试                                                         |
 
 ---
 
 ## Task 1: 拆分 Store computed
 
 **Files:**
+
 - Modify: `src/renderer/src/stores/agentSession.ts`
 - Test: `test/renderer/stores/agentSession.test.ts`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 新建 `test/renderer/stores/agentSession.test.ts`：
 
@@ -129,7 +130,7 @@ describe("agentSession store - archive logic", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试，确认失败**
+- [x] **Step 2: 运行测试，确认失败**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime
@@ -138,7 +139,7 @@ pnpm test test/renderer/stores/agentSession.test.ts
 
 期望输出：`FAIL` — `activeSessions is not a function` 或类似错误（store 还没有这两个 computed）
 
-- [ ] **Step 3: 修改 store**
+- [x] **Step 3: 修改 store**
 
 将 `src/renderer/src/stores/agentSession.ts` 中的 `sortedSessions` 替换为 `activeSessions` 和 `archivedSessions`：
 
@@ -227,7 +228,7 @@ export const useAgentSessionStore = defineStore("agentSession", () => {
 });
 ```
 
-- [ ] **Step 4: 运行测试，确认通过**
+- [x] **Step 4: 运行测试，确认通过**
 
 ```bash
 pnpm test test/renderer/stores/agentSession.test.ts
@@ -235,7 +236,7 @@ pnpm test test/renderer/stores/agentSession.test.ts
 
 期望输出：所有 6 个 test case `PASS`
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add src/renderer/src/stores/agentSession.ts test/renderer/stores/agentSession.test.ts
@@ -247,10 +248,11 @@ git commit -m "feat(agent): split sortedSessions into activeSessions + archivedS
 ## Task 2: 更新 SessionList.vue 分组渲染
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/SessionList.vue`
 - Test: `test/renderer/components/chat/SessionList.test.ts`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 新建 `test/renderer/components/chat/SessionList.test.ts`：
 
@@ -278,7 +280,15 @@ const NOW = 1000000000000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const THRESHOLD_MS = 3 * DAY_MS;
 
-function makeSession(overrides: Partial<{ id: string; updatedAt: number; isPinned: boolean; agentId: string; title: string }>) {
+function makeSession(
+  overrides: Partial<{
+    id: string;
+    updatedAt: number;
+    isPinned: boolean;
+    agentId: string;
+    title: string;
+  }>,
+) {
   return {
     id: "s1",
     agentId: "a1",
@@ -302,7 +312,17 @@ describe("SessionList - archive", () => {
     const store = useAgentSessionStore();
     store.sessions = [makeSession({ id: "s1", updatedAt: NOW - DAY_MS })];
     const agentStore = useAgentStore();
-    agentStore.agents = [{ id: "a1", name: "Bot", type: "builtin", enabled: true, protected: false, config: {} as any, avatar: null }];
+    agentStore.agents = [
+      {
+        id: "a1",
+        name: "Bot",
+        type: "builtin",
+        enabled: true,
+        protected: false,
+        config: {} as any,
+        avatar: null,
+      },
+    ];
 
     const wrapper = mount(SessionList);
     expect(wrapper.find('[data-testid="archive-header"]').exists()).toBe(false);
@@ -312,7 +332,17 @@ describe("SessionList - archive", () => {
     const store = useAgentSessionStore();
     store.sessions = [makeSession({ id: "s1", updatedAt: NOW - THRESHOLD_MS - 1 })];
     const agentStore = useAgentStore();
-    agentStore.agents = [{ id: "a1", name: "Bot", type: "builtin", enabled: true, protected: false, config: {} as any, avatar: null }];
+    agentStore.agents = [
+      {
+        id: "a1",
+        name: "Bot",
+        type: "builtin",
+        enabled: true,
+        protected: false,
+        config: {} as any,
+        avatar: null,
+      },
+    ];
 
     const wrapper = mount(SessionList);
     expect(wrapper.find('[data-testid="archive-header"]').exists()).toBe(true);
@@ -368,7 +398,7 @@ describe("SessionList - archive", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试，确认失败**
+- [x] **Step 2: 运行测试，确认失败**
 
 ```bash
 pnpm test test/renderer/components/chat/SessionList.test.ts
@@ -376,7 +406,7 @@ pnpm test test/renderer/components/chat/SessionList.test.ts
 
 期望输出：`FAIL` — `archive-header` 找不到等错误
 
-- [ ] **Step 3: 修改 SessionList.vue**
+- [x] **Step 3: 修改 SessionList.vue**
 
 用以下内容完整替换 `src/renderer/src/components/chat/SessionList.vue`：
 
@@ -415,8 +445,10 @@ const filteredArchived = computed(() => {
 const isArchivedExpanded = computed({
   get() {
     if (searchQuery.value.trim() && filteredArchived.value.length > 0) return true;
-    return _isArchivedExpandedManual.value ||
-      sessionStore.archivedSessions.some((s) => s.id === sessionStore.activeSessionId);
+    return (
+      _isArchivedExpandedManual.value ||
+      sessionStore.archivedSessions.some((s) => s.id === sessionStore.activeSessionId)
+    );
   },
   set(val: boolean) {
     _isArchivedExpandedManual.value = val;
@@ -690,7 +722,7 @@ async function onRenameConfirm() {
 </template>
 ```
 
-- [ ] **Step 4: 运行测试，确认通过**
+- [x] **Step 4: 运行测试，确认通过**
 
 ```bash
 pnpm test test/renderer/components/chat/SessionList.test.ts
@@ -698,7 +730,7 @@ pnpm test test/renderer/components/chat/SessionList.test.ts
 
 期望输出：所有 7 个 test case `PASS`
 
-- [ ] **Step 5: 运行全量测试，确认无回归**
+- [x] **Step 5: 运行全量测试，确认无回归**
 
 ```bash
 pnpm test
@@ -706,7 +738,7 @@ pnpm test
 
 期望输出：全部 `PASS`，无新增失败
 
-- [ ] **Step 6: 格式化 + lint**
+- [x] **Step 6: 格式化 + lint**
 
 ```bash
 pnpm run format && pnpm run lint
@@ -714,7 +746,7 @@ pnpm run format && pnpm run lint
 
 期望输出：无错误
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add src/renderer/src/components/chat/SessionList.vue test/renderer/components/chat/SessionList.test.ts
