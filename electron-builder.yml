@@ -14,6 +14,7 @@ files:
 extraResources:
   - build/icon.png
   - resources/skills/
+  - resources/agents/
 asarUnpack:
   - "node_modules/better-sqlite3/**"
 mac:

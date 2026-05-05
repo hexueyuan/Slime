@@ -129,7 +129,7 @@ export class Presenter implements IPresenter {
     const port = (await this.configPresenter.get("gateway.port")) as number | null;
     await this.gatewayPresenter.init(port ?? undefined);
     await this.mcpServerPresenter.init();
-    this.agentConfigPresenter.init();
+    await this.agentConfigPresenter.init();
     logger.info("Presenter initialized");
   }
 

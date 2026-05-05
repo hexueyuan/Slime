@@ -35,8 +35,24 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
     return this.skillPresenter.listLocalSkillsForAgent(agentId, skillsDir);
   }
 
-  init(): void {
+  async init(): Promise<void> {
     agentDao.ensureBuiltin(getDb());
+    await this.syncBuiltinAvatars();
+  }
+
+  private async syncBuiltinAvatars(): Promise<void> {
+    const agentsResourceDir = join(paths.projectRoot, "resources", "agents");
+    await mkdir(paths.avatarsDir, { recursive: true });
+    const avatarMap: Record<string, string> = {
+      "hal.png": join(agentsResourceDir, "hal.png"),
+    };
+    for (const [dest, src] of Object.entries(avatarMap)) {
+      try {
+        await copyFile(src, join(paths.avatarsDir, dest));
+      } catch (e) {
+        logger.warn("syncBuiltinAvatars: failed to copy", { src, error: e });
+      }
+    }
   }
 
   async listAgents(): Promise<Agent[]> {
