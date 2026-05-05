@@ -37,7 +37,7 @@ const emit = defineEmits<{
           <div
             class="whitespace-pre-wrap px-3 pb-2 pt-1 text-xs leading-relaxed text-muted-foreground"
           >
-            {{ block.thinking }}
+            {{ block.thinking || "思考中..." }}
           </div>
         </details>
 
