@@ -57,6 +57,7 @@ function makeToolPresenter() {
   return {
     getToolSet: vi.fn(() => ({})),
     callTool: vi.fn(async () => "tool-result"),
+    setSessionContext: vi.fn(),
   } as any;
 }
 

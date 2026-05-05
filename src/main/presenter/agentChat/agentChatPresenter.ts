@@ -296,6 +296,9 @@ export class AgentChatPresenter {
     const config = configDao.getConfigById(db, sessionId);
     const agent = agentDao.getAgentById(db, session.agentId);
 
+    // Inject session context for exec tool env injection
+    this.toolPresenter.setSessionContext(sessionId, session.agentId, agent?.type ?? "custom");
+
     const capReqs: CapabilityRequirement = (config?.capabilityRequirements ??
       agent?.config?.capabilityRequirements ?? ["reasoning"]) as CapabilityRequirement;
     const selectResult = this.gatewayPresenter.select(capReqs);
