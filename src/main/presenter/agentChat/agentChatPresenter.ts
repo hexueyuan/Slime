@@ -314,10 +314,13 @@ export class AgentChatPresenter {
             )
           : null;
 
-    // Read systemPrompt from SOUL.md if available
-    const agentSystemPrompt = this.agentConfigPresenter
-      ? await this.agentConfigPresenter.readSoulMd(session.agentId)
-      : "";
+    // Read system prompt: agentSoul in config takes priority over SOUL.md
+    const agentSoulFromConfig = agent?.config?.agentSoul ?? null;
+    const agentSystemPrompt = agentSoulFromConfig
+      ? agentSoulFromConfig
+      : this.agentConfigPresenter
+        ? await this.agentConfigPresenter.readSoulMd(session.agentId)
+        : "";
 
     // Build context — contextBuilder deduplicates newUserContent from history
     const messages: CoreMessage[] = buildContext(sessionId, content, db, {
@@ -367,7 +370,7 @@ export class AgentChatPresenter {
 
         // Append assistant message to context
         const assistantParts: any[] = [];
-        if (textContent) assistantParts.push({ type: "text", text: textContent });
+        // thinking blocks must come before text/tool-call (Anthropic API requirement)
         for (const b of blocks) {
           if (b.type === "thinking" && b.thinking !== undefined) {
             assistantParts.push({
@@ -377,6 +380,7 @@ export class AgentChatPresenter {
             });
           }
         }
+        if (textContent) assistantParts.push({ type: "text", text: textContent });
         for (const tc of toolCalls) {
           assistantParts.push({
             type: "tool-call",
