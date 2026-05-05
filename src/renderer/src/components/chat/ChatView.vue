@@ -15,7 +15,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   openAgentEdit: [agentId: string];
   "select-tool-call": [id: string];
-  "show-thought-chain": [messageId?: string];
 }>();
 
 const agentStore = useAgentStore();
@@ -47,7 +46,11 @@ function onStop() {
 </script>
 
 <template>
-  <div v-if="session" class="relative flex h-full flex-col">
+  <div
+    v-if="session"
+    class="relative flex h-full flex-col"
+    :style="{ '--agent-color': agent?.themeColor ?? '#a855f7' }"
+  >
     <!-- Top bar -->
     <div class="flex items-center gap-2 border-b border-border px-4 py-2">
       <AgentAvatar v-if="agent" :avatar="agent.avatar" size="lg" />
@@ -77,7 +80,6 @@ function onStop() {
       ref="messageListRef"
       :selected-tool-call-id="props.selectedToolCallId"
       @select-tool-call="emit('select-tool-call', $event)"
-      @show-thought-chain="emit('show-thought-chain', $event)"
     />
 
     <!-- Input -->

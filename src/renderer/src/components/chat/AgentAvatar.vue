@@ -63,8 +63,9 @@ watch(
   <!-- Default -->
   <div
     v-else
-    :class="['flex shrink-0 items-center justify-center rounded-full bg-violet-500/15', s.box]"
+    :class="['flex shrink-0 items-center justify-center rounded-full', s.box]"
+    style="background-color: color-mix(in srgb, var(--agent-color, #a855f7) 15%, transparent)"
   >
-    <Icon icon="lucide:bot" :class="[s.icon, 'text-violet-400']" />
+    <Icon icon="lucide:bot" :class="s.icon" style="color: var(--agent-color, #a855f7)" />
   </div>
 </template>
