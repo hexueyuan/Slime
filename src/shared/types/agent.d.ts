@@ -12,8 +12,10 @@ export type UserProfile = {
 
 export interface AgentConfig {
   capabilityRequirements?: string[];
-  /** @deprecated 改从 SOUL.md 文件读取，此字段不再使用 */
+  /** @deprecated 使用 agentSoul 替代 */
   systemPrompt?: string;
+  /** 内置 agent 的系统 prompt，非空时优先于 SOUL.md */
+  agentSoul?: string;
   temperature?: number;
   contextLength?: number;
   maxTokens?: number;
@@ -36,6 +38,7 @@ export interface Agent {
   protected: boolean;
   description?: string;
   avatar?: AgentAvatar | null;
+  themeColor?: string | null; // CSS hex，如 "#a855f7"
   config?: AgentConfig | null;
   createdAt: number;
   updatedAt: number;

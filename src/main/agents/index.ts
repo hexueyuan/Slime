@@ -1,10 +1,12 @@
-import type { AgentConfig } from "@shared/types/agent";
+import type { AgentConfig, AgentAvatar } from "@shared/types/agent";
 import { HAL } from "./hal";
 
 export interface BuiltinAgentDef {
   id: string;
   name: string;
   description?: string;
+  avatar?: AgentAvatar;
+  themeColor?: string;
   config: AgentConfig;
 }
 
