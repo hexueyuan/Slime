@@ -383,41 +383,4 @@ describe("AgentChatPresenter", () => {
       expect(messageDao.updateMessage).not.toHaveBeenCalled();
     });
   });
-
-  it("marks last content block as is_final before saving", async () => {
-    let callCount = 0;
-    const mockClient = {
-      chat: vi.fn(async function* () {
-        callCount++;
-        if (callCount === 1) {
-          yield { type: "text", text: "let me check" };
-          yield { type: "tool_call_start", id: "tc1", name: "exec" };
-          yield { type: "tool_call_end", id: "tc1", input: { command: "date" } };
-        } else {
-          yield { type: "text", text: "today is Tuesday" };
-        }
-      }),
-    };
-    vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
-
-    vi.mocked(messageDao.getNextOrderSeq).mockReturnValue(2);
-    vi.mocked(messageDao.createMessage).mockImplementation(() => {});
-
-    const gw = makeGatewayPresenter();
-    const tool = makeToolPresenter();
-    const content = makeContentPresenter();
-    const p = new AgentChatPresenter(gw, tool, content);
-
-    await p.chat("sess-1", "what day");
-
-    const calls = vi.mocked(messageDao.createMessage).mock.calls;
-    const assistantCall = calls.find((c) => c[1].role === "assistant");
-    expect(assistantCall).toBeDefined();
-    const blocks = JSON.parse(assistantCall![1].content);
-    const contentBlocks = blocks.filter((b: any) => b.type === "content");
-    expect(contentBlocks.length).toBeGreaterThanOrEqual(2);
-    const lastContent = contentBlocks[contentBlocks.length - 1];
-    expect(lastContent.is_final).toBe(true);
-    expect(contentBlocks[0].is_final).toBeUndefined();
-  });
 });

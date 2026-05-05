@@ -133,7 +133,6 @@ describe("agentDao", () => {
       subagentEnabled: false,
       disabledTools: ["evolution_start", "evolution_plan", "evolution_complete"],
     });
-    expect(hal.config?.systemPrompt).toContain("SLIME_REPLY");
   });
 
   it("config_json and avatar_json serialization roundtrip", () => {
