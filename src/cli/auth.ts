@@ -6,6 +6,8 @@ export interface CallerContext {
   dataDir: string;
 }
 
+const VALID_ROLES: Role[] = ["user", "builtin-agent", "external-agent"];
+
 export function getCallerContext(): CallerContext {
   const role = process.env.SLIME_ROLE;
   const userId = process.env.SLIME_USER_ID;
@@ -16,7 +18,7 @@ export function getCallerContext(): CallerContext {
   if (!dataDir)
     throw new Error("SLIME_DATA_DIR is not set. Run via Slime app or slime-cli wrapper.");
 
-  if (role !== "user" && role !== "builtin-agent" && role !== "external-agent") {
+  if (!(VALID_ROLES as string[]).includes(role)) {
     throw new Error(`Invalid SLIME_ROLE: ${role}`);
   }
 

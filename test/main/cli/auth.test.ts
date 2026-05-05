@@ -48,4 +48,11 @@ describe("getCallerContext", () => {
     delete process.env.SLIME_DATA_DIR;
     expect(() => getCallerContext()).toThrow("SLIME_DATA_DIR is not set");
   });
+
+  it("throws when SLIME_ROLE is invalid", () => {
+    process.env.SLIME_ROLE = "admin";
+    process.env.SLIME_USER_ID = "hexueyuan";
+    process.env.SLIME_DATA_DIR = "/tmp";
+    expect(() => getCallerContext()).toThrow("Invalid SLIME_ROLE");
+  });
 });
