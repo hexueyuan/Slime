@@ -5,6 +5,7 @@ import type { FilePresenter } from "./filePresenter";
 import type { ContentPresenter } from "./contentPresenter";
 import type { EvolutionPresenter } from "./evolutionPresenter";
 import { logger, paths } from "@/utils";
+import { app } from "electron";
 import type { BrowserSession } from "@/browser/browserSession";
 import type { MCPToolBridge } from "./mcpToolBridge";
 import type { SkillPresenter } from "./skillPresenter";
@@ -52,6 +53,8 @@ function createTool(config: {
 }
 
 export class ToolPresenter {
+  private sessionContexts = new Map<string, { agentId: string; agentType: string }>();
+
   constructor(
     private filePresenter: FilePresenter,
     private contentPresenter: ContentPresenter,
@@ -60,6 +63,10 @@ export class ToolPresenter {
     private mcpBridge?: MCPToolBridge,
     private skillPresenter?: SkillPresenter,
   ) {}
+
+  setSessionContext(sessionId: string, agentId: string, agentType: string): void {
+    this.sessionContexts.set(sessionId, { agentId, agentType });
+  }
 
   async getToolSet(sessionId: string) {
     const tools: Record<string, any> = {
@@ -113,11 +120,20 @@ export class ToolPresenter {
         execute: async ({ command, timeout_ms }) => {
           validateCommand(command);
           const cwd = paths.effectiveProjectRoot;
+          const sessionCtx = this.sessionContexts.get(sessionId);
+          const slimeEnv = sessionCtx
+            ? {
+                SLIME_ROLE: sessionCtx.agentType === "builtin" ? "builtin-agent" : "external-agent",
+                SLIME_USER_ID: sessionCtx.agentId,
+                SLIME_DATA_DIR: app.getPath("userData"),
+              }
+            : {};
           try {
             const { stdout, stderr } = await execAsync(command, {
               cwd,
               timeout: timeout_ms,
               maxBuffer: 1024 * 1024,
+              env: { ...process.env, ...slimeEnv },
             });
             return { stdout, stderr, exit_code: 0 };
           } catch (err: unknown) {
