@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { Icon } from "@iconify/vue";
 import NewThreadInput from "./NewThreadInput.vue";
+import AgentAvatar from "./AgentAvatar.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
@@ -22,58 +22,49 @@ onMounted(() => {
   }
 });
 
-function getAvatarStyle(agent: Agent) {
-  if (!agent.avatar) return {};
-  if (agent.avatar.kind === "lucide") {
-    return { color: agent.avatar.color ?? "#a855f7" };
-  }
-  return {};
-}
-
 async function onSend(content: string) {
   if (!selectedAgentId.value) return;
   const session = await sessionStore.createSession(selectedAgentId.value);
   await chatStore.sendMessage(session.id, content);
+}
+
+function agentColor(agent: Agent): string {
+  return agent.themeColor ?? "#a855f7";
 }
 </script>
 
 <template>
   <div class="flex h-full flex-col">
     <div class="flex flex-1 flex-col items-center justify-center px-8">
-      <!-- Title -->
-      <Icon icon="lucide:message-square-plus" class="mb-3 h-10 w-10 text-violet-500/50" />
       <h2 class="mb-1 text-lg font-medium text-foreground">开始新对话</h2>
       <p class="mb-6 text-sm text-muted-foreground">选择一个 Agent 开始</p>
 
-      <!-- Agent chips -->
-      <div class="flex flex-wrap justify-center gap-2">
+      <!-- Agent cards -->
+      <div class="flex flex-wrap justify-center gap-3">
         <button
           v-for="agent in agentStore.enabledAgents"
           :key="agent.id"
+          :style="{
+            '--agent-color': agentColor(agent),
+            borderColor: selectedAgentId === agent.id ? agentColor(agent) : undefined,
+            backgroundColor: selectedAgentId === agent.id ? agentColor(agent) + '1a' : undefined,
+          }"
           :class="[
-            'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors',
+            'flex w-40 flex-col items-center gap-2 rounded-xl border px-4 py-4 text-sm transition-colors',
             selectedAgentId === agent.id
-              ? 'border-violet-500 bg-violet-500/10 text-foreground'
+              ? 'text-foreground'
               : 'border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground',
           ]"
           @click="selectedAgentId = agent.id"
         >
-          <!-- Avatar -->
-          <template v-if="agent.avatar?.kind === 'lucide'">
-            <Icon :icon="agent.avatar.icon" class="h-4 w-4" :style="getAvatarStyle(agent)" />
-          </template>
-          <template v-else-if="agent.avatar?.kind === 'monogram'">
-            <span
-              class="flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white"
-              :style="{ backgroundColor: agent.avatar.backgroundColor ?? '#7c3aed' }"
-            >
-              {{ agent.avatar.text }}
-            </span>
-          </template>
-          <template v-else>
-            <Icon icon="lucide:bot" class="h-4 w-4 text-violet-400" />
-          </template>
-          {{ agent.name }}
+          <AgentAvatar :avatar="agent.avatar" size="lg" />
+          <span class="font-medium text-foreground">{{ agent.name }}</span>
+          <span
+            v-if="agent.description"
+            class="line-clamp-2 text-center text-xs text-muted-foreground"
+          >
+            {{ agent.description }}
+          </span>
         </button>
       </div>
     </div>
