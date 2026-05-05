@@ -66,7 +66,7 @@ export function recordToCoreMessages(records: ChatMessageRecord[]): CoreMessage[
     } else {
       // assistant message: array of text + thinking + tool-call parts
       const assistantParts: Array<{ type: string; [key: string]: unknown }> = [];
-      if (textContent) assistantParts.push({ type: "text", text: textContent });
+      // thinking blocks must come before text/tool-call (Anthropic API requirement)
       for (const b of thinkingBlocks) {
         assistantParts.push({
           type: "thinking",
@@ -74,6 +74,7 @@ export function recordToCoreMessages(records: ChatMessageRecord[]): CoreMessage[
           signature: b.signature ?? "",
         });
       }
+      if (textContent) assistantParts.push({ type: "text", text: textContent });
       for (const b of toolCalls) {
         const tc = b.tool_call;
         const input = typeof tc.input === "string" ? JSON.parse(tc.input) : (tc.input ?? {});
@@ -154,10 +155,9 @@ export function buildContext(
 
   // 区分：options 中显式传入 agentSystemPrompt（custom agent）vs 未传（builtin/默认路径）
   const hasAgentSystemPromptOption = options !== undefined && "agentSystemPrompt" in options;
-  const rawSystemPrompt = hasAgentSystemPromptOption
+  const systemPrompt = hasAgentSystemPromptOption
     ? (options!.agentSystemPrompt ?? "")
     : config?.systemPrompt || "You are a helpful AI assistant.";
-  const systemPrompt = config?.systemPrompt || rawSystemPrompt;
   const finalSystemPrompt = options?.skillListXML
     ? systemPrompt + "\n\n" + options.skillListXML
     : systemPrompt;
