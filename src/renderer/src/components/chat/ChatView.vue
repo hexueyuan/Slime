@@ -15,6 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   openAgentEdit: [agentId: string];
   "select-tool-call": [id: string];
+  "show-thought-chain": [];
 }>();
 
 const agentStore = useAgentStore();

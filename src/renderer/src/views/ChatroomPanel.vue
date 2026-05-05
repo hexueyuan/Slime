@@ -10,7 +10,6 @@ import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
 import { useContentStore } from "@/stores/content";
 import { setupAgentChatIpc } from "@/stores/agentChatIpc";
-import { useSplitPane } from "@/composables/useSplitPane";
 import { AGENT_EVENTS, SESSION_EVENTS } from "@shared/events";
 import type { AssistantMessageBlock, BlockStatus } from "@shared/types/chat";
 
@@ -55,64 +54,70 @@ function onSessionSelect(id: string) {
   chatStore.fetchMessages(id);
 }
 
-// Split pane（mainRef 绑在 center+right 的包裹 div 上）
+// Split pane — 右侧固定宽度，左侧 flex-1 自动填满
 const mainRef = ref<HTMLElement | null>(null);
-const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
-  containerRef: mainRef,
-  defaultRatio: 0.65,
-  minLeftPx: 280,
-  minRightPx: 320,
+const DEFAULT_RIGHT_WIDTH = 320;
+const MIN_RIGHT_WIDTH = 200;
+const MAX_RIGHT_WIDTH = 600;
+const rightWidth = ref(DEFAULT_RIGHT_WIDTH);
+
+let startX = 0;
+let startWidth = 0;
+
+function onMouseMove(e: MouseEvent) {
+  const delta = startX - e.clientX;
+  rightWidth.value = Math.min(Math.max(startWidth + delta, MIN_RIGHT_WIDTH), MAX_RIGHT_WIDTH);
+}
+
+function onMouseUp() {
+  document.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mouseup", onMouseUp);
+  document.body.style.cursor = "";
+  document.body.style.userSelect = "";
+}
+
+function onMouseDown(e: MouseEvent) {
+  startX = e.clientX;
+  startWidth = rightWidth.value;
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+  document.body.style.cursor = "col-resize";
+  document.body.style.userSelect = "none";
+}
+
+function resetToDefault() {
+  rightWidth.value = DEFAULT_RIGHT_WIDTH;
+}
+
+onUnmounted(() => {
+  document.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mouseup", onMouseUp);
 });
 
 // Function panel state
 const activeTab = ref<"tools" | "preview">("tools");
 const selectedToolCallId = ref<string | null>(null);
-const showStreamingThought = ref(false);
-const selectedThoughtMessageId = ref<string | null>(null);
+const thoughtChainBlocks = ref<import("@shared/types/agent").AssistantMessageBlock[] | null>(null);
 
-// Reset thought chain state on session change (covers NewThread + SessionList)
+// Reset state on session change
 watch(
   () => sessionStore.activeSessionId,
   () => {
     selectedToolCallId.value = null;
-    selectedThoughtMessageId.value = null;
-    showStreamingThought.value = false;
+    thoughtChainBlocks.value = null;
   },
 );
 
-const thoughtChainBlocks = computed<import("@shared/types/agent").AssistantMessageBlock[] | null>(
-  () => {
-    if (showStreamingThought.value) {
-      return chatStore.streamingBlocks;
-    }
-    if (selectedThoughtMessageId.value) {
-      const msg = chatStore.messages.find((m) => m.id === selectedThoughtMessageId.value);
-      if (!msg || msg.role !== "assistant") return null;
-      try {
-        const blocks = JSON.parse(
-          msg.content,
-        ) as import("@shared/types/agent").AssistantMessageBlock[];
-        return blocks;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  },
-);
+function onShowThoughtChain() {
+  thoughtChainBlocks.value = chatStore.streamingBlocks;
+  activeTab.value = "preview";
+}
 
 // Auto-switch to preview when content arrives
 watch(
   () => contentStore.content,
   (newContent) => {
     if (newContent) activeTab.value = "preview";
-  },
-);
-
-watch(
-  () => chatStore.isGenerating,
-  (val) => {
-    if (!val) showStreamingThought.value = false;
   },
 );
 
@@ -163,17 +168,6 @@ function onSelectToolCall(id: string | null) {
   selectedToolCallId.value = id;
   if (id) activeTab.value = "tools";
 }
-
-function onShowThoughtChain(messageId?: string) {
-  if (messageId) {
-    selectedThoughtMessageId.value = messageId;
-    showStreamingThought.value = false;
-  } else {
-    showStreamingThought.value = true;
-    selectedThoughtMessageId.value = null;
-  }
-  activeTab.value = "preview";
-}
 </script>
 
 <template>
@@ -186,7 +180,7 @@ function onShowThoughtChain(messageId?: string) {
     <!-- Center + Right: Split pane area -->
     <div ref="mainRef" class="flex min-w-0 flex-1 overflow-hidden">
       <!-- Center: Chat area -->
-      <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
+      <div class="min-w-0 flex-1 overflow-hidden">
         <NewThread v-if="!sessionStore.activeSessionId" />
         <ChatView
           v-else
@@ -207,7 +201,7 @@ function onShowThoughtChain(messageId?: string) {
       </div>
 
       <!-- Right: Function panel -->
-      <div class="min-w-[320px] flex-1 overflow-hidden">
+      <div class="w-[320px] shrink-0 overflow-hidden" :style="{ width: rightWidth + 'px' }">
         <ChatFunctionPanel
           :active-tab="activeTab"
           :tool-call-blocks="toolCallBlocks"
