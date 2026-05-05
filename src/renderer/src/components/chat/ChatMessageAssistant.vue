@@ -56,17 +56,11 @@ const parsedBlocks = computed<AssistantMessageBlock[]>(() => {
 });
 
 // 携带原始 idx，使 getBlockContent 的 debouncedContents 下标保持一致
-const finalBlocks = computed<{ block: AssistantMessageBlock; originalIdx: number }[]>(() => {
+const visibleBlocks = computed<{ block: AssistantMessageBlock; originalIdx: number }[]>(() => {
   if (props.isStreaming) return [];
-  const blocks = parsedBlocks.value;
-  const hasFinal = blocks.some((b) => b.is_final);
-  const filtered = hasFinal ? blocks.filter((b) => b.is_final) : blocks;
-  return filtered.map((block) => ({ block, originalIdx: blocks.indexOf(block) }));
-});
-
-const intermediateBlocks = computed<AssistantMessageBlock[]>(() => {
-  if (props.isStreaming) return [];
-  return parsedBlocks.value.filter((b) => !b.is_final);
+  return parsedBlocks.value
+    .filter((b) => b.type !== "thinking")
+    .map((block) => ({ block, originalIdx: parsedBlocks.value.indexOf(block) }));
 });
 
 const debouncedContents = ref<Map<number, string>>(new Map());
@@ -161,9 +155,9 @@ function regenerate() {
           </div>
         </template>
 
-        <!-- Finished: only final blocks -->
+        <!-- Finished: only visible blocks -->
         <template v-else>
-          <template v-for="{ block, originalIdx } in finalBlocks" :key="originalIdx">
+          <template v-for="{ block, originalIdx } in visibleBlocks" :key="originalIdx">
             <!-- Content block -->
             <div
               v-if="block.type === 'content'"
@@ -218,14 +212,6 @@ function regenerate() {
           @click="copyMessage"
         >
           <Icon :icon="copied ? 'lucide:check' : 'lucide:copy'" class="h-3.5 w-3.5" />
-        </button>
-        <button
-          v-if="!isStreaming && intermediateBlocks.length > 0"
-          class="rounded p-1 text-muted-foreground hover:text-foreground"
-          title="查看思考链"
-          @click="message && emit('show-thought-chain', message.id)"
-        >
-          <Icon icon="lucide:list-tree" class="h-3.5 w-3.5" />
         </button>
         <button
           v-if="isLast && !isStreaming && !chatStore.isGenerating"

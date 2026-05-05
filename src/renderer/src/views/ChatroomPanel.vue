@@ -92,7 +92,7 @@ const thoughtChainBlocks = computed<import("@shared/types/agent").AssistantMessa
         const blocks = JSON.parse(
           msg.content,
         ) as import("@shared/types/agent").AssistantMessageBlock[];
-        return blocks.filter((b) => !b.is_final);
+        return blocks;
       } catch {
         return null;
       }
