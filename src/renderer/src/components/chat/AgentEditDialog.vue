@@ -44,6 +44,7 @@ const disabledSkills = ref<string[]>([]);
 const agentSkillsDir = ref<string | null>(null);
 const subagentEnabled = ref(false);
 const enableThinking = ref(false);
+const themeColor = ref("#a855f7");
 const enabled = ref(true);
 
 const PRESET_ICONS = [
@@ -108,6 +109,7 @@ watch(
         disabledSkills.value = cfg?.disabledSkills ?? [];
         subagentEnabled.value = cfg?.subagentEnabled ?? false;
         enableThinking.value = cfg?.enableThinking ?? false;
+        themeColor.value = agent.themeColor ?? "#a855f7";
         enabled.value = agent.enabled;
       }
       agentConfig.listLocalSkills(props.agentId!).then((s: SkillInfo[]) => {
@@ -136,6 +138,7 @@ watch(
       disabledSkills.value = [];
       subagentEnabled.value = false;
       enableThinking.value = false;
+      themeColor.value = "#a855f7";
       enabled.value = true;
       availableSkills.value = [];
       agentSkillsDir.value = null;
@@ -221,6 +224,7 @@ async function onSave() {
     avatar,
     config,
     enabled: enabled.value,
+    themeColor: themeColor.value,
   };
 
   if (isEdit.value && props.agentId) {
@@ -286,6 +290,31 @@ async function onSave() {
               class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none"
               placeholder="简短描述"
             />
+          </div>
+
+          <!-- 主题颜色 -->
+          <div v-if="!isProtected" class="space-y-1.5">
+            <label class="text-xs font-medium text-muted-foreground">主题颜色</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="themeColor"
+                type="color"
+                class="h-8 w-8 cursor-pointer rounded border border-border bg-transparent p-0.5"
+              />
+              <span class="text-xs text-muted-foreground">{{ themeColor }}</span>
+              <div class="flex gap-1">
+                <button
+                  v-for="c in PRESET_COLORS"
+                  :key="c"
+                  class="h-5 w-5 rounded-full border-2 transition-all"
+                  :style="{
+                    backgroundColor: c,
+                    borderColor: themeColor === c ? 'white' : 'transparent',
+                  }"
+                  @click="themeColor = c"
+                />
+              </div>
+            </div>
           </div>
 
           <!-- Avatar -->
