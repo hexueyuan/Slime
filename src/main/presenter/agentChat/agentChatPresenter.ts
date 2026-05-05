@@ -352,7 +352,9 @@ export class AgentChatPresenter {
           tools,
           {
             model: groupName,
-            maxTokens: config?.maxTokens ?? agent?.config?.maxTokens ?? undefined,
+            maxTokens: agent?.config?.enableThinking
+              ? (config?.maxTokens ?? agent?.config?.maxTokens ?? 16000)
+              : (config?.maxTokens ?? agent?.config?.maxTokens ?? undefined),
             thinkingBudget: agent?.config?.enableThinking ? 10000 : undefined,
           },
           sessionId,

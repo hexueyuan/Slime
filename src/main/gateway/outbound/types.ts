@@ -8,6 +8,7 @@ export interface InternalRequest {
   systemPrompt?: string;
   systemParts?: SystemTextPart[];
   cacheControl?: CacheControl;
+  thinking?: { type: "enabled"; budget_tokens: number };
   rawHeaders?: Record<string, string>;
   rawBody?: string;
   apiKeyId?: number;

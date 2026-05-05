@@ -48,6 +48,7 @@ interface AnthropicRequestBody {
   tools?: AnthropicToolDef[];
   stream?: boolean;
   cache_control?: { type: string; ttl?: string };
+  thinking?: { type: string; budget_tokens?: number };
 }
 
 function parseSystem(system: AnthropicRequestBody["system"]): {
@@ -191,6 +192,7 @@ export function registerAnthropicInbound(
       cacheControl: body.cache_control
         ? { type: "ephemeral" as const, ttl: body.cache_control.ttl }
         : undefined,
+      thinking: body.thinking as { type: "enabled"; budget_tokens: number } | undefined,
       rawBody: JSON.stringify(body),
       apiKeyId: request.apiKeyId,
     };

@@ -72,6 +72,8 @@ export function toAnthropicRequest(req: InternalRequest) {
     body.cache_control = cc;
   }
 
+  if (req.thinking) body.thinking = req.thinking;
+
   return body;
 }
 
