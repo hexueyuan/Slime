@@ -45,6 +45,8 @@ export interface ChatOptions {
   model: string;
   maxTokens?: number;
   temperature?: number;
+  /** 传入时向 Anthropic API 发送 extended thinking 参数，值为 budget_tokens */
+  thinkingBudget?: number;
 }
 
 /**

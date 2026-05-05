@@ -24,6 +24,8 @@ export interface AgentConfig {
   skills?: string[];
   /** 禁用的 skill 名称列表，目录下存在的 skill 默认启用 */
   disabledSkills?: string[];
+  /** 启用 Anthropic extended thinking 模式 */
+  enableThinking?: boolean;
 }
 
 export interface Agent {

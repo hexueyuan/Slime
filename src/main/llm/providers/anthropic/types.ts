@@ -10,6 +10,8 @@ export interface AnthropicRequestBody {
   tools?: AnthropicTool[];
   temperature?: number;
   cache_control?: { type: string; ttl?: string };
+  /** Extended thinking 配置 */
+  thinking?: { type: "enabled"; budget_tokens: number };
 }
 
 /**

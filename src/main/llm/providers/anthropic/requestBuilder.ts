@@ -36,7 +36,7 @@ export function buildAnthropicRequest(
   // 转换消息
   const anthropicMessages: AnthropicMessage[] = filtered.map((m) => convertMessage(m));
 
-  return {
+  const body: AnthropicRequestBody = {
     model: options.model,
     max_tokens: options.maxTokens ?? 4096,
     stream: true,
@@ -46,6 +46,13 @@ export function buildAnthropicRequest(
     temperature: options.temperature,
     cache_control: { type: "ephemeral" },
   };
+
+  if (options.thinkingBudget) {
+    body.thinking = { type: "enabled", budget_tokens: options.thinkingBudget };
+    body.temperature = undefined;
+  }
+
+  return body;
 }
 
 function convertMessage(m: CoreMessage): AnthropicMessage {
