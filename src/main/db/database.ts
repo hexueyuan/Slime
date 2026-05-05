@@ -153,6 +153,7 @@ CREATE TABLE IF NOT EXISTS agents (
   protected INTEGER NOT NULL DEFAULT 0,
   description TEXT,
   avatar_json TEXT,
+  theme_color TEXT,
   config_json TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
@@ -234,6 +235,11 @@ function migrate(instance: BetterSqlite3.Database): void {
   const cols = instance.prepare("PRAGMA table_info(relay_logs)").all() as { name: string }[];
   if (!cols.some((c) => c.name === "raw_request_body")) {
     instance.exec("ALTER TABLE relay_logs ADD COLUMN raw_request_body TEXT");
+  }
+  // Add theme_color column to agents if it doesn't exist
+  const agentCols = instance.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
+  if (!agentCols.some((c) => c.name === "theme_color")) {
+    instance.exec("ALTER TABLE agents ADD COLUMN theme_color TEXT");
   }
 }
 
