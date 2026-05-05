@@ -43,6 +43,7 @@ const availableSkills = ref<SkillInfo[]>([]);
 const disabledSkills = ref<string[]>([]);
 const agentSkillsDir = ref<string | null>(null);
 const subagentEnabled = ref(false);
+const enableThinking = ref(false);
 const enabled = ref(true);
 
 const PRESET_ICONS = [
@@ -106,6 +107,7 @@ watch(
         mcpTools.value = cfg?.mcpTools ?? [];
         disabledSkills.value = cfg?.disabledSkills ?? [];
         subagentEnabled.value = cfg?.subagentEnabled ?? false;
+        enableThinking.value = cfg?.enableThinking ?? false;
         enabled.value = agent.enabled;
       }
       agentConfig.listLocalSkills(props.agentId!).then((s: SkillInfo[]) => {
@@ -133,6 +135,7 @@ watch(
       mcpTools.value = [];
       disabledSkills.value = [];
       subagentEnabled.value = false;
+      enableThinking.value = false;
       enabled.value = true;
       availableSkills.value = [];
       agentSkillsDir.value = null;
@@ -209,6 +212,7 @@ async function onSave() {
     mcpTools: mcpTools.value.length > 0 ? mcpTools.value : undefined,
     disabledSkills: disabledSkills.value.length > 0 ? disabledSkills.value : undefined,
     subagentEnabled: subagentEnabled.value,
+    enableThinking: enableThinking.value || undefined,
   };
 
   const data: Partial<Agent> = {
@@ -551,6 +555,29 @@ async function onSave() {
                 :class="[
                   'absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform',
                   subagentEnabled ? 'translate-x-4' : 'translate-x-0.5',
+                ]"
+              />
+            </button>
+          </div>
+
+          <div v-if="!isProtected" class="flex items-center justify-between">
+            <div class="flex flex-col">
+              <span class="text-sm text-foreground">思考模式</span>
+              <span class="text-xs text-muted-foreground"
+                >启用后模型将输出思考链（需模型支持）</span
+              >
+            </div>
+            <button
+              :class="[
+                'relative h-5 w-9 rounded-full transition-colors',
+                enableThinking ? 'bg-violet-500' : 'bg-muted-foreground/30',
+              ]"
+              @click="enableThinking = !enableThinking"
+            >
+              <span
+                :class="[
+                  'absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform',
+                  enableThinking ? 'translate-x-4' : 'translate-x-0.5',
                 ]"
               />
             </button>
