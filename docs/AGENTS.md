@@ -11,13 +11,21 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
   - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state）
   - `gateway/`: LLM Gateway 核心（router, balancer, circuit, keypool, relay, server, outbound adapters, inbound handlers, stats, auth）
   - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool）
+  - `agents/`: 内置 Agent 定义（index.ts BUILTIN_AGENTS 注册表 + hal.ts HAL Agent）
   - `mcp/`: MCP Client（types, transport/stdio+SSE, mcpClient, healthChecker）
   - `browser/`: 浏览器自动化（browserSession.ts 封装 playwright-core，browserTools.ts 定义 10 个工具）
   - `eventbus.ts`: EventBus 单例（主进程事件 + 渲染进程推送）
-  - `utils/`: 工具模块（logger, paths, errors）
+  - `utils/`: 工具模块（logger, paths, errors, cliWrapper）
   - `window.ts`: 窗口管理
   - `tray.ts`: macOS 状态栏托盘（隐藏窗口到托盘、左键恢复、右键菜单退出）
   - `index.ts`: 入口，bootstrap 流程
+- `src/cli/`: 独立 CLI 工具（不依赖 Electron 运行时，打包为 `resources/slime-cli.js`）
+  - `index.ts`: 入口，解析 argv，分发命令
+  - `auth.ts`: 解析 SLIME_ROLE/SLIME_USER_ID/SLIME_DATA_DIR，返回 CallerContext
+  - `registry.ts`: CommandDef 类型 + canAccess() 鉴权
+  - `commands/help.ts`: help 命令（按角色过滤可见命令）
+  - `commands/logs.ts`: logs 命令（查看/过滤/清空当日日志）
+  - `utils/logReader.ts`: 日志读取/格式化工具
 - `src/preload/`: 安全 IPC 桥接（contextIsolation，暴露 `window.electron.ipcRenderer`）
 - `src/renderer/src/`: Vue 3 渲染进程（components/, composables/, stores/, views/）
 - `src/shared/`: 主进程与渲染进程共享类型

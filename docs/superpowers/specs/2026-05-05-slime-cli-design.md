@@ -20,19 +20,19 @@ CLI 不依赖 Electron 运行时，直接读取文件系统数据。
 
 CLI 通过两个环境变量识别调用者身份，不做加密认证（信任注入来源）。
 
-| 变量 | 说明 |
-|------|------|
-| `SLIME_ROLE` | `user` / `builtin-agent` / `external-agent` |
-| `SLIME_USER_ID` | 用户名（用户场景）或 agent id（agent 场景，如 `hal-ai`） |
-| `SLIME_DATA_DIR` | Slime userData 目录路径，CLI 据此定位日志文件 |
+| 变量             | 说明                                                     |
+| ---------------- | -------------------------------------------------------- |
+| `SLIME_ROLE`     | `user` / `builtin-agent` / `external-agent`              |
+| `SLIME_USER_ID`  | 用户名（用户场景）或 agent id（agent 场景，如 `hal-ai`） |
+| `SLIME_DATA_DIR` | Slime userData 目录路径，CLI 据此定位日志文件            |
 
 **三种场景的环境变量值：**
 
-| 场景 | `SLIME_ROLE` | `SLIME_USER_ID` | `SLIME_DATA_DIR` |
-|------|-------------|-----------------|-----------------|
-| 内置 agent（哈尔） | `builtin-agent` | `hal-ai` | Electron 注入 |
-| 外部/自定义 agent | `external-agent` | agent id | Electron 注入 |
-| 用户手动调用 | `user` | 用户名 / OS username | wrapper 写死 |
+| 场景               | `SLIME_ROLE`     | `SLIME_USER_ID`      | `SLIME_DATA_DIR` |
+| ------------------ | ---------------- | -------------------- | ---------------- |
+| 内置 agent（哈尔） | `builtin-agent`  | `hal-ai`             | Electron 注入    |
+| 外部/自定义 agent  | `external-agent` | agent id             | Electron 注入    |
+| 用户手动调用       | `user`           | 用户名 / OS username | wrapper 写死     |
 
 缺失环境变量时 CLI 报错退出，不做猜测。
 
@@ -44,12 +44,12 @@ CLI 通过两个环境变量识别调用者身份，不做加密认证（信任�
 
 ```typescript
 interface CommandDef {
-  name: string
-  description: string          // 单行简介（用于 help 列表）
-  detail: string               // 完整参数说明（用于 help <cmd>）
-  allowedRoles: Role[]         // 第一级：角色白名单
-  allowedAgents?: string[]     // 第二级：agent id 白名单（可选，声明后角色通过还需再检查）
-  run: (args: ParsedArgs, ctx: CallerContext) => void
+  name: string;
+  description: string; // 单行简介（用于 help 列表）
+  detail: string; // 完整参数说明（用于 help <cmd>）
+  allowedRoles: Role[]; // 第一级：角色白名单
+  allowedAgents?: string[]; // 第二级：agent id 白名单（可选，声明后角色通过还需再检查）
+  run: (args: ParsedArgs, ctx: CallerContext) => void;
 }
 ```
 
@@ -77,6 +77,7 @@ slime-cli help <cmd>    # 输出指定命令的完整参数说明
 **权限**：`allowedRoles: ['user', 'builtin-agent', 'external-agent']`（所有人）
 
 **输出示例（`slime-cli help`）：**
+
 ```
 Slime CLI — Slime 应用管理工具
 
@@ -107,6 +108,7 @@ slime-cli logs --clear             # 清空今日日志文件
 **日志文件路径**：`{SLIME_DATA_DIR}/logs/slime-{YYYY-MM-DD}.log`（今日文件）
 
 **输出格式**（每行 JSON 解析后格式化）：
+
 ```
 [INFO]  2026-05-05T10:23:01.123Z  gateway started  {"port":3000}
 [ERROR] 2026-05-05T10:23:05.456Z  relay failed     {"channel":"openai","error":"timeout"}
@@ -141,6 +143,7 @@ src/cli/
 electron-vite 新增 CLI 打包目标，输出 `resources/slime-cli.js`（CommonJS，Node.js 可直接运行）。
 
 `electron.vite.config.ts` 新增：
+
 ```typescript
 // cli 额外入口
 build: {
@@ -186,13 +189,13 @@ Electron 启动时（`index.ts` bootstrap 阶段）调用 `setupCliWrapper()`：
 
 ## 7. 错误处理
 
-| 场景 | 输出 | 退出码 |
-|------|------|--------|
-| 环境变量缺失 | `Error: SLIME_ROLE is not set. Run via Slime app or slime-cli wrapper.` | 1 |
-| 无权限命令 | `Unknown command: <name>` | 1 |
-| `--head` 和 `--tail` 同时使用 | `Error: --head and --tail are mutually exclusive` | 1 |
-| 日志文件不存在 | `No logs found for today.` | 0 |
-| 日志目录不存在 | `Error: data directory not found: <path>` | 1 |
+| 场景                          | 输出                                                                    | 退出码 |
+| ----------------------------- | ----------------------------------------------------------------------- | ------ |
+| 环境变量缺失                  | `Error: SLIME_ROLE is not set. Run via Slime app or slime-cli wrapper.` | 1      |
+| 无权限命令                    | `Unknown command: <name>`                                               | 1      |
+| `--head` 和 `--tail` 同时使用 | `Error: --head and --tail are mutually exclusive`                       | 1      |
+| 日志文件不存在                | `No logs found for today.`                                              | 0      |
+| 日志目录不存在                | `Error: data directory not found: <path>`                               | 1      |
 
 ---
 
