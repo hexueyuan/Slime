@@ -86,7 +86,7 @@ export class AgentChatPresenter {
     client: LLMClient,
     messages: CoreMessage[],
     tools: Record<string, Tool>,
-    options: { model: string; maxTokens?: number },
+    options: { model: string; maxTokens?: number; thinkingBudget?: number },
     sessionId: string,
     messageId: string,
     blocks: AssistantMessageBlock[],
@@ -353,6 +353,7 @@ export class AgentChatPresenter {
           {
             model: groupName,
             maxTokens: config?.maxTokens ?? agent?.config?.maxTokens ?? undefined,
+            thinkingBudget: agent?.config?.enableThinking ? 10000 : undefined,
           },
           sessionId,
           assistantMessageId,
