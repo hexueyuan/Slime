@@ -12,7 +12,9 @@ export async function setupCliWrapper(userName: string): Promise<void> {
     }
 
     const wrapperPath = join(wrapperDir, "slime-cli");
-    const cliJsPath = join(app.getAppPath(), "..", "slime-cli.js");
+    const cliJsPath = app.isPackaged
+      ? join(app.getAppPath(), "..", "slime-cli.js")
+      : join(app.getAppPath(), "resources", "slime-cli.js");
     const userData = app.getPath("userData");
 
     const script =
