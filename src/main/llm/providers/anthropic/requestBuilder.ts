@@ -47,7 +47,7 @@ export function buildAnthropicRequest(
     cache_control: { type: "ephemeral" },
   };
 
-  if (options.thinkingBudget) {
+  if (options.thinkingBudget != null) {
     body.thinking = { type: "enabled", budget_tokens: options.thinkingBudget };
     body.temperature = undefined;
   }
