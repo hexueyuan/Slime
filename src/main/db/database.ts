@@ -245,8 +245,6 @@ CREATE TABLE IF NOT EXISTS tasks (
   repeat_interval INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
-CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_type, assignee_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS task_attachments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -339,10 +337,13 @@ function migrate(instance: BetterSqlite3.Database): void {
       ALTER TABLE tasks ADD COLUMN assignee_id TEXT;
       ALTER TABLE tasks ADD COLUMN scheduled_at INTEGER;
       ALTER TABLE tasks ADD COLUMN repeat_interval INTEGER;
-      CREATE INDEX idx_tasks_assignee ON tasks(assignee_type, assignee_id);
-      CREATE INDEX idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
     `);
   }
+  // Ensure indexes exist (covers both fresh DB and migrated DB)
+  instance.exec(`
+    CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_type, assignee_id);
+    CREATE INDEX IF NOT EXISTS idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
+  `);
 }
 
 function createDb(dbPath: string): BetterSqlite3.Database {
