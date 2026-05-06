@@ -7,6 +7,7 @@ export const useScheduleStore = defineStore("schedule", () => {
   const selectedDate = ref(new Date().toISOString().slice(0, 10));
   const tasks = ref<Task[]>([]);
   const timeline = ref<TimelineEntry[]>([]);
+  const timelineDates = ref<string[]>([]); // 已加载的日期列表（有序）
   const notes = ref<Note[]>([]);
 
   async function fetchTasks(): Promise<void> {
@@ -14,7 +15,41 @@ export const useScheduleStore = defineStore("schedule", () => {
   }
 
   async function fetchTimeline(): Promise<void> {
-    timeline.value = (await ipc.invoke("task:getTimeline", selectedDate.value)) as TimelineEntry[];
+    // 以 selectedDate 为中心，加载前后各3天（共7天）
+    const dates = getDateRange(selectedDate.value, 3);
+    const entries: TimelineEntry[] = [];
+    for (const d of dates) {
+      const dayEntries = (await ipc.invoke("task:getTimeline", d)) as TimelineEntry[];
+      entries.push(...dayEntries);
+    }
+    timeline.value = entries;
+    timelineDates.value = dates;
+  }
+
+  async function loadMoreBefore(): Promise<void> {
+    if (timelineDates.value.length === 0) return;
+    const earliest = timelineDates.value[0];
+    const newDates = getDateRange(offsetDate(earliest, -3), 0, 2); // 再往前3天
+    const entries: TimelineEntry[] = [];
+    for (const d of newDates) {
+      const dayEntries = (await ipc.invoke("task:getTimeline", d)) as TimelineEntry[];
+      entries.push(...dayEntries);
+    }
+    timeline.value = [...entries, ...timeline.value];
+    timelineDates.value = [...newDates, ...timelineDates.value];
+  }
+
+  async function loadMoreAfter(): Promise<void> {
+    if (timelineDates.value.length === 0) return;
+    const latest = timelineDates.value[timelineDates.value.length - 1];
+    const newDates = getDateRange(offsetDate(latest, 1), 0, 2); // 再往后3天
+    const entries: TimelineEntry[] = [];
+    for (const d of newDates) {
+      const dayEntries = (await ipc.invoke("task:getTimeline", d)) as TimelineEntry[];
+      entries.push(...dayEntries);
+    }
+    timeline.value = [...timeline.value, ...entries];
+    timelineDates.value = [...timelineDates.value, ...newDates];
   }
 
   async function fetchNotes(): Promise<void> {
@@ -94,10 +129,13 @@ export const useScheduleStore = defineStore("schedule", () => {
     selectedDate,
     tasks,
     timeline,
+    timelineDates,
     notes,
     fetchTasks,
     fetchTimeline,
     fetchNotes,
+    loadMoreBefore,
+    loadMoreAfter,
     createTask,
     updateTask,
     updateTaskStatus,
@@ -109,3 +147,19 @@ export const useScheduleStore = defineStore("schedule", () => {
     setupListeners,
   };
 });
+
+// 工具函数
+function getDateRange(center: string, before: number, after?: number): string[] {
+  const a = after ?? before;
+  const dates: string[] = [];
+  for (let i = -before; i <= a; i++) {
+    dates.push(offsetDate(center, i));
+  }
+  return dates;
+}
+
+function offsetDate(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}

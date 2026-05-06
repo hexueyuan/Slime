@@ -20,7 +20,13 @@
     <div class="w-px bg-border" />
     <!-- 右列 -->
     <div class="w-[280px] shrink-0 overflow-y-auto px-3 py-3">
-      <TimelinePanel :entries="store.timeline" @add-entry="showTimelineAdd = true" />
+      <TimelinePanel
+        :entries="store.timeline"
+        :dates="store.timelineDates"
+        @add-entry="showTimelineAdd = true"
+        @load-before="store.loadMoreBefore"
+        @load-after="store.loadMoreAfter"
+      />
     </div>
 
     <TaskDetailDialog
