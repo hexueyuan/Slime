@@ -6,11 +6,11 @@
 
 ## 任务类型
 
-| 类型 | scheduled_at | repeat_interval |
-|------|-------------|-----------------|
-| 普通任务 | null | null |
-| 定时任务（一次性） | 有值 | null/0 |
-| 定时循环任务 | 有值 | >0 |
+| 类型               | scheduled_at | repeat_interval |
+| ------------------ | ------------ | --------------- |
+| 普通任务           | null         | null            |
+| 定时任务（一次性） | 有值         | null/0          |
+| 定时循环任务       | 有值         | >0              |
 
 ## 数据库变更
 
@@ -48,37 +48,37 @@ CREATE INDEX idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NO
 ## 类型定义变更（schedule.d.ts）
 
 ```typescript
-export type ActorType = 'user' | 'agent'
+export type ActorType = "user" | "agent";
 
-export type RepeatPreset = 'none' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom'
+export type RepeatPreset = "none" | "hourly" | "daily" | "weekly" | "monthly" | "custom";
 
 export interface Task {
-  id: string
-  title: string
-  detail?: string
-  status: TaskStatus
-  createdAt: number
-  startedAt?: number
-  finishedAt?: number
-  creatorType: ActorType
-  creatorId?: string
-  assigneeType: ActorType
-  assigneeId?: string
-  scheduledAt?: number
-  repeatInterval?: number
+  id: string;
+  title: string;
+  detail?: string;
+  status: TaskStatus;
+  createdAt: number;
+  startedAt?: number;
+  finishedAt?: number;
+  creatorType: ActorType;
+  creatorId?: string;
+  assigneeType: ActorType;
+  assigneeId?: string;
+  scheduledAt?: number;
+  repeatInterval?: number;
 }
 ```
 
 ### 预设间隔映射
 
-| 预设 | 分钟数 |
-|------|--------|
-| none | null |
-| hourly | 60 |
-| daily | 1440 |
-| weekly | 10080 |
-| monthly | 43200 |
-| custom | 用户输入 |
+| 预设    | 分钟数   |
+| ------- | -------- |
+| none    | null     |
+| hourly  | 60       |
+| daily   | 1440     |
+| weekly  | 10080    |
+| monthly | 43200    |
+| custom  | 用户输入 |
 
 ## API / IPC 变更
 
@@ -150,14 +150,18 @@ task add <描述> --creator-type <user|agent> --creator-id <id> [--assignee-type
 ### 下次执行时间（纯展示）
 
 ```typescript
-function getNextExecutions(scheduledAt: number, repeatInterval: number | null, count = 3): number[] {
-  if (!scheduledAt) return []
-  if (!repeatInterval) return [scheduledAt]
-  const now = Date.now()
-  const intervalMs = repeatInterval * 60_000
-  let next = scheduledAt
-  while (next < now) next += intervalMs
-  return Array.from({ length: count }, (_, i) => next + i * intervalMs)
+function getNextExecutions(
+  scheduledAt: number,
+  repeatInterval: number | null,
+  count = 3,
+): number[] {
+  if (!scheduledAt) return [];
+  if (!repeatInterval) return [scheduledAt];
+  const now = Date.now();
+  const intervalMs = repeatInterval * 60_000;
+  let next = scheduledAt;
+  while (next < now) next += intervalMs;
+  return Array.from({ length: count }, (_, i) => next + i * intervalMs);
 }
 ```
 

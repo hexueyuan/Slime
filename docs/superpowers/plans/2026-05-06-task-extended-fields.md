@@ -1,6 +1,6 @@
 # Task Extended Fields Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add creator, assignee, scheduled time, and repeat interval fields to the task system, supporting normal/scheduled/recurring task types.
 
@@ -12,36 +12,37 @@
 
 ## File Structure
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `src/shared/types/schedule.d.ts` | Modify | Add `ActorType`, `RepeatPreset`, extend `Task` interface |
-| `src/main/db/database.ts` | Modify | Add migration for new columns + indexes |
-| `src/main/tasks/taskDao.ts` | Modify | Extend `createTask`, `updateTask`, `rowToTask`, `TaskRow` |
-| `src/main/presenter/taskPresenter.ts` | Modify | Update IPC handlers for new params |
-| `src/main/tasks/taskServer.ts` | Modify | Extend HTTP endpoints for new fields |
-| `src/cli/commands/task.ts` | Modify | Add `--creator-type/id`, `--assignee-type/id`, `--scheduled-at`, `--repeat` flags with validation |
-| `src/renderer/src/stores/schedule.ts` | Modify | Update `createTask`/`updateTask` signatures |
-| `src/renderer/src/components/schedule/TaskBoard.vue` | Modify | Add assignee/schedule indicators |
-| `src/renderer/src/components/schedule/TaskDetailDialog.vue` | Modify | Add assignee selector, schedule config, creator display |
-| `src/renderer/src/components/schedule/ScheduleConfig.vue` | Create | Extracted schedule configuration component |
-| `src/renderer/src/utils/scheduleUtils.ts` | Create | `getNextExecutions()` helper + `REPEAT_PRESETS` map |
-| `test/main/tasks/taskDao.test.ts` | Create | Unit tests for extended DAO |
-| `test/main/tasks/taskServer.test.ts` | Modify or Create | HTTP endpoint tests |
+| File                                                        | Action           | Responsibility                                                                                    |
+| ----------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------- |
+| `src/shared/types/schedule.d.ts`                            | Modify           | Add `ActorType`, `RepeatPreset`, extend `Task` interface                                          |
+| `src/main/db/database.ts`                                   | Modify           | Add migration for new columns + indexes                                                           |
+| `src/main/tasks/taskDao.ts`                                 | Modify           | Extend `createTask`, `updateTask`, `rowToTask`, `TaskRow`                                         |
+| `src/main/presenter/taskPresenter.ts`                       | Modify           | Update IPC handlers for new params                                                                |
+| `src/main/tasks/taskServer.ts`                              | Modify           | Extend HTTP endpoints for new fields                                                              |
+| `src/cli/commands/task.ts`                                  | Modify           | Add `--creator-type/id`, `--assignee-type/id`, `--scheduled-at`, `--repeat` flags with validation |
+| `src/renderer/src/stores/schedule.ts`                       | Modify           | Update `createTask`/`updateTask` signatures                                                       |
+| `src/renderer/src/components/schedule/TaskBoard.vue`        | Modify           | Add assignee/schedule indicators                                                                  |
+| `src/renderer/src/components/schedule/TaskDetailDialog.vue` | Modify           | Add assignee selector, schedule config, creator display                                           |
+| `src/renderer/src/components/schedule/ScheduleConfig.vue`   | Create           | Extracted schedule configuration component                                                        |
+| `src/renderer/src/utils/scheduleUtils.ts`                   | Create           | `getNextExecutions()` helper + `REPEAT_PRESETS` map                                               |
+| `test/main/tasks/taskDao.test.ts`                           | Create           | Unit tests for extended DAO                                                                       |
+| `test/main/tasks/taskServer.test.ts`                        | Modify or Create | HTTP endpoint tests                                                                               |
 
 ---
 
 ### Task 1: Type Definitions
 
 **Files:**
+
 - Modify: `src/shared/types/schedule.d.ts`
 
-- [ ] **Step 1: Update type definitions**
+- [x] **Step 1: Update type definitions**
 
 ```typescript
 // Add at the top of schedule.d.ts, before TaskStatus
-export type ActorType = 'user' | 'agent'
+export type ActorType = "user" | "agent";
 
-export type RepeatPreset = 'none' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom'
+export type RepeatPreset = "none" | "hourly" | "daily" | "weekly" | "monthly" | "custom";
 ```
 
 Update the `Task` interface to:
@@ -64,12 +65,12 @@ export interface Task {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck passes**
+- [x] **Step 2: Verify typecheck passes**
 
 Run: `pnpm run typecheck`
 Expected: May show errors in taskDao.ts and other files that reference Task — this is expected, we'll fix them in subsequent tasks.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/shared/types/schedule.d.ts
@@ -81,17 +82,18 @@ git commit -m "feat(schedule): extend Task type with creator/assignee/schedule f
 ### Task 2: Database Migration
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 
-- [ ] **Step 1: Add migration logic in `migrate()` function**
+- [x] **Step 1: Add migration logic in `migrate()` function**
 
 After the existing schedule tables migration block (line ~323), add:
 
 ```typescript
-  // Add extended fields to tasks table (creator/assignee/schedule)
-  const taskCols = instance.prepare("PRAGMA table_info(tasks)").all() as { name: string }[];
-  if (!taskCols.some((c) => c.name === "creator_type")) {
-    instance.exec(`
+// Add extended fields to tasks table (creator/assignee/schedule)
+const taskCols = instance.prepare("PRAGMA table_info(tasks)").all() as { name: string }[];
+if (!taskCols.some((c) => c.name === "creator_type")) {
+  instance.exec(`
       ALTER TABLE tasks ADD COLUMN creator_type TEXT NOT NULL DEFAULT 'user';
       ALTER TABLE tasks ADD COLUMN creator_id TEXT;
       ALTER TABLE tasks ADD COLUMN assignee_type TEXT NOT NULL DEFAULT 'user';
@@ -101,10 +103,10 @@ After the existing schedule tables migration block (line ~323), add:
       CREATE INDEX idx_tasks_assignee ON tasks(assignee_type, assignee_id);
       CREATE INDEX idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
     `);
-  }
+}
 ```
 
-- [ ] **Step 2: Also update the DDL `CREATE TABLE tasks` in the main DDL string**
+- [x] **Step 2: Also update the DDL `CREATE TABLE tasks` in the main DDL string**
 
 Update the tasks table DDL (line ~232) to include the new columns so fresh installs get them:
 
@@ -129,7 +131,7 @@ CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_type, assignee_i
 CREATE INDEX IF NOT EXISTS idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/main/db/database.ts
@@ -141,110 +143,111 @@ git commit -m "feat(schedule): add DB migration for task extended fields"
 ### Task 3: DAO Layer Extension
 
 **Files:**
+
 - Modify: `src/main/tasks/taskDao.ts`
 - Create: `test/main/tasks/taskDao.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `test/main/tasks/taskDao.test.ts`:
 
 ```typescript
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { initDb, closeDb } from '@/db/database'
-import * as taskDao from '@/tasks/taskDao'
-import type BetterSqlite3 from 'better-sqlite3'
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { initDb, closeDb } from "@/db/database";
+import * as taskDao from "@/tasks/taskDao";
+import type BetterSqlite3 from "better-sqlite3";
 
-describe('taskDao extended fields', () => {
-  let db: BetterSqlite3.Database
+describe("taskDao extended fields", () => {
+  let db: BetterSqlite3.Database;
 
   beforeEach(() => {
-    db = initDb(':memory:')
-  })
+    db = initDb(":memory:");
+  });
 
   afterEach(() => {
-    closeDb()
-  })
+    closeDb();
+  });
 
-  it('createTask with creator and assignee', () => {
+  it("createTask with creator and assignee", () => {
     const task = taskDao.createTask(db, {
-      title: 'test task',
-      creatorType: 'agent',
-      creatorId: 'hal-ai',
-      assigneeType: 'user',
-      assigneeId: 'user-1',
-    })
-    expect(task.creatorType).toBe('agent')
-    expect(task.creatorId).toBe('hal-ai')
-    expect(task.assigneeType).toBe('user')
-    expect(task.assigneeId).toBe('user-1')
-  })
+      title: "test task",
+      creatorType: "agent",
+      creatorId: "hal-ai",
+      assigneeType: "user",
+      assigneeId: "user-1",
+    });
+    expect(task.creatorType).toBe("agent");
+    expect(task.creatorId).toBe("hal-ai");
+    expect(task.assigneeType).toBe("user");
+    expect(task.assigneeId).toBe("user-1");
+  });
 
-  it('createTask with schedule', () => {
-    const scheduled = Date.now() + 3600_000
+  it("createTask with schedule", () => {
+    const scheduled = Date.now() + 3600_000;
     const task = taskDao.createTask(db, {
-      title: 'scheduled task',
+      title: "scheduled task",
       scheduledAt: scheduled,
       repeatInterval: 1440,
-    })
-    expect(task.scheduledAt).toBe(scheduled)
-    expect(task.repeatInterval).toBe(1440)
-  })
+    });
+    expect(task.scheduledAt).toBe(scheduled);
+    expect(task.repeatInterval).toBe(1440);
+  });
 
-  it('createTask defaults creator/assignee to user', () => {
-    const task = taskDao.createTask(db, { title: 'default task' })
-    expect(task.creatorType).toBe('user')
-    expect(task.assigneeType).toBe('user')
-    expect(task.scheduledAt).toBeUndefined()
-    expect(task.repeatInterval).toBeUndefined()
-  })
+  it("createTask defaults creator/assignee to user", () => {
+    const task = taskDao.createTask(db, { title: "default task" });
+    expect(task.creatorType).toBe("user");
+    expect(task.assigneeType).toBe("user");
+    expect(task.scheduledAt).toBeUndefined();
+    expect(task.repeatInterval).toBeUndefined();
+  });
 
-  it('updateTask can change assignee and schedule', () => {
-    const task = taskDao.createTask(db, { title: 'updatable' })
+  it("updateTask can change assignee and schedule", () => {
+    const task = taskDao.createTask(db, { title: "updatable" });
     const updated = taskDao.updateTask(db, task.id, {
-      assigneeType: 'agent',
-      assigneeId: 'moss-ai',
+      assigneeType: "agent",
+      assigneeId: "moss-ai",
       scheduledAt: 1700000000000,
       repeatInterval: 60,
-    })
-    expect(updated.assigneeType).toBe('agent')
-    expect(updated.assigneeId).toBe('moss-ai')
-    expect(updated.scheduledAt).toBe(1700000000000)
-    expect(updated.repeatInterval).toBe(60)
-  })
+    });
+    expect(updated.assigneeType).toBe("agent");
+    expect(updated.assigneeId).toBe("moss-ai");
+    expect(updated.scheduledAt).toBe(1700000000000);
+    expect(updated.repeatInterval).toBe(60);
+  });
 
-  it('updateTask cannot change creator fields', () => {
+  it("updateTask cannot change creator fields", () => {
     const task = taskDao.createTask(db, {
-      title: 'immutable creator',
-      creatorType: 'agent',
-      creatorId: 'hal-ai',
-    })
+      title: "immutable creator",
+      creatorType: "agent",
+      creatorId: "hal-ai",
+    });
     // creatorType/creatorId not in updateTask fields type
-    const updated = taskDao.updateTask(db, task.id, { title: 'renamed' })
-    expect(updated.creatorType).toBe('agent')
-    expect(updated.creatorId).toBe('hal-ai')
-  })
+    const updated = taskDao.updateTask(db, task.id, { title: "renamed" });
+    expect(updated.creatorType).toBe("agent");
+    expect(updated.creatorId).toBe("hal-ai");
+  });
 
-  it('listTasks returns extended fields', () => {
+  it("listTasks returns extended fields", () => {
     taskDao.createTask(db, {
-      title: 'listed',
-      creatorType: 'agent',
-      creatorId: 'moss-ai',
+      title: "listed",
+      creatorType: "agent",
+      creatorId: "moss-ai",
       scheduledAt: 1700000000000,
-    })
-    const tasks = taskDao.listTasks(db)
-    expect(tasks[0].creatorType).toBe('agent')
-    expect(tasks[0].creatorId).toBe('moss-ai')
-    expect(tasks[0].scheduledAt).toBe(1700000000000)
-  })
-})
+    });
+    const tasks = taskDao.listTasks(db);
+    expect(tasks[0].creatorType).toBe("agent");
+    expect(tasks[0].creatorId).toBe("moss-ai");
+    expect(tasks[0].scheduledAt).toBe(1700000000000);
+  });
+});
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pnpm test -- test/main/tasks/taskDao.test.ts`
 Expected: FAIL — `createTask` signature doesn't accept object param yet.
 
-- [ ] **Step 3: Update TaskRow and rowToTask**
+- [x] **Step 3: Update TaskRow and rowToTask**
 
 In `src/main/tasks/taskDao.ts`, update `TaskRow`:
 
@@ -302,7 +305,7 @@ import type {
 } from "@shared/types/schedule";
 ```
 
-- [ ] **Step 4: Refactor createTask to accept params object**
+- [x] **Step 4: Refactor createTask to accept params object**
 
 Replace the existing `createTask` function:
 
@@ -321,8 +324,8 @@ export interface CreateTaskParams {
 export function createTask(db: BetterSqlite3.Database, params: CreateTaskParams): Task {
   const id = makeId();
   const now = Date.now();
-  const creatorType = params.creatorType ?? 'user';
-  const assigneeType = params.assigneeType ?? 'user';
+  const creatorType = params.creatorType ?? "user";
+  const assigneeType = params.assigneeType ?? "user";
   db.prepare(
     `INSERT INTO tasks (id, title, detail, status, created_at, creator_type, creator_id, assignee_type, assignee_id, scheduled_at, repeat_interval)
      VALUES (?, ?, ?, 'todo', ?, ?, ?, ?, ?, ?, ?)`,
@@ -342,7 +345,7 @@ export function createTask(db: BetterSqlite3.Database, params: CreateTaskParams)
     id,
     title: params.title,
     detail: params.detail,
-    status: 'todo',
+    status: "todo",
     createdAt: now,
     creatorType,
     creatorId: params.creatorId,
@@ -354,7 +357,7 @@ export function createTask(db: BetterSqlite3.Database, params: CreateTaskParams)
 }
 ```
 
-- [ ] **Step 5: Extend updateTask to accept new fields**
+- [x] **Step 5: Extend updateTask to accept new fields**
 
 ```typescript
 export function updateTask(
@@ -373,26 +376,44 @@ export function updateTask(
   if (!task) throw new Error(`task ${id} not found`);
   const sets: string[] = [];
   const values: unknown[] = [];
-  if (fields.title !== undefined) { sets.push('title = ?'); values.push(fields.title); }
-  if (fields.detail !== undefined) { sets.push('detail = ?'); values.push(fields.detail); }
-  if (fields.assigneeType !== undefined) { sets.push('assignee_type = ?'); values.push(fields.assigneeType); }
-  if (fields.assigneeId !== undefined) { sets.push('assignee_id = ?'); values.push(fields.assigneeId); }
-  if (fields.scheduledAt !== undefined) { sets.push('scheduled_at = ?'); values.push(fields.scheduledAt); }
-  if (fields.repeatInterval !== undefined) { sets.push('repeat_interval = ?'); values.push(fields.repeatInterval); }
+  if (fields.title !== undefined) {
+    sets.push("title = ?");
+    values.push(fields.title);
+  }
+  if (fields.detail !== undefined) {
+    sets.push("detail = ?");
+    values.push(fields.detail);
+  }
+  if (fields.assigneeType !== undefined) {
+    sets.push("assignee_type = ?");
+    values.push(fields.assigneeType);
+  }
+  if (fields.assigneeId !== undefined) {
+    sets.push("assignee_id = ?");
+    values.push(fields.assigneeId);
+  }
+  if (fields.scheduledAt !== undefined) {
+    sets.push("scheduled_at = ?");
+    values.push(fields.scheduledAt);
+  }
+  if (fields.repeatInterval !== undefined) {
+    sets.push("repeat_interval = ?");
+    values.push(fields.repeatInterval);
+  }
   if (sets.length > 0) {
     values.push(id);
-    db.prepare(`UPDATE tasks SET ${sets.join(', ')} WHERE id = ?`).run(...values);
+    db.prepare(`UPDATE tasks SET ${sets.join(", ")} WHERE id = ?`).run(...values);
   }
   return getTask(db, id)!;
 }
 ```
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
 Run: `pnpm test -- test/main/tasks/taskDao.test.ts`
 Expected: All PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/tasks/taskDao.ts test/main/tasks/taskDao.test.ts
@@ -404,9 +425,10 @@ git commit -m "feat(schedule): extend taskDao with creator/assignee/schedule fie
 ### Task 4: TaskPresenter IPC Update
 
 **Files:**
+
 - Modify: `src/main/presenter/taskPresenter.ts`
 
-- [ ] **Step 1: Update createTask IPC handler**
+- [x] **Step 1: Update createTask IPC handler**
 
 Change the `task:createTask` handler from:
 
@@ -428,19 +450,16 @@ ipcMain.handle("task:createTask", (_e, params: taskDao.CreateTaskParams) => {
 });
 ```
 
-- [ ] **Step 2: Update updateTask IPC handler**
+- [x] **Step 2: Update updateTask IPC handler**
 
 Change from:
 
 ```typescript
-ipcMain.handle(
-  "task:updateTask",
-  (_e, id: string, fields: { title?: string; detail?: string }) => {
-    const task = taskDao.updateTask(this.db!, id, fields);
-    this.emitTasksChanged();
-    return task;
-  },
-);
+ipcMain.handle("task:updateTask", (_e, id: string, fields: { title?: string; detail?: string }) => {
+  const task = taskDao.updateTask(this.db!, id, fields);
+  this.emitTasksChanged();
+  return task;
+});
 ```
 
 To:
@@ -448,14 +467,18 @@ To:
 ```typescript
 ipcMain.handle(
   "task:updateTask",
-  (_e, id: string, fields: {
-    title?: string;
-    detail?: string;
-    assigneeType?: string;
-    assigneeId?: string;
-    scheduledAt?: number | null;
-    repeatInterval?: number | null;
-  }) => {
+  (
+    _e,
+    id: string,
+    fields: {
+      title?: string;
+      detail?: string;
+      assigneeType?: string;
+      assigneeId?: string;
+      scheduledAt?: number | null;
+      repeatInterval?: number | null;
+    },
+  ) => {
     const task = taskDao.updateTask(this.db!, id, fields);
     this.emitTasksChanged();
     return task;
@@ -463,7 +486,7 @@ ipcMain.handle(
 );
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/main/presenter/taskPresenter.ts
@@ -475,9 +498,10 @@ git commit -m "feat(schedule): update TaskPresenter IPC for extended fields"
 ### Task 5: TaskServer HTTP Extension
 
 **Files:**
+
 - Modify: `src/main/tasks/taskServer.ts`
 
-- [ ] **Step 1: Extend POST /tasks endpoint**
+- [x] **Step 1: Extend POST /tasks endpoint**
 
 Update the POST handler body type and logic:
 
@@ -500,9 +524,9 @@ app.post<{
   }
   const task = taskDao.createTask(db, {
     title,
-    creatorType: (req.body.creatorType as 'user' | 'agent') ?? 'user',
+    creatorType: (req.body.creatorType as "user" | "agent") ?? "user",
     creatorId: req.body.creatorId,
-    assigneeType: (req.body.assigneeType as 'user' | 'agent') ?? 'user',
+    assigneeType: (req.body.assigneeType as "user" | "agent") ?? "user",
     assigneeId: req.body.assigneeId,
     scheduledAt: req.body.scheduledAt,
     repeatInterval: req.body.repeatInterval,
@@ -512,7 +536,7 @@ app.post<{
 });
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/main/tasks/taskServer.ts
@@ -524,9 +548,10 @@ git commit -m "feat(schedule): extend TaskServer HTTP for new fields"
 ### Task 6: CLI Extension
 
 **Files:**
+
 - Modify: `src/cli/commands/task.ts`
 
-- [ ] **Step 1: Update Task interface in CLI**
+- [x] **Step 1: Update Task interface in CLI**
 
 ```typescript
 interface Task {
@@ -545,7 +570,7 @@ interface Task {
 }
 ```
 
-- [ ] **Step 2: Add argument parsing helper**
+- [x] **Step 2: Add argument parsing helper**
 
 ```typescript
 function parseFlag(args: string[], flag: string): string | undefined {
@@ -555,38 +580,48 @@ function parseFlag(args: string[], flag: string): string | undefined {
 }
 ```
 
-- [ ] **Step 3: Update the `add` subcommand**
+- [x] **Step 3: Update the `add` subcommand**
 
 Replace the existing `add` block:
 
 ```typescript
 if (sub === "add") {
   // Extract flags from rest
-  const creatorType = parseFlag(rest, '--creator-type');
-  const creatorId = parseFlag(rest, '--creator-id');
-  const assigneeType = parseFlag(rest, '--assignee-type');
-  const assigneeId = parseFlag(rest, '--assignee-id');
-  const scheduledAtStr = parseFlag(rest, '--scheduled-at');
-  const repeatStr = parseFlag(rest, '--repeat');
+  const creatorType = parseFlag(rest, "--creator-type");
+  const creatorId = parseFlag(rest, "--creator-id");
+  const assigneeType = parseFlag(rest, "--assignee-type");
+  const assigneeId = parseFlag(rest, "--assignee-id");
+  const scheduledAtStr = parseFlag(rest, "--scheduled-at");
+  const repeatStr = parseFlag(rest, "--repeat");
 
   // Validate required flags
   if (!creatorType) throw new Error("--creator-type is required (user|agent)");
   if (!creatorId) throw new Error("--creator-id is required");
-  if (creatorType !== 'user' && creatorType !== 'agent') {
+  if (creatorType !== "user" && creatorType !== "agent") {
     throw new Error(`--creator-type must be 'user' or 'agent', got '${creatorType}'`);
   }
-  if (assigneeType && assigneeType !== 'user' && assigneeType !== 'agent') {
+  if (assigneeType && assigneeType !== "user" && assigneeType !== "agent") {
     throw new Error(`--assignee-type must be 'user' or 'agent', got '${assigneeType}'`);
   }
 
   // Extract title (args that are not flags)
-  const flagNames = ['--creator-type', '--creator-id', '--assignee-type', '--assignee-id', '--scheduled-at', '--repeat'];
+  const flagNames = [
+    "--creator-type",
+    "--creator-id",
+    "--assignee-type",
+    "--assignee-id",
+    "--scheduled-at",
+    "--repeat",
+  ];
   const titleParts: string[] = [];
   for (let i = 0; i < rest.length; i++) {
-    if (flagNames.includes(rest[i])) { i++; continue; } // skip flag + value
+    if (flagNames.includes(rest[i])) {
+      i++;
+      continue;
+    } // skip flag + value
     titleParts.push(rest[i]);
   }
-  const title = titleParts.join(' ').trim();
+  const title = titleParts.join(" ").trim();
   if (!title) throw new Error("title is required");
 
   const body: Record<string, unknown> = {
@@ -604,13 +639,13 @@ if (sub === "add") {
 }
 ```
 
-- [ ] **Step 4: Update formatTask to show new fields**
+- [x] **Step 4: Update formatTask to show new fields**
 
 ```typescript
 function formatTask(t: Task): string {
   const parts = [
     `[${t.id}] ${t.title} [${STATUS_LABEL[t.status] ?? t.status}]`,
-    `creator:${t.creatorType}/${t.creatorId ?? '-'}`,
+    `creator:${t.creatorType}/${t.creatorId ?? "-"}`,
   ];
   if (t.assigneeId) parts.push(`assignee:${t.assigneeType}/${t.assigneeId}`);
   if (t.scheduledAt) parts.push(`scheduled:${formatTime(t.scheduledAt)}`);
@@ -622,7 +657,7 @@ function formatTask(t: Task): string {
 }
 ```
 
-- [ ] **Step 5: Update help text**
+- [x] **Step 5: Update help text**
 
 ```typescript
 process.stdout.write(
@@ -638,7 +673,7 @@ process.stdout.write(
 );
 ```
 
-- [ ] **Step 6: Update allowedRoles to include all roles**
+- [x] **Step 6: Update allowedRoles to include all roles**
 
 Since we need both user and agents to create tasks with explicit `--creator-type`:
 
@@ -659,7 +694,7 @@ export const taskCommand: CommandDef = {
 
 Note: Remove the `allowedAgents` restriction since any agent/user can now use it.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/cli/commands/task.ts
@@ -671,57 +706,58 @@ git commit -m "feat(schedule): extend CLI task command with creator/assignee/sch
 ### Task 7: Schedule Utils
 
 **Files:**
+
 - Create: `src/renderer/src/utils/scheduleUtils.ts`
 
-- [ ] **Step 1: Create the utility file**
+- [x] **Step 1: Create the utility file**
 
 ```typescript
-import type { RepeatPreset } from '@shared/types/schedule'
+import type { RepeatPreset } from "@shared/types/schedule";
 
 export const REPEAT_PRESETS: { value: RepeatPreset; label: string; minutes: number | null }[] = [
-  { value: 'none', label: '不循环', minutes: null },
-  { value: 'hourly', label: '每小时', minutes: 60 },
-  { value: 'daily', label: '每天', minutes: 1440 },
-  { value: 'weekly', label: '每周', minutes: 10080 },
-  { value: 'monthly', label: '每月', minutes: 43200 },
-  { value: 'custom', label: '自定义', minutes: null },
-]
+  { value: "none", label: "不循环", minutes: null },
+  { value: "hourly", label: "每小时", minutes: 60 },
+  { value: "daily", label: "每天", minutes: 1440 },
+  { value: "weekly", label: "每周", minutes: 10080 },
+  { value: "monthly", label: "每月", minutes: 43200 },
+  { value: "custom", label: "自定义", minutes: null },
+];
 
 export function getNextExecutions(
   scheduledAt: number,
   repeatInterval: number | null | undefined,
   count = 3,
 ): number[] {
-  if (!scheduledAt) return []
-  if (!repeatInterval) return [scheduledAt]
-  const now = Date.now()
-  const intervalMs = repeatInterval * 60_000
-  let next = scheduledAt
-  while (next < now) next += intervalMs
-  return Array.from({ length: count }, (_, i) => next + i * intervalMs)
+  if (!scheduledAt) return [];
+  if (!repeatInterval) return [scheduledAt];
+  const now = Date.now();
+  const intervalMs = repeatInterval * 60_000;
+  let next = scheduledAt;
+  while (next < now) next += intervalMs;
+  return Array.from({ length: count }, (_, i) => next + i * intervalMs);
 }
 
 export function formatScheduleTime(ms: number): string {
-  const d = new Date(ms)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const h = String(d.getHours()).padStart(2, '0')
-  const min = String(d.getMinutes()).padStart(2, '0')
-  return `${y}/${m}/${day} ${h}:${min}`
+  const d = new Date(ms);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${y}/${m}/${day} ${h}:${min}`;
 }
 
 export function intervalToLabel(minutes: number): string {
-  const preset = REPEAT_PRESETS.find((p) => p.minutes === minutes)
-  if (preset) return preset.label
-  if (minutes < 60) return `${minutes}分钟`
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  return m > 0 ? `${h}小时${m}分钟` : `${h}小时`
+  const preset = REPEAT_PRESETS.find((p) => p.minutes === minutes);
+  if (preset) return preset.label;
+  if (minutes < 60) return `${minutes}分钟`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}小时${m}分钟` : `${h}小时`;
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/renderer/src/utils/scheduleUtils.ts
@@ -733,9 +769,10 @@ git commit -m "feat(schedule): add scheduleUtils with getNextExecutions and pres
 ### Task 8: Store Update
 
 **Files:**
+
 - Modify: `src/renderer/src/stores/schedule.ts`
 
-- [ ] **Step 1: Update createTask signature**
+- [x] **Step 1: Update createTask signature**
 
 Change:
 
@@ -766,15 +803,12 @@ async function createTask(params: {
 }
 ```
 
-- [ ] **Step 2: Update updateTask signature**
+- [x] **Step 2: Update updateTask signature**
 
 Change:
 
 ```typescript
-async function updateTask(
-  id: string,
-  fields: { title?: string; detail?: string },
-): Promise<void> {
+async function updateTask(id: string, fields: { title?: string; detail?: string }): Promise<void> {
   await ipc.invoke("task:updateTask", id, fields);
   await fetchTasks();
 }
@@ -799,7 +833,7 @@ async function updateTask(
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/renderer/src/stores/schedule.ts
@@ -811,9 +845,10 @@ git commit -m "feat(schedule): update store createTask/updateTask for new fields
 ### Task 9: SchedulePanel createTask Caller Update
 
 **Files:**
+
 - Modify: `src/renderer/src/views/SchedulePanel.vue`
 
-- [ ] **Step 1: Update createNewTask to use object params**
+- [x] **Step 1: Update createNewTask to use object params**
 
 Change:
 
@@ -835,12 +870,12 @@ async function createNewTask(): Promise<void> {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 Run: `pnpm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/renderer/src/views/SchedulePanel.vue
@@ -852,17 +887,18 @@ git commit -m "fix(schedule): update SchedulePanel createTask to use params obje
 ### Task 10: TaskBoard UI — Assignee & Schedule Indicators
 
 **Files:**
+
 - Modify: `src/renderer/src/components/schedule/TaskBoard.vue`
 
-- [ ] **Step 1: Add imports and computed helpers**
+- [x] **Step 1: Add imports and computed helpers**
 
 Add at the top of `<script setup>`:
 
 ```typescript
-import { getNextExecutions, formatScheduleTime, intervalToLabel } from '@/utils/scheduleUtils'
+import { getNextExecutions, formatScheduleTime, intervalToLabel } from "@/utils/scheduleUtils";
 ```
 
-- [ ] **Step 2: Add assignee/schedule indicators to task items in active section**
+- [x] **Step 2: Add assignee/schedule indicators to task items in active section**
 
 In the active tasks `<button>` template, after the `<span>` for title, add before the date span:
 
@@ -872,10 +908,7 @@ In the active tasks `<button>` template, after the `<span>` for title, add befor
   class="shrink-0 rounded bg-violet-500/15 px-1 text-[10px] text-violet-400"
   >{{ task.assigneeId }}</span
 >
-<span
-  v-if="task.scheduledAt"
-  class="flex shrink-0 items-center gap-0.5 text-[10px] text-blue-400"
->
+<span v-if="task.scheduledAt" class="flex shrink-0 items-center gap-0.5 text-[10px] text-blue-400">
   <Icon icon="lucide:clock" class="h-2.5 w-2.5" />
   <Icon v-if="task.repeatInterval" icon="lucide:repeat" class="h-2.5 w-2.5" />
 </span>
@@ -883,7 +916,7 @@ In the active tasks `<button>` template, after the `<span>` for title, add befor
 
 Apply the same indicators to the finished tasks section.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/renderer/src/components/schedule/TaskBoard.vue
@@ -895,9 +928,10 @@ git commit -m "feat(schedule): add assignee/schedule indicators to TaskBoard"
 ### Task 11: ScheduleConfig Component
 
 **Files:**
+
 - Create: `src/renderer/src/components/schedule/ScheduleConfig.vue`
 
-- [ ] **Step 1: Create the component**
+- [x] **Step 1: Create the component**
 
 ```vue
 <template>
@@ -983,109 +1017,105 @@ git commit -m "feat(schedule): add assignee/schedule indicators to TaskBoard"
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import type { RepeatPreset } from '@shared/types/schedule'
-import {
-  REPEAT_PRESETS,
-  getNextExecutions,
-  formatScheduleTime,
-} from '@/utils/scheduleUtils'
+import { ref, computed, watch } from "vue";
+import type { RepeatPreset } from "@shared/types/schedule";
+import { REPEAT_PRESETS, getNextExecutions, formatScheduleTime } from "@/utils/scheduleUtils";
 
 const props = defineProps<{
-  scheduledAt?: number
-  repeatInterval?: number
-}>()
+  scheduledAt?: number;
+  repeatInterval?: number;
+}>();
 
 const emit = defineEmits<{
-  'update:scheduledAt': [value: number | undefined]
-  'update:repeatInterval': [value: number | undefined]
-}>()
+  "update:scheduledAt": [value: number | undefined];
+  "update:repeatInterval": [value: number | undefined];
+}>();
 
-const enabled = computed(() => props.scheduledAt != null)
-const repeatEnabled = computed(() => (props.repeatInterval ?? 0) > 0)
+const enabled = computed(() => props.scheduledAt != null);
+const repeatEnabled = computed(() => (props.repeatInterval ?? 0) > 0);
 
-const presets = REPEAT_PRESETS.filter((p) => p.value !== 'none')
+const presets = REPEAT_PRESETS.filter((p) => p.value !== "none");
 
 const activePreset = computed<RepeatPreset>(() => {
-  if (!props.repeatInterval) return 'none'
-  const found = REPEAT_PRESETS.find((p) => p.minutes === props.repeatInterval)
-  return found ? found.value : 'custom'
-})
+  if (!props.repeatInterval) return "none";
+  const found = REPEAT_PRESETS.find((p) => p.minutes === props.repeatInterval);
+  return found ? found.value : "custom";
+});
 
-const customHours = ref(0)
-const customMinutes = ref(0)
+const customHours = ref(0);
+const customMinutes = ref(0);
 
 watch(
   () => props.repeatInterval,
   (v) => {
-    if (v && activePreset.value === 'custom') {
-      customHours.value = Math.floor(v / 60)
-      customMinutes.value = v % 60
+    if (v && activePreset.value === "custom") {
+      customHours.value = Math.floor(v / 60);
+      customMinutes.value = v % 60;
     }
   },
   { immediate: true },
-)
+);
 
 const scheduledLocal = computed(() => {
-  if (!props.scheduledAt) return ''
-  const d = new Date(props.scheduledAt)
-  const offset = d.getTimezoneOffset()
-  const local = new Date(d.getTime() - offset * 60_000)
-  return local.toISOString().slice(0, 16)
-})
+  if (!props.scheduledAt) return "";
+  const d = new Date(props.scheduledAt);
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60_000);
+  return local.toISOString().slice(0, 16);
+});
 
 const nextTimes = computed(() => {
-  if (!props.scheduledAt) return []
-  return getNextExecutions(props.scheduledAt, props.repeatInterval, 3)
-})
+  if (!props.scheduledAt) return [];
+  return getNextExecutions(props.scheduledAt, props.repeatInterval, 3);
+});
 
 function toggleEnabled(e: Event): void {
-  const checked = (e.target as HTMLInputElement).checked
+  const checked = (e.target as HTMLInputElement).checked;
   if (checked) {
     // Default to next hour
-    const next = new Date()
-    next.setMinutes(0, 0, 0)
-    next.setHours(next.getHours() + 1)
-    emit('update:scheduledAt', next.getTime())
+    const next = new Date();
+    next.setMinutes(0, 0, 0);
+    next.setHours(next.getHours() + 1);
+    emit("update:scheduledAt", next.getTime());
   } else {
-    emit('update:scheduledAt', undefined)
-    emit('update:repeatInterval', undefined)
+    emit("update:scheduledAt", undefined);
+    emit("update:repeatInterval", undefined);
   }
 }
 
 function toggleRepeat(e: Event): void {
-  const checked = (e.target as HTMLInputElement).checked
+  const checked = (e.target as HTMLInputElement).checked;
   if (checked) {
-    emit('update:repeatInterval', 1440) // default daily
+    emit("update:repeatInterval", 1440); // default daily
   } else {
-    emit('update:repeatInterval', undefined)
+    emit("update:repeatInterval", undefined);
   }
 }
 
 function onScheduledChange(e: Event): void {
-  const value = (e.target as HTMLInputElement).value
+  const value = (e.target as HTMLInputElement).value;
   if (value) {
-    emit('update:scheduledAt', new Date(value).getTime())
+    emit("update:scheduledAt", new Date(value).getTime());
   }
 }
 
 function selectPreset(preset: { value: RepeatPreset; minutes: number | null }): void {
-  if (preset.value === 'custom') {
-    const total = customHours.value * 60 + customMinutes.value
-    emit('update:repeatInterval', total > 0 ? total : 60)
+  if (preset.value === "custom") {
+    const total = customHours.value * 60 + customMinutes.value;
+    emit("update:repeatInterval", total > 0 ? total : 60);
   } else if (preset.minutes) {
-    emit('update:repeatInterval', preset.minutes)
+    emit("update:repeatInterval", preset.minutes);
   }
 }
 
 function emitCustomInterval(): void {
-  const total = customHours.value * 60 + customMinutes.value
-  if (total > 0) emit('update:repeatInterval', total)
+  const total = customHours.value * 60 + customMinutes.value;
+  if (total > 0) emit("update:repeatInterval", total);
 }
 </script>
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/renderer/src/components/schedule/ScheduleConfig.vue
@@ -1097,44 +1127,48 @@ git commit -m "feat(schedule): add ScheduleConfig component"
 ### Task 12: TaskDetailDialog Extension
 
 **Files:**
+
 - Modify: `src/renderer/src/components/schedule/TaskDetailDialog.vue`
 
-- [ ] **Step 1: Add imports**
+- [x] **Step 1: Add imports**
 
 Add to the script imports:
 
 ```typescript
-import ScheduleConfig from './ScheduleConfig.vue'
-import type { ActorType } from '@shared/types/schedule'
+import ScheduleConfig from "./ScheduleConfig.vue";
+import type { ActorType } from "@shared/types/schedule";
 ```
 
-- [ ] **Step 2: Add state refs for new fields**
+- [x] **Step 2: Add state refs for new fields**
 
 After the existing `attachments` ref:
 
 ```typescript
-const assigneeType = ref<ActorType>('user')
-const assigneeId = ref<string | undefined>(undefined)
-const scheduledAt = ref<number | undefined>(undefined)
-const repeatInterval = ref<number | undefined>(undefined)
-const agents = ref<{ id: string; name: string }[]>([])
+const assigneeType = ref<ActorType>("user");
+const assigneeId = ref<string | undefined>(undefined);
+const scheduledAt = ref<number | undefined>(undefined);
+const repeatInterval = ref<number | undefined>(undefined);
+const agents = ref<{ id: string; name: string }[]>([]);
 ```
 
-- [ ] **Step 3: Load agents and populate fields on open**
+- [x] **Step 3: Load agents and populate fields on open**
 
 In the `watch` callback, after setting `detail.value`, add:
 
 ```typescript
-assigneeType.value = task.value?.assigneeType ?? 'user'
-assigneeId.value = task.value?.assigneeId
-scheduledAt.value = task.value?.scheduledAt
-repeatInterval.value = task.value?.repeatInterval
+assigneeType.value = task.value?.assigneeType ?? "user";
+assigneeId.value = task.value?.assigneeId;
+scheduledAt.value = task.value?.scheduledAt;
+repeatInterval.value = task.value?.repeatInterval;
 // Load agents for assignee selector
-const agentList = (await ipc.invoke('presenter:call', 'agentConfig', 'listAgents')) as { id: string; name: string }[]
-agents.value = agentList
+const agentList = (await ipc.invoke("presenter:call", "agentConfig", "listAgents")) as {
+  id: string;
+  name: string;
+}[];
+agents.value = agentList;
 ```
 
-- [ ] **Step 4: Add assignee selector to template**
+- [x] **Step 4: Add assignee selector to template**
 
 After the detail textarea section, add:
 
@@ -1148,14 +1182,12 @@ After the detail textarea section, add:
     @change="onAssigneeChange"
   >
     <option value="__user__">我</option>
-    <option v-for="agent in agents" :key="agent.id" :value="agent.id">
-      {{ agent.name }}
-    </option>
+    <option v-for="agent in agents" :key="agent.id" :value="agent.id">{{ agent.name }}</option>
   </select>
 </div>
 ```
 
-- [ ] **Step 5: Add schedule config to template**
+- [x] **Step 5: Add schedule config to template**
 
 After the assignee section:
 
@@ -1172,15 +1204,13 @@ After the assignee section:
 </div>
 ```
 
-- [ ] **Step 6: Add creator display to the bottom info section**
+- [x] **Step 6: Add creator display to the bottom info section**
 
 Update the bottom info div to include creator:
 
 ```html
 <div class="text-[11px] text-muted-foreground/60">
-  <span v-if="task?.creatorType === 'agent'">
-    由 {{ task.creatorId }} 创建
-  </span>
+  <span v-if="task?.creatorType === 'agent'"> 由 {{ task.creatorId }} 创建 </span>
   <span v-else>由我创建</span>
   · 创建于 {{ formatTime(task?.createdAt) }}
   <span v-if="task?.startedAt"> · 开始于 {{ formatTime(task.startedAt) }}</span>
@@ -1188,55 +1218,55 @@ Update the bottom info div to include creator:
 </div>
 ```
 
-- [ ] **Step 7: Add handler functions**
+- [x] **Step 7: Add handler functions**
 
 ```typescript
 function onAssigneeChange(e: Event): void {
-  const value = (e.target as HTMLSelectElement).value
-  if (value === '__user__') {
-    assigneeType.value = 'user'
-    assigneeId.value = undefined
+  const value = (e.target as HTMLSelectElement).value;
+  if (value === "__user__") {
+    assigneeType.value = "user";
+    assigneeId.value = undefined;
   } else {
-    assigneeType.value = 'agent'
-    assigneeId.value = value
+    assigneeType.value = "agent";
+    assigneeId.value = value;
   }
-  saveAssignee()
+  saveAssignee();
 }
 
 async function saveAssignee(): Promise<void> {
-  if (!props.taskId) return
-  await ipc.invoke('task:updateTask', props.taskId, {
+  if (!props.taskId) return;
+  await ipc.invoke("task:updateTask", props.taskId, {
     assigneeType: assigneeType.value,
     assigneeId: assigneeId.value ?? null,
-  })
-  emit('changed')
+  });
+  emit("changed");
 }
 
 function onScheduledAtChange(value: number | undefined): void {
-  scheduledAt.value = value
-  saveSchedule()
+  scheduledAt.value = value;
+  saveSchedule();
 }
 
 function onRepeatIntervalChange(value: number | undefined): void {
-  repeatInterval.value = value
-  saveSchedule()
+  repeatInterval.value = value;
+  saveSchedule();
 }
 
 async function saveSchedule(): Promise<void> {
-  if (!props.taskId) return
-  await ipc.invoke('task:updateTask', props.taskId, {
+  if (!props.taskId) return;
+  await ipc.invoke("task:updateTask", props.taskId, {
     scheduledAt: scheduledAt.value ?? null,
     repeatInterval: repeatInterval.value ?? null,
-  })
-  emit('changed')
+  });
+  emit("changed");
 }
 ```
 
-- [ ] **Step 8: Run lint and format**
+- [x] **Step 8: Run lint and format**
 
 Run: `pnpm run format && pnpm run lint`
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/renderer/src/components/schedule/TaskDetailDialog.vue
@@ -1249,26 +1279,26 @@ git commit -m "feat(schedule): add assignee/schedule/creator UI to TaskDetailDia
 
 **Files:** All modified files
 
-- [ ] **Step 1: Run full typecheck**
+- [x] **Step 1: Run full typecheck**
 
 Run: `pnpm run typecheck`
 Expected: PASS (no errors)
 
-- [ ] **Step 2: Run lint**
+- [x] **Step 2: Run lint**
 
 Run: `pnpm run lint`
 Expected: PASS
 
-- [ ] **Step 3: Run format**
+- [x] **Step 3: Run format**
 
 Run: `pnpm run format`
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `pnpm test`
 Expected: All tests pass
 
-- [ ] **Step 5: Commit any format fixes**
+- [x] **Step 5: Commit any format fixes**
 
 ```bash
 git add -A

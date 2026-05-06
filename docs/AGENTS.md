@@ -8,11 +8,12 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 
 - `src/main/`: Electron 主进程
   - `presenter/`: Presenter 单例 + 子 Presenter（通过 `presenter:call` IPC 分发）
-  - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state）
+  - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state；schedule 表：tasks, notes, timeline_entries, attachments）
   - `gateway/`: LLM Gateway 核心（router, balancer, circuit, keypool, relay, server, outbound adapters, inbound handlers, stats, auth）
   - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool）
   - `agents/`: 内置 Agent 定义（index.ts BUILTIN_AGENTS 注册表 + hal.ts HAL Agent）
   - `mcp/`: MCP Client（types, transport/stdio+SSE, mcpClient, healthChecker）
+  - `tasks/`: Schedule 任务系统（taskDao, taskServer/Fastify HTTP, attachmentService）
   - `browser/`: 浏览器自动化（browserSession.ts 封装 playwright-core，browserTools.ts 定义 10 个工具）
   - `eventbus.ts`: EventBus 单例（主进程事件 + 渲染进程推送）
   - `utils/`: 工具模块（logger, paths, errors, cliWrapper）
@@ -103,6 +104,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                                                           |
 | AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                                                     |
 | MCPServerPresenter        | MCP Server 生命周期管理：连接/发现工具/健康检查/CRUD + 会话工具状态；客户端 Map 管理                                                                                                                           |
+| TaskPresenter             | Schedule 任务系统 IPC：task CRUD + 状态流转 + 附件 + timeline + notes；委托 taskDao/taskServer                                                                                                                 |
 
 ### 自研 LLM 客户端
 
