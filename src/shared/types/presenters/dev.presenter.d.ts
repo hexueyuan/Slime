@@ -1,7 +1,7 @@
 export interface BuiltinAgentInfo {
   id: string;
   config: Record<string, unknown>;
-  soul: string;
+  prompt: string;
 }
 
 export interface SkillManifest {
@@ -15,7 +15,7 @@ export interface SkillManifest {
 export interface IDevPresenter {
   listBuiltinAgents(): Promise<BuiltinAgentInfo[]>;
   getBuiltinAgent(agentId: string): Promise<BuiltinAgentInfo | null>;
-  saveBuiltinAgent(agentId: string, config: Record<string, unknown>, soul: string): Promise<void>;
+  saveBuiltinAgent(agentId: string, config: Record<string, unknown>, prompt: string): Promise<void>;
   createBuiltinAgent(agentId: string): Promise<void>;
   deleteBuiltinAgent(agentId: string): Promise<void>;
   listGlobalSkills(): Promise<SkillManifest[]>;

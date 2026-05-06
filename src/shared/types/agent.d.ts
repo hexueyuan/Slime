@@ -1,3 +1,5 @@
+import type { MBTIType } from "../constants/mbti";
+
 export type AgentType = "builtin" | "custom";
 
 export type AgentAvatar =
@@ -12,23 +14,15 @@ export type UserProfile = {
 
 export interface AgentConfig {
   capabilityRequirements?: string[];
-  /** @deprecated 使用 agentSoul 替代 */
-  systemPrompt?: string;
-  /** 内置 agent 的系统 prompt，非空时优先于 SOUL.md。支持异步函数用于动态注入运行时数据 */
-  agentSoul?: string | (() => Promise<string>);
+  /** 附加提示词，追加到 MBTI 性格提示词之后 */
+  additionalPrompt?: string;
   temperature?: number;
   contextLength?: number;
   maxTokens?: number;
-  /** @deprecated 使用 enabledTools 白名单替代 */
-  disabledTools?: string[];
   /** 启用的工具白名单，必须显式列出可用工具 */
   enabledTools?: string[];
   subagentEnabled?: boolean;
   mcpTools?: string[]; // "{server_id}/{tool_name}"[]
-  /** @deprecated 改为 disabledSkills 黑名单 */
-  skills?: string[];
-  /** @deprecated 使用 enabledSkills 白名单替代 */
-  disabledSkills?: string[];
   /** 启用的 skill 名称白名单 */
   enabledSkills?: string[];
   /** 允许的 slime-cli 命令白名单 */
@@ -45,7 +39,7 @@ export interface Agent {
   protected: boolean;
   description?: string;
   avatar?: AgentAvatar | null;
-  themeColor?: string | null; // CSS hex，如 "#a855f7"
+  mbti: MBTIType;
   config?: AgentConfig | null;
   createdAt: number;
   updatedAt: number;
