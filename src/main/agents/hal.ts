@@ -17,7 +17,7 @@ export const HAL: BuiltinAgentDef = {
   id: "hal-ai",
   name: "哈尔",
   description: "你好我是哈尔，使用Slime有问题都可以来找我～",
-  avatar: { kind: "lucide", icon: "lucide:bot" },
+  avatar: { kind: "image", path: "avatars/hal.png" },
   themeColor: "#a855f7",
   config: {
     capabilityRequirements: ["reasoning"],
