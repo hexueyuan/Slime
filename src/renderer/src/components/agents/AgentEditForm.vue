@@ -7,6 +7,21 @@
         <div class="mt-1 text-sm text-foreground font-mono">{{ agentInfo?.id }}</div>
       </div>
 
+      <!-- 头像 -->
+      <div>
+        <label class="text-xs font-medium text-muted-foreground">头像</label>
+        <div class="mt-1 flex items-center gap-3">
+          <AgentAvatar :avatar="currentAvatar" size="xl" />
+          <button
+            v-if="!readonly"
+            class="rounded-md border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+            @click="changeAvatar"
+          >
+            更换头像
+          </button>
+        </div>
+      </div>
+
       <!-- 名称 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">名称</label>
@@ -230,7 +245,8 @@
 import { ref, reactive, watch, onMounted, computed } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useAgentStore } from "@/stores/agent";
-import type { Agent } from "@shared/types/agent";
+import AgentAvatar from "@/components/chat/AgentAvatar.vue";
+import type { Agent, AgentAvatar as AgentAvatarType } from "@shared/types/agent";
 import type { BuiltinAgentInfo } from "@shared/types/presenters";
 
 const props = defineProps<{
@@ -264,6 +280,19 @@ const saveSuccess = ref(false);
 const availableTools = ref<string[]>([]);
 const availableCliCommands = ref<string[]>([]);
 const availableSkills = ref<string[]>([]);
+const currentAvatar = ref<AgentAvatarType | null>(null);
+
+async function changeAvatar() {
+  const path = (await agentConfigPresenter.pickAvatar()) as string | null;
+  if (!path) return;
+  const newAvatar: AgentAvatarType = { kind: "image", path };
+  currentAvatar.value = newAvatar;
+  // Persist immediately
+  const agentId = props.agentInfo?.id ?? props.agent?.id;
+  if (agentId) {
+    await agentStore.updateAgent(agentId, { avatar: newAvatar });
+  }
+}
 
 const form = reactive({
   name: "",
@@ -318,6 +347,9 @@ function loadBuiltin(info: BuiltinAgentInfo) {
   form.maxTokens = cfg.maxTokens as number | undefined;
   form.subagentEnabled = (cfg.subagentEnabled as boolean) || false;
   form.enableThinking = (cfg.enableThinking as boolean) || false;
+  // Load avatar from DB agent record
+  const dbAgent = agentStore.agents.find((a) => a.id === info.id);
+  currentAvatar.value = dbAgent?.avatar ?? null;
 }
 
 async function loadCustom(agent: Agent) {
@@ -333,6 +365,7 @@ async function loadCustom(agent: Agent) {
   form.maxTokens = cfg.maxTokens;
   form.subagentEnabled = cfg.subagentEnabled || false;
   form.enableThinking = cfg.enableThinking || false;
+  currentAvatar.value = agent.avatar ?? null;
   // Load soul from file
   const soul = (await agentConfigPresenter.readSoulMd(agent.id)) as string;
   form.soul = soul || "";

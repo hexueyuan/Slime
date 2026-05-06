@@ -44,7 +44,6 @@ export function buildAnthropicRequest(
     messages: anthropicMessages,
     tools: anthropicTools,
     temperature: options.temperature,
-    cache_control: { type: "ephemeral" },
   };
 
   if (options.thinkingBudget != null) {
