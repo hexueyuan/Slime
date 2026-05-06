@@ -45,6 +45,7 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
     await mkdir(paths.avatarsDir, { recursive: true });
     const avatarMap: Record<string, string> = {
       "hal.png": join(agentsResourceDir, "hal.png"),
+      "moss.png": join(agentsResourceDir, "moss.png"),
     };
     for (const [dest, src] of Object.entries(avatarMap)) {
       try {
