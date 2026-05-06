@@ -21,12 +21,12 @@
 
 ```typescript
 export interface AgentDashboard {
-  template: string  // 完整 HTML 模版，用 {{key}} 占位符绑定数据
+  template: string; // 完整 HTML 模版，用 {{key}} 占位符绑定数据
 }
 
 export interface AgentConfig {
   // ... 现有字段不变
-  dashboard?: AgentDashboard  // 仅内置 Agent 使用
+  dashboard?: AgentDashboard; // 仅内置 Agent 使用
 }
 ```
 
@@ -71,7 +71,7 @@ dashboard_update: {
 ### 1.5 IPC 事件
 
 ```typescript
-AGENT_EVENTS.DASHBOARD_UPDATE = "agent:dashboard:update"
+AGENT_EVENTS.DASHBOARD_UPDATE = "agent:dashboard:update";
 // payload: { sessionId: string, data: Record<string, unknown> }
 ```
 
@@ -93,7 +93,7 @@ export const MOSS: BuiltinAgentDef = {
     dashboard: { template: MOSS_DASHBOARD_TEMPLATE },
     agentSoul: MOSS_SOUL,
   },
-}
+};
 ```
 
 头像源文件：`/Users/hexueyuan/Downloads/moss.png` → 复制到 `resources/agents/avatars/moss.png`
@@ -111,6 +111,7 @@ export const MOSS: BuiltinAgentDef = {
 静态部分写在 `moss.ts`，vault 路径在 `AgentChatPresenter` 构建 system prompt 时动态替换（`agentSoul` 支持 `string | (() => Promise<string>)`，或在 `buildSystemPrompt` 时通过 ConfigPresenter 注入）。
 
 agentSoul 内容覆盖：
+
 - 身份定义：莫斯是日程助手，不参与代码进化
 - 路径约定：明确说明任务文件和每日记录的存储路径
 - 行为规范：每次写操作后调用 `dashboard_update` 推送最新数据
@@ -121,13 +122,16 @@ agentSoul 内容覆盖：
 # 任务列表
 
 ## 待办
+
 - [ ] 任务A
 - [ ] 任务B
 
 ## 进行中
+
 - [ ] 任务C 🔄
 
 ## 已完成
+
 - [x] 任务D
 ```
 
@@ -137,6 +141,7 @@ agentSoul 内容覆盖：
 # 2025-05-06
 
 ## 事件记录
+
 - 10:00 完成了 XX
 - 14:00 参加了 XX 会议
 
@@ -146,6 +151,7 @@ agentSoul 内容覆盖：
 ### 2.6 仪表盘模版
 
 HTML 模版存为常量，展示：
+
 - 今日任务列表（`{{today_tasks}}`）
 - 本周未完成任务（`{{week_pending}}`）
 - 最近更新时间（`{{last_updated}}`）
@@ -186,21 +192,21 @@ Skills 存放在 `resources/skills/` 下，每个 Skill 是一个目录，包含
 
 ### 需要新增/修改的文件
 
-| 文件 | 变更类型 | 说明 |
-|------|----------|------|
-| `src/shared/types/agent.d.ts` | 修改 | 新增 `AgentDashboard` 类型，`AgentConfig` 加 `dashboard` 字段 |
-| `src/main/agents/index.ts` | 修改 | 注册 MOSS 到 `BUILTIN_AGENTS` |
-| `src/main/agents/moss.ts` | 新增 | 莫斯 Agent 定义 |
-| `src/main/presenter/agentChat/agentChatPresenter.ts` | 修改 | 构建工具集时按 `config.dashboard` 注入 `dashboard_update` 工具；agentSoul 动态注入 vault 路径 |
-| `src/main/eventbus.ts` | 修改 | 新增 `AGENT_EVENTS.DASHBOARD_UPDATE` 事件 |
-| `src/renderer/src/components/chat/ChatFunctionPanel.vue` | 修改 | 新增 `dashboard` Tab，条件渲染 `AgentDashboardPanel` |
-| `src/renderer/src/components/chat/AgentDashboardPanel.vue` | 新增 | 仪表盘渲染组件 |
-| `src/renderer/src/views/ChatroomPanel.vue` | 修改 | 读取 Agent dashboard 配置，控制 Tab 显示；订阅 dashboard:update 事件 |
-| `src/renderer/src/stores/agentChatStore.ts` | 修改 | 新增 `dashboardData: Map<sessionId, Record>` |
-| `resources/agents/avatars/moss.png` | 新增 | 莫斯头像 |
-| `resources/skills/moss-tasks/SKILL.md` | 新增 | 任务管理 Skill |
-| `resources/skills/moss-diary/SKILL.md` | 新增 | 每日记录 Skill |
-| `resources/skills/moss-weekly/SKILL.md` | 新增 | 周报生成 Skill |
+| 文件                                                       | 变更类型 | 说明                                                                                          |
+| ---------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| `src/shared/types/agent.d.ts`                              | 修改     | 新增 `AgentDashboard` 类型，`AgentConfig` 加 `dashboard` 字段                                 |
+| `src/main/agents/index.ts`                                 | 修改     | 注册 MOSS 到 `BUILTIN_AGENTS`                                                                 |
+| `src/main/agents/moss.ts`                                  | 新增     | 莫斯 Agent 定义                                                                               |
+| `src/main/presenter/agentChat/agentChatPresenter.ts`       | 修改     | 构建工具集时按 `config.dashboard` 注入 `dashboard_update` 工具；agentSoul 动态注入 vault 路径 |
+| `src/main/eventbus.ts`                                     | 修改     | 新增 `AGENT_EVENTS.DASHBOARD_UPDATE` 事件                                                     |
+| `src/renderer/src/components/chat/ChatFunctionPanel.vue`   | 修改     | 新增 `dashboard` Tab，条件渲染 `AgentDashboardPanel`                                          |
+| `src/renderer/src/components/chat/AgentDashboardPanel.vue` | 新增     | 仪表盘渲染组件                                                                                |
+| `src/renderer/src/views/ChatroomPanel.vue`                 | 修改     | 读取 Agent dashboard 配置，控制 Tab 显示；订阅 dashboard:update 事件                          |
+| `src/renderer/src/stores/agentChatStore.ts`                | 修改     | 新增 `dashboardData: Map<sessionId, Record>`                                                  |
+| `resources/agents/avatars/moss.png`                        | 新增     | 莫斯头像                                                                                      |
+| `resources/skills/moss-tasks/SKILL.md`                     | 新增     | 任务管理 Skill                                                                                |
+| `resources/skills/moss-diary/SKILL.md`                     | 新增     | 每日记录 Skill                                                                                |
+| `resources/skills/moss-weekly/SKILL.md`                    | 新增     | 周报生成 Skill                                                                                |
 
 ### 不需要改动
 
@@ -211,4 +217,8 @@ Skills 存放在 `resources/skills/` 下，每个 Skill 是一个目录，包含
 
 ### agentSoul 动态 vault 路径方案
 
-`BuiltinAgentDef` 的 `config.agentSoul` 扩展为 `string | (() => Promise<string>)`。`AgentChatPresenter` 在读取 `agentSoul` 时，若为函数则 await 调用。莫斯的 `agentSoul` 函数从 `configPresenter.get("obsidian.vaultPath")` 读取路径后拼接完整 prompt。
+`AgentConfig.agentSoul` 类型扩展为 `string | (() => Promise<string>)`（同步修改 `src/shared/types/agent.d.ts`）。
+
+`AgentChatPresenter` 在构建 system prompt 时（`buildSystemPrompt` 调用前），若 `agentSoul` 为函数则 await 调用，结果作为 agentSoul 字符串使用。
+
+莫斯的 `agentSoul` 实现为异步函数，从 `configPresenter.get("obsidian.vaultPath")` 读取路径后拼接完整 prompt，路径不存在时降级为提示用户配置。

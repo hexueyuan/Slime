@@ -12,29 +12,30 @@
 
 ## 文件清单
 
-| 文件 | 变更 |
-|------|------|
-| `src/shared/types/agent.d.ts` | 修改：新增 `AgentDashboard`，`AgentConfig` 加 `dashboard`，`agentSoul` 支持函数类型 |
-| `src/shared/events.ts` | 修改：`AGENT_EVENTS` 加 `DASHBOARD_UPDATE` |
-| `src/main/agents/moss.ts` | 新增：莫斯 Agent 定义 |
-| `src/main/agents/index.ts` | 修改：注册 MOSS |
-| `src/main/presenter/agentConfigPresenter.ts` | 修改：`syncBuiltinAvatars` 加 `moss.png` |
-| `src/main/presenter/agentChat/agentChatPresenter.ts` | 修改：(1) agentSoul 函数支持；(2) 注入 `dashboard_update` 工具 |
-| `src/renderer/src/stores/agentChat.ts` | 修改：新增 `dashboardData` Map + `setDashboardData` |
-| `src/renderer/src/stores/agentChatIpc.ts` | 修改：订阅 `DASHBOARD_UPDATE` 事件 |
-| `src/renderer/src/components/chat/AgentDashboardPanel.vue` | 新增：仪表盘渲染组件 |
-| `src/renderer/src/components/chat/ChatFunctionPanel.vue` | 修改：新增 `dashboard` Tab |
-| `src/renderer/src/views/ChatroomPanel.vue` | 修改：读取 Agent dashboard 配置控制 Tab 显示；传 dashboard 数据给 ChatFunctionPanel |
-| `resources/agents/moss.png` | 新增：复制自 `/Users/hexueyuan/Downloads/moss.png` |
-| `resources/skills/moss-tasks/SKILL.md` | 新增 |
-| `resources/skills/moss-diary/SKILL.md` | 新增 |
-| `resources/skills/moss-weekly/SKILL.md` | 新增 |
+| 文件                                                       | 变更                                                                                |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `src/shared/types/agent.d.ts`                              | 修改：新增 `AgentDashboard`，`AgentConfig` 加 `dashboard`，`agentSoul` 支持函数类型 |
+| `src/shared/events.ts`                                     | 修改：`AGENT_EVENTS` 加 `DASHBOARD_UPDATE`                                          |
+| `src/main/agents/moss.ts`                                  | 新增：莫斯 Agent 定义                                                               |
+| `src/main/agents/index.ts`                                 | 修改：注册 MOSS                                                                     |
+| `src/main/presenter/agentConfigPresenter.ts`               | 修改：`syncBuiltinAvatars` 加 `moss.png`                                            |
+| `src/main/presenter/agentChat/agentChatPresenter.ts`       | 修改：(1) agentSoul 函数支持；(2) 注入 `dashboard_update` 工具                      |
+| `src/renderer/src/stores/agentChat.ts`                     | 修改：新增 `dashboardData` Map + `setDashboardData`                                 |
+| `src/renderer/src/stores/agentChatIpc.ts`                  | 修改：订阅 `DASHBOARD_UPDATE` 事件                                                  |
+| `src/renderer/src/components/chat/AgentDashboardPanel.vue` | 新增：仪表盘渲染组件                                                                |
+| `src/renderer/src/components/chat/ChatFunctionPanel.vue`   | 修改：新增 `dashboard` Tab                                                          |
+| `src/renderer/src/views/ChatroomPanel.vue`                 | 修改：读取 Agent dashboard 配置控制 Tab 显示；传 dashboard 数据给 ChatFunctionPanel |
+| `resources/agents/moss.png`                                | 新增：复制自 `/Users/hexueyuan/Downloads/moss.png`                                  |
+| `resources/skills/moss-tasks/SKILL.md`                     | 新增                                                                                |
+| `resources/skills/moss-diary/SKILL.md`                     | 新增                                                                                |
+| `resources/skills/moss-weekly/SKILL.md`                    | 新增                                                                                |
 
 ---
 
 ## Task 1：类型与事件扩展
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 - Modify: `src/shared/events.ts`
 
@@ -45,11 +46,12 @@
 ```typescript
 // 在文件顶部 AgentConfig 前插入：
 export interface AgentDashboard {
-  template: string
+  template: string;
 }
 ```
 
 修改 `AgentConfig`：将 `agentSoul?: string` 改为：
+
 ```typescript
 agentSoul?: string | (() => Promise<string>)
 dashboard?: AgentDashboard
@@ -104,6 +106,7 @@ git commit -m "feat(agent): add AgentDashboard type and DASHBOARD_UPDATE event"
 ## Task 2：AgentChatPresenter 支持异步 agentSoul + 注入 dashboard_update
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentChatPresenter.ts`
 
 - [ ] **Step 1：修改 agentSoul 解析逻辑**
@@ -177,9 +180,7 @@ Expected: 无新增错误（可能有因 `filteredAiSdkTools` 类型的 readonly
 ```typescript
 const filteredAiSdkTools: Record<string, any> =
   disabledTools.length > 0
-    ? Object.fromEntries(
-        Object.entries(allAiSdkTools).filter(([k]) => !disabledTools.includes(k)),
-      )
+    ? Object.fromEntries(Object.entries(allAiSdkTools).filter(([k]) => !disabledTools.includes(k)))
     : { ...allAiSdkTools };
 ```
 
@@ -195,6 +196,7 @@ git commit -m "feat(agentChat): support async agentSoul and inject dashboard_upd
 ## Task 3：渲染进程 dashboardData 状态 + IPC 订阅
 
 **Files:**
+
 - Modify: `src/renderer/src/stores/agentChat.ts`
 - Modify: `src/renderer/src/stores/agentChatIpc.ts`
 
@@ -289,6 +291,7 @@ git commit -m "feat(store): add dashboardData state and DASHBOARD_UPDATE IPC sub
 ## Task 4：AgentDashboardPanel 组件 + ChatFunctionPanel 扩展
 
 **Files:**
+
 - Create: `src/renderer/src/components/chat/AgentDashboardPanel.vue`
 - Modify: `src/renderer/src/components/chat/ChatFunctionPanel.vue`
 
@@ -406,6 +409,7 @@ git commit -m "feat(ui): add AgentDashboardPanel and extend ChatFunctionPanel wi
 ## Task 5：ChatroomPanel 连接 dashboard 逻辑
 
 **Files:**
+
 - Modify: `src/renderer/src/views/ChatroomPanel.vue`
 
 - [ ] **Step 1：读取当前 Agent dashboard 配置**
@@ -453,10 +457,13 @@ watch(
 - [ ] **Step 3：更新 activeTab ref 类型**
 
 将：
+
 ```typescript
 const activeTab = ref<"tools" | "preview">("tools");
 ```
+
 改为：
+
 ```typescript
 const activeTab = ref<"tools" | "preview" | "dashboard">("tools");
 ```
@@ -499,6 +506,7 @@ git commit -m "feat(chatroom): wire dashboard template and data to ChatFunctionP
 ## Task 6：莫斯头像资源
 
 **Files:**
+
 - Create: `resources/agents/moss.png`
 
 - [ ] **Step 1：复制头像文件**
@@ -532,6 +540,7 @@ git commit -m "feat(assets): add moss avatar and register in syncBuiltinAvatars"
 ## Task 7：莫斯 Agent 定义
 
 **Files:**
+
 - Create: `src/main/agents/moss.ts`
 - Modify: `src/main/agents/index.ts`
 
@@ -550,10 +559,13 @@ export function setMossConfigPresenter(cp: ConfigPresenter): void {
 }
 
 async function buildAgentSoul(): Promise<string> {
-  const vaultPath =
-    configPresenterRef ? ((await configPresenterRef.get("obsidian.vaultPath")) as string | null) : null;
+  const vaultPath = configPresenterRef
+    ? ((await configPresenterRef.get("obsidian.vaultPath")) as string | null)
+    : null;
 
-  const tasksPath = vaultPath ? `${vaultPath}/Tasks.md` : "(未配置 Obsidian Vault 路径，请先在设置中配置)";
+  const tasksPath = vaultPath
+    ? `${vaultPath}/Tasks.md`
+    : "(未配置 Obsidian Vault 路径，请先在设置中配置)";
   const diaryBase = vaultPath ? `${vaultPath}/日程记录` : "(未配置)";
 
   return `你是莫斯（MOSS），一个日程与任务管理助手，寄宿在 Slime 中帮助用户记录日程、管理待办事项。
@@ -712,6 +724,7 @@ git commit -m "feat(agent): add MOSS builtin agent with dashboard template and a
 ## Task 8：莫斯 Skills
 
 **Files:**
+
 - Create: `resources/skills/moss-tasks/SKILL.md`
 - Create: `resources/skills/moss-diary/SKILL.md`
 - Create: `resources/skills/moss-weekly/SKILL.md`
@@ -731,24 +744,29 @@ agentIds:
 # 任务管理指南
 
 ## 读取任务
+
 使用 `read` 工具读取 Tasks.md 文件（绝对路径），获取当前所有任务。
 
 ## 新增任务
+
 1. 用 `read` 读取 Tasks.md
 2. 在 `## 待办` 分类下追加一行 `- [ ] 任务名称`
 3. 用 `write` 写回文件
 
 ## 更新任务状态
+
 - 待办 → 进行中：将 `- [ ] 任务名称` 改为 `- [ ] 任务名称 🔄`，并移动到 `## 进行中` 分类
 - 进行中 → 已完成：将 `- [ ] 任务名称 🔄` 改为 `- [x] 任务名称`，并移动到 `## 已完成` 分类
 - 待办 → 已完成：将 `- [ ]` 改为 `- [x]`，移动到 `## 已完成` 分类
 - 操作步骤：read → 字符串替换 → write
 
 ## 查询未完成任务
+
 读取 Tasks.md，返回 `## 待办` 和 `## 进行中` 中的所有条目。
 
 ## Tasks.md 文件格式（不存在时自动创建）
 ```
+
 # 任务列表
 
 ## 待办
@@ -756,6 +774,7 @@ agentIds:
 ## 进行中
 
 ## 已完成
+
 ```
 
 ## 更新仪表盘
@@ -780,23 +799,28 @@ agentIds:
 # 每日记录指南
 
 ## 路径计算
+
 给定日期 yyyy-mm-dd：
+
 1. 提取年份 yyyy
 2. 计算 ISO 周数 ww（两位数字，不足补零，如第5周 → "05"）
    - ISO 周：周一为一周起始，包含当年第一个周四的周为第1周
 3. 路径：`{diaryBase}/{yyyy}年/第{ww}周/{yyyy-mm-dd}.md`
 
 ## 写入记录
+
 1. 构造目标文件路径
 2. 用 `read` 尝试读取文件（文件不存在时用 write 创建）
 3. 若文件不存在，创建文件头：
-   ```
-   # {yyyy-mm-dd}
+```
 
-   ## 事件记录
+# {yyyy-mm-dd}
 
-   ## 备注
-   ```
+## 事件记录
+
+## 备注
+
+```
 4. 追加事件行：在 `## 事件记录` 下加 `- {HH:mm} 事件描述`
 5. 用 `write` 写回（全量覆盖）
 
@@ -825,6 +849,7 @@ agentIds:
 # 周报生成指南
 
 ## 生成步骤
+
 1. 确定目标周：默认本周，也可按用户指定
 2. 计算本周日期范围（周一到周日）
 3. 遍历每天读取日记文件（文件不存在跳过）
@@ -834,21 +859,26 @@ agentIds:
 
 ## 周报格式
 ```
+
 # 第{ww}周工作周报（{月/日} - {月/日}）
 
 ## 本周完成任务
+
 - [x] 任务名称（来自 Tasks.md 已完成列表）
 
 ## 每日记录摘要
 
 ### 周一 {yyyy-mm-dd}
+
 - {HH:mm} 事件描述
-（无记录则写"无记录"）
+  （无记录则写"无记录"）
 
 ### 周二 {yyyy-mm-dd}
+
 ...（以此类推）
 
 ## 备注
+
 ```
 
 ## 注意
