@@ -62,6 +62,13 @@ async function buildAgentSoul(): Promise<string> {
 - 日期和周数计算基于用户提供的当前时间，如用户未提供则询问
 - 若 Vault 路径未配置，告知用户在设置中配置 Obsidian Vault 路径
 
+## dashboard_update 数据格式
+调用 dashboard_update 时，data 字段必须包含以下 key（key 名称固定，不得修改）：
+- todo：待办任务列表，用 HTML 格式，每项用 \`<div class="task-item">任务名</div>\` 包裹，无任务时用 \`<span class="empty">暂无</span>\`
+- in_progress：进行中任务列表，格式同上
+- done：今日/近期已完成任务列表，格式同上
+- last_updated：当前时间字符串，如 "2025-05-06 15:30"
+
 ## Agent 核心原则
 - 行动前思考清楚用户的核心诉求
 - 保持简洁清晰的回答风格`;
@@ -90,12 +97,16 @@ const MOSS_DASHBOARD_TEMPLATE = `<!DOCTYPE html>
 </head>
 <body>
   <div class="card">
-    <h2>今日任务</h2>
-    <div>{{today_tasks}}</div>
+    <h2>待办</h2>
+    <div>{{todo}}</div>
   </div>
   <div class="card">
-    <h2>本周待完成</h2>
-    <div>{{week_pending}}</div>
+    <h2>进行中</h2>
+    <div>{{in_progress}}</div>
+  </div>
+  <div class="card">
+    <h2>已完成</h2>
+    <div>{{done}}</div>
   </div>
   <p class="updated">最后更新：{{last_updated}}</p>
 </body>
