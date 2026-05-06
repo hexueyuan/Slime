@@ -88,7 +88,7 @@
       <!-- 工具 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground"
-          >工具 <span class="text-muted-foreground">(取消勾选=禁用)</span></label
+          >工具 <span class="text-muted-foreground">(勾选=启用)</span></label
         >
         <div class="mt-1 grid grid-cols-3 gap-x-4 gap-y-1">
           <label
@@ -99,7 +99,7 @@
             <input
               type="checkbox"
               :disabled="readonly"
-              :checked="!form.disabledTools.includes(tool)"
+              :checked="form.enabledTools.includes(tool)"
               class="disabled:opacity-50"
               @change="toggleTool(tool)"
             />
@@ -271,7 +271,7 @@ const form = reactive({
   themeColor: "",
   soul: "",
   capabilityRequirements: [] as string[],
-  disabledTools: [] as string[],
+  enabledTools: [] as string[],
   allowedCliCommands: [] as string[],
   enabledSkills: [] as string[],
   temperature: undefined as number | undefined,
@@ -287,9 +287,9 @@ function toggleCapability(cap: string) {
 }
 
 function toggleTool(tool: string) {
-  const idx = form.disabledTools.indexOf(tool);
-  if (idx >= 0) form.disabledTools.splice(idx, 1);
-  else form.disabledTools.push(tool);
+  const idx = form.enabledTools.indexOf(tool);
+  if (idx >= 0) form.enabledTools.splice(idx, 1);
+  else form.enabledTools.push(tool);
 }
 
 function toggleCliCommand(cmd: string) {
@@ -311,7 +311,7 @@ function loadBuiltin(info: BuiltinAgentInfo) {
   form.themeColor = (cfg.themeColor as string) || "";
   form.soul = info.soul || "";
   form.capabilityRequirements = ((cfg.capabilityRequirements as string[]) || []).slice();
-  form.disabledTools = ((cfg.disabledTools as string[]) || []).slice();
+  form.enabledTools = ((cfg.enabledTools as string[]) || []).slice();
   form.allowedCliCommands = ((cfg.allowedCliCommands as string[]) || []).slice();
   form.enabledSkills = ((cfg.enabledSkills as string[]) || []).slice();
   form.temperature = cfg.temperature as number | undefined;
@@ -326,7 +326,7 @@ async function loadCustom(agent: Agent) {
   form.themeColor = agent.themeColor || "";
   const cfg = agent.config || {};
   form.capabilityRequirements = (cfg.capabilityRequirements || []).slice();
-  form.disabledTools = (cfg.disabledTools || []).slice();
+  form.enabledTools = (cfg.enabledTools || []).slice();
   form.allowedCliCommands = (cfg.allowedCliCommands || []).slice();
   form.enabledSkills = (cfg.enabledSkills || []).slice();
   form.temperature = cfg.temperature;
@@ -363,7 +363,7 @@ async function save() {
         description: form.description,
         themeColor: form.themeColor || undefined,
         capabilityRequirements: form.capabilityRequirements,
-        disabledTools: form.disabledTools.length ? form.disabledTools : undefined,
+        enabledTools: form.enabledTools,
         allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
         enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
         temperature: form.temperature,
@@ -380,7 +380,7 @@ async function save() {
         themeColor: form.themeColor || null,
         config: {
           capabilityRequirements: form.capabilityRequirements,
-          disabledTools: form.disabledTools.length ? form.disabledTools : undefined,
+          enabledTools: form.enabledTools,
           allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
           enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
           temperature: form.temperature,

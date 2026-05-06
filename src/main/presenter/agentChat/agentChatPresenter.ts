@@ -341,15 +341,25 @@ export class AgentChatPresenter {
     });
     const client = this.createClient();
 
-    // Filter disabled tools
-    const disabledTools = agent?.config?.disabledTools ?? [];
+    // Filter tools by enabledTools whitelist (fallback to disabledTools for backward compat)
+    const enabledTools = agent?.config?.enabledTools;
+    const disabledTools = agent?.config?.disabledTools;
     const allAiSdkTools = await this.toolPresenter.getToolSet(sessionId);
-    const filteredAiSdkTools: Record<string, any> =
-      disabledTools.length > 0
-        ? Object.fromEntries(
-            Object.entries(allAiSdkTools).filter(([k]) => !disabledTools.includes(k)),
-          )
-        : { ...allAiSdkTools };
+    let filteredAiSdkTools: Record<string, any>;
+    if (enabledTools !== undefined) {
+      // Whitelist mode: only include tools in enabledTools
+      filteredAiSdkTools = Object.fromEntries(
+        Object.entries(allAiSdkTools).filter(([k]) => enabledTools.includes(k)),
+      );
+    } else if (disabledTools && disabledTools.length > 0) {
+      // Legacy blacklist mode
+      filteredAiSdkTools = Object.fromEntries(
+        Object.entries(allAiSdkTools).filter(([k]) => !disabledTools.includes(k)),
+      );
+    } else {
+      // Neither enabledTools nor disabledTools — no tools available
+      filteredAiSdkTools = {};
+    }
 
     const tools = this.convertTools(filteredAiSdkTools);
 

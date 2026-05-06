@@ -18,6 +18,7 @@ interface AgentConfigJson {
   themeColor?: string;
   capabilityRequirements?: string[];
   disabledTools?: string[];
+  enabledTools?: string[];
   allowedCliCommands?: string[];
   enabledSkills?: string[];
   subagentEnabled?: boolean;
@@ -51,6 +52,7 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       themeColor,
       capabilityRequirements,
       disabledTools,
+      enabledTools,
       subagentEnabled,
       enableThinking,
       temperature,
@@ -69,6 +71,7 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       config: {
         capabilityRequirements,
         disabledTools,
+        enabledTools,
         subagentEnabled,
         enableThinking,
         temperature,

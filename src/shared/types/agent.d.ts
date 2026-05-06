@@ -19,7 +19,10 @@ export interface AgentConfig {
   temperature?: number;
   contextLength?: number;
   maxTokens?: number;
+  /** @deprecated 使用 enabledTools 白名单替代 */
   disabledTools?: string[];
+  /** 启用的工具白名单，必须显式列出可用工具 */
+  enabledTools?: string[];
   subagentEnabled?: boolean;
   mcpTools?: string[]; // "{server_id}/{tool_name}"[]
   /** @deprecated 改为 disabledSkills 黑名单 */

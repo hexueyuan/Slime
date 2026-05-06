@@ -4,6 +4,27 @@
   "avatar": { "kind": "image", "path": "avatars/hal.png" },
   "themeColor": "#a855f7",
   "capabilityRequirements": ["reasoning"],
-  "disabledTools": ["evolution_start", "evolution_plan", "evolution_complete"],
+  "enabledTools": [
+    "read",
+    "write",
+    "edit",
+    "exec",
+    "list_dir",
+    "ask_user",
+    "open_url",
+    "browser_navigate",
+    "browser_screenshot",
+    "browser_click",
+    "browser_type",
+    "browser_scroll",
+    "browser_select",
+    "browser_hover",
+    "browser_close",
+    "browser_wait",
+    "web_fetch",
+    "skill",
+    "subagent"
+  ],
+  "allowedCliCommands": ["help", "logs"],
   "subagentEnabled": false
 }
