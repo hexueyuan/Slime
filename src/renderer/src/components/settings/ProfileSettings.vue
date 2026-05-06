@@ -167,7 +167,7 @@ async function pickImage() {
       </div>
 
       <!-- Monogram mode -->
-      <div v-else class="flex items-center gap-3">
+      <div v-else-if="avatarType === 'monogram'" class="flex items-center gap-3">
         <input
           v-model="avatarText"
           type="text"
