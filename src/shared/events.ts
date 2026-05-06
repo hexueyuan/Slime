@@ -65,3 +65,8 @@ export const MCP_EVENTS = {
   SERVER_STATUS: "mcp:server-status",
   TOOLS_CHANGED: "mcp:tools-changed",
 } as const;
+
+export const TASK_EVENTS = {
+  TASKS_CHANGED: "task:tasks-changed",
+  TIMELINE_CHANGED: "task:timeline-changed",
+} as const;
