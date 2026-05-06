@@ -146,7 +146,7 @@ slime-cli task get <id>
 ### 权限
 
 ```typescript
-allowedRoles: ["builtin-agent", "external-agent", "user"],
+allowedRoles: ["builtin-agent"],
 allowedAgents: ["moss-ai"],  // 其他 agent 暂不开放
 ```
 
