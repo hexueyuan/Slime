@@ -45,37 +45,40 @@
         />
       </div>
 
-      <!-- 主题颜色 -->
+      <!-- MBTI 性格类型 -->
       <div>
-        <label class="text-xs font-medium text-muted-foreground">主题颜色</label>
-        <div class="mt-1 flex items-center gap-2">
+        <label class="text-xs font-medium text-muted-foreground">MBTI 性格类型</label>
+        <div class="mt-1 grid grid-cols-4 gap-2">
           <button
-            v-for="c in PRESET_COLORS"
-            :key="c"
+            v-for="mbti in MBTI_TYPES"
+            :key="mbti"
             :disabled="readonly"
-            class="h-6 w-6 rounded-full border border-border disabled:opacity-50"
-            :class="{ 'ring-2 ring-offset-1 ring-violet-500': form.themeColor === c }"
-            :style="{ backgroundColor: c }"
-            @click="form.themeColor = c"
-          />
-          <input
-            v-model="form.themeColor"
-            :disabled="readonly"
-            type="color"
-            class="h-6 w-6 cursor-pointer rounded border border-border disabled:opacity-50"
-          />
+            class="flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs transition-colors disabled:opacity-50"
+            :class="
+              form.mbti === mbti
+                ? 'border-violet-500 bg-violet-500/10 text-foreground'
+                : 'border-border text-muted-foreground hover:border-muted-foreground'
+            "
+            @click="form.mbti = mbti"
+          >
+            <span
+              class="h-3 w-3 shrink-0 rounded-full"
+              :style="{ backgroundColor: getMBTIColor(mbti) }"
+            />
+            {{ mbti }}
+          </button>
         </div>
       </div>
 
-      <!-- 性格设定 Soul -->
+      <!-- 附加提示词 -->
       <div>
-        <label class="text-xs font-medium text-muted-foreground">性格设定 (Soul)</label>
+        <label class="text-xs font-medium text-muted-foreground">附加提示词</label>
         <textarea
-          v-model="form.soul"
+          v-model="form.additionalPrompt"
           :disabled="readonly"
           rows="12"
           class="mt-1 block w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm font-mono disabled:opacity-50"
-          placeholder="Agent 的性格与行为设定..."
+          placeholder="追加到 MBTI 性格提示词之后..."
         />
       </div>
 
@@ -248,6 +251,7 @@ import { useAgentStore } from "@/stores/agent";
 import AgentAvatar from "@/components/chat/AgentAvatar.vue";
 import type { Agent, AgentAvatar as AgentAvatarType } from "@shared/types/agent";
 import type { BuiltinAgentInfo } from "@shared/types/presenters";
+import { type MBTIType, getMBTIColor } from "@shared/constants/mbti";
 
 const props = defineProps<{
   agentInfo?: BuiltinAgentInfo | null;
@@ -258,15 +262,23 @@ const props = defineProps<{
 
 const emit = defineEmits<{ saved: [] }>();
 
-const PRESET_COLORS = [
-  "#a855f7",
-  "#10b981",
-  "#6366f1",
-  "#f59e0b",
-  "#ef4444",
-  "#06b6d4",
-  "#ec4899",
-  "#84cc16",
+const MBTI_TYPES: MBTIType[] = [
+  "INTJ",
+  "INTP",
+  "ENTJ",
+  "ENTP",
+  "INFJ",
+  "INFP",
+  "ENFJ",
+  "ENFP",
+  "ISTJ",
+  "ISFJ",
+  "ESTJ",
+  "ESFJ",
+  "ISTP",
+  "ISFP",
+  "ESTP",
+  "ESFP",
 ];
 const CAPABILITIES = ["reasoning", "vision", "image_gen", "tool_call"];
 
@@ -297,8 +309,8 @@ async function changeAvatar() {
 const form = reactive({
   name: "",
   description: "",
-  themeColor: "",
-  soul: "",
+  mbti: "INTJ" as MBTIType,
+  additionalPrompt: "",
   capabilityRequirements: [] as string[],
   enabledTools: [] as string[],
   allowedCliCommands: [] as string[],
@@ -337,8 +349,8 @@ function loadBuiltin(info: BuiltinAgentInfo) {
   const cfg = info.config as Record<string, unknown>;
   form.name = (cfg.name as string) || info.id;
   form.description = (cfg.description as string) || "";
-  form.themeColor = (cfg.themeColor as string) || "";
-  form.soul = info.soul || "";
+  form.mbti = (cfg.mbti as MBTIType) || "INTJ";
+  form.additionalPrompt = info.soul || "";
   form.capabilityRequirements = ((cfg.capabilityRequirements as string[]) || []).slice();
   form.enabledTools = ((cfg.enabledTools as string[]) || []).slice();
   form.allowedCliCommands = ((cfg.allowedCliCommands as string[]) || []).slice();
@@ -355,7 +367,7 @@ function loadBuiltin(info: BuiltinAgentInfo) {
 async function loadCustom(agent: Agent) {
   form.name = agent.name;
   form.description = agent.description || "";
-  form.themeColor = agent.themeColor || "";
+  form.mbti = agent.mbti || "INTJ";
   const cfg = agent.config || {};
   form.capabilityRequirements = (cfg.capabilityRequirements || []).slice();
   form.enabledTools = (cfg.enabledTools || []).slice();
@@ -366,9 +378,9 @@ async function loadCustom(agent: Agent) {
   form.subagentEnabled = cfg.subagentEnabled || false;
   form.enableThinking = cfg.enableThinking || false;
   currentAvatar.value = agent.avatar ?? null;
-  // Load soul from file
-  const soul = (await agentConfigPresenter.readPromptMd(agent.id)) as string;
-  form.soul = soul || "";
+  // Load prompt from file
+  const prompt = (await agentConfigPresenter.readPromptMd(agent.id)) as string;
+  form.additionalPrompt = prompt || "";
 }
 
 watch(
@@ -394,7 +406,7 @@ async function save() {
       const config: Record<string, unknown> = {
         name: form.name,
         description: form.description,
-        themeColor: form.themeColor || undefined,
+        mbti: form.mbti,
         capabilityRequirements: form.capabilityRequirements,
         enabledTools: form.enabledTools,
         allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
@@ -404,13 +416,13 @@ async function save() {
         subagentEnabled: form.subagentEnabled || undefined,
         enableThinking: form.enableThinking || undefined,
       };
-      await devPresenter.saveBuiltinAgent(props.agentInfo.id, config, form.soul);
+      await devPresenter.saveBuiltinAgent(props.agentInfo.id, config, form.additionalPrompt);
       emit("saved");
     } else if (props.agent) {
       await agentStore.updateAgent(props.agent.id, {
         name: form.name,
         description: form.description,
-        themeColor: form.themeColor || null,
+        mbti: form.mbti,
         config: {
           capabilityRequirements: form.capabilityRequirements,
           enabledTools: form.enabledTools,
@@ -420,7 +432,7 @@ async function save() {
           maxTokens: form.maxTokens,
           subagentEnabled: form.subagentEnabled || undefined,
           enableThinking: form.enableThinking || undefined,
-          agentSoul: form.soul || undefined,
+          additionalPrompt: form.additionalPrompt || undefined,
         },
       });
       emit("saved");
