@@ -30,6 +30,15 @@ export function makeId(): string {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}${pad(d.getMilliseconds(), 3)}`;
 }
 
+function parseLocalTime(str: string): number {
+  const tzOffset = new Date().getTimezoneOffset();
+  const sign = tzOffset <= 0 ? "+" : "-";
+  const absOffset = Math.abs(tzOffset);
+  const hh = String(Math.floor(absOffset / 60)).padStart(2, "0");
+  const mm = String(absOffset % 60).padStart(2, "0");
+  return new Date(`${str}${sign}${hh}:${mm}`).getTime();
+}
+
 function parseMeta(comment: string): Record<string, string> {
   const meta: Record<string, string> = {};
   for (const m of comment.matchAll(/(\w+):([^\s]+)/g)) {
@@ -200,7 +209,7 @@ export class TaskManager {
     for (const task of main) {
       const terminalDate = task.completedAt ?? task.cancelledAt;
       if ((task.status === "done" || task.status === "cancelled") && terminalDate) {
-        const age = now - new Date(terminalDate).getTime();
+        const age = now - parseLocalTime(terminalDate);
         if (age > sevenDaysMs) {
           toArchive.push({ ...task, status: "archived", archivedAt: nowLocal() });
           continue;
