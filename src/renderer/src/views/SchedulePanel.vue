@@ -67,7 +67,7 @@ function openTaskDetail(id: string): void {
 }
 
 async function createNewTask(): Promise<void> {
-  const task = await store.createTask("新任务");
+  const task = await store.createTask({ title: "新任务" });
   selectedTaskId.value = task.id;
   showTaskDetail.value = true;
 }

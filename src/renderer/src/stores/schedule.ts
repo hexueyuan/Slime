@@ -62,15 +62,31 @@ export const useScheduleStore = defineStore("schedule", () => {
     notes.value = (await ipc.invoke("task:getNotes", 50)) as Note[];
   }
 
-  async function createTask(title: string, detail?: string): Promise<Task> {
-    const task = (await ipc.invoke("task:createTask", title, detail)) as Task;
+  async function createTask(params: {
+    title: string;
+    detail?: string;
+    creatorType?: string;
+    creatorId?: string;
+    assigneeType?: string;
+    assigneeId?: string;
+    scheduledAt?: number;
+    repeatInterval?: number;
+  }): Promise<Task> {
+    const task = (await ipc.invoke("task:createTask", params)) as Task;
     await fetchTasks();
     return task;
   }
 
   async function updateTask(
     id: string,
-    fields: { title?: string; detail?: string },
+    fields: {
+      title?: string;
+      detail?: string;
+      assigneeType?: string;
+      assigneeId?: string;
+      scheduledAt?: number | null;
+      repeatInterval?: number | null;
+    },
   ): Promise<void> {
     await ipc.invoke("task:updateTask", id, fields);
     await fetchTasks();
