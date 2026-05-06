@@ -1,0 +1,9 @@
+{
+  "name": "哈尔",
+  "description": "你好我是哈尔，使用Slime有问题都可以来找我～",
+  "avatar": { "kind": "image", "path": "avatars/hal.png" },
+  "themeColor": "#a855f7",
+  "capabilityRequirements": ["reasoning"],
+  "disabledTools": ["evolution_start", "evolution_plan", "evolution_complete"],
+  "subagentEnabled": false
+}

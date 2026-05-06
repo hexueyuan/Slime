@@ -1,0 +1,8 @@
+{
+  "name": "莫斯",
+  "description": "你好，我是莫斯，帮你管理日程和待办任务。",
+  "avatar": { "kind": "image", "path": "avatars/moss.png" },
+  "themeColor": "#10b981",
+  "disabledTools": ["evolution_start", "evolution_plan", "evolution_complete"],
+  "subagentEnabled": false
+}
