@@ -45,6 +45,20 @@
       <Icon icon="lucide:network" class="h-5 w-5" />
     </button>
 
+    <button
+      data-testid="sidebar-agents"
+      :class="[
+        'mt-1 flex h-8 w-8 items-center justify-center rounded-md',
+        activeView === 'agents'
+          ? 'bg-muted text-foreground'
+          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+      ]"
+      title="Agent 管理"
+      @click="$emit('update:activeView', 'agents')"
+    >
+      <Icon icon="lucide:bot" class="h-5 w-5" />
+    </button>
+
     <!-- EvoLab hidden in v0.3 -->
     <button
       v-if="false"
@@ -107,11 +121,11 @@ import { Icon } from "@iconify/vue";
 import SettingsDialog from "./settings/SettingsDialog.vue";
 
 defineProps<{
-  activeView: "chatroom" | "schedule" | "gateway" | "evolab";
+  activeView: "chatroom" | "schedule" | "gateway" | "evolab" | "agents";
 }>();
 
 defineEmits<{
-  "update:activeView": [view: "chatroom" | "schedule" | "gateway" | "evolab"];
+  "update:activeView": [view: "chatroom" | "schedule" | "gateway" | "evolab" | "agents"];
 }>();
 
 const showSettings = ref(false);
