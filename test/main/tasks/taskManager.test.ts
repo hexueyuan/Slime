@@ -104,6 +104,19 @@ describe("TaskManager CRUD", () => {
     await expect(tm.start(t.id)).rejects.toThrow("cannot transition");
   });
 
+  it("done throws when already cancelled", async () => {
+    const t = await tm.add("任务");
+    await tm.cancel(t.id);
+    await expect(tm.done(t.id)).rejects.toThrow("cannot transition");
+  });
+
+  it("cancel throws when already done", async () => {
+    const t = await tm.add("任务");
+    await tm.start(t.id);
+    await tm.done(t.id);
+    await expect(tm.cancel(t.id)).rejects.toThrow("cannot transition");
+  });
+
   it("persists tasks across instances", async () => {
     await tm.add("持久化任务");
     const tm2 = new TaskManager(tasksFile);

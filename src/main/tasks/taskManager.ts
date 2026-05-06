@@ -170,7 +170,8 @@ export class TaskManager {
     const { main, archived } = await this.readAll();
     const task = main.find((t) => t.id === id);
     if (!task) throw new Error(`task ${id} not found`);
-    if (task.status === "done") throw new Error(`task ${id} cannot transition from done to done`);
+    if (task.status === "done" || task.status === "cancelled")
+      throw new Error(`task ${id} cannot transition from ${task.status} to done`);
     task.status = "done";
     task.completedAt = nowLocal();
     await this.writeAll(main, archived);
@@ -181,8 +182,8 @@ export class TaskManager {
     const { main, archived } = await this.readAll();
     const task = main.find((t) => t.id === id);
     if (!task) throw new Error(`task ${id} not found`);
-    if (task.status === "cancelled")
-      throw new Error(`task ${id} cannot transition from cancelled to cancelled`);
+    if (task.status === "done" || task.status === "cancelled")
+      throw new Error(`task ${id} cannot transition from ${task.status} to cancelled`);
     task.status = "cancelled";
     task.cancelledAt = nowLocal();
     await this.writeAll(main, archived);
