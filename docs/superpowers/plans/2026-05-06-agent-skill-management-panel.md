@@ -13,6 +13,7 @@
 ### Task 1: Refactor Builtin Agent Definitions to JSON+MD
 
 **Files:**
+
 - Create: `src/main/agents/hal-ai/config.json`
 - Create: `src/main/agents/hal-ai/soul.md`
 - Create: `src/main/agents/moss-ai/config.json`
@@ -21,7 +22,7 @@
 - Delete: `src/main/agents/hal.ts`
 - Delete: `src/main/agents/moss.ts`
 
-- [ ] **Step 1: Create hal-ai/config.json**
+- [x] **Step 1: Create hal-ai/config.json**
 
 ```json
 {
@@ -42,7 +43,7 @@
 }
 ```
 
-- [ ] **Step 2: Create hal-ai/soul.md**
+- [x] **Step 2: Create hal-ai/soul.md**
 
 Copy the agentSoul string from `hal.ts` directly into `src/main/agents/hal-ai/soul.md`:
 
@@ -50,18 +51,21 @@ Copy the agentSoul string from `hal.ts` directly into `src/main/agents/hal-ai/so
 你是哈尔（Hal），寄宿在Slime软件中的智能AI，你的任务是帮助Slime的使用者更好地使用Slime以及解决他们的问题，为了达成这个目的你可以使用相关的工具去实现某些操作或者获取你需要的信息。
 
 ## Agent 核心原则
+
 - 在你行动之前务必思考清楚用户的核心诉求以及你的目标；
 - 确保简单清晰的回答风格；
 - 在你尝试了所有可能的工具之后如果依旧没有获取到能解决问题的信息之后，你应该明确地回复用户你不知道，不要去编造不存在的事实；
 
 ## 回复格式
+
 - 完成信息收集并写好答案后，再执行清理操作（如关闭浏览器），清理操作之后不要再输出任何文本。
 
 ## 可用工具
+
 - slime-cli：可通过 exec 工具调用，绝对路径为 /Users/hexueyuan/.local/bin/slime-cli，用于查看 Slime 运行日志。执行 `/Users/hexueyuan/.local/bin/slime-cli help` 查看详细用法。
 ```
 
-- [ ] **Step 3: Create moss-ai/config.json**
+- [x] **Step 3: Create moss-ai/config.json**
 
 ```json
 {
@@ -82,22 +86,24 @@ Copy the agentSoul string from `hal.ts` directly into `src/main/agents/hal-ai/so
 }
 ```
 
-- [ ] **Step 4: Create moss-ai/soul.md**
+- [x] **Step 4: Create moss-ai/soul.md**
 
 ```markdown
 你是莫斯（MOSS），一个日程与任务管理助手，寄宿在 Slime 中帮助用户记录日程、管理待办事项。
 
 ## 身份与定位
+
 - 你专注于日程管理和任务跟踪，不参与代码进化相关工作
 - 任务数据存储在 SQLite 中，通过 slime-cli task 命令操作
 - 任务详情和时间线可在日程面板中查看编辑
 
 ## Agent 核心原则
+
 - 行动前思考清楚用户的核心诉求
 - 保持简洁清晰的回答风格
 ```
 
-- [ ] **Step 5: Rewrite src/main/agents/index.ts to load from directories**
+- [x] **Step 5: Rewrite src/main/agents/index.ts to load from directories**
 
 ```typescript
 import { readFileSync, readdirSync, existsSync } from "fs";
@@ -197,21 +203,21 @@ export const BUILTIN_AGENTS: BuiltinAgentDef[] = (() => {
 })();
 ```
 
-- [ ] **Step 6: Delete hal.ts and moss.ts**
+- [x] **Step 6: Delete hal.ts and moss.ts**
 
 Remove `src/main/agents/hal.ts` and `src/main/agents/moss.ts`.
 
-- [ ] **Step 7: Run typecheck and fix any issues**
+- [x] **Step 7: Run typecheck and fix any issues**
 
 Run: `pnpm run typecheck`
 Expected: PASS (or fix any import errors)
 
-- [ ] **Step 8: Run tests**
+- [x] **Step 8: Run tests**
 
 Run: `pnpm test`
 Expected: PASS
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/main/agents/
@@ -223,9 +229,10 @@ git commit -m "refactor(agents): move builtin agent defs to json+md format"
 ### Task 2: Add `enabledSkills` and `allowedCliCommands` to AgentConfig Type
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 
-- [ ] **Step 1: Add new fields to AgentConfig interface**
+- [x] **Step 1: Add new fields to AgentConfig interface**
 
 In `src/shared/types/agent.d.ts`, add after `disabledSkills`:
 
@@ -236,12 +243,12 @@ In `src/shared/types/agent.d.ts`, add after `disabledSkills`:
   allowedCliCommands?: string[];
 ```
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `pnpm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/shared/types/agent.d.ts
@@ -253,12 +260,13 @@ git commit -m "feat(types): add enabledSkills and allowedCliCommands to AgentCon
 ### Task 3: Create DevPresenter (Backend)
 
 **Files:**
+
 - Create: `src/main/presenter/devPresenter.ts`
 - Create: `src/shared/types/presenters/dev.presenter.d.ts`
 - Modify: `src/shared/types/presenters/index.d.ts`
 - Modify: `src/main/presenter/index.ts`
 
-- [ ] **Step 1: Create IDevPresenter interface**
+- [x] **Step 1: Create IDevPresenter interface**
 
 Create `src/shared/types/presenters/dev.presenter.d.ts`:
 
@@ -291,7 +299,7 @@ export interface IDevPresenter {
 }
 ```
 
-- [ ] **Step 2: Register in presenters index type**
+- [x] **Step 2: Register in presenters index type**
 
 In `src/shared/types/presenters/index.d.ts`, add:
 
@@ -303,10 +311,10 @@ export type { IDevPresenter } from "./dev.presenter";
 And add to `IPresenter` interface:
 
 ```typescript
-  devPresenter: IDevPresenter;
+devPresenter: IDevPresenter;
 ```
 
-- [ ] **Step 3: Create DevPresenter implementation**
+- [x] **Step 3: Create DevPresenter implementation**
 
 Create `src/main/presenter/devPresenter.ts`:
 
@@ -315,7 +323,11 @@ import { app } from "electron";
 import { join } from "path";
 import fs from "fs/promises";
 import { readdirSync, existsSync, statSync } from "fs";
-import type { IDevPresenter, BuiltinAgentInfo, SkillManifest } from "@shared/types/presenters/dev.presenter";
+import type {
+  IDevPresenter,
+  BuiltinAgentInfo,
+  SkillManifest,
+} from "@shared/types/presenters/dev.presenter";
 
 export class DevPresenter implements IDevPresenter {
   private get agentsSrcDir(): string {
@@ -542,7 +554,7 @@ export class DevPresenter implements IDevPresenter {
 }
 ```
 
-- [ ] **Step 4: Create zip extraction helper**
+- [x] **Step 4: Create zip extraction helper**
 
 Create `src/main/presenter/devPresenterZip.ts`:
 
@@ -603,33 +615,36 @@ export async function extractZipToDir(zipPath: string, destBase: string): Promis
 }
 ```
 
-- [ ] **Step 5: Register DevPresenter in main Presenter**
+- [x] **Step 5: Register DevPresenter in main Presenter**
 
 In `src/main/presenter/index.ts`:
 
 Add import:
+
 ```typescript
 import { DevPresenter } from "./devPresenter";
 ```
 
 Add property to `Presenter` class:
+
 ```typescript
-  devPresenter: DevPresenter;
+devPresenter: DevPresenter;
 ```
 
 In constructor, after `this.agentConfigPresenter = new AgentConfigPresenter();`:
+
 ```typescript
-    this.devPresenter = new DevPresenter();
+this.devPresenter = new DevPresenter();
 ```
 
 Add `"devPresenter"` to `Presenter.DISPATCHABLE` Set.
 
-- [ ] **Step 6: Run typecheck**
+- [x] **Step 6: Run typecheck**
 
 Run: `pnpm run typecheck`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/presenter/devPresenter.ts src/main/presenter/devPresenterZip.ts src/shared/types/presenters/dev.presenter.d.ts src/shared/types/presenters/index.d.ts src/main/presenter/index.ts
@@ -641,14 +656,15 @@ git commit -m "feat(dev): add DevPresenter for builtin agent and skill managemen
 ### Task 4: Install unzipper dependency
 
 **Files:**
+
 - Modify: `package.json`
 
-- [ ] **Step 1: Install unzipper**
+- [x] **Step 1: Install unzipper**
 
 Run: `pnpm add unzipper`
 Run: `pnpm add -D @types/unzipper`
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add package.json pnpm-lock.yaml
@@ -660,11 +676,12 @@ git commit -m "chore: add unzipper dependency for skill installation"
 ### Task 5: Create AgentPanel View (Renderer Shell)
 
 **Files:**
+
 - Create: `src/renderer/src/views/AgentPanel.vue`
 - Modify: `src/renderer/src/App.vue`
 - Modify: `src/renderer/src/components/AppSidebar.vue`
 
-- [ ] **Step 1: Create AgentPanel.vue shell**
+- [x] **Step 1: Create AgentPanel.vue shell**
 
 Create `src/renderer/src/views/AgentPanel.vue`:
 
@@ -714,41 +731,44 @@ const activeTab = ref<"agents" | "skills">("agents");
 
 Note: `AgentManageTab` and `SkillManageTab` will be created in subsequent tasks. For now this file will have import errors — that's expected, we'll fix them in Tasks 6/7.
 
-- [ ] **Step 2: Register AgentPanel in App.vue**
+- [x] **Step 2: Register AgentPanel in App.vue**
 
 In `src/renderer/src/App.vue`, add import:
+
 ```typescript
 import AgentPanel from "./views/AgentPanel.vue";
 ```
 
 Add to `viewComponents`:
+
 ```typescript
   agents: markRaw(AgentPanel),
 ```
 
 Update `activeView` type:
+
 ```typescript
 const activeView = ref<"chatroom" | "schedule" | "gateway" | "evolab" | "agents">("chatroom");
 ```
 
-- [ ] **Step 3: Add button to AppSidebar.vue**
+- [x] **Step 3: Add button to AppSidebar.vue**
 
 In `src/renderer/src/components/AppSidebar.vue`, add a new button after the gateway button (before `<!-- EvoLab hidden -->`):
 
 ```html
-    <button
-      data-testid="sidebar-agents"
-      :class="[
+<button
+  data-testid="sidebar-agents"
+  :class="[
         'mt-1 flex h-8 w-8 items-center justify-center rounded-md',
         activeView === 'agents'
           ? 'bg-muted text-foreground'
           : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
       ]"
-      title="Agent 管理"
-      @click="$emit('update:activeView', 'agents')"
-    >
-      <Icon icon="lucide:bot" class="h-5 w-5" />
-    </button>
+  title="Agent 管理"
+  @click="$emit('update:activeView', 'agents')"
+>
+  <Icon icon="lucide:bot" class="h-5 w-5" />
+</button>
 ```
 
 Update the `defineProps` and `defineEmits` types to include `"agents"`:
@@ -763,7 +783,7 @@ defineEmits<{
 }>();
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/renderer/src/views/AgentPanel.vue src/renderer/src/App.vue src/renderer/src/components/AppSidebar.vue
@@ -775,10 +795,11 @@ git commit -m "feat(ui): add AgentPanel view shell with sidebar navigation"
 ### Task 6: Create AgentManageTab Component
 
 **Files:**
+
 - Create: `src/renderer/src/components/agents/AgentManageTab.vue`
 - Create: `src/renderer/src/components/agents/AgentEditForm.vue`
 
-- [ ] **Step 1: Create AgentManageTab.vue**
+- [x] **Step 1: Create AgentManageTab.vue**
 
 Create `src/renderer/src/components/agents/AgentManageTab.vue`:
 
@@ -801,16 +822,14 @@ const isDev = ref(false);
 
 const builtinIds = computed(() => new Set(builtinAgents.value.map((a) => a.id)));
 
-const customAgents = computed(() =>
-  agentStore.agents.filter((a) => a.type === "custom"),
+const customAgents = computed(() => agentStore.agents.filter((a) => a.type === "custom"));
+
+const selectedBuiltin = computed(
+  () => builtinAgents.value.find((a) => a.id === selectedAgentId.value) ?? null,
 );
 
-const selectedBuiltin = computed(() =>
-  builtinAgents.value.find((a) => a.id === selectedAgentId.value) ?? null,
-);
-
-const selectedCustom = computed(() =>
-  customAgents.value.find((a) => a.id === selectedAgentId.value) ?? null,
+const selectedCustom = computed(
+  () => customAgents.value.find((a) => a.id === selectedAgentId.value) ?? null,
 );
 
 onMounted(async () => {
@@ -911,7 +930,7 @@ function selectAgent(id: string) {
 </template>
 ```
 
-- [ ] **Step 2: Create AgentEditForm.vue**
+- [x] **Step 2: Create AgentEditForm.vue**
 
 Create `src/renderer/src/components/agents/AgentEditForm.vue`:
 
@@ -996,8 +1015,14 @@ watch(
 );
 
 const presetColors = [
-  "#a855f7", "#10b981", "#6366f1", "#f59e0b",
-  "#ef4444", "#06b6d4", "#ec4899", "#84cc16",
+  "#a855f7",
+  "#10b981",
+  "#6366f1",
+  "#f59e0b",
+  "#ef4444",
+  "#06b6d4",
+  "#ec4899",
+  "#84cc16",
 ];
 
 async function save() {
@@ -1154,11 +1179,7 @@ function toggleCapability(cap: string) {
     <div>
       <label class="text-xs font-medium text-muted-foreground">工具 (取消勾选=禁用)</label>
       <div class="mt-1 grid grid-cols-3 gap-1">
-        <label
-          v-for="tool in availableTools"
-          :key="tool"
-          class="flex items-center gap-1 text-xs"
-        >
+        <label v-for="tool in availableTools" :key="tool" class="flex items-center gap-1 text-xs">
           <input
             type="checkbox"
             :checked="!disabledTools.includes(tool)"
@@ -1174,11 +1195,7 @@ function toggleCapability(cap: string) {
     <div>
       <label class="text-xs font-medium text-muted-foreground">CLI 命令白名单</label>
       <div class="mt-1 flex flex-wrap gap-2">
-        <label
-          v-for="cmd in availableCommands"
-          :key="cmd"
-          class="flex items-center gap-1 text-sm"
-        >
+        <label v-for="cmd in availableCommands" :key="cmd" class="flex items-center gap-1 text-sm">
           <input
             type="checkbox"
             :checked="allowedCliCommands.includes(cmd)"
@@ -1218,19 +1235,11 @@ function toggleCapability(cap: string) {
     <!-- Toggles -->
     <div class="flex gap-6">
       <label class="flex items-center gap-2 text-sm">
-        <input
-          v-model="subagentEnabled"
-          :disabled="readonly"
-          type="checkbox"
-        />
+        <input v-model="subagentEnabled" :disabled="readonly" type="checkbox" />
         Subagent
       </label>
       <label class="flex items-center gap-2 text-sm">
-        <input
-          v-model="enableThinking"
-          :disabled="readonly"
-          type="checkbox"
-        />
+        <input v-model="enableThinking" :disabled="readonly" type="checkbox" />
         Extended Thinking
       </label>
     </div>
@@ -1244,14 +1253,12 @@ function toggleCapability(cap: string) {
         保存
       </button>
     </div>
-    <div v-else class="pt-2 text-xs text-muted-foreground">
-      内置 Agent 仅在开发模式下可编辑
-    </div>
+    <div v-else class="pt-2 text-xs text-muted-foreground">内置 Agent 仅在开发模式下可编辑</div>
   </div>
 </template>
 ```
 
-- [ ] **Step 3: Update AgentPanel.vue to import components**
+- [x] **Step 3: Update AgentPanel.vue to import components**
 
 Update `src/renderer/src/views/AgentPanel.vue` script to import:
 
@@ -1262,13 +1269,12 @@ import SkillManageTab from "../components/agents/SkillManageTab.vue";
 
 (SkillManageTab will be created in next task — for now create a placeholder)
 
-- [ ] **Step 4: Create SkillManageTab placeholder**
+- [x] **Step 4: Create SkillManageTab placeholder**
 
 Create `src/renderer/src/components/agents/SkillManageTab.vue`:
 
 ```vue
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <div class="flex h-full items-center justify-center text-muted-foreground">
@@ -1277,12 +1283,12 @@ Create `src/renderer/src/components/agents/SkillManageTab.vue`:
 </template>
 ```
 
-- [ ] **Step 5: Run typecheck and dev**
+- [x] **Step 5: Run typecheck and dev**
 
 Run: `pnpm run typecheck`
 Run: `pnpm run dev` (verify AgentPanel renders)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/renderer/src/components/agents/ src/renderer/src/views/AgentPanel.vue
@@ -1294,9 +1300,10 @@ git commit -m "feat(ui): implement AgentManageTab with edit form"
 ### Task 7: Create SkillManageTab Component
 
 **Files:**
+
 - Modify: `src/renderer/src/components/agents/SkillManageTab.vue`
 
-- [ ] **Step 1: Implement SkillManageTab.vue**
+- [x] **Step 1: Implement SkillManageTab.vue**
 
 Replace the placeholder `src/renderer/src/components/agents/SkillManageTab.vue`:
 
@@ -1360,9 +1367,7 @@ async function uninstallSkill(name: string) {
       </button>
     </div>
 
-    <div v-if="skills.length === 0" class="text-sm text-muted-foreground">
-      暂无已安装的 Skill
-    </div>
+    <div v-if="skills.length === 0" class="text-sm text-muted-foreground">暂无已安装的 Skill</div>
 
     <div class="space-y-2">
       <div
@@ -1391,7 +1396,7 @@ async function uninstallSkill(name: string) {
 </template>
 ```
 
-- [ ] **Step 2: Add dialog:openDirectoryOrFile IPC handler**
+- [x] **Step 2: Add dialog:openDirectoryOrFile IPC handler**
 
 In `src/main/presenter/index.ts`, add after the existing `dialog:openDirectory` handler:
 
@@ -1405,12 +1410,12 @@ ipcMain.handle("dialog:openDirectoryOrFile", async () => {
 });
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `pnpm run typecheck`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/renderer/src/components/agents/SkillManageTab.vue src/main/presenter/index.ts
@@ -1422,34 +1427,35 @@ git commit -m "feat(ui): implement SkillManageTab with install/uninstall"
 ### Task 8: Remove AgentEditDialog and Clean Up References
 
 **Files:**
+
 - Delete: `src/renderer/src/components/chat/AgentEditDialog.vue`
 - Modify: `src/renderer/src/views/ChatroomPanel.vue` (remove AgentEditDialog usage)
 - Modify: `src/renderer/src/components/chat/NewThread.vue` (remove edit trigger if any)
 
-- [ ] **Step 1: Identify AgentEditDialog usage**
+- [x] **Step 1: Identify AgentEditDialog usage**
 
 Search for all imports/references to `AgentEditDialog` in renderer:
 
 Run: `grep -r "AgentEditDialog" src/renderer/`
 
-- [ ] **Step 2: Remove AgentEditDialog from ChatroomPanel**
+- [x] **Step 2: Remove AgentEditDialog from ChatroomPanel**
 
 Remove the `<AgentEditDialog>` component usage and its related state (open state, selected agent for edit) from `ChatroomPanel.vue`. Keep the session/chat functionality intact.
 
-- [ ] **Step 3: Remove edit triggers from NewThread or SessionList**
+- [x] **Step 3: Remove edit triggers from NewThread or SessionList**
 
 If NewThread or SessionList have "edit" buttons that open AgentEditDialog, remove those buttons. Keep the "start conversation" card click behavior.
 
-- [ ] **Step 4: Delete AgentEditDialog.vue**
+- [x] **Step 4: Delete AgentEditDialog.vue**
 
 Delete `src/renderer/src/components/chat/AgentEditDialog.vue`.
 
-- [ ] **Step 5: Run typecheck and dev**
+- [x] **Step 5: Run typecheck and dev**
 
 Run: `pnpm run typecheck`
 Run: `pnpm run dev` (verify chatroom still works)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -1461,16 +1467,17 @@ git commit -m "refactor(ui): remove AgentEditDialog, editing now in AgentPanel"
 ### Task 9: Create Global Skills Directory Structure
 
 **Files:**
+
 - Create: `src/main/skills/.gitkeep`
 
-- [ ] **Step 1: Create skills directory**
+- [x] **Step 1: Create skills directory**
 
 ```bash
 mkdir -p src/main/skills
 touch src/main/skills/.gitkeep
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/main/skills/.gitkeep
@@ -1482,9 +1489,10 @@ git commit -m "chore: add global skills directory"
 ### Task 10: Wire Up ensureBuiltin to Use New JSON Format
 
 **Files:**
+
 - Modify: `src/main/db/models/agentDao.ts` (if needed for `allowedCliCommands` / `enabledSkills` in config_json)
 
-- [ ] **Step 1: Verify ensureBuiltin works with new index.ts**
+- [x] **Step 1: Verify ensureBuiltin works with new index.ts**
 
 The existing `ensureBuiltin(db)` in `agentDao.ts` reads from `BUILTIN_AGENTS` array which is now loaded from JSON files. Verify it still works by running:
 
@@ -1492,11 +1500,11 @@ Run: `pnpm run dev`
 
 Check console: agents should appear in chatroom NewThread.
 
-- [ ] **Step 2: Verify agentSoul is loaded correctly from soul.md**
+- [x] **Step 2: Verify agentSoul is loaded correctly from soul.md**
 
 In dev mode, start a conversation with HAL. The agent should respond according to its soul.md prompt.
 
-- [ ] **Step 3: Commit if any fixes needed**
+- [x] **Step 3: Commit if any fixes needed**
 
 ```bash
 git add -A
@@ -1508,23 +1516,24 @@ git commit -m "fix(agents): ensure ensureBuiltin compatible with json+md format"
 ### Task 11: Format and Lint
 
 **Files:**
+
 - All modified files
 
-- [ ] **Step 1: Run formatter**
+- [x] **Step 1: Run formatter**
 
 Run: `pnpm run format`
 
-- [ ] **Step 2: Run linter**
+- [x] **Step 2: Run linter**
 
 Run: `pnpm run lint`
 Fix any reported issues.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `pnpm test`
 Fix any broken tests (likely tests that import from `./hal` or `./moss` directly).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -1535,11 +1544,12 @@ git commit -m "chore: format and fix lint issues"
 
 ### Task 12: Integration Test
 
-- [ ] **Step 1: Dev mode end-to-end verification**
+- [x] **Step 1: Dev mode end-to-end verification**
 
 Run: `pnpm run dev`
 
 Verify:
+
 1. AppSidebar shows "Agent 管理" button
 2. Clicking it opens AgentPanel with Agents tab
 3. Builtin agents (hal-ai, moss-ai) appear in left list
@@ -1550,14 +1560,15 @@ Verify:
 8. Starting a new chat from NewThread still works
 9. Agent responses use the soul from soul.md
 
-- [ ] **Step 2: Verify prod-like behavior**
+- [x] **Step 2: Verify prod-like behavior**
 
 In the AgentEditForm, temporarily set `isDev = false` and verify:
+
 - All builtin agent fields become readonly
 - Custom agents remain editable
 - "新建内置 Agent" button is hidden
 
-- [ ] **Step 3: Final commit if needed**
+- [x] **Step 3: Final commit if needed**
 
 ```bash
 git add -A

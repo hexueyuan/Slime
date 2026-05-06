@@ -11,7 +11,8 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
   - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state；schedule 表：tasks, notes, timeline_entries, attachments）
   - `gateway/`: LLM Gateway 核心（router, balancer, circuit, keypool, relay, server, outbound adapters, inbound handlers, stats, auth）
   - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool）
-  - `agents/`: 内置 Agent 定义（index.ts BUILTIN_AGENTS 注册表 + hal.ts HAL Agent）
+  - `agents/`: 内置 Agent 定义（index.ts BUILTIN_AGENTS 注册表 + `<id>/config.json` + `<id>/soul.md`）
+  - `skills/`: 全局 Skill 目录（`<name>/manifest.json` + 实现文件）
   - `mcp/`: MCP Client（types, transport/stdio+SSE, mcpClient, healthChecker）
   - `tasks/`: Schedule 任务系统（taskDao, taskServer/Fastify HTTP, attachmentService）
   - `browser/`: 浏览器自动化（browserSession.ts 封装 playwright-core，browserTools.ts 定义 10 个工具）
@@ -105,6 +106,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                                                     |
 | MCPServerPresenter        | MCP Server 生命周期管理：连接/发现工具/健康检查/CRUD + 会话工具状态；客户端 Map 管理                                                                                                                           |
 | TaskPresenter             | Schedule 任务系统 IPC：task CRUD + 状态流转 + 附件 + timeline + notes；委托 taskDao/taskServer                                                                                                                 |
+| DevPresenter              | 开发模式专用：内置 Agent 源码读写（JSON+MD）、Skill 安装/卸载、可用工具/CLI 命令查询                                                                                                                           |
 
 ### 自研 LLM 客户端
 
@@ -233,9 +235,10 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - **AgentConfigPresenter**: Agent CRUD + ensureBuiltin（HalAI, id='hal-ai', protected, capabilityRequirements=['reasoning']）
 - **AgentChatPresenterAdapter**: 封装 session CRUD + 委托 chat 控制给 AgentChatPresenter
 - **Context Builder**: token 估算(len/4)，summary 注入，turn history 裁剪，4096 reserve
-- **视图切换**: App.vue 三视图（chatroom/gateway/evolab），默认 chatroom，EvoLab 隐藏(v-if="false")
+- **视图切换**: App.vue 四视图（chatroom/gateway/agents/evolab），默认 chatroom，EvoLab 隐藏(v-if="false")
 - **Pinia Stores**: `useAgentStore` + `useAgentSessionStore` + `useAgentChatStore` + `setupAgentChatIpc`
-- **Chat UI**: ChatroomPanel(SessionList + split pane(ChatView + ChatFunctionPanel))、AgentEditDialog、AgentAvatar、ChatInput、ChatMessageList/User/Assistant
+- **Chat UI**: ChatroomPanel(SessionList + split pane(ChatView + ChatFunctionPanel))、AgentAvatar、ChatInput、ChatMessageList/User/Assistant
+- **AgentPanel**: AgentManageTab（内置/用户 Agent 列表 + AgentEditForm 编辑）+ SkillManageTab（Skill 安装/卸载）
 - **ChatFunctionPanel**: 工具/预览两 Tab（无历史），与 evolab/FunctionPanel 完全独立；tool_call block 点击高亮，interaction submit 走 agentChatStore.answerQuestion；agent 类型 block 在 ChatroomPanel.toolCallBlocks computed 中转换为 chat 格式再传给 ToolPanel
 - **AGENT_EVENTS.CHANGED**: Agent 变更时推送，渲染进程监听刷新列表
 

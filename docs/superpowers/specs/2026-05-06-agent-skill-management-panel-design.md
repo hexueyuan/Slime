@@ -6,27 +6,27 @@
 
 ## 设计决策
 
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| 视图入口 | AppSidebar 常驻按钮 | 用户 Agent 管理在 prod 也需要 |
-| 布局 | 主内容区新视图，Tab 切换 | 轻量，复用已有导航模式 |
-| 内置 Agent 存储 | `src/main/agents/<id>/config.json` + `soul.md` | JSON 易编辑，MD 提示词分离 |
-| 用户 Agent 存储 | 数据库（现有机制） | 不改动 |
-| 源码写入方式 | 直接 fs 写 JSON/MD 文件 | 无需 AST，结构简单 |
-| Skill 存储 | `src/main/skills/<name>/` | 纳入源码 git 管理 |
-| Skill 安装来源 | 本地目录 / zip 压缩包 | 无远程市场 |
-| Skill 分配语义 | 白名单 `enabledSkills[]` | 替代原 `disabledSkills` 黑名单 |
-| CLI 命令管理 | 白名单 `allowedCliCommands[]` | 显式控制 |
-| 移除 AgentEditDialog | 是 | 统一入口，干净分离 |
+| 决策                 | 选择                                           | 理由                           |
+| -------------------- | ---------------------------------------------- | ------------------------------ |
+| 视图入口             | AppSidebar 常驻按钮                            | 用户 Agent 管理在 prod 也需要  |
+| 布局                 | 主内容区新视图，Tab 切换                       | 轻量，复用已有导航模式         |
+| 内置 Agent 存储      | `src/main/agents/<id>/config.json` + `soul.md` | JSON 易编辑，MD 提示词分离     |
+| 用户 Agent 存储      | 数据库（现有机制）                             | 不改动                         |
+| 源码写入方式         | 直接 fs 写 JSON/MD 文件                        | 无需 AST，结构简单             |
+| Skill 存储           | `src/main/skills/<name>/`                      | 纳入源码 git 管理              |
+| Skill 安装来源       | 本地目录 / zip 压缩包                          | 无远程市场                     |
+| Skill 分配语义       | 白名单 `enabledSkills[]`                       | 替代原 `disabledSkills` 黑名单 |
+| CLI 命令管理         | 白名单 `allowedCliCommands[]`                  | 显式控制                       |
+| 移除 AgentEditDialog | 是                                             | 统一入口，干净分离             |
 
 ## 权限矩阵
 
-| 操作 | 内置 Agent (prod) | 内置 Agent (dev) | 用户 Agent |
-|------|-------------------|------------------|------------|
-| 查看 | ✅ | ✅ | ✅ |
-| 编辑 | ❌ 只读 | ✅ 写回源码 | ✅ 写入 DB |
-| 创建 | ❌ | ✅ 新建内置 | ✅ 新建用户 |
-| 删除 | ❌ | ✅ 删除源码 | ✅ 删除 DB |
+| 操作 | 内置 Agent (prod) | 内置 Agent (dev) | 用户 Agent  |
+| ---- | ----------------- | ---------------- | ----------- |
+| 查看 | ✅                | ✅               | ✅          |
+| 编辑 | ❌ 只读           | ✅ 写回源码      | ✅ 写入 DB  |
+| 创建 | ❌                | ✅ 新建内置      | ✅ 新建用户 |
+| 删除 | ❌                | ✅ 删除源码      | ✅ 删除 DB  |
 
 ## Agent 定义文件重构
 
@@ -131,21 +131,21 @@ class DevPresenter {
   // 所有方法内部首行: if (app.isPackaged) throw new Error('dev only')
 
   // === 内置 Agent 源码操作 ===
-  listBuiltinAgentDefs(): { id: string; config: object; soul: string }[]
-  getBuiltinAgentDef(agentId: string): { config: object; soul: string }
-  saveBuiltinAgentDef(agentId: string, config: object, soul: string): void
-  createBuiltinAgent(agentId: string): void   // 创建目录 + 空模板
-  deleteBuiltinAgent(agentId: string): void   // 删除目录
+  listBuiltinAgentDefs(): { id: string; config: object; soul: string }[];
+  getBuiltinAgentDef(agentId: string): { config: object; soul: string };
+  saveBuiltinAgentDef(agentId: string, config: object, soul: string): void;
+  createBuiltinAgent(agentId: string): void; // 创建目录 + 空模板
+  deleteBuiltinAgent(agentId: string): void; // 删除目录
 
   // === Skill 源码操作 ===
-  listGlobalSkills(): SkillManifest[]
-  installSkill(sourcePath: string): { success: boolean; error?: string }
-  uninstallSkill(skillName: string): void
-  getSkillManifest(skillName: string): SkillManifest
+  listGlobalSkills(): SkillManifest[];
+  installSkill(sourcePath: string): { success: boolean; error?: string };
+  uninstallSkill(skillName: string): void;
+  getSkillManifest(skillName: string): SkillManifest;
 
   // === 查询辅助 ===
-  listAvailableTools(): string[]              // 所有工具名
-  listAvailableCliCommands(): string[]        // 所有 CLI 命令名
+  listAvailableTools(): string[]; // 所有工具名
+  listAvailableCliCommands(): string[]; // 所有 CLI 命令名
 }
 ```
 
@@ -157,10 +157,10 @@ class DevPresenter {
 
 ```typescript
 interface SkillManifest {
-  name: string
-  description: string
-  version?: string
-  author?: string
+  name: string;
+  description: string;
+  version?: string;
+  author?: string;
 }
 ```
 
