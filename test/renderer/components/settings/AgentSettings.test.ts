@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
-import { nextTick } from "vue";
 import { setActivePinia, createPinia } from "pinia";
 
 const mockInvoke = vi.fn();
@@ -12,14 +11,6 @@ const mockInvoke = vi.fn();
   },
 };
 
-vi.mock("@/components/chat/AgentEditDialog.vue", () => ({
-  default: {
-    name: "AgentEditDialog",
-    props: ["open", "agentId"],
-    emits: ["update:open", "saved"],
-    template: '<div data-testid="agent-edit-dialog" :data-open="open" :data-agent-id="agentId" />',
-  },
-}));
 vi.mock("@/components/chat/AgentAvatar.vue", () => ({
   default: {
     name: "AgentAvatar",
@@ -93,27 +84,6 @@ describe("AgentSettings", () => {
     const rows = wrapper.findAll('[data-testid="agent-row"]');
     const customRow = rows[1];
     expect(customRow.find('[data-testid="delete-btn"]').exists()).toBe(true);
-  });
-
-  it("opens dialog with no agentId on new agent click", async () => {
-    const wrapper = mount(AgentSettings, { attachTo: document.body });
-    await flushPromises();
-    await wrapper.find('[data-testid="new-agent-btn"]').trigger("click");
-    await nextTick();
-    const dialog = wrapper.find('[data-testid="agent-edit-dialog"]');
-    expect(dialog.attributes("data-open")).toBe("true");
-    expect(dialog.attributes("data-agent-id")).toBeFalsy();
-  });
-
-  it("opens dialog with agentId on edit click", async () => {
-    const wrapper = mount(AgentSettings, { attachTo: document.body });
-    await flushPromises();
-    const rows = wrapper.findAll('[data-testid="agent-row"]');
-    await rows[1].find('[data-testid="edit-btn"]').trigger("click");
-    await nextTick();
-    const dialog = wrapper.find('[data-testid="agent-edit-dialog"]');
-    expect(dialog.attributes("data-open")).toBe("true");
-    expect(dialog.attributes("data-agent-id")).toBe("my-agent");
   });
 
   it("calls deleteAgent and re-fetches on delete confirm", async () => {

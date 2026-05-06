@@ -129,7 +129,7 @@ describe("agentDao", () => {
     expect(hal.type).toBe("builtin");
     expect(hal.protected).toBe(true);
     expect(hal.themeColor).toBe("#a855f7");
-    expect(hal.avatar).toEqual({ kind: "lucide", icon: "lucide:bot" });
+    expect(hal.avatar).toEqual({ kind: "image", path: "avatars/hal.png" });
     expect(hal.config).toMatchObject({
       capabilityRequirements: ["reasoning"],
       subagentEnabled: false,
