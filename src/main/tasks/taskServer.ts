@@ -14,7 +14,7 @@ export function createTaskServer(
     if (!title || typeof title !== "string") {
       return reply.status(400).send({ error: "title is required" });
     }
-    const task = taskDao.createTask(db, title);
+    const task = taskDao.createTask(db, { title });
     onTasksChanged();
     return reply.status(201).send(task);
   });

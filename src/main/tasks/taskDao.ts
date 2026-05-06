@@ -6,6 +6,7 @@ import type {
   TimelineEntry,
   TimelineSource,
   Note,
+  ActorType,
 } from "@shared/types/schedule";
 
 let _idCounter = 0;
@@ -37,6 +38,12 @@ interface TaskRow {
   created_at: number;
   started_at: number | null;
   finished_at: number | null;
+  creator_type: string;
+  creator_id: string | null;
+  assignee_type: string;
+  assignee_id: string | null;
+  scheduled_at: number | null;
+  repeat_interval: number | null;
 }
 
 function rowToTask(row: TaskRow): Task {
@@ -48,16 +55,59 @@ function rowToTask(row: TaskRow): Task {
     createdAt: row.created_at,
     startedAt: row.started_at ?? undefined,
     finishedAt: row.finished_at ?? undefined,
+    creatorType: row.creator_type as ActorType,
+    creatorId: row.creator_id ?? undefined,
+    assigneeType: row.assignee_type as ActorType,
+    assigneeId: row.assignee_id ?? undefined,
+    scheduledAt: row.scheduled_at ?? undefined,
+    repeatInterval: row.repeat_interval ?? undefined,
   };
 }
 
-export function createTask(db: BetterSqlite3.Database, title: string, detail?: string): Task {
+export interface CreateTaskParams {
+  title: string;
+  detail?: string;
+  creatorType?: ActorType;
+  creatorId?: string;
+  assigneeType?: ActorType;
+  assigneeId?: string;
+  scheduledAt?: number;
+  repeatInterval?: number;
+}
+
+export function createTask(db: BetterSqlite3.Database, params: CreateTaskParams): Task {
   const id = makeId();
   const now = Date.now();
+  const creatorType = params.creatorType ?? "user";
+  const assigneeType = params.assigneeType ?? "user";
   db.prepare(
-    "INSERT INTO tasks (id, title, detail, status, created_at) VALUES (?, ?, ?, 'todo', ?)",
-  ).run(id, title, detail ?? null, now);
-  return { id, title, detail, status: "todo", createdAt: now };
+    `INSERT INTO tasks (id, title, detail, status, created_at, creator_type, creator_id, assignee_type, assignee_id, scheduled_at, repeat_interval)
+     VALUES (?, ?, ?, 'todo', ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    id,
+    params.title,
+    params.detail ?? null,
+    now,
+    creatorType,
+    params.creatorId ?? null,
+    assigneeType,
+    params.assigneeId ?? null,
+    params.scheduledAt ?? null,
+    params.repeatInterval ?? null,
+  );
+  return {
+    id,
+    title: params.title,
+    detail: params.detail,
+    status: "todo",
+    createdAt: now,
+    creatorType,
+    creatorId: params.creatorId,
+    assigneeType,
+    assigneeId: params.assigneeId,
+    scheduledAt: params.scheduledAt,
+    repeatInterval: params.repeatInterval,
+  };
 }
 
 export function getTask(db: BetterSqlite3.Database, id: string): Task | null {
@@ -79,15 +129,46 @@ export function listTasks(db: BetterSqlite3.Database, status?: TaskStatus): Task
 export function updateTask(
   db: BetterSqlite3.Database,
   id: string,
-  fields: { title?: string; detail?: string },
+  fields: {
+    title?: string;
+    detail?: string;
+    assigneeType?: ActorType;
+    assigneeId?: string;
+    scheduledAt?: number | null;
+    repeatInterval?: number | null;
+  },
 ): Task {
   const task = getTask(db, id);
   if (!task) throw new Error(`task ${id} not found`);
+  const sets: string[] = [];
+  const values: unknown[] = [];
   if (fields.title !== undefined) {
-    db.prepare("UPDATE tasks SET title = ? WHERE id = ?").run(fields.title, id);
+    sets.push("title = ?");
+    values.push(fields.title);
   }
   if (fields.detail !== undefined) {
-    db.prepare("UPDATE tasks SET detail = ? WHERE id = ?").run(fields.detail, id);
+    sets.push("detail = ?");
+    values.push(fields.detail);
+  }
+  if (fields.assigneeType !== undefined) {
+    sets.push("assignee_type = ?");
+    values.push(fields.assigneeType);
+  }
+  if (fields.assigneeId !== undefined) {
+    sets.push("assignee_id = ?");
+    values.push(fields.assigneeId);
+  }
+  if (fields.scheduledAt !== undefined) {
+    sets.push("scheduled_at = ?");
+    values.push(fields.scheduledAt);
+  }
+  if (fields.repeatInterval !== undefined) {
+    sets.push("repeat_interval = ?");
+    values.push(fields.repeatInterval);
+  }
+  if (sets.length > 0) {
+    values.push(id);
+    db.prepare(`UPDATE tasks SET ${sets.join(", ")} WHERE id = ?`).run(...values);
   }
   return getTask(db, id)!;
 }

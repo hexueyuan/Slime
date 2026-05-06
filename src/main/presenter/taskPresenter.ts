@@ -41,7 +41,7 @@ class TaskPresenter {
       return taskDao.listTasks(this.db!, status);
     });
     ipcMain.handle("task:createTask", (_e, title: string, detail?: string) => {
-      const task = taskDao.createTask(this.db!, title, detail);
+      const task = taskDao.createTask(this.db!, { title, detail });
       this.emitTasksChanged();
       return task;
     });
