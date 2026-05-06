@@ -73,14 +73,21 @@ const selectedThoughtMessageId = ref<string | null>(null);
 // Reset thought chain state on session change (covers NewThread + SessionList)
 watch(
   () => sessionStore.activeSessionId,
-  () => {
+  async (sessionId) => {
     selectedToolCallId.value = null;
     selectedThoughtMessageId.value = null;
     showStreamingThought.value = false;
     if (activeTab.value === "dashboard" && !showDashboard.value) {
       activeTab.value = "tools";
     }
+    // 会话激活时主动拉取仪表盘数据
+    if (!sessionId || !dashboardTemplate.value) return;
+    const agentId = activeAgent.value?.id;
+    if (!agentId) return;
+    const data = await window.electron.ipcRenderer.invoke("task:getDashboardData", agentId);
+    chatStore.setDashboardData(sessionId, data as Record<string, unknown>);
   },
+  { immediate: true },
 );
 
 const thoughtChainBlocks = computed<import("@shared/types/agent").AssistantMessageBlock[] | null>(
