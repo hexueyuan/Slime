@@ -37,6 +37,7 @@
 ### 架构
 
 采用 **Teleport to body + useProfileModal composable** 方案：
+
 - 弹窗全局只有一个 DOM 实例，不受父组件层叠上下文影响。
 - 调用方只传 `ProfileData`，弹窗内部从 store 取数据。
 
@@ -45,9 +46,7 @@
 #### `src/renderer/src/composables/useProfileModal.ts`
 
 ```ts
-type ProfileData =
-  | { type: 'agent'; agentId: string }
-  | { type: 'user' }
+type ProfileData = { type: "agent"; agentId: string } | { type: "user" };
 
 // 暴露 open(profile) / close() / visible / profile
 ```
@@ -65,12 +64,12 @@ type ProfileData =
 
 ### 修改文件
 
-| 文件 | 改动 |
-|---|---|
-| `App.vue` | 注册 `<ProfileModal />` 一次 |
-| `ChatMessageUser.vue` | 头像 div 加 `@click`，调 `useProfileModal().open({ type: 'user' })` |
+| 文件                       | 改动                                                                          |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `App.vue`                  | 注册 `<ProfileModal />` 一次                                                  |
+| `ChatMessageUser.vue`      | 头像 div 加 `@click`，调 `useProfileModal().open({ type: 'user' })`           |
 | `ChatMessageAssistant.vue` | 头像 div 加 `@click`，调 `useProfileModal().open({ type: 'agent', agentId })` |
-| `AgentAvatar.vue` | 新增 `xl` 尺寸规格：96×96px，图标 48×48px，文字 `text-2xl` |
+| `AgentAvatar.vue`          | 新增 `xl` 尺寸规格：96×96px，图标 48×48px，文字 `text-2xl`                    |
 
 ### 弹窗视觉规格
 
@@ -83,12 +82,12 @@ type ProfileData =
 
 ## 文件改动汇总
 
-| 文件 | 类型 | 说明 |
-|---|---|---|
-| `components/settings/ProfileSettings.vue` | 修改 | 新增 image Tab |
-| `composables/useProfileModal.ts` | 新建 | 全局弹窗状态 |
-| `components/chat/ProfileModal.vue` | 新建 | 资料弹窗组件 |
-| `App.vue` | 修改 | 注册 ProfileModal |
-| `components/chat/ChatMessageUser.vue` | 修改 | 头像加 click |
-| `components/chat/ChatMessageAssistant.vue` | 修改 | 头像加 click |
-| `components/chat/AgentAvatar.vue` | 修改 | 新增 xl 尺寸 |
+| 文件                                       | 类型 | 说明              |
+| ------------------------------------------ | ---- | ----------------- |
+| `components/settings/ProfileSettings.vue`  | 修改 | 新增 image Tab    |
+| `composables/useProfileModal.ts`           | 新建 | 全局弹窗状态      |
+| `components/chat/ProfileModal.vue`         | 新建 | 资料弹窗组件      |
+| `App.vue`                                  | 修改 | 注册 ProfileModal |
+| `components/chat/ChatMessageUser.vue`      | 修改 | 头像加 click      |
+| `components/chat/ChatMessageAssistant.vue` | 修改 | 头像加 click      |
+| `components/chat/AgentAvatar.vue`          | 修改 | 新增 xl 尺寸      |

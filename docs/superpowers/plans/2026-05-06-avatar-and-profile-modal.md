@@ -12,21 +12,22 @@
 
 ## File Map
 
-| 文件 | 操作 | 说明 |
-|---|---|---|
-| `src/renderer/src/components/chat/AgentAvatar.vue` | 修改 | 新增 `xl` 尺寸（96×96px） |
-| `src/renderer/src/composables/useProfileModal.ts` | 新建 | 全局弹窗状态（模块级单例） |
-| `src/renderer/src/components/chat/ProfileModal.vue` | 新建 | 资料弹窗组件，Teleport to body |
-| `src/renderer/src/App.vue` | 修改 | 注册 `<ProfileModal />` |
-| `src/renderer/src/components/chat/ChatMessageUser.vue` | 修改 | 头像加 `@click` |
-| `src/renderer/src/components/chat/ChatMessageAssistant.vue` | 修改 | 头像加 `@click` |
-| `src/renderer/src/components/settings/ProfileSettings.vue` | 修改 | 新增 image Tab |
+| 文件                                                        | 操作 | 说明                           |
+| ----------------------------------------------------------- | ---- | ------------------------------ |
+| `src/renderer/src/components/chat/AgentAvatar.vue`          | 修改 | 新增 `xl` 尺寸（96×96px）      |
+| `src/renderer/src/composables/useProfileModal.ts`           | 新建 | 全局弹窗状态（模块级单例）     |
+| `src/renderer/src/components/chat/ProfileModal.vue`         | 新建 | 资料弹窗组件，Teleport to body |
+| `src/renderer/src/App.vue`                                  | 修改 | 注册 `<ProfileModal />`        |
+| `src/renderer/src/components/chat/ChatMessageUser.vue`      | 修改 | 头像加 `@click`                |
+| `src/renderer/src/components/chat/ChatMessageAssistant.vue` | 修改 | 头像加 `@click`                |
+| `src/renderer/src/components/settings/ProfileSettings.vue`  | 修改 | 新增 image Tab                 |
 
 ---
 
 ## Task 1: AgentAvatar 新增 xl 尺寸
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/AgentAvatar.vue`
 
 - [ ] **Step 1: 修改 sizeMap，新增 xl 规格**
@@ -94,6 +95,7 @@ git commit -m "feat(avatar): add xl size to AgentAvatar"
 ## Task 2: useProfileModal composable
 
 **Files:**
+
 - Create: `src/renderer/src/composables/useProfileModal.ts`
 
 - [ ] **Step 1: 新建 composable**
@@ -142,6 +144,7 @@ git commit -m "feat(chat): add useProfileModal composable"
 ## Task 3: ProfileModal 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/chat/ProfileModal.vue`
 
 ProfileModal 从 store 取数据，自行查询 agent/user profile，无需调用方传入。
@@ -208,7 +211,9 @@ const userProfile = computed(() => chatStore.userProfile);
         <template v-else-if="profile?.type === 'user'">
           <div class="flex flex-col items-center gap-3">
             <AgentAvatarComp
-              :avatar="userProfile?.avatar ?? { kind: 'monogram', text: 'U', backgroundColor: '#3b82f6' }"
+              :avatar="
+                userProfile?.avatar ?? { kind: 'monogram', text: 'U', backgroundColor: '#3b82f6' }
+              "
               size="xl"
             />
             <div class="text-base font-semibold text-foreground">
@@ -242,6 +247,7 @@ git commit -m "feat(chat): add ProfileModal component"
 ## Task 4: 在 App.vue 注册 ProfileModal
 
 **Files:**
+
 - Modify: `src/renderer/src/App.vue`
 
 - [ ] **Step 1: 引入并注册 ProfileModal**
@@ -300,6 +306,7 @@ git commit -m "feat(chat): register ProfileModal in App.vue"
 ## Task 5: ChatMessageUser 头像点击
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatMessageUser.vue`
 
 - [ ] **Step 1: 引入 useProfileModal，头像加 click + cursor-pointer**
@@ -314,20 +321,20 @@ const { open: openProfile } = useProfileModal();
 template 中找到头像行（当前第 62 行）：
 
 ```html
-    <!-- Avatar -->
-    <AgentAvatarComp :avatar="userAvatar" size="lg" />
+<!-- Avatar -->
+<AgentAvatarComp :avatar="userAvatar" size="lg" />
 ```
 
 改为：
 
 ```html
-    <!-- Avatar -->
-    <AgentAvatarComp
-      :avatar="userAvatar"
-      size="lg"
-      class="cursor-pointer"
-      @click="openProfile({ type: 'user' })"
-    />
+<!-- Avatar -->
+<AgentAvatarComp
+  :avatar="userAvatar"
+  size="lg"
+  class="cursor-pointer"
+  @click="openProfile({ type: 'user' })"
+/>
 ```
 
 - [ ] **Step 2: 运行 typecheck**
@@ -350,6 +357,7 @@ git commit -m "feat(chat): open profile modal on user avatar click"
 ## Task 6: ChatMessageAssistant 头像点击
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatMessageAssistant.vue`
 
 - [ ] **Step 1: 引入 useProfileModal，头像加 click + cursor-pointer**
@@ -364,20 +372,20 @@ const { open: openProfile } = useProfileModal();
 template 中找到头像行（当前第 120 行）：
 
 ```html
-    <!-- Avatar -->
-    <AgentAvatarComp :avatar="agentAvatar" size="lg" />
+<!-- Avatar -->
+<AgentAvatarComp :avatar="agentAvatar" size="lg" />
 ```
 
 改为：
 
 ```html
-    <!-- Avatar -->
-    <AgentAvatarComp
-      :avatar="agentAvatar"
-      size="lg"
-      class="cursor-pointer"
-      @click="agentId && openProfile({ type: 'agent', agentId })"
-    />
+<!-- Avatar -->
+<AgentAvatarComp
+  :avatar="agentAvatar"
+  size="lg"
+  class="cursor-pointer"
+  @click="agentId && openProfile({ type: 'agent', agentId })"
+/>
 ```
 
 - [ ] **Step 2: 运行 typecheck**
@@ -400,6 +408,7 @@ git commit -m "feat(chat): open profile modal on agent avatar click"
 ## Task 7: ProfileSettings 新增 image Tab
 
 **Files:**
+
 - Modify: `src/renderer/src/components/settings/ProfileSettings.vue`
 
 - [ ] **Step 1: 更新 script setup**
@@ -458,17 +467,17 @@ import { usePresenter } from "@/composables/usePresenter";
 在「文字」按钮（`@click="avatarType = 'monogram'"`）后追加：
 
 ```html
-        <button
-          :class="[
+<button
+  :class="[
             'rounded px-2 py-1 text-xs',
             avatarType === 'image'
               ? 'bg-violet-500/20 text-violet-400'
               : 'text-muted-foreground hover:bg-muted',
           ]"
-          @click="avatarType = 'image'"
-        >
-          图片
-        </button>
+  @click="avatarType = 'image'"
+>
+  图片
+</button>
 ```
 
 - [ ] **Step 3: 更新 template — 新增图片模式 UI**
@@ -476,29 +485,29 @@ import { usePresenter } from "@/composables/usePresenter";
 将现有 `v-else`（monogram 模式，第 143 行）改为 `v-else-if="avatarType === 'monogram'"`，并在其后新增图片模式区块：
 
 ```html
-      <!-- Monogram mode -->
-      <div v-else-if="avatarType === 'monogram'" class="flex items-center gap-3">
-        <!-- 原有内容不变 -->
-      </div>
+<!-- Monogram mode -->
+<div v-else-if="avatarType === 'monogram'" class="flex items-center gap-3">
+  <!-- 原有内容不变 -->
+</div>
 
-      <!-- Image mode -->
-      <div v-else-if="avatarType === 'image'" class="flex items-center gap-3">
-        <div
-          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground overflow-hidden"
-        >
-          <span v-if="!avatarImagePath">无</span>
-          <AgentAvatar v-else :avatar="{ kind: 'image', path: avatarImagePath }" size="lg" />
-        </div>
-        <div class="flex flex-col gap-1">
-          <button
-            class="rounded-md bg-violet-600 px-3 py-1 text-xs text-white hover:bg-violet-500"
-            @click="pickImage"
-          >
-            选择图片…
-          </button>
-          <span class="text-xs text-muted-foreground">支持 PNG / JPG / GIF / WebP / SVG</span>
-        </div>
-      </div>
+<!-- Image mode -->
+<div v-else-if="avatarType === 'image'" class="flex items-center gap-3">
+  <div
+    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground overflow-hidden"
+  >
+    <span v-if="!avatarImagePath">无</span>
+    <AgentAvatar v-else :avatar="{ kind: 'image', path: avatarImagePath }" size="lg" />
+  </div>
+  <div class="flex flex-col gap-1">
+    <button
+      class="rounded-md bg-violet-600 px-3 py-1 text-xs text-white hover:bg-violet-500"
+      @click="pickImage"
+    >
+      选择图片…
+    </button>
+    <span class="text-xs text-muted-foreground">支持 PNG / JPG / GIF / WebP / SVG</span>
+  </div>
+</div>
 ```
 
 - [ ] **Step 4: 运行 typecheck + lint**
