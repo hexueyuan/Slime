@@ -22,6 +22,7 @@ import { logger, paths } from "@/utils";
 import { browserSession } from "@/browser/browserSession";
 import { MCPServerPresenter } from "./mcpServerPresenter";
 import { MCPToolBridge } from "./mcpToolBridge";
+import { DevPresenter } from "./devPresenter";
 import { SkillPresenter } from "./skillPresenter";
 import { taskPresenter } from "./taskPresenter";
 
@@ -40,6 +41,7 @@ export class Presenter implements IPresenter {
   agentConfigPresenter: AgentConfigPresenter;
   agentChatPresenter: AgentChatPresenterAdapter;
   mcpServerPresenter: MCPServerPresenter;
+  devPresenter: DevPresenter;
 
   evolutionPresenter: EvolutionPresenter;
 
@@ -59,6 +61,7 @@ export class Presenter implements IPresenter {
     this.gitPresenter = new GitPresenter(paths.effectiveProjectRoot);
     this.evolutionPresenter = new EvolutionPresenter(this.gitPresenter);
     this.mcpServerPresenter = new MCPServerPresenter();
+    this.devPresenter = new DevPresenter();
     const mcpBridge = new MCPToolBridge(this.mcpServerPresenter);
     const skillPresenter = new SkillPresenter(paths.builtinSkillsDir, paths.agentsDir);
     this.toolPresenter = new ToolPresenter(
@@ -120,6 +123,7 @@ export class Presenter implements IPresenter {
     "agentConfigPresenter",
     "agentChatPresenter",
     "mcpServerPresenter",
+    "devPresenter",
   ]);
 
   private async syncVaultTrustedPath(): Promise<void> {
@@ -347,6 +351,14 @@ ipcMain.handle("evolution:skip-package", () => {
 
 ipcMain.handle("dialog:openDirectory", async () => {
   const result = await dialog.showOpenDialog({ properties: ["openDirectory"] });
+  return result.canceled ? null : result.filePaths[0];
+});
+
+ipcMain.handle("dialog:openDirectoryOrFile", async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ["openDirectory", "openFile"],
+    filters: [{ name: "Skill", extensions: ["zip"] }],
+  });
   return result.canceled ? null : result.filePaths[0];
 });
 
