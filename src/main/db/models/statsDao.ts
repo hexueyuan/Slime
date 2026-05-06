@@ -18,7 +18,7 @@ export function aggregateToHourly(db: BetterSqlite3.Database, beforeDate: string
         (date, hour, model_name, channel_id, requests, input_tokens, output_tokens,
          cache_read_tokens, cache_write_tokens, cost, success_count, fail_count, avg_latency_ms)
       SELECT
-        date(created_at) AS date,
+        log_date AS date,
         CAST(strftime('%H', created_at) AS INTEGER) AS hour,
         model_name,
         COALESCE(channel_id, 0),
@@ -94,8 +94,8 @@ export function getStatsRange(db: BetterSqlite3.Database, from: string, to: stri
         SELECT 1, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost,
                duration_ms AS weighted, 1 AS cnt
         FROM relay_logs
-        WHERE date(created_at) >= ? AND date(created_at) < ?
-          AND date(created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
+        WHERE log_date >= ? AND log_date < ?
+          AND log_date NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )`,
     )
     .get(from, to, from, to, from, to) as Record<string, number>;
@@ -216,8 +216,8 @@ export function getChannelRanking(
                l.cache_read_tokens, l.cache_write_tokens,
                CASE WHEN l.status = 'success' THEN l.duration_ms END, l.cost
         FROM relay_logs l LEFT JOIN channels c ON c.id = l.channel_id
-        WHERE date(l.created_at) >= ? AND date(l.created_at) < ?
-          AND date(l.created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
+        WHERE l.log_date >= ? AND l.log_date < ?
+          AND l.log_date NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
       GROUP BY channel_id
       ORDER BY requests DESC`,
@@ -259,8 +259,8 @@ export function getModelRanking(
         UNION ALL
         SELECT model_name, 1, input_tokens, output_tokens,
                cache_read_tokens, cache_write_tokens, cost
-        FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
-          AND date(created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
+        FROM relay_logs WHERE log_date >= ? AND log_date < ?
+          AND log_date NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
       GROUP BY model_name
       ORDER BY requests DESC`,
@@ -288,39 +288,44 @@ export function getLatencyPercentiles(
   const params: (string | number)[] = [from, to];
   if (channelId !== undefined) params.push(channelId);
 
-  const { cnt } = db
+  // Single query to get count + p50 + p95 via window function
+  const row = db
     .prepare(
-      `SELECT COUNT(*) AS cnt FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra}`,
-    )
-    .get(...params) as { cnt: number };
-
-  if (cnt === 0) return { p50: 0, p95: 0, ttftP50: null };
-
-  const p50Offset = Math.max(0, Math.floor(cnt * 0.5) - 1);
-  const p95Offset = Math.max(0, Math.floor(cnt * 0.95) - 1);
-  const durationSql = `SELECT duration_ms FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra} ORDER BY duration_ms LIMIT 1 OFFSET ?`;
-
-  const p50Row = db.prepare(durationSql).get(...params, p50Offset) as { duration_ms: number };
-  const p95Row = db.prepare(durationSql).get(...params, p95Offset) as { duration_ms: number };
-
-  const { cnt: ttftCnt } = db
-    .prepare(
-      `SELECT COUNT(*) AS cnt FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra} AND ttft_ms IS NOT NULL`,
-    )
-    .get(...params) as { cnt: number };
-
-  let ttftP50: number | null = null;
-  if (ttftCnt > 0) {
-    const ttftOffset = Math.max(0, Math.floor(ttftCnt * 0.5) - 1);
-    const ttftRow = db
-      .prepare(
-        `SELECT ttft_ms FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?${extra} AND ttft_ms IS NOT NULL ORDER BY ttft_ms LIMIT 1 OFFSET ?`,
+      `WITH ordered AS (
+        SELECT duration_ms, ttft_ms,
+               ROW_NUMBER() OVER (ORDER BY duration_ms) AS rn,
+               COUNT(*) OVER () AS cnt
+        FROM relay_logs
+        WHERE log_date >= ? AND log_date < ?${extra}
       )
-      .get(...params, ttftOffset) as { ttft_ms: number };
-    ttftP50 = ttftRow.ttft_ms;
-  }
+      SELECT
+        cnt,
+        MAX(CASE WHEN rn = MAX(1, cnt * 50 / 100) THEN duration_ms END) AS p50,
+        MAX(CASE WHEN rn = MAX(1, cnt * 95 / 100) THEN duration_ms END) AS p95
+      FROM ordered`,
+    )
+    .get(...params) as { cnt: number; p50: number | null; p95: number | null } | undefined;
 
-  return { p50: p50Row.duration_ms, p95: p95Row.duration_ms, ttftP50 };
+  if (!row || row.cnt === 0) return { p50: 0, p95: 0, ttftP50: null };
+
+  // TTFT p50 separately (only rows with ttft_ms)
+  let ttftP50: number | null = null;
+  const ttftRow = db
+    .prepare(
+      `WITH ordered AS (
+        SELECT ttft_ms,
+               ROW_NUMBER() OVER (ORDER BY ttft_ms) AS rn,
+               COUNT(*) OVER () AS cnt
+        FROM relay_logs
+        WHERE log_date >= ? AND log_date < ?${extra} AND ttft_ms IS NOT NULL
+      )
+      SELECT MAX(CASE WHEN rn = MAX(1, cnt * 50 / 100) THEN ttft_ms END) AS p50
+      FROM ordered`,
+    )
+    .get(...params) as { p50: number | null } | undefined;
+  if (ttftRow?.p50 != null) ttftP50 = ttftRow.p50;
+
+  return { p50: row.p50 ?? 0, p95: row.p95 ?? 0, ttftP50 };
 }
 
 export function getChannelStabilityHourly(
@@ -345,13 +350,13 @@ export function getChannelStabilityHourly(
          WHERE channel_id = ? AND date >= ? AND date < ?
            AND (success_count + fail_count) > 0
          UNION ALL
-         SELECT date(created_at) || 'T' || printf('%02d', CAST(strftime('%H', created_at) AS INTEGER)),
+         SELECT log_date || 'T' || printf('%02d', CAST(strftime('%H', created_at) AS INTEGER)),
                 CASE WHEN status = 'success' THEN 1 ELSE 0 END,
                 CASE WHEN status = 'error' THEN 1 ELSE 0 END,
                 CASE WHEN status = 'success' THEN duration_ms END
          FROM relay_logs
-         WHERE channel_id = ? AND date(created_at) >= ? AND date(created_at) < ?
-           AND (date(created_at) || '_' || CAST(strftime('%H', created_at) AS INTEGER))
+         WHERE channel_id = ? AND log_date >= ? AND log_date < ?
+           AND (log_date || '_' || CAST(strftime('%H', created_at) AS INTEGER))
              NOT IN (SELECT date || '_' || hour FROM stats_hourly WHERE channel_id = ? AND date >= ? AND date < ?)
        )
        GROUP BY hour
@@ -414,10 +419,10 @@ export function getStatsDailyTrend(
                cache_read_tokens, cache_write_tokens
         FROM stats_daily WHERE date >= ? AND date < ?
         UNION ALL
-        SELECT date(created_at, 'localtime') AS date, 1, input_tokens, output_tokens, cost,
+        SELECT log_date AS date, 1, input_tokens, output_tokens, cost,
                cache_read_tokens, cache_write_tokens
-        FROM relay_logs WHERE date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') < ?
-          AND date(created_at, 'localtime') NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
+        FROM relay_logs WHERE log_date >= ? AND log_date < ?
+          AND log_date NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
       GROUP BY date ORDER BY date`,
     )
@@ -450,11 +455,11 @@ export function getStatsHourlyTrend(
                cache_read_tokens, cache_write_tokens
         FROM stats_hourly WHERE date >= ? AND date < ?
         UNION ALL
-        SELECT date(created_at, 'localtime'), CAST(strftime('%H', created_at, 'localtime') AS INTEGER),
+        SELECT log_date, CAST(strftime('%H', created_at) AS INTEGER),
                1, input_tokens, output_tokens, cost,
                cache_read_tokens, cache_write_tokens
-        FROM relay_logs WHERE date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') < ?
-          AND (date(created_at, 'localtime') || '_' || CAST(strftime('%H', created_at, 'localtime') AS INTEGER))
+        FROM relay_logs WHERE log_date >= ? AND log_date < ?
+          AND (log_date || '_' || CAST(strftime('%H', created_at) AS INTEGER))
             NOT IN (SELECT date || '_' || hour FROM stats_hourly WHERE date >= ? AND date < ?)
       )
       GROUP BY date, hour ORDER BY date, hour`,
