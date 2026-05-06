@@ -23,9 +23,9 @@
           @click="$emit('selectTask', task.id)"
         >
           <span
-            class="w-[60px] shrink-0 truncate font-mono text-[10px]"
+            class="w-[28px] shrink-0 font-mono text-[10px]"
             :class="task.status === 'in_progress' ? 'text-amber-400' : 'text-foreground'"
-            >{{ task.id.slice(-6) }}</span
+            >#{{ taskSeqMap[task.id] }}</span
           >
           <span
             class="flex-1 truncate"
@@ -52,9 +52,9 @@
           class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-muted/50"
           @click="$emit('selectTask', task.id)"
         >
-          <span class="w-[60px] shrink-0 truncate font-mono text-[10px] text-muted-foreground">{{
-            task.id.slice(-6)
-          }}</span>
+          <span class="w-[28px] shrink-0 font-mono text-[10px] text-muted-foreground"
+            >#{{ taskSeqMap[task.id] }}</span
+          >
           <span
             class="flex-1 truncate"
             :class="
@@ -80,6 +80,16 @@ import type { Task } from "@shared/types/schedule";
 
 const props = defineProps<{ tasks: Task[] }>();
 defineEmits<{ selectTask: [id: string]; createTask: [] }>();
+
+// 按创建时间排序分配序号 #1, #2, ...
+const taskSeqMap = computed(() => {
+  const sorted = [...props.tasks].sort((a, b) => a.createdAt - b.createdAt);
+  const map: Record<string, number> = {};
+  sorted.forEach((t, i) => {
+    map[t.id] = i + 1;
+  });
+  return map;
+});
 
 // 待办+进行中，按创建时间排序（最新在前）
 const activeTasks = computed(() =>
