@@ -129,6 +129,30 @@
         </div>
       </div>
 
+      <!-- Skill 白名单 -->
+      <div>
+        <label class="text-xs font-medium text-muted-foreground">Skill 白名单</label>
+        <div class="mt-1 grid grid-cols-3 gap-x-4 gap-y-1">
+          <label
+            v-for="skill in availableSkills"
+            :key="skill"
+            class="flex items-center gap-1 text-sm text-foreground truncate"
+          >
+            <input
+              type="checkbox"
+              :disabled="readonly"
+              :checked="form.enabledSkills.includes(skill)"
+              class="disabled:opacity-50"
+              @change="toggleSkill(skill)"
+            />
+            <span class="truncate">{{ skill }}</span>
+          </label>
+        </div>
+        <p v-if="availableSkills.length === 0" class="mt-1 text-xs text-muted-foreground">
+          暂无可用 Skill
+        </p>
+      </div>
+
       <!-- 参数 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">参数</label>
@@ -239,6 +263,7 @@ const saving = ref(false);
 const saveSuccess = ref(false);
 const availableTools = ref<string[]>([]);
 const availableCliCommands = ref<string[]>([]);
+const availableSkills = ref<string[]>([]);
 
 const form = reactive({
   name: "",
@@ -248,6 +273,7 @@ const form = reactive({
   capabilityRequirements: [] as string[],
   disabledTools: [] as string[],
   allowedCliCommands: [] as string[],
+  enabledSkills: [] as string[],
   temperature: undefined as number | undefined,
   maxTokens: undefined as number | undefined,
   subagentEnabled: false,
@@ -272,6 +298,12 @@ function toggleCliCommand(cmd: string) {
   else form.allowedCliCommands.push(cmd);
 }
 
+function toggleSkill(name: string) {
+  const idx = form.enabledSkills.indexOf(name);
+  if (idx >= 0) form.enabledSkills.splice(idx, 1);
+  else form.enabledSkills.push(name);
+}
+
 function loadBuiltin(info: BuiltinAgentInfo) {
   const cfg = info.config as Record<string, unknown>;
   form.name = (cfg.name as string) || info.id;
@@ -281,6 +313,7 @@ function loadBuiltin(info: BuiltinAgentInfo) {
   form.capabilityRequirements = ((cfg.capabilityRequirements as string[]) || []).slice();
   form.disabledTools = ((cfg.disabledTools as string[]) || []).slice();
   form.allowedCliCommands = ((cfg.allowedCliCommands as string[]) || []).slice();
+  form.enabledSkills = ((cfg.enabledSkills as string[]) || []).slice();
   form.temperature = cfg.temperature as number | undefined;
   form.maxTokens = cfg.maxTokens as number | undefined;
   form.subagentEnabled = (cfg.subagentEnabled as boolean) || false;
@@ -295,6 +328,7 @@ async function loadCustom(agent: Agent) {
   form.capabilityRequirements = (cfg.capabilityRequirements || []).slice();
   form.disabledTools = (cfg.disabledTools || []).slice();
   form.allowedCliCommands = (cfg.allowedCliCommands || []).slice();
+  form.enabledSkills = (cfg.enabledSkills || []).slice();
   form.temperature = cfg.temperature;
   form.maxTokens = cfg.maxTokens;
   form.subagentEnabled = cfg.subagentEnabled || false;
@@ -331,6 +365,7 @@ async function save() {
         capabilityRequirements: form.capabilityRequirements,
         disabledTools: form.disabledTools.length ? form.disabledTools : undefined,
         allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
+        enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
         temperature: form.temperature,
         maxTokens: form.maxTokens,
         subagentEnabled: form.subagentEnabled || undefined,
@@ -347,6 +382,7 @@ async function save() {
           capabilityRequirements: form.capabilityRequirements,
           disabledTools: form.disabledTools.length ? form.disabledTools : undefined,
           allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
+          enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
           temperature: form.temperature,
           maxTokens: form.maxTokens,
           subagentEnabled: form.subagentEnabled || undefined,
@@ -366,5 +402,7 @@ async function save() {
 onMounted(async () => {
   availableTools.value = (await devPresenter.listAvailableTools()) as string[];
   availableCliCommands.value = (await devPresenter.listAvailableCliCommands()) as string[];
+  const skills = (await devPresenter.listGlobalSkills()) as { name: string }[];
+  availableSkills.value = skills.map((s) => s.name);
 });
 </script>
