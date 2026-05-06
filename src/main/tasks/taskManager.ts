@@ -27,7 +27,7 @@ export function nowLocal(): string {
 export function makeId(): string {
   const d = new Date();
   const pad = (n: number, len = 2) => String(n).padStart(len, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}${pad(d.getMilliseconds(), 3)}`;
 }
 
 function parseMeta(comment: string): Record<string, string> {
@@ -38,11 +38,12 @@ function parseMeta(comment: string): Record<string, string> {
   return meta;
 }
 
-function statusFromLine(checkbox: string, emoji: string): TaskStatus {
+function statusFromLine(checkbox: string, emoji: string): TaskStatus | null {
+  if (checkbox === "[ ]" && emoji === "") return "todo";
   if (checkbox === "[ ]" && emoji === "🔄") return "in_progress";
   if (checkbox === "[x]" && emoji === "✅") return "done";
   if (checkbox === "[x]" && emoji === "❌") return "cancelled";
-  return "todo";
+  return null;
 }
 
 function emojiForStatus(status: TaskStatus): string {
@@ -66,7 +67,7 @@ export function serializeTask(task: Task): string {
   const meta: string[] = [`id:${task.id}`, `created:${task.createdAt}`];
   if (task.startedAt) meta.push(`started:${task.startedAt}`);
   if (task.completedAt) meta.push(`completed:${task.completedAt}`);
-  if (task.cancelledAt) meta.push(`cancelledAt:${task.cancelledAt}`);
+  if (task.cancelledAt) meta.push(`cancelled:${task.cancelledAt}`);
   if (task.archivedAt) meta.push(`archived:${task.archivedAt}`);
   return `- ${cb} ${task.description}${emoji} <!-- ${meta.join(" ")} -->`;
 }
@@ -78,6 +79,7 @@ export function parseTaskLine(line: string): Task | null {
   const meta = parseMeta(comment);
   if (!meta["id"] || !meta["created"]) return null;
   const status = statusFromLine(cb.slice(1, -1), emoji);
+  if (status === null) return null;
   return {
     id: meta["id"],
     description: desc.trim(),
@@ -85,7 +87,7 @@ export function parseTaskLine(line: string): Task | null {
     createdAt: meta["created"],
     startedAt: meta["started"],
     completedAt: meta["completed"],
-    cancelledAt: meta["cancelledAt"],
+    cancelledAt: meta["cancelled"],
     archivedAt: meta["archived"],
   };
 }
@@ -120,7 +122,7 @@ export class TaskManager {
     return { main, archived };
   }
 
-  async writeAll(main: Task[], archived: Task[]): Promise<void> {
+  private async writeAll(main: Task[], archived: Task[]): Promise<void> {
     const mainLines = ["# 任务列表", "", ...main.map(serializeTask)].join("\n");
     const archiveLines =
       archived.length > 0 ? ARCHIVE_HEADER + archived.map(serializeTask).join("\n") + "\n" : "";

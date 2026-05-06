@@ -31,3 +31,25 @@ describe("TaskManager.list", () => {
     expect(tasks).toEqual([]);
   });
 });
+
+describe("serializeTask / parseTaskLine round-trip", () => {
+  it("todo task round-trips correctly", async () => {
+    const task = await tm.add("测试任务");
+    const tasks = await tm.list();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].id).toBe(task.id);
+    expect(tasks[0].description).toBe("测试任务");
+    expect(tasks[0].status).toBe("todo");
+  });
+
+  it("list filters by status", async () => {
+    await tm.add("任务A");
+    await tm.add("任务B");
+    const all = await tm.list();
+    expect(all).toHaveLength(2);
+    const todo = await tm.list("todo");
+    expect(todo).toHaveLength(2);
+    const inProg = await tm.list("in_progress");
+    expect(inProg).toHaveLength(0);
+  });
+});
