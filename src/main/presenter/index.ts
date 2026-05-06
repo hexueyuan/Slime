@@ -137,9 +137,17 @@ export class Presenter implements IPresenter {
     await this.mcpServerPresenter.init();
     await this.agentConfigPresenter.init();
     await this.syncVaultTrustedPath();
-    // Re-sync trusted path whenever config changes
-    eventBus.on("config:changed", () => {
+    // Re-sync trusted path whenever config changes; re-init taskPresenter on vault path change
+    eventBus.on("config:changed", async (key: string) => {
       this.syncVaultTrustedPath().catch(() => {});
+      if (key === "obsidian.vaultPath") {
+        const newVaultPath = (await this.configPresenter.get("obsidian.vaultPath")) as
+          | string
+          | undefined;
+        if (newVaultPath) {
+          await taskPresenter.init(newVaultPath);
+        }
+      }
     });
     const vaultPath = (await this.configPresenter.get("obsidian.vaultPath")) as string | undefined;
     if (vaultPath) {
