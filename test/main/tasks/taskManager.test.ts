@@ -125,3 +125,63 @@ describe("TaskManager CRUD", () => {
     expect(tasks[0].description).toBe("持久化任务");
   });
 });
+
+describe("TaskManager.autoArchive", () => {
+  it("archives done tasks older than 7 days", async () => {
+    const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const oldDate = `${eightDaysAgo.getFullYear()}-${pad(eightDaysAgo.getMonth() + 1)}-${pad(eightDaysAgo.getDate())}T${pad(eightDaysAgo.getHours())}:${pad(eightDaysAgo.getMinutes())}:${pad(eightDaysAgo.getSeconds())}`;
+    const content = `# 任务列表\n\n- [x] 旧任务 ✅ <!-- id:20250101120000000 created:2025-01-01T12:00:00 completed:${oldDate} -->\n`;
+    await writeFile(tasksFile, content, "utf-8");
+
+    await tm.autoArchive();
+
+    const main = await tm.list();
+    const archived = await tm.list("archived");
+    expect(main).toHaveLength(0);
+    expect(archived).toHaveLength(1);
+    expect(archived[0].id).toBe("20250101120000000");
+    expect(archived[0].archivedAt).toBeDefined();
+  });
+
+  it("does not archive done tasks within 7 days", async () => {
+    const t = await tm.add("新任务");
+    await tm.start(t.id);
+    await tm.done(t.id);
+    await tm.autoArchive();
+    const main = await tm.list();
+    expect(main).toHaveLength(1);
+  });
+
+  it("archives cancelled tasks older than 7 days", async () => {
+    const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const oldDate = `${eightDaysAgo.getFullYear()}-${pad(eightDaysAgo.getMonth() + 1)}-${pad(eightDaysAgo.getDate())}T${pad(eightDaysAgo.getHours())}:${pad(eightDaysAgo.getMinutes())}:${pad(eightDaysAgo.getSeconds())}`;
+    const content = `# 任务列表\n\n- [x] 旧取消任务 ❌ <!-- id:20250102120000000 created:2025-01-02T12:00:00 cancelled:${oldDate} -->\n`;
+    await writeFile(tasksFile, content, "utf-8");
+
+    await tm.autoArchive();
+
+    const archived = await tm.list("archived");
+    expect(archived[0].id).toBe("20250102120000000");
+  });
+
+  it("sorts archived section by completedAt/cancelledAt ascending", async () => {
+    const makeOldLine = (id: string, dateStr: string, emoji: string, field: string) =>
+      `- [x] 任务${id} ${emoji} <!-- id:${id} created:2025-01-01T00:00:00 ${field}:${dateStr} -->`;
+    const content = [
+      "# 任务列表",
+      "",
+      makeOldLine("20250101000000001", "2025-01-10T00:00:00", "✅", "completed"),
+      makeOldLine("20250101000000002", "2025-01-09T00:00:00", "✅", "completed"),
+      "",
+    ].join("\n");
+    await writeFile(tasksFile, content, "utf-8");
+
+    await tm.autoArchive();
+
+    const archived = await tm.list("archived");
+    expect(archived[0].id).toBe("20250101000000002");
+    expect(archived[1].id).toBe("20250101000000001");
+  });
+});

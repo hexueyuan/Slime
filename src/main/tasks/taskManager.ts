@@ -189,4 +189,57 @@ export class TaskManager {
     await this.writeAll(main, archived);
     return task;
   }
+
+  async autoArchive(): Promise<void> {
+    const { main, archived } = await this.readAll();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const toArchive: Task[] = [];
+    const remaining: Task[] = [];
+
+    for (const task of main) {
+      const terminalDate = task.completedAt ?? task.cancelledAt;
+      if ((task.status === "done" || task.status === "cancelled") && terminalDate) {
+        const age = now - new Date(terminalDate).getTime();
+        if (age > sevenDaysMs) {
+          toArchive.push({ ...task, status: "archived", archivedAt: nowLocal() });
+          continue;
+        }
+      }
+      remaining.push(task);
+    }
+
+    if (toArchive.length === 0) return;
+
+    const allArchived = [...archived, ...toArchive].sort((a, b) => {
+      const da = a.completedAt ?? a.cancelledAt ?? "";
+      const db = b.completedAt ?? b.cancelledAt ?? "";
+      return da.localeCompare(db);
+    });
+
+    await this.writeAll(remaining, allArchived);
+  }
+
+  async getDashboardData(): Promise<Record<string, unknown>> {
+    const { main } = await this.readAll();
+    const fmt = (tasks: Task[]) =>
+      tasks.length === 0
+        ? '<span class="empty">暂无</span>'
+        : tasks.map((t) => `<div class="task-item">${t.description}</div>`).join("");
+
+    const todo = main.filter((t) => t.status === "todo");
+    const inProgress = main.filter((t) => t.status === "in_progress");
+    const done = main.filter((t) => t.status === "done");
+
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const lastUpdated = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    return {
+      todo: fmt(todo),
+      in_progress: fmt(inProgress),
+      done: fmt(done),
+      last_updated: lastUpdated,
+    };
+  }
 }
