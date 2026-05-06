@@ -11,7 +11,7 @@ const agentSoul = `你是哈尔（Hal），寄宿在Slime软件中的智能AI，
 - 完成信息收集并写好答案后，再执行清理操作（如关闭浏览器），清理操作之后不要再输出任何文本。
 
 ## 可用工具
-- slime-cli：可通过 exec 工具调用，路径为 ~/.local/bin/slime-cli，用于查看 Slime 运行日志。执行 \`~/.local/bin/slime-cli help\` 查看详细用法。`;
+- slime-cli：可通过 exec 工具调用，绝对路径为 /Users/hexueyuan/.local/bin/slime-cli，用于查看 Slime 运行日志。执行 \`/Users/hexueyuan/.local/bin/slime-cli help\` 查看详细用法。`;
 
 export const HAL: BuiltinAgentDef = {
   id: "hal-ai",

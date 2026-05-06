@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { exec as execCb } from "child_process";
+import { existsSync } from "fs";
+import { homedir } from "os";
 import { promisify } from "util";
 import type { FilePresenter } from "./filePresenter";
 import type { ContentPresenter } from "./contentPresenter";
@@ -125,7 +127,8 @@ export class ToolPresenter {
         }),
         execute: async ({ command, timeout_ms }) => {
           validateCommand(command);
-          const cwd = paths.effectiveProjectRoot;
+          const rawCwd = paths.effectiveProjectRoot;
+          const cwd = existsSync(rawCwd) ? rawCwd : homedir();
           const sessionCtx = this.sessionContexts.get(sessionId);
           const slimeEnv = sessionCtx
             ? {
@@ -134,16 +137,43 @@ export class ToolPresenter {
                 SLIME_DATA_DIR: app.getPath("userData"),
               }
             : {};
+          const fallbackPath = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
           try {
             const { stdout, stderr } = await execAsync(command, {
               cwd,
+              shell: "/bin/sh",
               timeout: timeout_ms,
               maxBuffer: 1024 * 1024,
-              env: { ...process.env, ...slimeEnv },
+              env: {
+                PATH: fallbackPath,
+                ...process.env,
+                ...slimeEnv,
+              },
+            });
+            logger.debug("tool:exec:ok", {
+              command,
+              stdout: stdout.slice(0, 200),
+              stderr: stderr.slice(0, 200),
             });
             return { stdout, stderr, exit_code: 0 };
           } catch (err: unknown) {
-            const e = err as { stdout?: string; stderr?: string; message?: string; code?: number };
+            const e = err as {
+              stdout?: string;
+              stderr?: string;
+              message?: string;
+              code?: number;
+              killed?: boolean;
+              signal?: string;
+            };
+            logger.error("tool:exec:error", {
+              command,
+              stdout: e.stdout,
+              stderr: e.stderr,
+              message: e.message,
+              code: e.code,
+              killed: e.killed,
+              signal: e.signal,
+            });
             return {
               stdout: e.stdout || "",
               stderr: e.stderr || e.message || "",

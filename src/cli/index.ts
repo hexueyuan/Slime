@@ -18,8 +18,8 @@ function main(): void {
 
   const args = process.argv.slice(2);
 
-  // No args → help
-  if (args.length === 0) {
+  // No args or --help → help
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
     helpCommand.run([], ctx);
     return;
   }

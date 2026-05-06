@@ -15,6 +15,7 @@ extraResources:
   - build/icon.png
   - resources/skills/
   - resources/agents/
+  - resources/slime-cli.js
 asarUnpack:
   - "node_modules/better-sqlite3/**"
 mac:

@@ -2,7 +2,20 @@ import { writeFileSync, chmodSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { app } from "electron";
+import { execFileSync } from "child_process";
 import { logger } from "./logger";
+
+function findNode(): string {
+  const candidates = ["/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  try {
+    return execFileSync("/usr/bin/which", ["node"], { encoding: "utf-8" }).trim();
+  } catch {
+    return "node";
+  }
+}
 
 export async function setupCliWrapper(userName: string): Promise<void> {
   try {
@@ -13,17 +26,18 @@ export async function setupCliWrapper(userName: string): Promise<void> {
 
     const wrapperPath = join(wrapperDir, "slime-cli");
     const cliJsPath = app.isPackaged
-      ? join(app.getAppPath(), "..", "slime-cli.js")
+      ? join(app.getAppPath(), "..", "resources", "slime-cli.js")
       : join(app.getAppPath(), "resources", "slime-cli.js");
     const userData = app.getPath("userData");
 
+    const nodePath = findNode();
     const script =
       [
         "#!/bin/sh",
         `SLIME_ROLE=\${SLIME_ROLE:-user} \\`,
         `SLIME_USER_ID=\${SLIME_USER_ID:-${JSON.stringify(userName)}} \\`,
         `SLIME_DATA_DIR=\${SLIME_DATA_DIR:-${JSON.stringify(userData)}} \\`,
-        `node ${JSON.stringify(cliJsPath)} "$@"`,
+        `${JSON.stringify(nodePath)} ${JSON.stringify(cliJsPath)} "$@"`,
       ].join("\n") + "\n";
 
     writeFileSync(wrapperPath, script, "utf-8");
