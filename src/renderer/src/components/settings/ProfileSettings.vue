@@ -50,9 +50,9 @@ onMounted(async () => {
       avatarType.value = "icon";
       avatarIcon.value = profile.avatar.icon ?? "lucide:user";
       avatarColor.value = profile.avatar.color ?? "#3b82f6";
-    } else if (profile.avatar?.kind === "image") {
+    } else if (profile.avatar?.kind === "image" && profile.avatar.path) {
       avatarType.value = "image";
-      avatarImagePath.value = profile.avatar.path ?? "";
+      avatarImagePath.value = profile.avatar.path;
     } else if (profile.avatar?.kind === "monogram") {
       avatarType.value = "monogram";
       avatarText.value = profile.avatar.text ?? "U";
