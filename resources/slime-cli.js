@@ -140,7 +140,6 @@ const STATUS_LABEL = {
   in_progress: "进行中",
   done: "已完成",
   cancelled: "已取消",
-  archived: "已归档",
 };
 function getBaseUrl() {
   const port = process.env["SLIME_TASK_PORT"];
@@ -159,15 +158,17 @@ async function httpRequest(method, path, body) {
   if (!res.ok) throw new Error(json.error);
   return json;
 }
+function formatTime(ms) {
+  if (!ms) return "";
+  return new Date(ms).toISOString().slice(0, 19).replace("T", " ");
+}
 function formatTask(t) {
   const parts = [
-    `[${t.id}] ${t.description} [${STATUS_LABEL[t.status] ?? t.status}]`,
-    `created:${t.createdAt}`,
+    `[${t.id}] ${t.title} [${STATUS_LABEL[t.status] ?? t.status}]`,
+    `created:${formatTime(t.createdAt)}`,
   ];
-  if (t.startedAt) parts.push(`started:${t.startedAt}`);
-  if (t.completedAt) parts.push(`completed:${t.completedAt}`);
-  if (t.cancelledAt) parts.push(`cancelled:${t.cancelledAt}`);
-  if (t.archivedAt) parts.push(`archived:${t.archivedAt}`);
+  if (t.startedAt) parts.push(`started:${formatTime(t.startedAt)}`);
+  if (t.finishedAt) parts.push(`finished:${formatTime(t.finishedAt)}`);
   return parts.join(" ");
 }
 async function runAsync(args) {
@@ -179,18 +180,18 @@ async function runAsync(args) {
   start <id>                   待办 → 进行中
   done <id>                    进行中 → 已完成
   cancel <id>                  任意状态 → 已取消
-  list [--status <状态>]       列表查询（默认返回非归档任务）
+  list [--status <状态>]       列表查询
   get <id>                     查询单个任务详情
 
-状态值: todo | in_progress | done | cancelled | archived
+状态值: todo | in_progress | done | cancelled
 `,
     );
     return;
   }
   if (sub === "add") {
-    const description = rest.join(" ").trim();
-    if (!description) throw new Error("description is required");
-    const task = await httpRequest("POST", "/tasks", { description });
+    const title = rest.join(" ").trim();
+    if (!title) throw new Error("title is required");
+    const task = await httpRequest("POST", "/tasks", { title });
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "start") {
     if (!rest[0]) throw new Error("id is required");
@@ -225,7 +226,7 @@ async function runAsync(args) {
 }
 const taskCommand = {
   name: "task",
-  description: "任务管理（待办/进行中/已完成/已取消/已归档）",
+  description: "任务管理（待办/进行中/已完成/已取消）",
   detail: "task <subcommand> — add/start/done/cancel/list/get",
   allowedRoles: ["builtin-agent"],
   allowedAgents: ["moss-ai"],
