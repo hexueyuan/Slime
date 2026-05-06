@@ -23,6 +23,7 @@ import { browserSession } from "@/browser/browserSession";
 import { MCPServerPresenter } from "./mcpServerPresenter";
 import { MCPToolBridge } from "./mcpToolBridge";
 import { SkillPresenter } from "./skillPresenter";
+import { taskPresenter } from "./taskPresenter";
 
 type DispatchableKey = Exclude<keyof IPresenter, "init" | "destroy">;
 
@@ -140,6 +141,10 @@ export class Presenter implements IPresenter {
     eventBus.on("config:changed", () => {
       this.syncVaultTrustedPath().catch(() => {});
     });
+    const vaultPath = (await this.configPresenter.get("obsidian.vaultPath")) as string | undefined;
+    if (vaultPath) {
+      await taskPresenter.init(vaultPath);
+    }
     logger.info("Presenter initialized");
   }
 
@@ -166,6 +171,7 @@ export class Presenter implements IPresenter {
   async destroy(): Promise<void> {
     await browserSession.close();
     await this.gatewayPresenter.destroy();
+    await taskPresenter.destroy();
     logger.info("Presenter destroyed");
   }
 }
