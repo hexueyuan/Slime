@@ -231,6 +231,32 @@ export class DevPresenter implements IDevPresenter {
     await rm(dir, { recursive: true });
   }
 
+  async getSkillContent(
+    skillName: string,
+    source: "builtin" | "installed",
+  ): Promise<string | null> {
+    const dir = source === "builtin" ? this.builtinSkillsDir : this.skillsSrcDir;
+    const skillDir = join(dir, skillName);
+    const skillMd = join(skillDir, "SKILL.md");
+    if (existsSync(skillMd)) return readFileSync(skillMd, "utf-8");
+    // fallback: try manifest-based skill with index.md
+    const indexMd = join(skillDir, "index.md");
+    if (existsSync(indexMd)) return readFileSync(indexMd, "utf-8");
+    return null;
+  }
+
+  async saveSkillContent(
+    skillName: string,
+    source: "builtin" | "installed",
+    content: string,
+  ): Promise<void> {
+    this.assertDev();
+    const dir = source === "builtin" ? this.builtinSkillsDir : this.skillsSrcDir;
+    const skillDir = join(dir, skillName);
+    const skillMd = join(skillDir, "SKILL.md");
+    await writeFile(skillMd, content, "utf-8");
+  }
+
   async uninstallBuiltinSkill(skillName: string): Promise<void> {
     this.assertDev();
     const dir = join(this.builtinSkillsDir, skillName);

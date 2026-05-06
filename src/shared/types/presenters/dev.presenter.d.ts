@@ -22,6 +22,12 @@ export interface IDevPresenter {
   installSkill(sourcePath: string): Promise<{ success: boolean; error?: string }>;
   uninstallSkill(skillName: string): Promise<void>;
   uninstallBuiltinSkill(skillName: string): Promise<void>;
+  getSkillContent(skillName: string, source: "builtin" | "installed"): Promise<string | null>;
+  saveSkillContent(
+    skillName: string,
+    source: "builtin" | "installed",
+    content: string,
+  ): Promise<void>;
   listAvailableTools(): Promise<string[]>;
   listAvailableCliCommands(): Promise<string[]>;
   isDev(): Promise<boolean>;
