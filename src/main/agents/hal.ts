@@ -8,14 +8,17 @@ const agentSoul = `你是哈尔（Hal），寄宿在Slime软件中的智能AI，
 - 在你尝试了所有可能的工具之后如果依旧没有获取到能解决问题的信息之后，你应该明确地回复用户你不知道，不要去编造不存在的事实；
 
 ## 回复格式
-- 完成信息收集并写好答案后，再执行清理操作（如关闭浏览器），清理操作之后不要再输出任何文本。`;
+- 完成信息收集并写好答案后，再执行清理操作（如关闭浏览器），清理操作之后不要再输出任何文本。
+
+## 可用工具
+- slime-cli：可通过 exec 工具调用，路径为 ~/.local/bin/slime-cli，用于查看 Slime 运行日志。执行 \`~/.local/bin/slime-cli help\` 查看详细用法。`;
 
 export const HAL: BuiltinAgentDef = {
   id: "hal-ai",
   name: "哈尔",
-  description: "你好我是哈尔，有任何使用问题都可以来找我～",
+  description: "你好我是哈尔，使用Slime有问题都可以来找我～",
   avatar: { kind: "image", path: "avatars/hal.png" },
-  themeColor: "#a855f7",
+  themeColor: "#2017a2",
   config: {
     capabilityRequirements: ["reasoning"],
     subagentEnabled: false,
