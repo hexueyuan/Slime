@@ -5,6 +5,9 @@ import type { ChatMessageRecord, AgentAvatar as AgentAvatarType } from "@shared/
 import { useAgentChatStore } from "@/stores/agentChat";
 import { formatMessageTime } from "@/utils/formatTime";
 import AgentAvatarComp from "./AgentAvatar.vue";
+import { useProfileModal } from "@/composables/useProfileModal";
+
+const { open: openProfile } = useProfileModal();
 
 const props = defineProps<{
   message: ChatMessageRecord;
@@ -59,6 +62,11 @@ async function copyMessage() {
     </div>
 
     <!-- Avatar -->
-    <AgentAvatarComp :avatar="userAvatar" size="lg" />
+    <AgentAvatarComp
+      :avatar="userAvatar"
+      size="lg"
+      class="cursor-pointer"
+      @click="openProfile({ type: 'user' })"
+    />
   </div>
 </template>
