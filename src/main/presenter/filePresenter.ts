@@ -24,7 +24,16 @@ const FORBIDDEN_WRITE_PATTERNS = [
 ];
 
 export class FilePresenter implements IFilePresenter {
+  private trustedPaths: string[] = [];
+
   constructor(private projectRoot?: string) {}
+
+  addTrustedPath(p: string): void {
+    const normalized = p.endsWith("/") ? p : p + "/";
+    if (!this.trustedPaths.includes(normalized)) {
+      this.trustedPaths.push(normalized);
+    }
+  }
 
   private validateWritable(userPath: string): void {
     const normalized = userPath.replace(/\\/g, "/");
@@ -38,8 +47,12 @@ export class FilePresenter implements IFilePresenter {
   private resolveSafe(userPath: string): string {
     const root = this.projectRoot || process.cwd();
     const resolved = resolve(root, userPath);
+    // Allow absolute paths that fall within a trusted path (e.g. obsidian vault)
     if (!resolved.startsWith(root)) {
-      throw new Error(`Path "${userPath}" resolves outside project root`);
+      const inTrusted = this.trustedPaths.some((tp) => resolved.startsWith(tp));
+      if (!inTrusted) {
+        throw new Error(`Path "${userPath}" resolves outside project root`);
+      }
     }
     return resolved;
   }

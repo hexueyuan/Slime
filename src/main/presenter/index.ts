@@ -121,6 +121,11 @@ export class Presenter implements IPresenter {
     "mcpServerPresenter",
   ]);
 
+  private async syncVaultTrustedPath(): Promise<void> {
+    const vaultPath = (await this.configPresenter.get("obsidian.vaultPath")) as string | null;
+    if (vaultPath) this.filePresenter.addTrustedPath(vaultPath);
+  }
+
   async init(): Promise<void> {
     this.pendingRecovery = await this.evolutionPresenter.restoreState();
     if (this.pendingRecovery) {
@@ -130,6 +135,11 @@ export class Presenter implements IPresenter {
     await this.gatewayPresenter.init(port ?? undefined);
     await this.mcpServerPresenter.init();
     await this.agentConfigPresenter.init();
+    await this.syncVaultTrustedPath();
+    // Re-sync trusted path whenever config changes
+    eventBus.on("config:changed", () => {
+      this.syncVaultTrustedPath().catch(() => {});
+    });
     logger.info("Presenter initialized");
   }
 
