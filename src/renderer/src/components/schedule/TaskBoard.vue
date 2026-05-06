@@ -3,7 +3,7 @@
     <!-- 上半：待办 + 进行中 -->
     <div class="flex-1 overflow-y-auto border-b border-border pb-2">
       <div class="mb-2 flex items-center justify-between">
-        <h2 class="text-xs font-semibold text-foreground">待办 / 进行中</h2>
+        <h2 class="text-sm font-semibold text-foreground">待办 / 进行中</h2>
         <button
           class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted"
           title="新建任务"
@@ -41,7 +41,7 @@
 
     <!-- 下半：已完成 + 已取消 -->
     <div class="flex-1 overflow-y-auto pt-2">
-      <h2 class="mb-2 text-xs font-semibold text-muted-foreground">已完成 / 已取消</h2>
+      <h2 class="mb-2 text-sm font-semibold text-muted-foreground">已完成 / 已取消</h2>
       <div v-if="finishedTasks.length === 0" class="py-4 text-center text-xs text-muted-foreground">
         暂无记录
       </div>
