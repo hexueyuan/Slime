@@ -39,10 +39,10 @@ function parseMeta(comment: string): Record<string, string> {
 }
 
 function statusFromLine(checkbox: string, emoji: string): TaskStatus | null {
-  if (checkbox === "[ ]" && emoji === "") return "todo";
-  if (checkbox === "[ ]" && emoji === "🔄") return "in_progress";
-  if (checkbox === "[x]" && emoji === "✅") return "done";
-  if (checkbox === "[x]" && emoji === "❌") return "cancelled";
+  if (checkbox === " " && emoji === "") return "todo";
+  if (checkbox === " " && emoji === "🔄") return "in_progress";
+  if (checkbox === "x" && emoji === "✅") return "done";
+  if (checkbox === "x" && emoji === "❌") return "cancelled";
   return null;
 }
 
@@ -134,5 +134,58 @@ export class TaskManager {
     if (status === "archived") return archived;
     if (status) return main.filter((t) => t.status === status);
     return main;
+  }
+
+  async add(description: string): Promise<Task> {
+    const { main, archived } = await this.readAll();
+    const task: Task = {
+      id: makeId(),
+      description,
+      status: "todo",
+      createdAt: nowLocal(),
+    };
+    main.push(task);
+    await this.writeAll(main, archived);
+    return task;
+  }
+
+  async get(id: string): Promise<Task | null> {
+    const { main, archived } = await this.readAll();
+    return [...main, ...archived].find((t) => t.id === id) ?? null;
+  }
+
+  async start(id: string): Promise<Task> {
+    const { main, archived } = await this.readAll();
+    const task = main.find((t) => t.id === id);
+    if (!task) throw new Error(`task ${id} not found`);
+    if (task.status !== "todo")
+      throw new Error(`task ${id} cannot transition from ${task.status} to in_progress`);
+    task.status = "in_progress";
+    task.startedAt = nowLocal();
+    await this.writeAll(main, archived);
+    return task;
+  }
+
+  async done(id: string): Promise<Task> {
+    const { main, archived } = await this.readAll();
+    const task = main.find((t) => t.id === id);
+    if (!task) throw new Error(`task ${id} not found`);
+    if (task.status === "done") throw new Error(`task ${id} cannot transition from done to done`);
+    task.status = "done";
+    task.completedAt = nowLocal();
+    await this.writeAll(main, archived);
+    return task;
+  }
+
+  async cancel(id: string): Promise<Task> {
+    const { main, archived } = await this.readAll();
+    const task = main.find((t) => t.id === id);
+    if (!task) throw new Error(`task ${id} not found`);
+    if (task.status === "cancelled")
+      throw new Error(`task ${id} cannot transition from cancelled to cancelled`);
+    task.status = "cancelled";
+    task.cancelledAt = nowLocal();
+    await this.writeAll(main, archived);
+    return task;
   }
 }
