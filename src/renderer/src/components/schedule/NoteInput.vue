@@ -6,6 +6,7 @@
         v-model="text"
         class="flex-1 resize-none rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
         rows="3"
+        maxlength="200"
         placeholder="记录一些想法..."
         @keydown.ctrl.enter="submit"
         @keydown.meta.enter="submit"
@@ -18,7 +19,10 @@
         <Icon icon="lucide:send" class="h-4 w-4" />
       </button>
     </div>
-    <div class="mt-1 text-[10px] text-muted-foreground/50">Ctrl+Enter 提交</div>
+    <div class="mt-1 flex justify-between text-[10px] text-muted-foreground/50">
+      <span>Ctrl+Enter 提交</span>
+      <span>{{ text.length }}/200</span>
+    </div>
   </div>
 </template>
 
