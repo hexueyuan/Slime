@@ -34,6 +34,12 @@ const EXEC_BLOCKED_PATTERNS: [RegExp, string][] = [
 
 function validateCommand(command: string): void {
   for (const [pattern, reason] of EXEC_BLOCKED_PATTERNS) {
+    if (reason === "absolute paths are not allowed") {
+      if (pattern.test(command) && !/slime-cli\b/.test(command)) {
+        throw new Error(`Command blocked: ${reason} — "${command}"`);
+      }
+      continue;
+    }
     if (pattern.test(command)) {
       throw new Error(`Command blocked: ${reason} — "${command}"`);
     }
