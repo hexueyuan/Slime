@@ -1,56 +1,103 @@
 <template>
-  <div>
-    <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-sm font-semibold text-foreground">任务</h2>
-      <button
-        class="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted"
-        title="新建任务"
-        @click="$emit('createTask')"
-      >
-        <Icon icon="lucide:plus" class="h-4 w-4" />
-      </button>
+  <div class="flex h-full flex-col">
+    <!-- 上半：待办 + 进行中 -->
+    <div class="flex-1 overflow-y-auto border-b border-border pb-2">
+      <div class="mb-2 flex items-center justify-between">
+        <h2 class="text-xs font-semibold text-foreground">待办 / 进行中</h2>
+        <button
+          class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted"
+          title="新建任务"
+          @click="$emit('createTask')"
+        >
+          <Icon icon="lucide:plus" class="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div v-if="activeTasks.length === 0" class="py-4 text-center text-xs text-muted-foreground">
+        暂无任务
+      </div>
+      <div v-else class="space-y-0.5">
+        <button
+          v-for="task in activeTasks"
+          :key="task.id"
+          class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-muted/50"
+          @click="$emit('selectTask', task.id)"
+        >
+          <span
+            class="w-[60px] shrink-0 truncate font-mono text-[10px]"
+            :class="task.status === 'in_progress' ? 'text-amber-400' : 'text-foreground'"
+            >{{ task.id.slice(-6) }}</span
+          >
+          <span
+            class="flex-1 truncate"
+            :class="task.status === 'in_progress' ? 'text-amber-400' : 'text-foreground'"
+            >{{ task.title }}</span
+          >
+          <span class="shrink-0 text-[10px] text-muted-foreground">{{
+            formatDate(task.createdAt)
+          }}</span>
+        </button>
+      </div>
     </div>
 
-    <TaskGroup
-      label="待办"
-      color-class="text-slate-300"
-      :tasks="todoTasks"
-      @select-task="$emit('selectTask', $event)"
-    />
-    <TaskGroup
-      label="进行中"
-      color-class="text-amber-400"
-      :tasks="inProgressTasks"
-      @select-task="$emit('selectTask', $event)"
-    />
-    <TaskGroup
-      label="已完成"
-      color-class="text-emerald-400"
-      :tasks="doneTasks"
-      :default-collapsed="true"
-      @select-task="$emit('selectTask', $event)"
-    />
-    <TaskGroup
-      label="已取消"
-      color-class="text-slate-500"
-      :tasks="cancelledTasks"
-      :default-collapsed="true"
-      @select-task="$emit('selectTask', $event)"
-    />
+    <!-- 下半：已完成 + 已取消 -->
+    <div class="flex-1 overflow-y-auto pt-2">
+      <h2 class="mb-2 text-xs font-semibold text-muted-foreground">已完成 / 已取消</h2>
+      <div v-if="finishedTasks.length === 0" class="py-4 text-center text-xs text-muted-foreground">
+        暂无记录
+      </div>
+      <div v-else class="space-y-0.5">
+        <button
+          v-for="task in finishedTasks"
+          :key="task.id"
+          class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-muted/50"
+          @click="$emit('selectTask', task.id)"
+        >
+          <span class="w-[60px] shrink-0 truncate font-mono text-[10px] text-muted-foreground">{{
+            task.id.slice(-6)
+          }}</span>
+          <span
+            class="flex-1 truncate"
+            :class="
+              task.status === 'cancelled'
+                ? 'text-muted-foreground line-through'
+                : 'text-emerald-400/80'
+            "
+            >{{ task.title }}</span
+          >
+          <span class="shrink-0 text-[10px] text-muted-foreground">{{
+            formatDate(task.finishedAt)
+          }}</span>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
 import { Icon } from "@iconify/vue";
-import TaskGroup from "./TaskGroup.vue";
 import type { Task } from "@shared/types/schedule";
 
 const props = defineProps<{ tasks: Task[] }>();
 defineEmits<{ selectTask: [id: string]; createTask: [] }>();
 
-const todoTasks = computed(() => props.tasks.filter((t) => t.status === "todo"));
-const inProgressTasks = computed(() => props.tasks.filter((t) => t.status === "in_progress"));
-const doneTasks = computed(() => props.tasks.filter((t) => t.status === "done"));
-const cancelledTasks = computed(() => props.tasks.filter((t) => t.status === "cancelled"));
+// 待办+进行中，按创建时间排序（最新在前）
+const activeTasks = computed(() =>
+  props.tasks
+    .filter((t) => t.status === "todo" || t.status === "in_progress")
+    .sort((a, b) => b.createdAt - a.createdAt),
+);
+
+// 已完成+已取消，按结束时间排序（最新在前）
+const finishedTasks = computed(() =>
+  props.tasks
+    .filter((t) => t.status === "done" || t.status === "cancelled")
+    .sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0)),
+);
+
+function formatDate(ms?: number): string {
+  if (!ms) return "";
+  const d = new Date(ms);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 </script>

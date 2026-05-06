@@ -1,18 +1,18 @@
 <template>
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-1">
     <button
-      class="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted"
+      class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted"
       @click="prevWeek"
     >
-      <Icon icon="lucide:chevron-left" class="h-4 w-4" />
+      <Icon icon="lucide:chevron-left" class="h-3 w-3" />
     </button>
 
-    <div class="flex flex-1 justify-between">
+    <div class="flex flex-1 items-center justify-between">
       <button
         v-for="day in weekDays"
         :key="day.date"
         :class="[
-          'flex w-9 flex-col items-center rounded-md py-1 text-xs',
+          'flex w-7 flex-col items-center rounded py-0.5 text-[11px]',
           day.date === selectedDate
             ? 'bg-violet-500/20 text-violet-400'
             : day.isToday
@@ -21,17 +21,19 @@
         ]"
         @click="$emit('update:selectedDate', day.date)"
       >
-        <span class="text-[10px]">{{ day.label }}</span>
-        <span class="mt-0.5 font-medium">{{ day.dayNum }}</span>
+        <span class="text-[9px]">{{ day.label }}</span>
+        <span class="font-medium">{{ day.dayNum }}</span>
       </button>
     </div>
 
     <button
-      class="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted"
+      class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted"
       @click="nextWeek"
     >
-      <Icon icon="lucide:chevron-right" class="h-4 w-4" />
+      <Icon icon="lucide:chevron-right" class="h-3 w-3" />
     </button>
+
+    <span class="ml-1 whitespace-nowrap text-[10px] text-muted-foreground">第{{ weekNum }}周</span>
   </div>
 </template>
 
@@ -64,6 +66,13 @@ const weekDays = computed(() => {
       isToday: date === today,
     };
   });
+});
+
+const weekNum = computed(() => {
+  const d = new Date(weekDays.value[3].date); // Thursday of the week (ISO week rule)
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const days = Math.floor((d.getTime() - yearStart.getTime()) / 86400000);
+  return Math.ceil((days + yearStart.getDay() + 1) / 7);
 });
 
 function prevWeek(): void {
