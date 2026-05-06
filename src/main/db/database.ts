@@ -228,6 +228,44 @@ CREATE TABLE IF NOT EXISTS session_mcp_state (
   disabled INTEGER NOT NULL DEFAULT 0,
   UNIQUE(session_id, tool_id)
 );
+
+CREATE TABLE IF NOT EXISTS tasks (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  detail TEXT,
+  status TEXT NOT NULL DEFAULT 'todo',
+  created_at INTEGER NOT NULL,
+  started_at INTEGER,
+  finished_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+
+CREATE TABLE IF NOT EXISTS task_attachments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  file_type TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS timeline_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  content TEXT NOT NULL,
+  source TEXT NOT NULL,
+  source_id TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_timeline_date ON timeline_entries(date);
+
+CREATE TABLE IF NOT EXISTS notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  content TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
 `;
 
 function migrate(instance: BetterSqlite3.Database): void {
@@ -240,6 +278,48 @@ function migrate(instance: BetterSqlite3.Database): void {
   const agentCols = instance.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
   if (!agentCols.some((c) => c.name === "theme_color")) {
     instance.exec("ALTER TABLE agents ADD COLUMN theme_color TEXT");
+  }
+  // Add schedule tables if they don't exist (v0.5 migration)
+  const tables = instance
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'")
+    .get();
+  if (!tables) {
+    instance.exec(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        detail TEXT,
+        status TEXT NOT NULL DEFAULT 'todo',
+        created_at INTEGER NOT NULL,
+        started_at INTEGER,
+        finished_at INTEGER
+      );
+      CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+      CREATE TABLE IF NOT EXISTS task_attachments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+        file_name TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        file_type TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS timeline_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT,
+        content TEXT NOT NULL,
+        source TEXT NOT NULL,
+        source_id TEXT,
+        created_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_timeline_date ON timeline_entries(date);
+      CREATE TABLE IF NOT EXISTS notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      );
+    `);
   }
 }
 
