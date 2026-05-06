@@ -19,6 +19,7 @@ import type { AgentConfigPresenter } from "../agentConfigPresenter";
 import { createLLMClient } from "@/llm";
 import type { LLMClient, Tool } from "@/llm";
 import { BUILTIN_AGENTS } from "@/agents";
+import { MBTI_MAP } from "@shared/constants/mbti";
 
 const MAX_STEPS = 128;
 
@@ -320,24 +321,24 @@ export class AgentChatPresenter {
             )
           : null;
 
-    // Read system prompt: agentSoul in config takes priority over SOUL.md
-    // For builtin agents, agentSoul function is not persisted to DB — fall back to in-memory BUILTIN_AGENTS
-    const agentSoulRaw =
+    // Build system prompt: MBTI personality + additional prompt (prompt.md)
+    const mbtiPrompt = agent?.mbti ? (MBTI_MAP[agent.mbti]?.personality ?? "") : "";
+    const additionalPrompt =
       agent?.type === "builtin"
-        ? (BUILTIN_AGENTS.find((b) => b.id === agent.id)?.config?.agentSoul ??
-          agent?.config?.agentSoul ??
-          null)
-        : (agent?.config?.agentSoul ?? null);
-    const agentSoulFromConfig = agentSoulRaw
-      ? typeof agentSoulRaw === "function"
-        ? await agentSoulRaw()
-        : agentSoulRaw
-      : null;
-    const agentSystemPrompt = agentSoulFromConfig
-      ? agentSoulFromConfig
-      : this.agentConfigPresenter
+        ? (BUILTIN_AGENTS.find((b) => b.id === agent.id)?.config?.additionalPrompt ??
+          agent?.config?.additionalPrompt ??
+          "")
+        : (agent?.config?.additionalPrompt ?? "");
+    const promptFromFile =
+      !additionalPrompt && this.agentConfigPresenter
         ? await this.agentConfigPresenter.readPromptMd(session.agentId)
         : "";
+    const rawPrompt = additionalPrompt || promptFromFile;
+    const agentSystemPrompt = mbtiPrompt
+      ? rawPrompt
+        ? mbtiPrompt + "\n\n" + rawPrompt
+        : mbtiPrompt
+      : rawPrompt;
 
     // Build context — contextBuilder deduplicates newUserContent from history
     const messages: CoreMessage[] = buildContext(sessionId, content, db, {
