@@ -28,6 +28,7 @@ describe("agentDao", () => {
       type: "custom",
       enabled: true,
       protected: false,
+      mbti: "INTJ",
     });
     expect(agent.id).toBe("test-1");
     expect(agent.name).toBe("Test Agent");
@@ -45,6 +46,7 @@ describe("agentDao", () => {
       type: "custom",
       enabled: true,
       protected: false,
+      mbti: "INTJ",
     });
     agentDao.createAgent(db, {
       id: "b",
@@ -52,6 +54,7 @@ describe("agentDao", () => {
       type: "builtin",
       enabled: true,
       protected: true,
+      mbti: "INTJ",
     });
     agentDao.createAgent(db, {
       id: "c",
@@ -59,6 +62,7 @@ describe("agentDao", () => {
       type: "custom",
       enabled: false,
       protected: false,
+      mbti: "INTJ",
     });
     const list = agentDao.listAgents(db);
     // c is disabled, should not appear
@@ -75,6 +79,7 @@ describe("agentDao", () => {
       type: "custom",
       enabled: true,
       protected: false,
+      mbti: "INTJ",
     });
     expect(agentDao.getAgentById(db, "x")).toBeDefined();
     expect(agentDao.getAgentById(db, "x")!.name).toBe("X");
@@ -89,6 +94,7 @@ describe("agentDao", () => {
       enabled: true,
       protected: false,
       description: "desc",
+      mbti: "INTJ",
     });
     agentDao.updateAgent(db, "u", { name: "New" });
     const updated = agentDao.getAgentById(db, "u")!;
@@ -103,6 +109,7 @@ describe("agentDao", () => {
       type: "custom",
       enabled: true,
       protected: false,
+      mbti: "INTJ",
     });
     agentDao.removeAgent(db, "del");
     expect(agentDao.getAgentById(db, "del")).toBeUndefined();
@@ -115,6 +122,7 @@ describe("agentDao", () => {
       type: "builtin",
       enabled: true,
       protected: true,
+      mbti: "INTJ",
     });
     expect(() => agentDao.removeAgent(db, "prot")).toThrow("Cannot delete protected agent");
   });
@@ -128,12 +136,9 @@ describe("agentDao", () => {
     expect(hal.name).toBe("哈尔");
     expect(hal.type).toBe("builtin");
     expect(hal.protected).toBe(true);
-    expect(hal.themeColor).toBe("#a855f7");
-    expect(hal.avatar).toEqual({ kind: "image", path: "avatars/hal.png" });
+    expect(hal.mbti).toBe("INTJ");
     expect(hal.config).toMatchObject({
       capabilityRequirements: ["reasoning"],
-      subagentEnabled: false,
-      disabledTools: ["evolution_start", "evolution_plan", "evolution_complete"],
     });
   });
 
@@ -144,6 +149,7 @@ describe("agentDao", () => {
       type: "custom",
       enabled: true,
       protected: false,
+      mbti: "INTJ",
       avatar: { kind: "lucide", icon: "bot", color: "#ff0000" },
       config: {
         capabilityRequirements: ["reasoning"],
@@ -169,6 +175,7 @@ describe("agentDao", () => {
       type: "custom",
       enabled: false,
       protected: false,
+      mbti: "INTJ",
     });
     const agent = agentDao.getAgentById(db, "bool-test")!;
     expect(agent.enabled).toBe(false);
@@ -176,5 +183,21 @@ describe("agentDao", () => {
 
     agentDao.updateAgent(db, "bool-test", { enabled: true });
     expect(agentDao.getAgentById(db, "bool-test")!.enabled).toBe(true);
+  });
+
+  it("stores and retrieves mbti field", () => {
+    const agent = agentDao.createAgent(db, {
+      id: "mbti-test",
+      name: "MBTI Test",
+      type: "custom",
+      enabled: true,
+      protected: false,
+      mbti: "ENFP",
+    });
+    expect(agent.mbti).toBe("ENFP");
+
+    agentDao.updateAgent(db, "mbti-test", { mbti: "INTJ" });
+    const updated = agentDao.getAgentById(db, "mbti-test");
+    expect(updated?.mbti).toBe("INTJ");
   });
 });

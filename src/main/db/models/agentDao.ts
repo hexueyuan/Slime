@@ -1,5 +1,6 @@
 import type BetterSqlite3 from "better-sqlite3";
 import type { Agent, AgentAvatar, AgentConfig, AgentType } from "@shared/types/agent";
+import type { MBTIType } from "@shared/constants/mbti";
 import { BUILTIN_AGENTS } from "../../agents";
 
 interface AgentRow {
@@ -11,6 +12,7 @@ interface AgentRow {
   description: string | null;
   avatar_json: string | null;
   theme_color: string | null;
+  mbti: string;
   config_json: string | null;
   created_at: number;
   updated_at: number;
@@ -25,7 +27,7 @@ function rowToAgent(row: AgentRow): Agent {
     protected: !!row.protected,
     description: row.description ?? undefined,
     avatar: row.avatar_json ? (JSON.parse(row.avatar_json) as AgentAvatar) : undefined,
-    themeColor: row.theme_color ?? undefined,
+    mbti: row.mbti as MBTIType,
     config: row.config_json ? (JSON.parse(row.config_json) as AgentConfig) : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -50,7 +52,7 @@ export function createAgent(
 ): Agent {
   const now = Date.now();
   db.prepare(
-    `INSERT INTO agents (id, name, type, enabled, protected, description, avatar_json, theme_color, config_json, created_at, updated_at)
+    `INSERT INTO agents (id, name, type, enabled, protected, description, avatar_json, mbti, config_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     data.id,
@@ -60,7 +62,7 @@ export function createAgent(
     data.protected ? 1 : 0,
     data.description ?? null,
     data.avatar != null ? JSON.stringify(data.avatar) : null,
-    data.themeColor ?? null,
+    data.mbti ?? "INTJ",
     data.config != null ? JSON.stringify(data.config) : null,
     now,
     now,
@@ -100,9 +102,9 @@ export function updateAgent(
     sets.push("avatar_json = ?");
     values.push(data.avatar != null ? JSON.stringify(data.avatar) : null);
   }
-  if (data.themeColor !== undefined) {
-    sets.push("theme_color = ?");
-    values.push(data.themeColor ?? null);
+  if (data.mbti !== undefined) {
+    sets.push("mbti = ?");
+    values.push(data.mbti);
   }
   if (data.config !== undefined) {
     sets.push("config_json = ?");
@@ -130,13 +132,13 @@ export function removeAgent(db: BetterSqlite3.Database, id: string): void {
 export function ensureBuiltin(db: BetterSqlite3.Database): void {
   const now = Date.now();
   const upsert = db.prepare(
-    `INSERT INTO agents (id, name, description, type, enabled, protected, avatar_json, theme_color, config_json, created_at, updated_at)
+    `INSERT INTO agents (id, name, description, type, enabled, protected, avatar_json, mbti, config_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
        description = excluded.description,
        avatar_json = excluded.avatar_json,
-       theme_color = excluded.theme_color,
+       mbti = excluded.mbti,
        config_json = excluded.config_json,
        updated_at = excluded.updated_at`,
   );
@@ -149,7 +151,7 @@ export function ensureBuiltin(db: BetterSqlite3.Database): void {
       1,
       1,
       agent.avatar != null ? JSON.stringify(agent.avatar) : null,
-      agent.themeColor ?? null,
+      agent.mbti ?? "INTJ",
       JSON.stringify(agent.config),
       now,
       now,

@@ -1,4 +1,5 @@
 import type { AgentConfig, AgentAvatar } from "@shared/types/agent";
+import type { MBTIType } from "@shared/constants/mbti";
 import { readdirSync, statSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -8,6 +9,7 @@ export interface BuiltinAgentDef {
   description?: string;
   avatar?: AgentAvatar;
   themeColor?: string;
+  mbti?: MBTIType;
   config: AgentConfig;
 }
 
@@ -16,6 +18,7 @@ interface AgentConfigJson {
   description?: string;
   avatar?: AgentAvatar;
   themeColor?: string;
+  mbti?: MBTIType;
   capabilityRequirements?: string[];
   disabledTools?: string[];
   enabledTools?: string[];
@@ -50,6 +53,7 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       description,
       avatar,
       themeColor,
+      mbti,
       capabilityRequirements,
       disabledTools,
       enabledTools,
@@ -68,6 +72,7 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       description,
       avatar,
       themeColor,
+      mbti,
       config: {
         capabilityRequirements,
         disabledTools,
