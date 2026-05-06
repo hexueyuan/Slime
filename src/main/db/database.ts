@@ -236,9 +236,17 @@ CREATE TABLE IF NOT EXISTS tasks (
   status TEXT NOT NULL DEFAULT 'todo',
   created_at INTEGER NOT NULL,
   started_at INTEGER,
-  finished_at INTEGER
+  finished_at INTEGER,
+  creator_type TEXT NOT NULL DEFAULT 'user',
+  creator_id TEXT,
+  assignee_type TEXT NOT NULL DEFAULT 'user',
+  assignee_id TEXT,
+  scheduled_at INTEGER,
+  repeat_interval INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_type, assignee_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS task_attachments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -319,6 +327,20 @@ function migrate(instance: BetterSqlite3.Database): void {
         content TEXT NOT NULL,
         created_at INTEGER NOT NULL
       );
+    `);
+  }
+  // Add extended fields to tasks table (creator/assignee/schedule)
+  const taskCols = instance.prepare("PRAGMA table_info(tasks)").all() as { name: string }[];
+  if (!taskCols.some((c) => c.name === "creator_type")) {
+    instance.exec(`
+      ALTER TABLE tasks ADD COLUMN creator_type TEXT NOT NULL DEFAULT 'user';
+      ALTER TABLE tasks ADD COLUMN creator_id TEXT;
+      ALTER TABLE tasks ADD COLUMN assignee_type TEXT NOT NULL DEFAULT 'user';
+      ALTER TABLE tasks ADD COLUMN assignee_id TEXT;
+      ALTER TABLE tasks ADD COLUMN scheduled_at INTEGER;
+      ALTER TABLE tasks ADD COLUMN repeat_interval INTEGER;
+      CREATE INDEX idx_tasks_assignee ON tasks(assignee_type, assignee_id);
+      CREATE INDEX idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
     `);
   }
 }

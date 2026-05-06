@@ -1,3 +1,6 @@
+export type ActorType = "user" | "agent";
+export type RepeatPreset = "none" | "hourly" | "daily" | "weekly" | "monthly" | "custom";
+
 export type TaskStatus = "todo" | "in_progress" | "done" | "cancelled";
 
 export interface Task {
@@ -8,6 +11,12 @@ export interface Task {
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;
+  creatorType: ActorType;
+  creatorId?: string;
+  assigneeType: ActorType;
+  assigneeId?: string;
+  scheduledAt?: number;
+  repeatInterval?: number;
 }
 
 export interface TaskAttachment {
