@@ -47,7 +47,18 @@ class TaskPresenter {
     });
     ipcMain.handle(
       "task:updateTask",
-      (_e, id: string, fields: { title?: string; detail?: string }) => {
+      (
+        _e,
+        id: string,
+        fields: {
+          title?: string;
+          detail?: string;
+          assigneeType?: string;
+          assigneeId?: string;
+          scheduledAt?: number | null;
+          repeatInterval?: number | null;
+        },
+      ) => {
         const task = taskDao.updateTask(this.db!, id, fields);
         this.emitTasksChanged();
         return task;

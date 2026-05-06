@@ -9,12 +9,31 @@ export function createTaskServer(
 ): FastifyInstance {
   const app = Fastify({ logger: false });
 
-  app.post<{ Body: { title?: string; description?: string } }>("/tasks", async (req, reply) => {
+  app.post<{
+    Body: {
+      title?: string;
+      description?: string;
+      creatorType?: string;
+      creatorId?: string;
+      assigneeType?: string;
+      assigneeId?: string;
+      scheduledAt?: number;
+      repeatInterval?: number;
+    };
+  }>("/tasks", async (req, reply) => {
     const title = req.body.title ?? req.body.description;
     if (!title || typeof title !== "string") {
       return reply.status(400).send({ error: "title is required" });
     }
-    const task = taskDao.createTask(db, { title });
+    const task = taskDao.createTask(db, {
+      title,
+      creatorType: (req.body.creatorType as "user" | "agent") ?? "user",
+      creatorId: req.body.creatorId,
+      assigneeType: (req.body.assigneeType as "user" | "agent") ?? "user",
+      assigneeId: req.body.assigneeId,
+      scheduledAt: req.body.scheduledAt,
+      repeatInterval: req.body.repeatInterval,
+    });
     onTasksChanged();
     return reply.status(201).send(task);
   });
