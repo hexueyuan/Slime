@@ -13,6 +13,7 @@ export const useAgentChatStore = defineStore("agentChat", () => {
   const streamingBlocks = ref<AssistantMessageBlock[]>([]);
   const error = ref<string | null>(null);
   const userProfile = ref<UserProfile | null>(null);
+  const dashboardData = ref<Map<string, Record<string, unknown>>>(new Map());
 
   async function fetchMessages(sessionId: string) {
     messages.value = (await chatPresenter.getMessages(sessionId)) as ChatMessageRecord[];
@@ -86,6 +87,10 @@ export const useAgentChatStore = defineStore("agentChat", () => {
     error.value = null;
   }
 
+  function setDashboardData(sessionId: string, data: Record<string, unknown>) {
+    dashboardData.value = new Map(dashboardData.value).set(sessionId, data);
+  }
+
   function clearMessages() {
     messages.value = [];
     streamingMessageId.value = null;
@@ -117,6 +122,7 @@ export const useAgentChatStore = defineStore("agentChat", () => {
     streamingBlocks,
     error,
     userProfile,
+    dashboardData,
     fetchMessages,
     sendMessage,
     stopGeneration,
@@ -129,5 +135,6 @@ export const useAgentChatStore = defineStore("agentChat", () => {
     clearMessages,
     fetchUserProfile,
     saveUserProfile,
+    setDashboardData,
   };
 });
