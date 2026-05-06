@@ -6,6 +6,7 @@ import GatewayPanel from "./views/GatewayPanel.vue";
 import EvolabPanel from "./views/EvolabPanel.vue";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard.vue";
 import { usePresenter } from "@/composables/usePresenter";
+import ProfileModal from "./components/chat/ProfileModal.vue";
 
 const activeView = ref<"chatroom" | "gateway" | "evolab">("chatroom");
 
@@ -51,5 +52,6 @@ async function onOnboardingDone() {
         </div>
       </div>
     </div>
+    <ProfileModal />
   </div>
 </template>
