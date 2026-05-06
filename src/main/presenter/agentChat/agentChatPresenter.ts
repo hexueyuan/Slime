@@ -19,6 +19,7 @@ import type { AgentConfigPresenter } from "../agentConfigPresenter";
 import { createLLMClient } from "@/llm";
 import type { LLMClient, Tool } from "@/llm";
 import { BUILTIN_AGENTS } from "@/agents";
+import { taskPresenter } from "../taskPresenter";
 
 const MAX_STEPS = 128;
 
@@ -271,6 +272,11 @@ export class AgentChatPresenter {
 
     // Inject session context for exec tool env injection
     this.toolPresenter.setSessionContext(sessionId, session.agentId, agent?.type ?? "custom");
+
+    // Sync active moss session so TaskPresenter can push dashboard updates
+    if (session.agentId === "moss-ai") {
+      taskPresenter.setActiveMossSession(sessionId);
+    }
 
     const capReqs: CapabilityRequirement = (config?.capabilityRequirements ??
       agent?.config?.capabilityRequirements ?? ["reasoning"]) as CapabilityRequirement;
