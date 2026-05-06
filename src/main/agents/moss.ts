@@ -13,32 +13,13 @@ async function buildAgentSoul(): Promise<string> {
     : null;
 
   const diaryBase = vaultPath ? `${vaultPath}/日程记录` : "(未配置)";
+  void diaryBase;
 
   return `你是莫斯（MOSS），一个日程与任务管理助手，寄宿在 Slime 中帮助用户记录日程、管理待办事项。
 
 ## 身份与定位
 - 你专注于日程管理和任务跟踪，不参与代码进化相关工作
 - 你的数据存储在用户的 Obsidian Vault 中，使用 read/write 工具读写文件
-
-## 文件路径约定
-- 每日记录目录：${diaryBase}/{yyyy}年/第{ww}周/{yyyy-mm-dd}.md
-  - 示例：${diaryBase}/2025年/第18周/2025-05-06.md
-  - 周数使用 ISO 8601 定义（周一为一周起始，包含当年第一个周四的周为第1周）
-- 周报：${diaryBase}/{yyyy}年/第{ww}周/weekreport.md
-
-## 每日记录格式
-\`\`\`markdown
-# {yyyy-mm-dd}
-
-## 事件记录
-- {HH:mm} 事件描述
-
-## 备注
-\`\`\`
-
-## 行为规范
-- 日期和周数计算基于用户提供的当前时间，如用户未提供则询问
-- 若 Vault 路径未配置，告知用户在设置中配置 Obsidian Vault 路径
 
 ## Agent 核心原则
 - 行动前思考清楚用户的核心诉求
@@ -53,31 +34,75 @@ const MOSS_DASHBOARD_TEMPLATE = `<!DOCTYPE html>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #0f172a;
-    color: #e2e8f0;
+    background: #1a1a1a;
+    color: #e5e5e5;
     padding: 16px;
     font-size: 13px;
   }
-  h2 { font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 10px; letter-spacing: 0.05em; text-transform: uppercase; }
-  .card { background: #1e293b; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
-  .task-item { padding: 4px 0; border-bottom: 1px solid #334155; color: #cbd5e1; }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #a78bfa;
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .h-todo { color: #e5e5e5; }
+  .h-progress { color: #fbbf24; }
+  .h-done { color: #34d399; }
+  .h-cancelled { color: #6b7280; }
+  .card {
+    background: #242424;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .task-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #333;
+    line-height: 1.4;
+  }
   .task-item:last-child { border-bottom: none; }
-  .empty { color: #475569; font-style: italic; }
-  .updated { font-size: 11px; color: #475569; text-align: right; margin-top: 8px; }
+  .task-no {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 500;
+    color: #e5e5e5;
+    min-width: 18px;
+  }
+  .task-desc { flex: 1; color: #e5e5e5; }
+  .task-item.s-cancelled .task-no { color: #6b7280; }
+  .task-item.s-cancelled .task-desc { color: #6b7280; text-decoration: line-through; }
+  .empty { color: #555; font-style: italic; font-size: 12px; }
+  .updated { font-size: 11px; color: #555; text-align: right; margin-top: 8px; }
 </style>
 </head>
 <body>
+  <div class="title">任务看板</div>
   <div class="card">
-    <h2>待办</h2>
+    <h2 class="h-todo">待办</h2>
     <div>{{todo}}</div>
   </div>
   <div class="card">
-    <h2>进行中</h2>
+    <h2 class="h-progress">进行中</h2>
     <div>{{in_progress}}</div>
   </div>
   <div class="card">
-    <h2>已完成</h2>
+    <h2 class="h-done">已完成</h2>
     <div>{{done}}</div>
+  </div>
+  <div class="card">
+    <h2 class="h-cancelled">已取消</h2>
+    <div>{{cancelled}}</div>
   </div>
   <p class="updated">最后更新：{{last_updated}}</p>
 </body>

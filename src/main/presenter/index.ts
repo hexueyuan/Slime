@@ -145,13 +145,15 @@ export class Presenter implements IPresenter {
           | string
           | undefined;
         if (newVaultPath) {
-          await taskPresenter.init(newVaultPath);
+          const { getDb } = await import("@/db");
+          await taskPresenter.init(getDb(), newVaultPath);
         }
       }
     });
     const vaultPath = (await this.configPresenter.get("obsidian.vaultPath")) as string | undefined;
     if (vaultPath) {
-      await taskPresenter.init(vaultPath);
+      const { getDb } = await import("@/db");
+      await taskPresenter.init(getDb(), vaultPath);
     }
     logger.info("Presenter initialized");
   }
