@@ -11,6 +11,7 @@ import { app } from "electron";
 import type { BrowserSession } from "@/browser/browserSession";
 import type { MCPToolBridge } from "./mcpToolBridge";
 import type { SkillPresenter } from "./skillPresenter";
+import { taskPresenter } from "./taskPresenter";
 import {
   makeBrowserNavigateTool,
   makeBrowserScreenshotTool,
@@ -135,6 +136,7 @@ export class ToolPresenter {
                 SLIME_ROLE: sessionCtx.agentType === "builtin" ? "builtin-agent" : "external-agent",
                 SLIME_USER_ID: sessionCtx.agentId,
                 SLIME_DATA_DIR: app.getPath("userData"),
+                SLIME_TASK_PORT: String(taskPresenter.getPort()),
               }
             : {};
           const fallbackPath = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
