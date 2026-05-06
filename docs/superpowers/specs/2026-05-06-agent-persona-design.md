@@ -24,7 +24,7 @@ export interface Agent {
   protected: boolean;
   description?: string;
   avatar?: AgentAvatar | null;
-  themeColor?: string | null;   // CSS hex，如 "#a855f7"
+  themeColor?: string | null; // CSS hex，如 "#a855f7"
   config?: AgentConfig | null;
   createdAt: number;
   updatedAt: number;
@@ -54,7 +54,7 @@ export interface BuiltinAgentDef {
   description?: string;
   avatar?: AgentAvatar;
   themeColor?: string;
-  config: AgentConfig;  // agentSoul 在 config 里
+  config: AgentConfig; // agentSoul 在 config 里
 }
 ```
 
@@ -106,7 +106,7 @@ ON CONFLICT(id) DO UPDATE SET
 在需要展示 agent 的父容器注入 CSS 变量：
 
 ```html
-<div :style="{ '--agent-color': agent.themeColor ?? '#a855f7' }">
+<div :style="{ '--agent-color': agent.themeColor ?? '#a855f7' }"></div>
 ```
 
 所有原先硬编码 `violet-500` / `#a855f7` 的涉及 agent 颜色处改为 `var(--agent-color)`，包括：
@@ -155,22 +155,24 @@ export const HAL: BuiltinAgentDef = {
 
 `AgentChatPresenter` 构建 system prompt 时，优先读 `config.agentSoul`，fallback 到 `SOUL.md` 文件（已有逻辑），`config.systemPrompt` 不再读取。
 
+优先级：`config.agentSoul` 非空 → 直接使用，不读 SOUL.md；`config.agentSoul` 为空 → fallback 读 SOUL.md（现有逻辑不变）。`config.systemPrompt` 不再读取。
+
 具体逻辑在 `contextBuilder.ts` 或 `agentChatPresenter.ts` 的 `buildSystemPrompt` 中调整。
 
 ---
 
 ## 变更文件清单
 
-| 文件 | 变更类型 |
-|------|---------|
-| `src/shared/types/agent.d.ts` | 新增 `Agent.themeColor`，`AgentConfig.agentSoul` |
-| `src/main/agents/index.ts` | `BuiltinAgentDef` 新增 `avatar`/`themeColor` |
-| `src/main/agents/hal.ts` | 补充 avatar/themeColor，改用 agentSoul |
-| `src/main/db/models/agentDao.ts` | theme_color 字段支持，ensureBuiltin 修复 |
-| `src/main/db/index.ts` 或 migration | ALTER TABLE 加 theme_color 列 |
-| `src/renderer/src/components/chat/NewThread.vue` | 改为卡片布局，复用 AgentAvatar |
-| `src/renderer/src/components/chat/AgentAvatar.vue` | fallback 颜色改用 `var(--agent-color)` |
-| `src/renderer/src/components/chat/AgentEditDialog.vue` | 加 themeColor 颜色选择器 |
-| `src/renderer/src/components/chat/ChatView.vue` | 注入 `--agent-color` CSS 变量 |
-| `src/renderer/src/views/ChatroomPanel.vue` | 注入 `--agent-color` 到会话区域 |
-| `src/main/presenter/agentChat/contextBuilder.ts` 或 `agentChatPresenter.ts` | agentSoul 优先级逻辑 |
+| 文件                                                                        | 变更类型                                         |
+| --------------------------------------------------------------------------- | ------------------------------------------------ |
+| `src/shared/types/agent.d.ts`                                               | 新增 `Agent.themeColor`，`AgentConfig.agentSoul` |
+| `src/main/agents/index.ts`                                                  | `BuiltinAgentDef` 新增 `avatar`/`themeColor`     |
+| `src/main/agents/hal.ts`                                                    | 补充 avatar/themeColor，改用 agentSoul           |
+| `src/main/db/models/agentDao.ts`                                            | theme_color 字段支持，ensureBuiltin 修复         |
+| `src/main/db/index.ts` 或 migration                                         | ALTER TABLE 加 theme_color 列                    |
+| `src/renderer/src/components/chat/NewThread.vue`                            | 改为卡片布局，复用 AgentAvatar                   |
+| `src/renderer/src/components/chat/AgentAvatar.vue`                          | fallback 颜色改用 `var(--agent-color)`           |
+| `src/renderer/src/components/chat/AgentEditDialog.vue`                      | 加 themeColor 颜色选择器                         |
+| `src/renderer/src/components/chat/ChatView.vue`                             | 注入 `--agent-color` CSS 变量                    |
+| `src/renderer/src/views/ChatroomPanel.vue`                                  | 注入 `--agent-color` 到会话区域                  |
+| `src/main/presenter/agentChat/contextBuilder.ts` 或 `agentChatPresenter.ts` | agentSoul 优先级逻辑                             |

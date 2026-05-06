@@ -29,12 +29,17 @@ function formatLogLine(raw) {
     const { timestamp, level, message, ...meta } = obj;
     const levelStr = `[${(level ?? "?").toUpperCase()}]`.padEnd(7);
     const metaStr = Object.keys(meta).length ? "  " + JSON.stringify(meta) : "";
-    return `${levelStr} ${timestamp}  ${message}${metaStr}`;
+    const localTime = timestamp ? new Date(timestamp).toLocaleString() : timestamp;
+    return `${levelStr} ${localTime}  ${message}${metaStr}`;
   } catch {
     return raw;
   }
 }
 function readLogs(dataDir, opts) {
+  const logsDir = join(dataDir, "logs");
+  if (!existsSync(logsDir)) {
+    throw new Error(`data directory not found: ${logsDir}`);
+  }
   const logPath = getTodayLogPath(dataDir);
   if (!existsSync(logPath)) return [];
   const raw = readFileSync(logPath, "utf-8");
@@ -92,7 +97,14 @@ function runLogs(args, ctx) {
     }
     return;
   }
-  const lines = readLogs(ctx.dataDir, { key: opts.key, tail: opts.tail, head: opts.head });
+  let lines;
+  try {
+    lines = readLogs(ctx.dataDir, { key: opts.key, tail: opts.tail, head: opts.head });
+  } catch (err) {
+    process.stdout.write(`Error: ${err instanceof Error ? err.message : String(err)}
+`);
+    process.exit(1);
+  }
   if (lines.length === 0) {
     process.stdout.write("No logs found for today.\n");
     return;

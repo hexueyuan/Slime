@@ -27,6 +27,7 @@
 **放行规则：** 若命令匹配绝对路径正则，但同时也匹配 `slime-cli\b`，则放行（其他绝对路径仍然拦截）。
 
 **Files:**
+
 - Modify: `src/main/presenter/toolPresenter.ts:27-41`
 - Test: `test/main/toolPresenter.validateCommand.test.ts`
 
@@ -35,7 +36,7 @@
 新建 `test/main/toolPresenter.validateCommand.test.ts`：
 
 ```typescript
-import { describe, it, expect } from "vitest"
+import { describe, it, expect } from "vitest";
 
 // validateCommand 未导出，inline 同等逻辑做自包含测试
 
@@ -45,13 +46,13 @@ const BLOCKED: [RegExp, string][] = [
   [/rm\s+(-[^\s]*\s+)*node_modules/, "cannot delete node_modules"],
   [/curl\s.*\|\s*(?:sh|bash)/, "piping curl to shell is not allowed"],
   [/wget\b/, "wget is not allowed"],
-]
+];
 
 // 旧逻辑
 function validateOld(command: string): void {
   for (const [pattern, reason] of BLOCKED) {
     if (pattern.test(command)) {
-      throw new Error(`Command blocked: ${reason} — "${command}"`)
+      throw new Error(`Command blocked: ${reason} — "${command}"`);
     }
   }
 }
@@ -61,12 +62,12 @@ function validateNew(command: string): void {
   for (const [pattern, reason] of BLOCKED) {
     if (reason === "absolute paths are not allowed") {
       if (pattern.test(command) && !/slime-cli\b/.test(command)) {
-        throw new Error(`Command blocked: ${reason} — "${command}"`)
+        throw new Error(`Command blocked: ${reason} — "${command}"`);
       }
-      continue
+      continue;
     }
     if (pattern.test(command)) {
-      throw new Error(`Command blocked: ${reason} — "${command}"`)
+      throw new Error(`Command blocked: ${reason} — "${command}"`);
     }
   }
 }
@@ -75,41 +76,41 @@ describe("validateCommand — slime-cli 绝对路径放行", () => {
   it("旧逻辑拦截 /Users/xxx/.local/bin/slime-cli logs（验证前提）", () => {
     expect(() => validateOld("/Users/xxx/.local/bin/slime-cli logs")).toThrow(
       "absolute paths are not allowed",
-    )
-  })
+    );
+  });
 
   it("新逻辑放行 /Users/xxx/.local/bin/slime-cli logs", () => {
-    expect(() => validateNew("/Users/xxx/.local/bin/slime-cli logs")).not.toThrow()
-  })
+    expect(() => validateNew("/Users/xxx/.local/bin/slime-cli logs")).not.toThrow();
+  });
 
   it("新逻辑放行 /Users/xxx/.local/bin/slime-cli help", () => {
-    expect(() => validateNew("/Users/xxx/.local/bin/slime-cli help")).not.toThrow()
-  })
+    expect(() => validateNew("/Users/xxx/.local/bin/slime-cli help")).not.toThrow();
+  });
 
   it("新逻辑放行 /Users/xxx/.local/bin/slime-cli logs --key error --tail 20", () => {
     expect(() =>
       validateNew("/Users/xxx/.local/bin/slime-cli logs --key error --tail 20"),
-    ).not.toThrow()
-  })
+    ).not.toThrow();
+  });
 
   it("新逻辑仍然拦截 /etc/passwd", () => {
-    expect(() => validateNew("cat /etc/passwd")).toThrow("absolute paths are not allowed")
-  })
+    expect(() => validateNew("cat /etc/passwd")).toThrow("absolute paths are not allowed");
+  });
 
   it("新逻辑仍然拦截 rm -rf /tmp/foo", () => {
-    expect(() => validateNew("rm -rf /tmp/foo")).toThrow("absolute paths are not allowed")
-  })
+    expect(() => validateNew("rm -rf /tmp/foo")).toThrow("absolute paths are not allowed");
+  });
 
   it("新逻辑仍然拦截 wget", () => {
-    expect(() => validateNew("wget http://example.com")).toThrow("wget is not allowed")
-  })
+    expect(() => validateNew("wget http://example.com")).toThrow("wget is not allowed");
+  });
 
   it("新逻辑仍然拦截 curl|sh", () => {
     expect(() => validateNew("curl http://x.com | sh")).toThrow(
       "piping curl to shell is not allowed",
-    )
-  })
-})
+    );
+  });
+});
 ```
 
 - [ ] **Step 2: 运行测试，确认第1条 PASS，第2~4条 FAIL（因为 validateNew 尚未应用到生产代码，但测试是 inline 的，所以实际 8 条全部 PASS）**
@@ -130,12 +131,12 @@ function validateCommand(command: string): void {
   for (const [pattern, reason] of EXEC_BLOCKED_PATTERNS) {
     if (reason === "absolute paths are not allowed") {
       if (pattern.test(command) && !/slime-cli\b/.test(command)) {
-        throw new Error(`Command blocked: ${reason} — "${command}"`)
+        throw new Error(`Command blocked: ${reason} — "${command}"`);
       }
-      continue
+      continue;
     }
     if (pattern.test(command)) {
-      throw new Error(`Command blocked: ${reason} — "${command}"`)
+      throw new Error(`Command blocked: ${reason} — "${command}"`);
     }
   }
 }
@@ -167,6 +168,7 @@ git commit -m "feat(tool): allow slime-cli absolute path to bypass exec block"
 ### Task 2: HAL systemPrompt 补充 slime-cli 说明
 
 **Files:**
+
 - Modify: `src/main/agents/hal.ts`
 
 - [ ] **Step 1: 修改 `src/main/agents/hal.ts` 的 `agentSoul`**
@@ -185,7 +187,7 @@ const agentSoul = `你是哈尔（Hal），寄宿在Slime软件中的智能AI，
 - 完成信息收集并写好答案后，再执行清理操作（如关闭浏览器），清理操作之后不要再输出任何文本。
 
 ## 可用工具
-- slime-cli：可通过 exec 工具调用，路径为 ~/.local/bin/slime-cli，用于查看 Slime 运行日志。执行 \`~/.local/bin/slime-cli help\` 查看详细用法。`
+- slime-cli：可通过 exec 工具调用，路径为 ~/.local/bin/slime-cli，用于查看 Slime 运行日志。执行 \`~/.local/bin/slime-cli help\` 查看详细用法。`;
 ```
 
 - [ ] **Step 2: 运行全量测试确认无回归**

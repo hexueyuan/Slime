@@ -12,25 +12,26 @@
 
 ## 文件变更清单
 
-| 文件 | 操作 |
-|------|------|
-| `src/shared/types/agent.d.ts` | 修改：新增 `Agent.themeColor`，`AgentConfig.agentSoul` |
-| `src/main/agents/index.ts` | 修改：`BuiltinAgentDef` 新增 `avatar`/`themeColor` |
-| `src/main/agents/hal.ts` | 修改：补充 avatar/themeColor，改用 agentSoul |
-| `src/main/db/database.ts` | 修改：DDL 加 `theme_color` 列，migrate() 加 ALTER TABLE |
-| `src/main/db/models/agentDao.ts` | 修改：theme_color 字段支持，ensureBuiltin 修复 |
-| `src/main/presenter/agentChat/agentChatPresenter.ts` | 修改：agentSoul 优先读取逻辑 |
-| `src/renderer/src/components/chat/NewThread.vue` | 修改：改为卡片布局，复用 AgentAvatar |
-| `src/renderer/src/components/chat/AgentAvatar.vue` | 修改：fallback 颜色改用 `var(--agent-color)` |
-| `src/renderer/src/components/chat/ChatView.vue` | 修改：注入 `--agent-color` CSS 变量 |
-| `src/renderer/src/components/chat/AgentEditDialog.vue` | 修改：新增 themeColor 颜色选择器 |
-| `test/main/agentDao.test.ts` | 修改：补充 themeColor/ensureBuiltin 测试 |
+| 文件                                                   | 操作                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------- |
+| `src/shared/types/agent.d.ts`                          | 修改：新增 `Agent.themeColor`，`AgentConfig.agentSoul`  |
+| `src/main/agents/index.ts`                             | 修改：`BuiltinAgentDef` 新增 `avatar`/`themeColor`      |
+| `src/main/agents/hal.ts`                               | 修改：补充 avatar/themeColor，改用 agentSoul            |
+| `src/main/db/database.ts`                              | 修改：DDL 加 `theme_color` 列，migrate() 加 ALTER TABLE |
+| `src/main/db/models/agentDao.ts`                       | 修改：theme_color 字段支持，ensureBuiltin 修复          |
+| `src/main/presenter/agentChat/agentChatPresenter.ts`   | 修改：agentSoul 优先读取逻辑                            |
+| `src/renderer/src/components/chat/NewThread.vue`       | 修改：改为卡片布局，复用 AgentAvatar                    |
+| `src/renderer/src/components/chat/AgentAvatar.vue`     | 修改：fallback 颜色改用 `var(--agent-color)`            |
+| `src/renderer/src/components/chat/ChatView.vue`        | 修改：注入 `--agent-color` CSS 变量                     |
+| `src/renderer/src/components/chat/AgentEditDialog.vue` | 修改：新增 themeColor 颜色选择器                        |
+| `test/main/agentDao.test.ts`                           | 修改：补充 themeColor/ensureBuiltin 测试                |
 
 ---
 
 ## Task 1: 扩展共享类型
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 - Modify: `src/main/agents/index.ts`
 
@@ -50,6 +51,7 @@ agentSoul?: string;
 ```
 
 完整修改后 `Agent` 的字段顺序：
+
 ```typescript
 export interface Agent {
   id: string;
@@ -67,6 +69,7 @@ export interface Agent {
 ```
 
 完整修改后 `AgentConfig` 末尾：
+
 ```typescript
 export interface AgentConfig {
   capabilityRequirements?: string[];
@@ -155,6 +158,7 @@ git commit -m "feat: add themeColor/agentSoul to agent types and hal def"
 ## Task 2: DB 层 — 新增 theme_color 列
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 - Modify: `src/main/db/models/agentDao.ts`
 
@@ -198,6 +202,7 @@ function migrate(instance: BetterSqlite3.Database): void {
 - [ ] **Step 3: 修改 `agentDao.ts` — `AgentRow` 新增字段，`rowToAgent` 映射**
 
 在 `AgentRow` interface 加：
+
 ```typescript
 interface AgentRow {
   id: string;
@@ -207,7 +212,7 @@ interface AgentRow {
   protected: number;
   description: string | null;
   avatar_json: string | null;
-  theme_color: string | null;   // 新增
+  theme_color: string | null; // 新增
   config_json: string | null;
   created_at: number;
   updated_at: number;
@@ -215,6 +220,7 @@ interface AgentRow {
 ```
 
 在 `rowToAgent` 加映射：
+
 ```typescript
 function rowToAgent(row: AgentRow): Agent {
   return {
@@ -225,7 +231,7 @@ function rowToAgent(row: AgentRow): Agent {
     protected: !!row.protected,
     description: row.description ?? undefined,
     avatar: row.avatar_json ? (JSON.parse(row.avatar_json) as AgentAvatar) : undefined,
-    themeColor: row.theme_color ?? undefined,   // 新增
+    themeColor: row.theme_color ?? undefined, // 新增
     config: row.config_json ? (JSON.parse(row.config_json) as AgentConfig) : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -252,7 +258,7 @@ export function createAgent(
     data.protected ? 1 : 0,
     data.description ?? null,
     data.avatar != null ? JSON.stringify(data.avatar) : null,
-    data.themeColor ?? null,   // 新增
+    data.themeColor ?? null, // 新增
     data.config != null ? JSON.stringify(data.config) : null,
     now,
     now,
@@ -326,6 +332,7 @@ git commit -m "feat: add theme_color to agents table and agentDao"
 ## Task 3: agentSoul 读取优先级
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentChatPresenter.ts`
 
 找到 `agentChatPresenter.ts` 中读取 SOUL.md 的位置（约第 317 行）：
@@ -374,6 +381,7 @@ git commit -m "feat: prefer agentSoul config field over SOUL.md"
 ## Task 4: 渲染层 — 主题色注入
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/AgentAvatar.vue`
 - Modify: `src/renderer/src/components/chat/ChatView.vue`
 
@@ -413,7 +421,7 @@ git commit -m "feat: prefer agentSoul config field over SOUL.md"
   v-if="session"
   class="relative flex h-full flex-col"
   :style="{ '--agent-color': agent?.themeColor ?? '#a855f7' }"
->
+></div>
 ```
 
 - [ ] **Step 3: 类型检查**
@@ -436,6 +444,7 @@ git commit -m "feat: inject --agent-color CSS var from agent themeColor"
 ## Task 5: New Thread 页面改为卡片布局
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/NewThread.vue`
 
 - [ ] **Step 1: 重写 `NewThread.vue` 为卡片网格**
@@ -492,8 +501,7 @@ function agentColor(agent: Agent): string {
           :style="{
             '--agent-color': agentColor(agent),
             borderColor: selectedAgentId === agent.id ? agentColor(agent) : undefined,
-            backgroundColor:
-              selectedAgentId === agent.id ? agentColor(agent) + '1a' : undefined,
+            backgroundColor: selectedAgentId === agent.id ? agentColor(agent) + '1a' : undefined,
           }"
           :class="[
             'flex w-40 flex-col items-center gap-2 rounded-xl border px-4 py-4 text-sm transition-colors',
@@ -553,21 +561,25 @@ git commit -m "feat: redesign NewThread as agent card grid with themeColor"
 ## Task 6: AgentEditDialog 加 themeColor 选择器
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/AgentEditDialog.vue`
 
 - [ ] **Step 1: 在 script 中加 `themeColor` ref，并在 watch 中读取/重置**
 
 在 `enableThinking` ref 后加：
+
 ```typescript
 const themeColor = ref("#a855f7");
 ```
 
 在 `watch` 的 edit 模式加载中（`capabilities.value = ...` 附近）加：
+
 ```typescript
 themeColor.value = agent.themeColor ?? "#a855f7";
 ```
 
 在 create 模式重置中加：
+
 ```typescript
 themeColor.value = "#a855f7";
 ```
@@ -577,12 +589,13 @@ themeColor.value = "#a855f7";
 找到 `updateAgent` / `createAgent` 调用处，加入 `themeColor: themeColor.value`。
 
 以 `updateAgent` 为例（找到调用处，加一行）：
+
 ```typescript
 await agentConfig.updateAgent(props.agentId!, {
   name: name.value,
   description: description.value || undefined,
   avatar: buildAvatar(),
-  themeColor: themeColor.value,   // 新增
+  themeColor: themeColor.value, // 新增
   enabled: enabled.value,
   config: buildConfig(),
 });
@@ -651,10 +664,12 @@ Expected: 所有测试通过（或仅已有 skip 测试）。
 - [ ] **Step 2: 找到 agentDao 相关测试，补充 themeColor 断言**
 
 找到测试文件（一般在 `test/main/` 下）中 `ensureBuiltin` 相关 case，验证：
+
 1. `ensureBuiltin` 后查询的 agent 有 `themeColor = "#a855f7"`
 2. `ensureBuiltin` 再次调用会覆盖 `avatar_json` 和 `theme_color`（upsert 正确）
 
 示例断言：
+
 ```typescript
 ensureBuiltin(db);
 const hal = getAgentById(db, "hal-ai");
@@ -662,7 +677,7 @@ expect(hal?.themeColor).toBe("#a855f7");
 expect(hal?.avatar).toEqual({ kind: "lucide", icon: "lucide:bot" });
 
 // 验证 upsert 覆盖
-ensureBuiltin(db);  // 再次调用
+ensureBuiltin(db); // 再次调用
 const hal2 = getAgentById(db, "hal-ai");
 expect(hal2?.themeColor).toBe("#a855f7");
 ```

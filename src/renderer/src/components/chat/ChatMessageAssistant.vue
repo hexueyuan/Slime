@@ -25,7 +25,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "select-tool-call": [id: string];
-  "show-thought-chain": [messageId?: string];
 }>();
 
 const chatStore = useAgentChatStore();
@@ -55,16 +54,17 @@ const parsedBlocks = computed<AssistantMessageBlock[]>(() => {
   }
 });
 
-const thinkingBlocks = computed<AssistantMessageBlock[]>(() => {
+// thinking + tool_call 合并为一个折叠块
+const processBlocks = computed<AssistantMessageBlock[]>(() => {
   if (props.isStreaming) return [];
-  return parsedBlocks.value.filter((b) => b.type === "thinking");
+  return parsedBlocks.value.filter((b) => b.type === "thinking" || b.type === "tool_call");
 });
 
 // 携带原始 idx，使 getBlockContent 的 debouncedContents 下标保持一致
 const visibleBlocks = computed<{ block: AssistantMessageBlock; originalIdx: number }[]>(() => {
   if (props.isStreaming) return [];
   return parsedBlocks.value
-    .filter((b) => b.type !== "thinking")
+    .filter((b) => b.type !== "thinking" && b.type !== "tool_call")
     .map((block) => ({ block, originalIdx: parsedBlocks.value.indexOf(block) }));
 });
 
@@ -151,21 +151,14 @@ function regenerate() {
               />
             </div>
             <span class="text-xs text-muted-foreground">思考中...</span>
-            <button
-              class="ml-1 rounded px-1.5 py-0.5 text-xs text-violet-400 hover:text-violet-300"
-              @click="emit('show-thought-chain')"
-            >
-              查看进度
-            </button>
           </div>
         </template>
 
         <!-- Finished: only visible blocks -->
         <template v-else>
-          <!-- Thinking blocks (折叠) -->
+          <!-- Merged thinking + tool_call block -->
           <details
-            v-for="(tb, idx) in thinkingBlocks"
-            :key="`thinking-${idx}`"
+            v-if="processBlocks.length > 0"
             class="mb-2 rounded-md border border-violet-500/20 bg-violet-500/5"
           >
             <summary
@@ -174,10 +167,45 @@ function regenerate() {
               <Icon icon="lucide:brain" class="h-3 w-3" />
               思考过程
             </summary>
-            <div
-              class="whitespace-pre-wrap px-3 pb-2 pt-1 text-xs leading-relaxed text-muted-foreground"
-            >
-              {{ tb.thinking }}
+            <div class="flex flex-col gap-1.5 px-3 pb-2 pt-1">
+              <template v-for="(pb, pbIdx) in processBlocks" :key="pbIdx">
+                <!-- thinking -->
+                <div
+                  v-if="pb.type === 'thinking'"
+                  class="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground"
+                >
+                  {{ pb.thinking }}
+                </div>
+                <!-- tool_call -->
+                <div
+                  v-else-if="pb.type === 'tool_call' && pb.tool_call"
+                  class="flex cursor-pointer items-center gap-2 rounded border px-2 py-1 text-xs transition-colors hover:bg-muted/30"
+                  :class="
+                    selectedToolCallId && pb.id && selectedToolCallId === pb.id
+                      ? 'border-violet-500/60 bg-violet-500/10'
+                      : 'border-border'
+                  "
+                  @click="pb.id && emit('select-tool-call', pb.id)"
+                >
+                  <svg
+                    v-if="pb.status === 'loading' || pb.status === 'pending'"
+                    class="h-3 w-3 shrink-0 animate-spin text-violet-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  <Icon
+                    v-else-if="pb.status === 'error'"
+                    icon="lucide:x"
+                    class="h-3 w-3 shrink-0 text-red-400"
+                  />
+                  <Icon v-else icon="lucide:check" class="h-3 w-3 shrink-0 text-green-500" />
+                  <span class="font-medium text-foreground">{{ pb.tool_call.name }}</span>
+                </div>
+              </template>
             </div>
           </details>
 
@@ -236,14 +264,6 @@ function regenerate() {
           @click="copyMessage"
         >
           <Icon :icon="copied ? 'lucide:check' : 'lucide:copy'" class="h-3.5 w-3.5" />
-        </button>
-        <button
-          v-if="!isStreaming && thinkingBlocks.length > 0"
-          class="rounded p-1 text-muted-foreground hover:text-foreground"
-          title="查看思考链"
-          @click="message && emit('show-thought-chain', message.id)"
-        >
-          <Icon icon="lucide:list-tree" class="h-3.5 w-3.5" />
         </button>
         <button
           v-if="isLast && !isStreaming && !chatStore.isGenerating"
