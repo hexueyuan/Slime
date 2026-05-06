@@ -33,7 +33,7 @@ function formatTask(t: Task): string {
   ];
   if (t.startedAt) parts.push(`started:${t.startedAt}`);
   if (t.completedAt) parts.push(`completed:${t.completedAt}`);
-  if (t.cancelledAt) parts.push(`cancelledAt:${t.cancelledAt}`);
+  if (t.cancelledAt) parts.push(`cancelled:${t.cancelledAt}`);
   if (t.archivedAt) parts.push(`archived:${t.archivedAt}`);
   return parts.join(" ");
 }
@@ -62,17 +62,21 @@ async function runAsync(args: string[]): Promise<void> {
     const task = (await httpRequest("POST", "/tasks", { description })) as Task;
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "start") {
+    if (!rest[0]) throw new Error("id is required");
     const task = (await httpRequest("PATCH", `/tasks/${rest[0]}/start`)) as Task;
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "done") {
+    if (!rest[0]) throw new Error("id is required");
     const task = (await httpRequest("PATCH", `/tasks/${rest[0]}/done`)) as Task;
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "cancel") {
+    if (!rest[0]) throw new Error("id is required");
     const task = (await httpRequest("PATCH", `/tasks/${rest[0]}/cancel`)) as Task;
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "list") {
     const statusIdx = rest.indexOf("--status");
     const status = statusIdx >= 0 ? rest[statusIdx + 1] : undefined;
+    if (statusIdx >= 0 && !rest[statusIdx + 1]) throw new Error("--status requires a value");
     const qs = status ? `?status=${status}` : "";
     const tasks = (await httpRequest("GET", `/tasks${qs}`)) as Task[];
     if (tasks.length === 0) {
@@ -81,6 +85,7 @@ async function runAsync(args: string[]): Promise<void> {
       tasks.forEach((t) => process.stdout.write(formatTask(t) + "\n"));
     }
   } else if (sub === "get") {
+    if (!rest[0]) throw new Error("id is required");
     const task = (await httpRequest("GET", `/tasks/${rest[0]}`)) as Task;
     process.stdout.write(formatTask(task) + "\n");
   } else {
