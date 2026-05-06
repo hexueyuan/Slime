@@ -24,8 +24,12 @@ export interface AgentConfig {
   mcpTools?: string[]; // "{server_id}/{tool_name}"[]
   /** @deprecated 改为 disabledSkills 黑名单 */
   skills?: string[];
-  /** 禁用的 skill 名称列表，目录下存在的 skill 默认启用 */
+  /** @deprecated 使用 enabledSkills 白名单替代 */
   disabledSkills?: string[];
+  /** 启用的 skill 名称白名单 */
+  enabledSkills?: string[];
+  /** 允许的 slime-cli 命令白名单 */
+  allowedCliCommands?: string[];
   /** 启用 Anthropic extended thinking 模式 */
   enableThinking?: boolean;
 }

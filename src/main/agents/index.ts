@@ -18,6 +18,8 @@ interface AgentConfigJson {
   themeColor?: string;
   capabilityRequirements?: string[];
   disabledTools?: string[];
+  allowedCliCommands?: string[];
+  enabledSkills?: string[];
   subagentEnabled?: boolean;
   enableThinking?: boolean;
   temperature?: number;
