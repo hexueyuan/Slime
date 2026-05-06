@@ -29,7 +29,10 @@ export const useScheduleStore = defineStore("schedule", () => {
   async function loadMoreBefore(): Promise<void> {
     if (timelineDates.value.length === 0) return;
     const earliest = timelineDates.value[0];
-    const newDates = getDateRange(offsetDate(earliest, -3), 0, 2); // 再往前3天
+    const newDates = getDateRange(offsetDate(earliest, -3), 0, 2).filter(
+      (d) => !timelineDates.value.includes(d),
+    );
+    if (newDates.length === 0) return;
     const entries: TimelineEntry[] = [];
     for (const d of newDates) {
       const dayEntries = (await ipc.invoke("task:getTimeline", d)) as TimelineEntry[];
@@ -42,7 +45,10 @@ export const useScheduleStore = defineStore("schedule", () => {
   async function loadMoreAfter(): Promise<void> {
     if (timelineDates.value.length === 0) return;
     const latest = timelineDates.value[timelineDates.value.length - 1];
-    const newDates = getDateRange(offsetDate(latest, 1), 0, 2); // 再往后3天
+    const newDates = getDateRange(offsetDate(latest, 1), 0, 2).filter(
+      (d) => !timelineDates.value.includes(d),
+    );
+    if (newDates.length === 0) return;
     const entries: TimelineEntry[] = [];
     for (const d of newDates) {
       const dayEntries = (await ipc.invoke("task:getTimeline", d)) as TimelineEntry[];

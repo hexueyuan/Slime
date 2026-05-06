@@ -66,6 +66,8 @@ const emit = defineEmits<{ addEntry: []; loadBefore: []; loadAfter: [] }>();
 
 const scrollContainer = ref<HTMLElement | null>(null);
 const dateRefs: Record<string, HTMLElement> = {};
+const loading = ref(false);
+let scrollTimer: ReturnType<typeof setTimeout> | null = null;
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -85,15 +87,25 @@ const groupedEntries = computed(() => {
 });
 
 function onScroll(): void {
+  if (scrollTimer) clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => checkLoadMore(), 200);
+}
+
+async function checkLoadMore(): Promise<void> {
   const el = scrollContainer.value;
-  if (!el) return;
-  // 接近顶部时加载更早的日期
-  if (el.scrollTop < 50) {
-    emit("loadBefore");
-  }
-  // 接近底部时加载更晚的日期
-  if (el.scrollHeight - el.scrollTop - el.clientHeight < 50) {
-    emit("loadAfter");
+  if (!el || loading.value) return;
+  loading.value = true;
+  try {
+    if (el.scrollTop < 50) {
+      emit("loadBefore");
+    } else if (el.scrollHeight - el.scrollTop - el.clientHeight < 50) {
+      emit("loadAfter");
+    }
+  } finally {
+    // 延迟释放锁，避免连续触发
+    setTimeout(() => {
+      loading.value = false;
+    }, 500);
   }
 }
 
