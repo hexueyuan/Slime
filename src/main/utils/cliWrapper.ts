@@ -20,9 +20,9 @@ export async function setupCliWrapper(userName: string): Promise<void> {
     const script =
       [
         "#!/bin/sh",
-        `SLIME_ROLE=user \\`,
-        `SLIME_USER_ID=${JSON.stringify(userName)} \\`,
-        `SLIME_DATA_DIR=${JSON.stringify(userData)} \\`,
+        `SLIME_ROLE=\${SLIME_ROLE:-user} \\`,
+        `SLIME_USER_ID=\${SLIME_USER_ID:-${JSON.stringify(userName)}} \\`,
+        `SLIME_DATA_DIR=\${SLIME_DATA_DIR:-${JSON.stringify(userData)}} \\`,
         `node ${JSON.stringify(cliJsPath)} "$@"`,
       ].join("\n") + "\n";
 
