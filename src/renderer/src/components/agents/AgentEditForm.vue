@@ -186,14 +186,16 @@
 
       <!-- 底部 -->
       <div class="pb-4">
-        <button
-          v-if="!readonly"
-          :disabled="saving"
-          class="rounded-md bg-violet-600 px-4 py-1.5 text-sm text-white hover:bg-violet-700 disabled:opacity-50"
-          @click="save"
-        >
-          {{ saving ? "保存中..." : "保存" }}
-        </button>
+        <div v-if="!readonly" class="flex items-center gap-2">
+          <button
+            :disabled="saving"
+            class="rounded-md bg-violet-600 px-4 py-1.5 text-sm text-white hover:bg-violet-700 disabled:opacity-50"
+            @click="save"
+          >
+            {{ saving ? "保存中..." : "保存" }}
+          </button>
+          <span v-if="saveSuccess" class="text-xs text-green-500">已保存</span>
+        </div>
         <p v-else class="text-xs text-muted-foreground">内置 Agent 仅在开发模式下可编辑</p>
       </div>
     </div>
@@ -234,6 +236,7 @@ const agentStore = useAgentStore();
 
 const readonly = computed(() => props.isBuiltin && !props.isDev);
 const saving = ref(false);
+const saveSuccess = ref(false);
 const availableTools = ref<string[]>([]);
 const availableCliCommands = ref<string[]>([]);
 
@@ -355,6 +358,8 @@ async function save() {
     }
   } finally {
     saving.value = false;
+    saveSuccess.value = true;
+    setTimeout(() => (saveSuccess.value = false), 2000);
   }
 }
 
