@@ -105,9 +105,17 @@ const finishedTasks = computed(() =>
     .sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0)),
 );
 
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+
 function formatDate(ms?: number): string {
   if (!ms) return "";
   const d = new Date(ms);
-  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const w = WEEKDAYS[d.getDay()];
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${y}/${m}/${day}（周${w}）${h}:${min}`;
 }
 </script>
