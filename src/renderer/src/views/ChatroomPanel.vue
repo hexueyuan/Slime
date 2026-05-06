@@ -77,6 +77,9 @@ watch(
     selectedToolCallId.value = null;
     selectedThoughtMessageId.value = null;
     showStreamingThought.value = false;
+    if (activeTab.value === "dashboard" && !showDashboard.value) {
+      activeTab.value = "tools";
+    }
   },
 );
 
@@ -159,6 +162,24 @@ const toolCallBlocks = computed<AssistantMessageBlock[]>(() => {
   return all;
 });
 
+const activeAgent = computed(() => {
+  const session = sessionStore.activeSession;
+  if (!session) return null;
+  return agentStore.agents.find((a) => a.id === session.agentId) ?? null;
+});
+
+const dashboardTemplate = computed(() => {
+  return activeAgent.value?.config?.dashboard?.template ?? null;
+});
+
+const showDashboard = computed(() => !!dashboardTemplate.value);
+
+const currentDashboardData = computed(() => {
+  const sid = sessionStore.activeSessionId;
+  if (!sid) return {};
+  return chatStore.dashboardData.get(sid) ?? {};
+});
+
 function onSelectToolCall(id: string | null) {
   selectedToolCallId.value = id;
   if (id) activeTab.value = "tools";
@@ -213,6 +234,9 @@ function onShowThoughtChain(messageId?: string) {
           :tool-call-blocks="toolCallBlocks"
           :selected-tool-call-id="selectedToolCallId"
           :thought-chain-blocks="thoughtChainBlocks"
+          :show-dashboard="showDashboard"
+          :dashboard-template="dashboardTemplate"
+          :dashboard-data="currentDashboardData"
           @update:active-tab="activeTab = $event"
           @select-tool-call="onSelectToolCall"
         />
