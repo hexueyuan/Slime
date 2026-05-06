@@ -18,7 +18,6 @@ interface AgentConfigJson {
   avatar?: AgentAvatar;
   mbti?: MBTIType;
   capabilityRequirements?: string[];
-  disabledTools?: string[];
   enabledTools?: string[];
   allowedCliCommands?: string[];
   enabledSkills?: string[];
@@ -57,7 +56,6 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       avatar,
       mbti,
       capabilityRequirements,
-      disabledTools,
       enabledTools,
       subagentEnabled,
       enableThinking,
@@ -76,7 +74,6 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       mbti,
       config: {
         capabilityRequirements,
-        disabledTools,
         enabledTools,
         subagentEnabled,
         enableThinking,

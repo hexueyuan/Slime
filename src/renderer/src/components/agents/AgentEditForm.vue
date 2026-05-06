@@ -350,7 +350,7 @@ function loadBuiltin(info: BuiltinAgentInfo) {
   form.name = (cfg.name as string) || info.id;
   form.description = (cfg.description as string) || "";
   form.mbti = (cfg.mbti as MBTIType) || "INTJ";
-  form.additionalPrompt = info.soul || "";
+  form.additionalPrompt = info.prompt || "";
   form.capabilityRequirements = ((cfg.capabilityRequirements as string[]) || []).slice();
   form.enabledTools = ((cfg.enabledTools as string[]) || []).slice();
   form.allowedCliCommands = ((cfg.allowedCliCommands as string[]) || []).slice();

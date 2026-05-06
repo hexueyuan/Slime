@@ -17,23 +17,35 @@
 
 ```typescript
 export type MBTIType =
-  | 'INTJ' | 'INTP' | 'ENTJ' | 'ENTP'
-  | 'INFJ' | 'INFP' | 'ENFJ' | 'ENFP'
-  | 'ISTJ' | 'ISFJ' | 'ESTJ' | 'ESFJ'
-  | 'ISTP' | 'ISFP' | 'ESTP' | 'ESFP'
+  | "INTJ"
+  | "INTP"
+  | "ENTJ"
+  | "ENTP"
+  | "INFJ"
+  | "INFP"
+  | "ENFJ"
+  | "ENFP"
+  | "ISTJ"
+  | "ISFJ"
+  | "ESTJ"
+  | "ESFJ"
+  | "ISTP"
+  | "ISFP"
+  | "ESTP"
+  | "ESFP";
 
 export interface MBTIProfile {
-  color: string         // CSS hex
-  personality: string   // 性格提示词（中文）
+  color: string; // CSS hex
+  personality: string; // 性格提示词（中文）
 }
 
-export const MBTI_MAP: Record<MBTIType, MBTIProfile>
+export const MBTI_MAP: Record<MBTIType, MBTIProfile>;
 ```
 
 ### 16 色映射（鲜明活泼风格）
 
-| 组别 | MBTI | 颜色 | 色值 |
-|------|------|------|------|
+| 组别   | MBTI | 颜色 | 色值      |
+| ------ | ---- | ---- | --------- |
 | 分析家 | INTJ | 靛蓝 | `#6366f1` |
 | 分析家 | INTP | 紫蓝 | `#818cf8` |
 | 分析家 | ENTJ | 深靛 | `#4f46e5` |
@@ -63,18 +75,18 @@ export const MBTI_MAP: Record<MBTIType, MBTIProfile>
 
 ```typescript
 export interface Agent {
-  id: string
-  name: string
-  type: AgentType
-  enabled: boolean
-  protected: boolean
-  description?: string
-  avatar?: AgentAvatar | null
-  mbti: MBTIType              // 新增，必填
+  id: string;
+  name: string;
+  type: AgentType;
+  enabled: boolean;
+  protected: boolean;
+  description?: string;
+  avatar?: AgentAvatar | null;
+  mbti: MBTIType; // 新增，必填
   // themeColor 删除
-  config?: AgentConfig | null
-  createdAt: number
-  updatedAt: number
+  config?: AgentConfig | null;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -82,17 +94,17 @@ export interface Agent {
 
 ```typescript
 export interface AgentConfig {
-  capabilityRequirements?: string[]
-  additionalPrompt?: string    // 替代 agentSoul，对应 prompt.md
-  temperature?: number
-  contextLength?: number
-  maxTokens?: number
-  enabledTools?: string[]
-  subagentEnabled?: boolean
-  mcpTools?: string[]
-  enabledSkills?: string[]
-  allowedCliCommands?: string[]
-  enableThinking?: boolean
+  capabilityRequirements?: string[];
+  additionalPrompt?: string; // 替代 agentSoul，对应 prompt.md
+  temperature?: number;
+  contextLength?: number;
+  maxTokens?: number;
+  enabledTools?: string[];
+  subagentEnabled?: boolean;
+  mcpTools?: string[];
+  enabledSkills?: string[];
+  allowedCliCommands?: string[];
+  enableThinking?: boolean;
 }
 ```
 
@@ -132,10 +144,12 @@ finalPrompt = systemPrompt + skillListXML
 ### AgentEditForm
 
 **删除**：
+
 - 主题颜色选择器（PRESET_COLORS + 颜色格子）
 - "性格设定 (Soul)" 标签文本
 
 **新增**：
+
 - MBTI 选择器：4×4 网格，按组分区（分析家/外交家/守卫者/探险家），每格显示 MBTI 四字母 + 对应颜色圆点，选中态带边框高亮
 - "附加提示词" 标签：保留原文本编辑器，placeholder 改为"追加到 MBTI 性格提示词之后"
 
@@ -144,10 +158,10 @@ finalPrompt = systemPrompt + skillListXML
 所有原来读 `agent.themeColor` 的地方改为工具函数：
 
 ```typescript
-import { MBTI_MAP } from '@shared/constants/mbti'
+import { MBTI_MAP } from "@shared/constants/mbti";
 
 export function getMBTIColor(mbti: MBTIType): string {
-  return MBTI_MAP[mbti].color
+  return MBTI_MAP[mbti].color;
 }
 ```
 
@@ -155,13 +169,13 @@ export function getMBTIColor(mbti: MBTIType): string {
 
 ## 文件重命名
 
-| 原文件 | 新文件 |
-|--------|--------|
-| `src/main/agents/hal-ai/soul.md` | `src/main/agents/hal-ai/prompt.md` |
-| `src/main/agents/moss-ai/soul.md` | `src/main/agents/moss-ai/prompt.md` |
-| AgentConfigPresenter.`readSoulMd` | `readPromptMd` |
-| AgentConfigPresenter.`writeSoulMd` | `writePromptMd` |
-| DevPresenter 相关方法 | 对应重命名 |
+| 原文件                             | 新文件                              |
+| ---------------------------------- | ----------------------------------- |
+| `src/main/agents/hal-ai/soul.md`   | `src/main/agents/hal-ai/prompt.md`  |
+| `src/main/agents/moss-ai/soul.md`  | `src/main/agents/moss-ai/prompt.md` |
+| AgentConfigPresenter.`readSoulMd`  | `readPromptMd`                      |
+| AgentConfigPresenter.`writeSoulMd` | `writePromptMd`                     |
+| DevPresenter 相关方法              | 对应重命名                          |
 
 兼容：`readPromptMd` 先尝试 `prompt.md`，不存在则 fallback 读 `soul.md`。
 

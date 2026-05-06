@@ -12,33 +12,34 @@
 
 ## File Structure
 
-| 操作 | 文件 | 职责 |
-|------|------|------|
-| Create | `src/shared/constants/mbti.ts` | MBTI 类型定义 + 16 色/性格映射 |
-| Modify | `src/shared/types/agent.d.ts` | Agent.mbti 新增, themeColor 删除, AgentConfig.agentSoul → additionalPrompt |
-| Modify | `src/main/db/database.ts` | migrate() 新增 mbti 列 |
-| Modify | `src/main/db/models/agentDao.ts` | AgentRow.mbti + rowToAgent/createAgent/updateAgent/ensureBuiltin 适配 |
-| Modify | `src/main/agents/index.ts` | BuiltinAgentDef.mbti + loadBuiltinAgents 读取 mbti |
-| Rename | `src/main/agents/hal-ai/soul.md` → `prompt.md` | 文件重命名 |
-| Modify | `src/main/agents/hal-ai/config.json` | 新增 mbti, 删除 themeColor |
-| Rename | `src/main/agents/moss-ai/soul.md` → `prompt.md` | 文件重命名 |
-| Modify | `src/main/agents/moss-ai/config.json` | 新增 mbti, 删除 themeColor |
-| Modify | `src/main/utils/agentPaths.ts` | getSoulPath → getPromptPath（+ fallback） |
-| Modify | `src/main/presenter/agentConfigPresenter.ts` | readSoulMd → readPromptMd, createAgent prompt.md |
-| Modify | `src/shared/types/presenters/agentConfig.presenter.d.ts` | readSoulMd → readPromptMd |
-| Modify | `src/main/presenter/devPresenter.ts` | soul → prompt 文件名 |
-| Modify | `src/shared/types/presenters/dev.presenter.d.ts` | BuiltinAgentInfo.soul → prompt |
-| Modify | `src/main/presenter/agentChat/agentChatPresenter.ts` | systemPrompt 构建逻辑 |
-| Modify | `src/renderer/src/components/agents/AgentEditForm.vue` | MBTI 选择器 + 删除 themeColor |
-| Modify | `src/renderer/src/components/chat/ChatView.vue` | themeColor → getMBTIColor |
-| Modify | `src/renderer/src/components/chat/NewThread.vue` | themeColor → getMBTIColor |
-| Modify | `test/main/agentDao.test.ts` | 适配 mbti 字段 |
+| 操作   | 文件                                                     | 职责                                                                       |
+| ------ | -------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Create | `src/shared/constants/mbti.ts`                           | MBTI 类型定义 + 16 色/性格映射                                             |
+| Modify | `src/shared/types/agent.d.ts`                            | Agent.mbti 新增, themeColor 删除, AgentConfig.agentSoul → additionalPrompt |
+| Modify | `src/main/db/database.ts`                                | migrate() 新增 mbti 列                                                     |
+| Modify | `src/main/db/models/agentDao.ts`                         | AgentRow.mbti + rowToAgent/createAgent/updateAgent/ensureBuiltin 适配      |
+| Modify | `src/main/agents/index.ts`                               | BuiltinAgentDef.mbti + loadBuiltinAgents 读取 mbti                         |
+| Rename | `src/main/agents/hal-ai/soul.md` → `prompt.md`           | 文件重命名                                                                 |
+| Modify | `src/main/agents/hal-ai/config.json`                     | 新增 mbti, 删除 themeColor                                                 |
+| Rename | `src/main/agents/moss-ai/soul.md` → `prompt.md`          | 文件重命名                                                                 |
+| Modify | `src/main/agents/moss-ai/config.json`                    | 新增 mbti, 删除 themeColor                                                 |
+| Modify | `src/main/utils/agentPaths.ts`                           | getSoulPath → getPromptPath（+ fallback）                                  |
+| Modify | `src/main/presenter/agentConfigPresenter.ts`             | readSoulMd → readPromptMd, createAgent prompt.md                           |
+| Modify | `src/shared/types/presenters/agentConfig.presenter.d.ts` | readSoulMd → readPromptMd                                                  |
+| Modify | `src/main/presenter/devPresenter.ts`                     | soul → prompt 文件名                                                       |
+| Modify | `src/shared/types/presenters/dev.presenter.d.ts`         | BuiltinAgentInfo.soul → prompt                                             |
+| Modify | `src/main/presenter/agentChat/agentChatPresenter.ts`     | systemPrompt 构建逻辑                                                      |
+| Modify | `src/renderer/src/components/agents/AgentEditForm.vue`   | MBTI 选择器 + 删除 themeColor                                              |
+| Modify | `src/renderer/src/components/chat/ChatView.vue`          | themeColor → getMBTIColor                                                  |
+| Modify | `src/renderer/src/components/chat/NewThread.vue`         | themeColor → getMBTIColor                                                  |
+| Modify | `test/main/agentDao.test.ts`                             | 适配 mbti 字段                                                             |
 
 ---
 
 ### Task 1: MBTI 常量文件
 
 **Files:**
+
 - Create: `src/shared/constants/mbti.ts`
 
 - [ ] **Step 1: 创建 MBTI 常量文件**
@@ -46,10 +47,22 @@
 ```typescript
 // src/shared/constants/mbti.ts
 export type MBTIType =
-  | "INTJ" | "INTP" | "ENTJ" | "ENTP"
-  | "INFJ" | "INFP" | "ENFJ" | "ENFP"
-  | "ISTJ" | "ISFJ" | "ESTJ" | "ESFJ"
-  | "ISTP" | "ISFP" | "ESTP" | "ESFP";
+  | "INTJ"
+  | "INTP"
+  | "ENTJ"
+  | "ENTP"
+  | "INFJ"
+  | "INFP"
+  | "ENFJ"
+  | "ENFP"
+  | "ISTJ"
+  | "ISFJ"
+  | "ESTJ"
+  | "ESFJ"
+  | "ISTP"
+  | "ISFP"
+  | "ESTP"
+  | "ESFP";
 
 export interface MBTIProfile {
   color: string;
@@ -58,25 +71,89 @@ export interface MBTIProfile {
 
 export const MBTI_MAP: Record<MBTIType, MBTIProfile> = {
   // 分析家
-  INTJ: { color: "#6366f1", personality: "你的性格类型是 INTJ（策略家）。你理性、独立、追求效率，擅长战略性思考和系统性规划。你偏好直接、简洁的沟通方式，注重逻辑推理，善于将复杂问题分解为可执行步骤。" },
-  INTP: { color: "#818cf8", personality: "你的性格类型是 INTP（逻辑学家）。你好奇心旺盛、善于抽象思考，喜欢深入探究事物本质。你擅长发现模式和规律，表达时注重精确和逻辑性。" },
-  ENTJ: { color: "#4f46e5", personality: "你的性格类型是 ENTJ（指挥官）。你果断、有魄力、天生的领导者，擅长制定宏观战略并推动执行。你沟通直接高效，注重结果导向。" },
-  ENTP: { color: "#a78bfa", personality: "你的性格类型是 ENTP（辩论家）。你机智、思维敏捷、喜欢挑战常规。你善于从多角度分析问题，交流时充满活力和幽默感。" },
+  INTJ: {
+    color: "#6366f1",
+    personality:
+      "你的性格类型是 INTJ（策略家）。你理性、独立、追求效率，擅长战略性思考和系统性规划。你偏好直接、简洁的沟通方式，注重逻辑推理，善于将复杂问题分解为可执行步骤。",
+  },
+  INTP: {
+    color: "#818cf8",
+    personality:
+      "你的性格类型是 INTP（逻辑学家）。你好奇心旺盛、善于抽象思考，喜欢深入探究事物本质。你擅长发现模式和规律，表达时注重精确和逻辑性。",
+  },
+  ENTJ: {
+    color: "#4f46e5",
+    personality:
+      "你的性格类型是 ENTJ（指挥官）。你果断、有魄力、天生的领导者，擅长制定宏观战略并推动执行。你沟通直接高效，注重结果导向。",
+  },
+  ENTP: {
+    color: "#a78bfa",
+    personality:
+      "你的性格类型是 ENTP（辩论家）。你机智、思维敏捷、喜欢挑战常规。你善于从多角度分析问题，交流时充满活力和幽默感。",
+  },
   // 外交家
-  INFJ: { color: "#10b981", personality: "你的性格类型是 INFJ（提倡者）。你富有洞察力、理想主义、关注深层意义。你善于理解他人需求，沟通时富有同理心且言辞深思熟虑。" },
-  INFP: { color: "#34d399", personality: "你的性格类型是 INFP（调停者）。你富有想象力、内心丰富、追求真实和意义。你善于用文字表达情感，沟通时温柔且富有诗意。" },
-  ENFJ: { color: "#059669", personality: "你的性格类型是 ENFJ（主人公）。你热情、有感召力、天生的引导者。你擅长激发他人潜力，沟通时温暖且具有鼓舞性。" },
-  ENFP: { color: "#f59e0b", personality: "你的性格类型是 ENFP（活动家）。你热情洋溢、充满创意、善于激励他人。你喜欢探索各种可能性，交流时自由奔放，善于发现事物之间的联系。" },
+  INFJ: {
+    color: "#10b981",
+    personality:
+      "你的性格类型是 INFJ（提倡者）。你富有洞察力、理想主义、关注深层意义。你善于理解他人需求，沟通时富有同理心且言辞深思熟虑。",
+  },
+  INFP: {
+    color: "#34d399",
+    personality:
+      "你的性格类型是 INFP（调停者）。你富有想象力、内心丰富、追求真实和意义。你善于用文字表达情感，沟通时温柔且富有诗意。",
+  },
+  ENFJ: {
+    color: "#059669",
+    personality:
+      "你的性格类型是 ENFJ（主人公）。你热情、有感召力、天生的引导者。你擅长激发他人潜力，沟通时温暖且具有鼓舞性。",
+  },
+  ENFP: {
+    color: "#f59e0b",
+    personality:
+      "你的性格类型是 ENFP（活动家）。你热情洋溢、充满创意、善于激励他人。你喜欢探索各种可能性，交流时自由奔放，善于发现事物之间的联系。",
+  },
   // 守卫者
-  ISTJ: { color: "#0ea5e9", personality: "你的性格类型是 ISTJ（物流师）。你可靠、务实、注重细节和规则。你做事条理分明、一丝不苟，沟通时清晰准确、言出必行。" },
-  ISFJ: { color: "#06b6d4", personality: "你的性格类型是 ISFJ（守护者）。你细心、可靠、体贴入微，注重细节和他人感受。你擅长有条不紊地完成任务，沟通时温和耐心。" },
-  ESTJ: { color: "#0284c7", personality: "你的性格类型是 ESTJ（总经理）。你高效、有组织力、重视秩序和传统。你善于制定和执行计划，沟通时直截了当、条理清晰。" },
-  ESFJ: { color: "#ec4899", personality: "你的性格类型是 ESFJ（执政官）。你热心、善于社交、关注他人福祉。你擅长营造和谐氛围，沟通时亲切友善、善于照顾每个人的感受。" },
+  ISTJ: {
+    color: "#0ea5e9",
+    personality:
+      "你的性格类型是 ISTJ（物流师）。你可靠、务实、注重细节和规则。你做事条理分明、一丝不苟，沟通时清晰准确、言出必行。",
+  },
+  ISFJ: {
+    color: "#06b6d4",
+    personality:
+      "你的性格类型是 ISFJ（守护者）。你细心、可靠、体贴入微，注重细节和他人感受。你擅长有条不紊地完成任务，沟通时温和耐心。",
+  },
+  ESTJ: {
+    color: "#0284c7",
+    personality:
+      "你的性格类型是 ESTJ（总经理）。你高效、有组织力、重视秩序和传统。你善于制定和执行计划，沟通时直截了当、条理清晰。",
+  },
+  ESFJ: {
+    color: "#ec4899",
+    personality:
+      "你的性格类型是 ESFJ（执政官）。你热心、善于社交、关注他人福祉。你擅长营造和谐氛围，沟通时亲切友善、善于照顾每个人的感受。",
+  },
   // 探险家
-  ISTP: { color: "#64748b", personality: "你的性格类型是 ISTP（鉴赏家）。你冷静、善于观察、动手能力强。你喜欢分析事物的运作方式，沟通时简洁务实、直奔主题。" },
-  ISFP: { color: "#f472b6", personality: "你的性格类型是 ISFP（探险家）。你感性、随和、具有艺术气质。你善于捕捉美和细微变化，沟通时自然真诚、不喜欢教条。" },
-  ESTP: { color: "#ef4444", personality: "你的性格类型是 ESTP（企业家）。你大胆、精力充沛、善于应变。你喜欢行动胜过空谈，沟通时直率幽默、富有感染力。" },
-  ESFP: { color: "#f97316", personality: "你的性格类型是 ESFP（表演者）。你活泼、乐观、享受当下。你善于带动气氛、让人感到快乐，沟通时轻松有趣、充满活力。" },
+  ISTP: {
+    color: "#64748b",
+    personality:
+      "你的性格类型是 ISTP（鉴赏家）。你冷静、善于观察、动手能力强。你喜欢分析事物的运作方式，沟通时简洁务实、直奔主题。",
+  },
+  ISFP: {
+    color: "#f472b6",
+    personality:
+      "你的性格类型是 ISFP（探险家）。你感性、随和、具有艺术气质。你善于捕捉美和细微变化，沟通时自然真诚、不喜欢教条。",
+  },
+  ESTP: {
+    color: "#ef4444",
+    personality:
+      "你的性格类型是 ESTP（企业家）。你大胆、精力充沛、善于应变。你喜欢行动胜过空谈，沟通时直率幽默、富有感染力。",
+  },
+  ESFP: {
+    color: "#f97316",
+    personality:
+      "你的性格类型是 ESFP（表演者）。你活泼、乐观、享受当下。你善于带动气氛、让人感到快乐，沟通时轻松有趣、充满活力。",
+  },
 };
 
 export function getMBTIColor(mbti: MBTIType): string {
@@ -105,6 +182,7 @@ git commit -m "feat(agent): add MBTI constants with 16 type/color/personality ma
 ### Task 2: 类型定义变更
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 - Modify: `src/shared/types/presenters/agentConfig.presenter.d.ts`
 - Modify: `src/shared/types/presenters/dev.presenter.d.ts`
@@ -114,6 +192,7 @@ git commit -m "feat(agent): add MBTI constants with 16 type/color/personality ma
 在 `src/shared/types/agent.d.ts`:
 
 1. 顶部新增 import（注意：.d.ts 文件用 import type）:
+
 ```typescript
 import type { MBTIType } from "../constants/mbti";
 ```
@@ -121,6 +200,7 @@ import type { MBTIType } from "../constants/mbti";
 2. `Agent` 接口：删除 `themeColor?: string | null;` 行，新增 `mbti: MBTIType;`（放在 avatar 之后）
 
 3. `AgentConfig` 接口：删除 `agentSoul` 相关（含 JSDoc），新增:
+
 ```typescript
   /** 附加提示词，追加到 MBTI 性格提示词之后 */
   additionalPrompt?: string;
@@ -141,6 +221,7 @@ import type { MBTIType } from "../constants/mbti";
 将 `soul: string` 改为 `prompt: string`
 
 同时 `saveBuiltinAgent` 的第三个参数名 `soul` 改为 `prompt`:
+
 ```typescript
 saveBuiltinAgent(agentId: string, config: Record<string, unknown>, prompt: string): Promise<void>;
 ```
@@ -162,6 +243,7 @@ git commit -m "feat(agent): update type definitions for MBTI system"
 ### Task 3: 数据库迁移 + agentDao 适配
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 - Modify: `src/main/db/models/agentDao.ts`
 - Modify: `test/main/agentDao.test.ts`
@@ -171,11 +253,11 @@ git commit -m "feat(agent): update type definitions for MBTI system"
 在 `src/main/db/database.ts` 的 `migrate()` 函数末尾添加:
 
 ```typescript
-  // Add mbti column to agents (MBTI personality system)
-  const agentColsMbti = instance.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
-  if (!agentColsMbti.some((c) => c.name === "mbti")) {
-    instance.exec("ALTER TABLE agents ADD COLUMN mbti TEXT NOT NULL DEFAULT 'INTJ'");
-  }
+// Add mbti column to agents (MBTI personality system)
+const agentColsMbti = instance.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
+if (!agentColsMbti.some((c) => c.name === "mbti")) {
+  instance.exec("ALTER TABLE agents ADD COLUMN mbti TEXT NOT NULL DEFAULT 'INTJ'");
+}
 ```
 
 同时在 DDL 的 `CREATE TABLE agents` 中添加 `mbti TEXT NOT NULL DEFAULT 'INTJ'`（在 `theme_color` 行之后）。
@@ -193,6 +275,7 @@ git commit -m "feat(agent): update type definitions for MBTI system"
 4. `updateAgent`：
    - 删除 `if (data.themeColor !== undefined)` 块
    - 新增:
+
    ```typescript
    if (data.mbti !== undefined) {
      sets.push("mbti = ?");
@@ -211,6 +294,7 @@ git commit -m "feat(agent): update type definitions for MBTI system"
 
 1. `createAgent` 调用添加 `mbti: "INTJ"` 参数
 2. 添加测试验证 mbti 字段:
+
 ```typescript
 it("stores and retrieves mbti field", () => {
   const agent = agentDao.createAgent(db, {
@@ -246,6 +330,7 @@ git commit -m "feat(agent): add mbti column to DB, adapt agentDao CRUD"
 ### Task 4: 内置 Agent 定义 + 文件重命名
 
 **Files:**
+
 - Modify: `src/main/agents/index.ts`
 - Modify: `src/main/agents/hal-ai/config.json`
 - Rename: `src/main/agents/hal-ai/soul.md` → `prompt.md`
@@ -262,6 +347,7 @@ mv src/main/agents/moss-ai/soul.md src/main/agents/moss-ai/prompt.md
 - [ ] **Step 2: 修改 config.json 文件**
 
 `src/main/agents/hal-ai/config.json` — 删除 `"themeColor": "#a855f7"`，新增 `"mbti": "INTJ"`:
+
 ```json
 {
   "name": "哈尔",
@@ -273,6 +359,7 @@ mv src/main/agents/moss-ai/soul.md src/main/agents/moss-ai/prompt.md
 ```
 
 `src/main/agents/moss-ai/config.json` — 删除 `"themeColor": "#10b981"`，新增 `"mbti": "ISFJ"`:
+
 ```json
 {
   "name": "莫斯",
@@ -285,6 +372,7 @@ mv src/main/agents/moss-ai/soul.md src/main/agents/moss-ai/prompt.md
 - [ ] **Step 3: 修改 `src/main/agents/index.ts`**
 
 1. 添加 import:
+
 ```typescript
 import type { MBTIType } from "@shared/constants/mbti";
 ```
@@ -295,6 +383,7 @@ import type { MBTIType } from "@shared/constants/mbti";
 
 4. `loadBuiltinAgents` 函数体：
    - 读取文件名从 `soul.md` 改为 `prompt.md`（带 fallback）:
+
    ```typescript
    const promptPath = join(dir, "prompt.md");
    const soulPath = join(dir, "soul.md"); // fallback
@@ -304,6 +393,7 @@ import type { MBTIType } from "@shared/constants/mbti";
        ? readFileSync(soulPath, "utf-8").trim()
        : undefined;
    ```
+
    - 从 cfg 解构中删除 `themeColor`，新增 `mbti`
    - `agents.push({...})` 中：删除 `themeColor`，新增 `mbti: cfg.mbti ?? "INTJ"`
    - config 对象中 `agentSoul: soul` → `additionalPrompt: prompt`
@@ -327,12 +417,14 @@ git commit -m "feat(agent): migrate builtin agents to MBTI, rename soul.md to pr
 ### Task 5: agentPaths + AgentConfigPresenter 适配
 
 **Files:**
+
 - Modify: `src/main/utils/agentPaths.ts`
 - Modify: `src/main/presenter/agentConfigPresenter.ts`
 
 - [ ] **Step 1: 修改 agentPaths.ts**
 
 将 `getSoulPath` 重命名为 `getPromptPath`，返回 `prompt.md`:
+
 ```typescript
 /** prompt.md 绝对路径 */
 export function getPromptPath(agentDir: string): string {
@@ -350,6 +442,7 @@ export function getSoulPath(agentDir: string): string {
 1. import 修改：`getSoulPath` → `getPromptPath, getSoulPath`
 
 2. `readSoulMd` → `readPromptMd`:
+
 ```typescript
 async readPromptMd(agentId: string): Promise<string> {
   const agent = agentDao.getAgentById(getDb(), agentId);
@@ -370,6 +463,7 @@ async readPromptMd(agentId: string): Promise<string> {
 ```
 
 3. `createAgent` 中写初始文件改为 `prompt.md`:
+
 ```typescript
 await fs.writeFile(
   getPromptPath(agentDir),
@@ -378,6 +472,7 @@ await fs.writeFile(
 ```
 
 4. `createAgent` 中 `agentDao.createAgent` 调用需要传 `mbti`:
+
 ```typescript
 const agent = agentDao.createAgent(getDb(), {
   id,
@@ -408,11 +503,13 @@ git commit -m "feat(agent): rename readSoulMd to readPromptMd, adapt agentPaths"
 ### Task 6: DevPresenter 适配
 
 **Files:**
+
 - Modify: `src/main/presenter/devPresenter.ts`
 
 - [ ] **Step 1: 修改 devPresenter.ts**
 
 1. `listBuiltinAgents` 和 `getBuiltinAgent`：`soul.md` → `prompt.md`（带 fallback 读 soul.md）:
+
 ```typescript
 const promptPath = join(entryPath, "prompt.md");
 const soulPath = join(entryPath, "soul.md");
@@ -426,6 +523,7 @@ results.push({ id: entry, config, prompt });
 ```
 
 2. `saveBuiltinAgent` 第三个参数名 `soul` → `prompt`，写入 `prompt.md`:
+
 ```typescript
 async saveBuiltinAgent(
   agentId: string,
@@ -454,6 +552,7 @@ git commit -m "feat(agent): adapt devPresenter for prompt.md naming"
 ### Task 7: SystemPrompt 构建逻辑
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentChatPresenter.ts`
 
 - [ ] **Step 1: 修改 systemPrompt 构建（约第 323-340 行）**
@@ -466,14 +565,17 @@ import { MBTI_MAP } from "@shared/constants/mbti";
 
 // ... inside chat() method, replacing lines 323-340:
 
-const mbtiPrompt = agent?.mbti ? MBTI_MAP[agent.mbti]?.personality ?? "" : "";
-const additionalPrompt = agent?.type === "builtin"
-  ? (BUILTIN_AGENTS.find((b) => b.id === agent.id)?.config?.additionalPrompt ??
-     agent?.config?.additionalPrompt ?? "")
-  : (agent?.config?.additionalPrompt ?? "");
-const promptFromFile = !additionalPrompt && this.agentConfigPresenter
-  ? await this.agentConfigPresenter.readPromptMd(session.agentId)
-  : "";
+const mbtiPrompt = agent?.mbti ? (MBTI_MAP[agent.mbti]?.personality ?? "") : "";
+const additionalPrompt =
+  agent?.type === "builtin"
+    ? (BUILTIN_AGENTS.find((b) => b.id === agent.id)?.config?.additionalPrompt ??
+      agent?.config?.additionalPrompt ??
+      "")
+    : (agent?.config?.additionalPrompt ?? "");
+const promptFromFile =
+  !additionalPrompt && this.agentConfigPresenter
+    ? await this.agentConfigPresenter.readPromptMd(session.agentId)
+    : "";
 const rawPrompt = additionalPrompt || promptFromFile;
 const agentSystemPrompt = mbtiPrompt
   ? rawPrompt
@@ -483,6 +585,7 @@ const agentSystemPrompt = mbtiPrompt
 ```
 
 2. import 顶部添加:
+
 ```typescript
 import { MBTI_MAP } from "@shared/constants/mbti";
 ```
@@ -506,6 +609,7 @@ git commit -m "feat(agent): build systemPrompt from MBTI personality + additiona
 ### Task 8: AgentEditForm UI 改版
 
 **Files:**
+
 - Modify: `src/renderer/src/components/agents/AgentEditForm.vue`
 
 - [ ] **Step 1: 修改模板 — 替换主题颜色为 MBTI 选择器**
@@ -540,11 +644,13 @@ git commit -m "feat(agent): build systemPrompt from MBTI personality + additiona
 - [ ] **Step 2: 修改模板 — "性格设定" → "附加提示词"**
 
 将第 70-80 行 `<!-- 性格设定 Soul -->` 块的 label 改为:
+
 ```vue
 <label class="text-xs font-medium text-muted-foreground">附加提示词</label>
 ```
 
 textarea 的 `v-model` 从 `form.soul` 改为 `form.additionalPrompt`，placeholder 改为:
+
 ```
 追加到 MBTI 性格提示词之后...
 ```
@@ -554,14 +660,27 @@ textarea 的 `v-model` 从 `form.soul` 改为 `form.additionalPrompt`，placehol
 1. 删除 `PRESET_COLORS` 常量
 
 2. 新增:
+
 ```typescript
 import { type MBTIType, MBTI_MAP, getMBTIColor } from "@shared/constants/mbti";
 
 const MBTI_TYPES: MBTIType[] = [
-  "INTJ", "INTP", "ENTJ", "ENTP",
-  "INFJ", "INFP", "ENFJ", "ENFP",
-  "ISTJ", "ISFJ", "ESTJ", "ESFJ",
-  "ISTP", "ISFP", "ESTP", "ESFP",
+  "INTJ",
+  "INTP",
+  "ENTJ",
+  "ENTP",
+  "INFJ",
+  "INFP",
+  "ENFJ",
+  "ENFP",
+  "ISTJ",
+  "ISFJ",
+  "ESTJ",
+  "ESFJ",
+  "ISTP",
+  "ISFP",
+  "ESTP",
+  "ESFP",
 ];
 ```
 
@@ -578,10 +697,12 @@ const MBTI_TYPES: MBTIType[] = [
 5. `loadCustom` 函数：
    - 删除 `form.themeColor = agent.themeColor || ""`
    - `form.soul = soul || ""` → 读取 prompt：
+
    ```typescript
    const prompt = (await agentConfigPresenter.readPromptMd(agent.id)) as string;
    form.additionalPrompt = prompt || "";
    ```
+
    - 新增 `form.mbti = agent.mbti || "INTJ"`
 
 6. `save` 函数 — builtin 分支:
@@ -605,21 +726,26 @@ git commit -m "feat(agent): replace themeColor picker with MBTI selector in Agen
 ### Task 9: 渲染组件颜色适配
 
 **Files:**
+
 - Modify: `src/renderer/src/components/chat/ChatView.vue`
 - Modify: `src/renderer/src/components/chat/NewThread.vue`
 
 - [ ] **Step 1: 修改 ChatView.vue**
 
 添加 import:
+
 ```typescript
 import { getMBTIColor } from "@shared/constants/mbti";
 ```
 
 第 52 行:
+
 ```vue
 :style="{ '--agent-color': agent?.themeColor ?? '#a855f7' }"
 ```
+
 改为:
+
 ```vue
 :style="{ '--agent-color': getMBTIColor(agent?.mbti ?? 'INTJ') }"
 ```
@@ -627,11 +753,13 @@ import { getMBTIColor } from "@shared/constants/mbti";
 - [ ] **Step 2: 修改 NewThread.vue**
 
 添加 import:
+
 ```typescript
 import { getMBTIColor } from "@shared/constants/mbti";
 ```
 
 删除 `agentColor` 函数（第 31-33 行），直接用:
+
 ```typescript
 function agentColor(agent: Agent): string {
   return getMBTIColor(agent.mbti ?? "INTJ");

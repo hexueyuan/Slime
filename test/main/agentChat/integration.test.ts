@@ -119,9 +119,9 @@ describe("AgentChatPresenter integration", () => {
         type: "custom",
         enabled: true,
         protected: false,
+        mbti: "ENFP",
         config: {
           capabilityRequirements: ["reasoning", "chat"],
-          systemPrompt: "Be concise",
           temperature: 0.3,
           maxTokens: 2048,
           subagentEnabled: false,
@@ -131,7 +131,7 @@ describe("AgentChatPresenter integration", () => {
       const session = await adapter.createSession("custom-agent");
       const config = configDao.getConfigById(db, session.id)!;
       expect(config.capabilityRequirements).toEqual(["reasoning", "chat"]);
-      expect(config.systemPrompt).toBe("Be concise");
+      expect(config.systemPrompt).toBeNull();
       expect(config.temperature).toBe(0.3);
       expect(config.maxTokens).toBe(2048);
     });

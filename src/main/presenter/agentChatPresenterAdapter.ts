@@ -33,7 +33,7 @@ export class AgentChatPresenterAdapter {
     configDao.createConfig(db, {
       id,
       capabilityRequirements: agentConfig?.capabilityRequirements ?? ["reasoning"],
-      systemPrompt: agentConfig?.systemPrompt ?? null,
+      systemPrompt: null,
       temperature: agentConfig?.temperature ?? null,
       contextLength: agentConfig?.contextLength ?? null,
       maxTokens: agentConfig?.maxTokens ?? null,
