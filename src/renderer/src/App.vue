@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, shallowRef, watch, markRaw } from "vue";
 import AppSidebar from "./components/AppSidebar.vue";
 import ChatroomPanel from "./views/ChatroomPanel.vue";
 import GatewayPanel from "./views/GatewayPanel.vue";
@@ -9,7 +9,19 @@ import OnboardingWizard from "./components/onboarding/OnboardingWizard.vue";
 import { usePresenter } from "@/composables/usePresenter";
 import ProfileModal from "./components/chat/ProfileModal.vue";
 
+const viewComponents: Record<string, object> = {
+  chatroom: markRaw(ChatroomPanel),
+  schedule: markRaw(SchedulePanel),
+  gateway: markRaw(GatewayPanel),
+  evolab: markRaw(EvolabPanel),
+};
+
 const activeView = ref<"chatroom" | "schedule" | "gateway" | "evolab">("chatroom");
+const currentComponent = shallowRef<object>(viewComponents.chatroom);
+
+watch(activeView, (v) => {
+  currentComponent.value = viewComponents[v];
+});
 
 const configPresenter = usePresenter("configPresenter");
 const needsOnboarding = ref<boolean | null>(null);
@@ -47,10 +59,9 @@ async function onOnboardingDone() {
         <div
           class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
         >
-          <ChatroomPanel v-if="activeView === 'chatroom'" />
-          <SchedulePanel v-else-if="activeView === 'schedule'" />
-          <GatewayPanel v-else-if="activeView === 'gateway'" />
-          <EvolabPanel v-else-if="activeView === 'evolab'" />
+          <KeepAlive>
+            <component :is="currentComponent" :key="activeView" />
+          </KeepAlive>
         </div>
       </div>
     </div>

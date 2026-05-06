@@ -17,6 +17,8 @@ import type {
   TrendPoint,
 } from "@shared/types/gateway";
 
+const CACHE_TTL = 30_000; // 30s cache
+
 export const useGatewayStore = defineStore("gateway", () => {
   const gw = usePresenter("gatewayPresenter");
 
@@ -42,6 +44,12 @@ export const useGatewayStore = defineStore("gateway", () => {
   const channelStability = ref<Map<number, StabilityPoint[]>>(new Map());
   const channelMinuteStability = ref<Map<number, MinutePoint[]>>(new Map());
   const statsTrend = ref<TrendPoint[]>([]);
+
+  // cache timestamps
+  let _lastAll = 0;
+  let _lastRanking = 0;
+  let _lastPercentiles = 0;
+  let _lastTrend = 0;
 
   const cacheRate = computed(() => {
     const input = stats.value.inputTokens;
@@ -82,11 +90,14 @@ export const useGatewayStore = defineStore("gateway", () => {
     models.value = new Map(models.value).set(channelId, list);
   }
 
-  async function loadAll() {
+  async function loadAll(force = false) {
+    if (!force && Date.now() - _lastAll < CACHE_TTL) return;
     await Promise.all([loadChannels(), loadGroups(), loadApiKeys(), loadStats()]);
+    _lastAll = Date.now();
   }
 
-  async function loadRanking() {
+  async function loadRanking(force = false) {
+    if (!force && Date.now() - _lastRanking < CACHE_TTL) return;
     const { from, to } = getDateRange(statsRange.value);
     const [ch, mo] = await Promise.all([
       gw.getChannelRanking(from, to),
@@ -94,15 +105,18 @@ export const useGatewayStore = defineStore("gateway", () => {
     ]);
     channelRanking.value = ch;
     modelRanking.value = mo;
+    _lastRanking = Date.now();
   }
 
-  async function loadLatencyPercentiles() {
+  async function loadLatencyPercentiles(force = false) {
+    if (!force && Date.now() - _lastPercentiles < CACHE_TTL) return;
     if (statsRange.value === "30d") {
       latencyPercentiles.value = { p50: 0, p95: 0, ttftP50: null };
       return;
     }
     const { from, to } = getDateRange(statsRange.value);
     latencyPercentiles.value = await gw.getLatencyPercentiles(from, to);
+    _lastPercentiles = Date.now();
   }
 
   async function loadChannelStability(channelId: number) {
@@ -120,13 +134,15 @@ export const useGatewayStore = defineStore("gateway", () => {
     channelMinuteStability.value = new Map(channelMinuteStability.value).set(channelId, points);
   }
 
-  async function loadStatsTrend() {
+  async function loadStatsTrend(force = false) {
+    if (!force && Date.now() - _lastTrend < CACHE_TTL) return;
     const { from, to } = getDateRange(statsRange.value);
     if (statsRange.value === "today") {
       statsTrend.value = await gw.getStatsHourlyTrend(from, to);
     } else {
       statsTrend.value = await gw.getStatsDailyTrend(from, to);
     }
+    _lastTrend = Date.now();
   }
 
   return {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from "vue";
+import { computed, onMounted, onActivated, onUnmounted, watch } from "vue";
 import { useGatewayStore } from "@/stores/gateway";
 import { GATEWAY_EVENTS } from "@shared/events";
 import ChannelTab from "@/components/gateway/ChannelTab.vue";
@@ -18,13 +18,21 @@ onMounted(() => {
   store.loadStatsTrend();
 });
 
+onActivated(() => {
+  // KeepAlive re-activate: skip if cache still fresh
+  store.loadAll();
+  store.loadRanking();
+  store.loadLatencyPercentiles();
+  store.loadStatsTrend();
+});
+
 watch(
   () => store.statsRange,
   () => {
     store.loadStats();
-    store.loadRanking();
-    store.loadLatencyPercentiles();
-    store.loadStatsTrend();
+    store.loadRanking(true);
+    store.loadLatencyPercentiles(true);
+    store.loadStatsTrend(true);
   },
 );
 
