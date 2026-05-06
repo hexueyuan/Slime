@@ -18,7 +18,8 @@ export function formatLogLine(raw: string): string {
     const { timestamp, level, message, ...meta } = obj;
     const levelStr = `[${(level ?? "?").toUpperCase()}]`.padEnd(7);
     const metaStr = Object.keys(meta).length ? "  " + JSON.stringify(meta) : "";
-    return `${levelStr} ${timestamp}  ${message}${metaStr}`;
+    const localTime = timestamp ? new Date(timestamp).toLocaleString() : timestamp;
+    return `${levelStr} ${localTime}  ${message}${metaStr}`;
   } catch {
     return raw;
   }
