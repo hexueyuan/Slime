@@ -4,11 +4,12 @@ import AppSidebar from "./components/AppSidebar.vue";
 import ChatroomPanel from "./views/ChatroomPanel.vue";
 import GatewayPanel from "./views/GatewayPanel.vue";
 import EvolabPanel from "./views/EvolabPanel.vue";
+import SchedulePanel from "./views/SchedulePanel.vue";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard.vue";
 import { usePresenter } from "@/composables/usePresenter";
 import ProfileModal from "./components/chat/ProfileModal.vue";
 
-const activeView = ref<"chatroom" | "gateway" | "evolab">("chatroom");
+const activeView = ref<"chatroom" | "schedule" | "gateway" | "evolab">("chatroom");
 
 const configPresenter = usePresenter("configPresenter");
 const needsOnboarding = ref<boolean | null>(null);
@@ -47,6 +48,7 @@ async function onOnboardingDone() {
           class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
         >
           <ChatroomPanel v-if="activeView === 'chatroom'" />
+          <SchedulePanel v-else-if="activeView === 'schedule'" />
           <GatewayPanel v-else-if="activeView === 'gateway'" />
           <EvolabPanel v-else-if="activeView === 'evolab'" />
         </div>

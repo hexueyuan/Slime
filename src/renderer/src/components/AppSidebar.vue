@@ -18,6 +18,20 @@
     </button>
 
     <button
+      data-testid="sidebar-schedule"
+      :class="[
+        'mt-1 flex h-8 w-8 items-center justify-center rounded-md',
+        activeView === 'schedule'
+          ? 'bg-muted text-foreground'
+          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+      ]"
+      title="日程"
+      @click="$emit('update:activeView', 'schedule')"
+    >
+      <Icon icon="lucide:calendar-check" class="h-5 w-5" />
+    </button>
+
+    <button
       data-testid="sidebar-gateway"
       :class="[
         'mt-1 flex h-8 w-8 items-center justify-center rounded-md',
@@ -93,11 +107,11 @@ import { Icon } from "@iconify/vue";
 import SettingsDialog from "./settings/SettingsDialog.vue";
 
 defineProps<{
-  activeView: "chatroom" | "gateway" | "evolab";
+  activeView: "chatroom" | "schedule" | "gateway" | "evolab";
 }>();
 
 defineEmits<{
-  "update:activeView": [view: "chatroom" | "gateway" | "evolab"];
+  "update:activeView": [view: "chatroom" | "schedule" | "gateway" | "evolab"];
 }>();
 
 const showSettings = ref(false);
