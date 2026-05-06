@@ -11,7 +11,7 @@
         <input
           type="datetime-local"
           :value="scheduledLocal"
-          class="w-full rounded-md border border-border bg-muted/30 px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+          class="w-full rounded-md border border-border bg-muted/30 px-2 py-1 text-sm text-foreground [color-scheme:dark] focus:outline-none focus:ring-1 focus:ring-violet-500/50"
           @input="onScheduledChange"
         />
       </div>

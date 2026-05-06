@@ -56,6 +56,7 @@
           @change="onAssigneeChange"
         >
           <option value="__user__">我</option>
+          <option value="__none__">暂无归属</option>
           <option v-for="agent in agents" :key="agent.id" :value="agent.id">
             {{ agent.name }}
           </option>
@@ -153,7 +154,11 @@ watch(
     assigneeId.value = task.value?.assigneeId;
     scheduledAt.value = task.value?.scheduledAt;
     repeatInterval.value = task.value?.repeatInterval;
-    const agentList = (await ipc.invoke("presenter:call", "agentConfig", "listAgents")) as {
+    const agentList = (await ipc.invoke(
+      "presenter:call",
+      "agentConfigPresenter",
+      "listAgents",
+    )) as {
       id: string;
       name: string;
     }[];
@@ -228,6 +233,9 @@ function formatTime(ms?: number): string {
 function onAssigneeChange(e: Event): void {
   const value = (e.target as HTMLSelectElement).value;
   if (value === "__user__") {
+    assigneeType.value = "user";
+    assigneeId.value = undefined;
+  } else if (value === "__none__") {
     assigneeType.value = "user";
     assigneeId.value = undefined;
   } else {
