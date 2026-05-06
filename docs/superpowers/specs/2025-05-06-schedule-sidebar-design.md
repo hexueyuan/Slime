@@ -44,51 +44,51 @@
 
 #### tasks
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | TEXT PK | 17位时间戳ID（YYYYMMDDHHmmssSSS） |
-| title | TEXT NOT NULL | 任务标题 |
-| detail | TEXT | 任务详情（Markdown，支持链接/图片引用） |
-| status | TEXT NOT NULL | todo / in_progress / done / cancelled |
-| created_at | INTEGER NOT NULL | 创建时间 ms |
-| started_at | INTEGER | 开始时间 ms |
-| finished_at | INTEGER | 完成/取消时间 ms |
+| 字段        | 类型             | 说明                                    |
+| ----------- | ---------------- | --------------------------------------- |
+| id          | TEXT PK          | 17位时间戳ID（YYYYMMDDHHmmssSSS）       |
+| title       | TEXT NOT NULL    | 任务标题                                |
+| detail      | TEXT             | 任务详情（Markdown，支持链接/图片引用） |
+| status      | TEXT NOT NULL    | todo / in_progress / done / cancelled   |
+| created_at  | INTEGER NOT NULL | 创建时间 ms                             |
+| started_at  | INTEGER          | 开始时间 ms                             |
+| finished_at | INTEGER          | 完成/取消时间 ms                        |
 
 索引：`idx_tasks_status`
 
 #### task_attachments
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | INTEGER PK AUTOINCREMENT | 自增 |
-| task_id | TEXT NOT NULL FK → tasks.id ON DELETE CASCADE | 关联任务 |
-| file_name | TEXT NOT NULL | 原始文件名 |
-| file_path | TEXT NOT NULL | 相对于 Vault 根的路径（如 `_Assets/image/xxx.png`） |
-| file_type | TEXT NOT NULL | image / doc / video |
-| created_at | INTEGER NOT NULL | 添加时间 ms |
+| 字段       | 类型                                          | 说明                                                |
+| ---------- | --------------------------------------------- | --------------------------------------------------- |
+| id         | INTEGER PK AUTOINCREMENT                      | 自增                                                |
+| task_id    | TEXT NOT NULL FK → tasks.id ON DELETE CASCADE | 关联任务                                            |
+| file_name  | TEXT NOT NULL                                 | 原始文件名                                          |
+| file_path  | TEXT NOT NULL                                 | 相对于 Vault 根的路径（如 `_Assets/image/xxx.png`） |
+| file_type  | TEXT NOT NULL                                 | image / doc / video                                 |
+| created_at | INTEGER NOT NULL                              | 添加时间 ms                                         |
 
 #### timeline_entries
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | INTEGER PK AUTOINCREMENT | 自增 |
-| date | TEXT NOT NULL | 日期 YYYY-MM-DD |
-| start_time | TEXT NOT NULL | 开始时间 HH:mm |
-| end_time | TEXT | 结束时间 HH:mm（空=时间点事件） |
-| content | TEXT NOT NULL | 描述文本 |
-| source | TEXT NOT NULL | manual / task_auto / note |
-| source_id | TEXT | 关联的 task_id 或 note_id |
-| created_at | INTEGER NOT NULL | 创建时间 ms |
+| 字段       | 类型                     | 说明                            |
+| ---------- | ------------------------ | ------------------------------- |
+| id         | INTEGER PK AUTOINCREMENT | 自增                            |
+| date       | TEXT NOT NULL            | 日期 YYYY-MM-DD                 |
+| start_time | TEXT NOT NULL            | 开始时间 HH:mm                  |
+| end_time   | TEXT                     | 结束时间 HH:mm（空=时间点事件） |
+| content    | TEXT NOT NULL            | 描述文本                        |
+| source     | TEXT NOT NULL            | manual / task_auto / note       |
+| source_id  | TEXT                     | 关联的 task_id 或 note_id       |
+| created_at | INTEGER NOT NULL         | 创建时间 ms                     |
 
 索引：`idx_timeline_date`
 
 #### notes
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | INTEGER PK AUTOINCREMENT | 自增 |
-| content | TEXT NOT NULL | 随笔内容 |
-| created_at | INTEGER NOT NULL | 创建时间 ms |
+| 字段       | 类型                     | 说明        |
+| ---------- | ------------------------ | ----------- |
+| id         | INTEGER PK AUTOINCREMENT | 自增        |
+| content    | TEXT NOT NULL            | 随笔内容    |
+| created_at | INTEGER NOT NULL         | 创建时间 ms |
 
 ---
 
@@ -108,20 +108,20 @@ src/main/tasks/
 
 ### TaskPresenter IPC 方法
 
-| 方法 | 说明 |
-|------|------|
-| `getTasks(filter?)` | 按状态筛选任务列表 |
-| `createTask(title, detail?)` | 新建任务 |
-| `updateTask(id, fields)` | 更新任务（标题/详情/状态） |
-| `addAttachment(taskId, filePath)` | 添加附件（复制到 Vault，写入 DB） |
-| `removeAttachment(attachmentId)` | 删除附件引用（不删文件） |
-| `getTimeline(date)` | 获取某天的时间线条目 |
-| `addTimelineEntry(entry)` | 手动添加时间线条目 |
-| `updateTimelineEntry(id, fields)` | 更新时间线条目 |
-| `removeTimelineEntry(id)` | 删除时间线条目 |
-| `getNotes(limit?)` | 获取随笔列表 |
-| `addNote(content)` | 添加随笔（同时写入 timeline_entries） |
-| `deleteNote(id)` | 删除随笔（同时删关联 timeline entry） |
+| 方法                              | 说明                                  |
+| --------------------------------- | ------------------------------------- |
+| `getTasks(filter?)`               | 按状态筛选任务列表                    |
+| `createTask(title, detail?)`      | 新建任务                              |
+| `updateTask(id, fields)`          | 更新任务（标题/详情/状态）            |
+| `addAttachment(taskId, filePath)` | 添加附件（复制到 Vault，写入 DB）     |
+| `removeAttachment(attachmentId)`  | 删除附件引用（不删文件）              |
+| `getTimeline(date)`               | 获取某天的时间线条目                  |
+| `addTimelineEntry(entry)`         | 手动添加时间线条目                    |
+| `updateTimelineEntry(id, fields)` | 更新时间线条目                        |
+| `removeTimelineEntry(id)`         | 删除时间线条目                        |
+| `getNotes(limit?)`                | 获取随笔列表                          |
+| `addNote(content)`                | 添加随笔（同时写入 timeline_entries） |
+| `deleteNote(id)`                  | 删除随笔（同时删关联 timeline entry） |
 
 ### TaskServer HTTP（MOSS CLI 用）
 
@@ -138,9 +138,9 @@ GET    /tasks/:id                                      → taskDao.get()
 
 ### 事件推送
 
-| 事件 | 触发时机 |
-|------|---------|
-| `TASK_EVENTS.TASKS_CHANGED` | 任务 CRUD 后 |
+| 事件                           | 触发时机                               |
+| ------------------------------ | -------------------------------------- |
+| `TASK_EVENTS.TASKS_CHANGED`    | 任务 CRUD 后                           |
 | `TASK_EVENTS.TIMELINE_CHANGED` | 时间线变更（含任务自动写入、随笔归入） |
 
 ---
@@ -168,10 +168,10 @@ src/renderer/src/components/schedule/
 ```typescript
 // src/renderer/src/stores/schedule.ts
 interface ScheduleState {
-  selectedDate: string          // YYYY-MM-DD，默认今天
-  tasks: Task[]                 // 任务列表
-  timeline: TimelineEntry[]     // 当前选中日期的时间线
-  notes: Note[]                 // 近期随笔
+  selectedDate: string; // YYYY-MM-DD，默认今天
+  tasks: Task[]; // 任务列表
+  timeline: TimelineEntry[]; // 当前选中日期的时间线
+  notes: Note[]; // 近期随笔
 }
 ```
 
@@ -253,8 +253,8 @@ CLI 操作不变，agentSoul 删除仪表盘描述，补充"任务详情可在�
 
 ## 环境隔离
 
-| 维度 | prod | dev |
-|------|------|-----|
-| HTTP 端口 | 40001 | 40002 |
-| 数据库 | 共用主 SQLite（已有 better-sqlite3 实例） | 同左 |
-| 判断方式 | `app.isPackaged` | `!app.isPackaged` |
+| 维度      | prod                                      | dev               |
+| --------- | ----------------------------------------- | ----------------- |
+| HTTP 端口 | 40001                                     | 40002             |
+| 数据库    | 共用主 SQLite（已有 better-sqlite3 实例） | 同左              |
+| 判断方式  | `app.isPackaged`                          | `!app.isPackaged` |

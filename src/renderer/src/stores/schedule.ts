@@ -2,9 +2,8 @@ import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import type { Task, TaskStatus, TimelineEntry, Note } from "@shared/types/schedule";
 
-const ipc = window.electron.ipcRenderer;
-
 export const useScheduleStore = defineStore("schedule", () => {
+  const ipc = window.electron.ipcRenderer;
   const selectedDate = ref(new Date().toISOString().slice(0, 10));
   const tasks = ref<Task[]>([]);
   const timeline = ref<TimelineEntry[]>([]);

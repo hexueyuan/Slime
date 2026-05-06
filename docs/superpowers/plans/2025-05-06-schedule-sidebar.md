@@ -14,58 +14,59 @@
 
 ### 新建文件
 
-| 文件 | 职责 |
-|------|------|
-| `src/main/tasks/taskDao.ts` | SQLite CRUD（tasks, task_attachments, timeline_entries, notes） |
-| `src/main/tasks/attachmentService.ts` | 附件复制到 Vault + 路径管理 |
-| `src/shared/types/schedule.d.ts` | 共享类型定义 |
-| `src/renderer/src/views/SchedulePanel.vue` | 顶层面板（左右分栏） |
-| `src/renderer/src/components/schedule/WeekCalendar.vue` | 可翻页周视图 |
-| `src/renderer/src/components/schedule/TaskBoard.vue` | 任务看板容器 |
-| `src/renderer/src/components/schedule/TaskGroup.vue` | 状态分组（可折叠） |
-| `src/renderer/src/components/schedule/TaskItem.vue` | 任务卡片 |
-| `src/renderer/src/components/schedule/TaskDetailDialog.vue` | 模态对话框 |
-| `src/renderer/src/components/schedule/TimelinePanel.vue` | 右列时间线 |
-| `src/renderer/src/components/schedule/TimelineEntry.vue` | 单条时间线条目 |
-| `src/renderer/src/components/schedule/NoteInput.vue` | 随笔输入框 |
-| `src/renderer/src/components/schedule/TimelineAddDialog.vue` | 手动添加时间线对话框 |
-| `src/renderer/src/stores/schedule.ts` | Pinia store |
-| `test/main/tasks/taskDao.test.ts` | DAO 单元测试 |
-| `test/main/tasks/attachmentService.test.ts` | 附件服务测试 |
+| 文件                                                         | 职责                                                            |
+| ------------------------------------------------------------ | --------------------------------------------------------------- |
+| `src/main/tasks/taskDao.ts`                                  | SQLite CRUD（tasks, task_attachments, timeline_entries, notes） |
+| `src/main/tasks/attachmentService.ts`                        | 附件复制到 Vault + 路径管理                                     |
+| `src/shared/types/schedule.d.ts`                             | 共享类型定义                                                    |
+| `src/renderer/src/views/SchedulePanel.vue`                   | 顶层面板（左右分栏）                                            |
+| `src/renderer/src/components/schedule/WeekCalendar.vue`      | 可翻页周视图                                                    |
+| `src/renderer/src/components/schedule/TaskBoard.vue`         | 任务看板容器                                                    |
+| `src/renderer/src/components/schedule/TaskGroup.vue`         | 状态分组（可折叠）                                              |
+| `src/renderer/src/components/schedule/TaskItem.vue`          | 任务卡片                                                        |
+| `src/renderer/src/components/schedule/TaskDetailDialog.vue`  | 模态对话框                                                      |
+| `src/renderer/src/components/schedule/TimelinePanel.vue`     | 右列时间线                                                      |
+| `src/renderer/src/components/schedule/TimelineEntry.vue`     | 单条时间线条目                                                  |
+| `src/renderer/src/components/schedule/NoteInput.vue`         | 随笔输入框                                                      |
+| `src/renderer/src/components/schedule/TimelineAddDialog.vue` | 手动添加时间线对话框                                            |
+| `src/renderer/src/stores/schedule.ts`                        | Pinia store                                                     |
+| `test/main/tasks/taskDao.test.ts`                            | DAO 单元测试                                                    |
+| `test/main/tasks/attachmentService.test.ts`                  | 附件服务测试                                                    |
 
 ### 修改文件
 
-| 文件 | 变更 |
-|------|------|
-| `src/main/db/database.ts` | DDL 新增 4 张表 + migrate 函数 |
-| `src/main/db/index.ts` | 导出新 DAO |
-| `src/main/tasks/taskServer.ts` | 底层改调 taskDao |
-| `src/main/presenter/taskPresenter.ts` | 重构：删 Markdown 依赖，新增 IPC 方法 |
-| `src/main/presenter/index.ts` | taskPresenter.init 改为传 db 实例 |
-| `src/main/agents/moss.ts` | 删除 dashboard 配置 + 更新 agentSoul |
-| `src/main/agents/index.ts` | 不变（MOSS 保留） |
-| `src/cli/commands/task.ts` | 适配新字段（description→title, completedAt→finished_at） |
-| `src/shared/events.ts` | 新增 TASK_EVENTS |
-| `src/renderer/src/App.vue` | 新增 schedule 视图 |
-| `src/renderer/src/components/AppSidebar.vue` | 新增 schedule 按钮 |
-| `src/renderer/src/views/ChatroomPanel.vue` | 删除 dashboard 逻辑 |
-| `src/renderer/src/components/chat/ChatFunctionPanel.vue` | 删除 dashboard tab |
-| `src/renderer/src/stores/agentChat.ts` | 删除 dashboardData |
-| `src/renderer/src/stores/agentChatIpc.ts` | 删除 DASHBOARD_UPDATE 监听 |
+| 文件                                                     | 变更                                                     |
+| -------------------------------------------------------- | -------------------------------------------------------- |
+| `src/main/db/database.ts`                                | DDL 新增 4 张表 + migrate 函数                           |
+| `src/main/db/index.ts`                                   | 导出新 DAO                                               |
+| `src/main/tasks/taskServer.ts`                           | 底层改调 taskDao                                         |
+| `src/main/presenter/taskPresenter.ts`                    | 重构：删 Markdown 依赖，新增 IPC 方法                    |
+| `src/main/presenter/index.ts`                            | taskPresenter.init 改为传 db 实例                        |
+| `src/main/agents/moss.ts`                                | 删除 dashboard 配置 + 更新 agentSoul                     |
+| `src/main/agents/index.ts`                               | 不变（MOSS 保留）                                        |
+| `src/cli/commands/task.ts`                               | 适配新字段（description→title, completedAt→finished_at） |
+| `src/shared/events.ts`                                   | 新增 TASK_EVENTS                                         |
+| `src/renderer/src/App.vue`                               | 新增 schedule 视图                                       |
+| `src/renderer/src/components/AppSidebar.vue`             | 新增 schedule 按钮                                       |
+| `src/renderer/src/views/ChatroomPanel.vue`               | 删除 dashboard 逻辑                                      |
+| `src/renderer/src/components/chat/ChatFunctionPanel.vue` | 删除 dashboard tab                                       |
+| `src/renderer/src/stores/agentChat.ts`                   | 删除 dashboardData                                       |
+| `src/renderer/src/stores/agentChatIpc.ts`                | 删除 DASHBOARD_UPDATE 监听                               |
 
 ### 删除文件
 
-| 文件 | 原因 |
-|------|------|
-| `src/main/tasks/taskManager.ts` | Markdown 方案废弃 |
-| `src/renderer/src/components/chat/AgentDashboardPanel.vue` | 仪表盘废弃 |
-| `test/main/tasks/taskManager.test.ts` | 对应源文件删除 |
+| 文件                                                       | 原因              |
+| ---------------------------------------------------------- | ----------------- |
+| `src/main/tasks/taskManager.ts`                            | Markdown 方案废弃 |
+| `src/renderer/src/components/chat/AgentDashboardPanel.vue` | 仪表盘废弃        |
+| `test/main/tasks/taskManager.test.ts`                      | 对应源文件删除    |
 
 ---
 
 ### Task 1: 共享类型定义 + 事件常量
 
 **Files:**
+
 - Create: `src/shared/types/schedule.d.ts`
 - Modify: `src/shared/events.ts`
 
@@ -142,6 +143,7 @@ git commit -m "feat(schedule): add shared types and events"
 ### Task 2: SQLite DDL + migrate
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 
 - [ ] **Step 1: 在 DDL 字符串末尾追加 4 张新表**
@@ -254,6 +256,7 @@ git commit -m "feat(schedule): add SQLite DDL for tasks/timeline/notes tables"
 ### Task 3: taskDao 实现
 
 **Files:**
+
 - Create: `src/main/tasks/taskDao.ts`
 - Modify: `src/main/db/index.ts`
 - Test: `test/main/tasks/taskDao.test.ts`
@@ -447,12 +450,9 @@ function rowToTask(row: TaskRow): Task {
 export function createTask(db: BetterSqlite3.Database, title: string, detail?: string): Task {
   const id = makeId();
   const now = Date.now();
-  db.prepare("INSERT INTO tasks (id, title, detail, status, created_at) VALUES (?, ?, ?, 'todo', ?)").run(
-    id,
-    title,
-    detail ?? null,
-    now,
-  );
+  db.prepare(
+    "INSERT INTO tasks (id, title, detail, status, created_at) VALUES (?, ?, ?, 'todo', ?)",
+  ).run(id, title, detail ?? null, now);
   return { id, title, detail, status: "todo", createdAt: now };
 }
 
@@ -463,7 +463,9 @@ export function getTask(db: BetterSqlite3.Database, id: string): Task | null {
 
 export function listTasks(db: BetterSqlite3.Database, status?: TaskStatus): Task[] {
   if (status) {
-    const rows = db.prepare("SELECT * FROM tasks WHERE status = ? ORDER BY created_at DESC").all(status) as TaskRow[];
+    const rows = db
+      .prepare("SELECT * FROM tasks WHERE status = ? ORDER BY created_at DESC")
+      .all(status) as TaskRow[];
     return rows.map(rowToTask);
   }
   const rows = db.prepare("SELECT * FROM tasks ORDER BY created_at DESC").all() as TaskRow[];
@@ -539,7 +541,14 @@ export function addAttachment(
       "INSERT INTO task_attachments (task_id, file_name, file_path, file_type, created_at) VALUES (?, ?, ?, ?, ?)",
     )
     .run(taskId, fileName, filePath, fileType, now);
-  return { id: Number(result.lastInsertRowid), taskId, fileName, filePath, fileType, createdAt: now };
+  return {
+    id: Number(result.lastInsertRowid),
+    taskId,
+    fileName,
+    filePath,
+    fileType,
+    createdAt: now,
+  };
 }
 
 export function getAttachments(db: BetterSqlite3.Database, taskId: string): TaskAttachment[] {
@@ -595,7 +604,15 @@ export function addTimelineEntry(
     .prepare(
       "INSERT INTO timeline_entries (date, start_time, end_time, content, source, source_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
-    .run(entry.date, entry.startTime, entry.endTime ?? null, entry.content, entry.source, entry.sourceId ?? null, now);
+    .run(
+      entry.date,
+      entry.startTime,
+      entry.endTime ?? null,
+      entry.content,
+      entry.source,
+      entry.sourceId ?? null,
+      now,
+    );
   return {
     id: Number(result.lastInsertRowid),
     date: entry.date,
@@ -646,7 +663,9 @@ function rowToNote(row: NoteRow): Note {
 
 export function addNote(db: BetterSqlite3.Database, content: string): Note {
   const now = Date.now();
-  const result = db.prepare("INSERT INTO notes (content, created_at) VALUES (?, ?)").run(content, now);
+  const result = db
+    .prepare("INSERT INTO notes (content, created_at) VALUES (?, ?)")
+    .run(content, now);
   const noteId = Number(result.lastInsertRowid);
   // Also add to timeline
   addTimelineEntry(db, {
@@ -667,13 +686,19 @@ export function getNotes(db: BetterSqlite3.Database, limit: number): Note[] {
 }
 
 export function deleteNote(db: BetterSqlite3.Database, id: number): void {
-  db.prepare("DELETE FROM timeline_entries WHERE source = 'note' AND source_id = ?").run(String(id));
+  db.prepare("DELETE FROM timeline_entries WHERE source = 'note' AND source_id = ?").run(
+    String(id),
+  );
   db.prepare("DELETE FROM notes WHERE id = ?").run(id);
 }
 
 // --- Auto timeline for task status changes ---
 
-export function addTaskAutoTimeline(db: BetterSqlite3.Database, taskId: string, content: string): TimelineEntry {
+export function addTaskAutoTimeline(
+  db: BetterSqlite3.Database,
+  taskId: string,
+  content: string,
+): TimelineEntry {
   return addTimelineEntry(db, {
     date: todayDate(),
     startTime: nowHHmm(),
@@ -722,6 +747,7 @@ git commit -m "feat(schedule): implement taskDao with SQLite CRUD"
 ### Task 4: attachmentService 实现
 
 **Files:**
+
 - Create: `src/main/tasks/attachmentService.ts`
 - Test: `test/main/tasks/attachmentService.test.ts`
 
@@ -852,6 +878,7 @@ git commit -m "feat(schedule): implement attachmentService for vault file manage
 ### Task 5: 重构 TaskPresenter
 
 **Files:**
+
 - Modify: `src/main/presenter/taskPresenter.ts`
 - Modify: `src/main/presenter/index.ts`
 
@@ -906,11 +933,14 @@ class TaskPresenter {
       this.emitTasksChanged();
       return task;
     });
-    ipcMain.handle("task:updateTask", (_e, id: string, fields: { title?: string; detail?: string }) => {
-      const task = taskDao.updateTask(this.db!, id, fields);
-      this.emitTasksChanged();
-      return task;
-    });
+    ipcMain.handle(
+      "task:updateTask",
+      (_e, id: string, fields: { title?: string; detail?: string }) => {
+        const task = taskDao.updateTask(this.db!, id, fields);
+        this.emitTasksChanged();
+        return task;
+      },
+    );
     ipcMain.handle("task:updateTaskStatus", (_e, id: string, status: TaskStatus) => {
       const task = taskDao.updateTaskStatus(this.db!, id, status);
       // Auto timeline
@@ -943,15 +973,21 @@ class TaskPresenter {
     ipcMain.handle("task:getTimeline", (_e, date: string) => {
       return taskDao.getTimeline(this.db!, date);
     });
-    ipcMain.handle("task:addTimelineEntry", (_e, entry: { date: string; startTime: string; endTime?: string; content: string }) => {
-      const result = taskDao.addTimelineEntry(this.db!, { ...entry, source: "manual" });
-      this.emitTimelineChanged();
-      return result;
-    });
-    ipcMain.handle("task:updateTimelineEntry", (_e, id: number, fields: { endTime?: string; content?: string }) => {
-      taskDao.updateTimelineEntry(this.db!, id, fields);
-      this.emitTimelineChanged();
-    });
+    ipcMain.handle(
+      "task:addTimelineEntry",
+      (_e, entry: { date: string; startTime: string; endTime?: string; content: string }) => {
+        const result = taskDao.addTimelineEntry(this.db!, { ...entry, source: "manual" });
+        this.emitTimelineChanged();
+        return result;
+      },
+    );
+    ipcMain.handle(
+      "task:updateTimelineEntry",
+      (_e, id: number, fields: { endTime?: string; content?: string }) => {
+        taskDao.updateTimelineEntry(this.db!, id, fields);
+        this.emitTimelineChanged();
+      },
+    );
     ipcMain.handle("task:removeTimelineEntry", (_e, id: number) => {
       taskDao.removeTimelineEntry(this.db!, id);
       this.emitTimelineChanged();
@@ -1058,6 +1094,7 @@ git commit -m "refactor(schedule): rewrite TaskPresenter to use SQLite via taskD
 ### Task 6: 重构 TaskServer（HTTP 层适配 taskDao）
 
 **Files:**
+
 - Modify: `src/main/tasks/taskServer.ts`
 
 - [ ] **Step 1: 重写 taskServer.ts**
@@ -1162,6 +1199,7 @@ git commit -m "refactor(schedule): adapt TaskServer to use taskDao"
 ### Task 7: 适配 CLI task 命令
 
 **Files:**
+
 - Modify: `src/cli/commands/task.ts`
 
 - [ ] **Step 1: 更新 CLI task.ts**
@@ -1307,6 +1345,7 @@ git commit -m "refactor(schedule): adapt CLI task command to new data model"
 ### Task 8: 删除旧 MOSS 仪表盘代码
 
 **Files:**
+
 - Delete: `src/main/tasks/taskManager.ts`
 - Delete: `src/renderer/src/components/chat/AgentDashboardPanel.vue`
 - Delete: `test/main/tasks/taskManager.test.ts`
@@ -1369,6 +1408,7 @@ export const MOSS: BuiltinAgentDef = {
 - [ ] **Step 3: 修改 ChatroomPanel.vue — 删除 dashboard 相关逻辑**
 
 从 `ChatroomPanel.vue` 中：
+
 - 将 `activeTab` 类型从 `"tools" | "preview" | "dashboard"` 改为 `"tools" | "preview"`
 - 删除 `dashboardTemplate` / `showDashboard` / `currentDashboardData` 计算属性
 - 删除 watch 中的 `task:getDashboardData` IPC 调用
@@ -1419,6 +1459,7 @@ git commit -m "refactor(schedule): remove old MOSS dashboard and taskManager"
 ### Task 9: Pinia store（useScheduleStore）
 
 **Files:**
+
 - Create: `src/renderer/src/stores/schedule.ts`
 
 - [ ] **Step 1: 实现 store**
@@ -1455,7 +1496,10 @@ export const useScheduleStore = defineStore("schedule", () => {
     return task;
   }
 
-  async function updateTask(id: string, fields: { title?: string; detail?: string }): Promise<void> {
+  async function updateTask(
+    id: string,
+    fields: { title?: string; detail?: string },
+  ): Promise<void> {
     await ipc.invoke("task:updateTask", id, fields);
     await fetchTasks();
   }
@@ -1555,6 +1599,7 @@ git commit -m "feat(schedule): add useScheduleStore pinia store"
 ### Task 10: AppSidebar + App.vue 新增 schedule 视图
 
 **Files:**
+
 - Modify: `src/renderer/src/components/AppSidebar.vue`
 - Modify: `src/renderer/src/App.vue`
 - Create: `src/renderer/src/views/SchedulePanel.vue`（骨架）
@@ -1707,8 +1752,7 @@ const activeView = ref<"chatroom" | "schedule" | "gateway" | "evolab">("chatroom
   </div>
 </template>
 
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 ```
 
 - [ ] **Step 4: 验证类型检查**
@@ -1728,6 +1772,7 @@ git commit -m "feat(schedule): add schedule view to AppSidebar and App.vue"
 ### Task 11: WeekCalendar 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/schedule/WeekCalendar.vue`
 
 - [ ] **Step 1: 实现 WeekCalendar**
@@ -1830,6 +1875,7 @@ git commit -m "feat(schedule): implement WeekCalendar component"
 ### Task 12: TaskBoard + TaskGroup + TaskItem 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/schedule/TaskBoard.vue`
 - Create: `src/renderer/src/components/schedule/TaskGroup.vue`
 - Create: `src/renderer/src/components/schedule/TaskItem.vue`
@@ -1846,9 +1892,13 @@ git commit -m "feat(schedule): implement WeekCalendar component"
     <div
       :class="[
         'h-2 w-2 shrink-0 rounded-full',
-        task.status === 'todo' ? 'bg-slate-400' :
-        task.status === 'in_progress' ? 'bg-amber-400' :
-        task.status === 'done' ? 'bg-emerald-400' : 'bg-slate-600',
+        task.status === 'todo'
+          ? 'bg-slate-400'
+          : task.status === 'in_progress'
+            ? 'bg-amber-400'
+            : task.status === 'done'
+              ? 'bg-emerald-400'
+              : 'bg-slate-600',
       ]"
     />
     <span
@@ -1856,7 +1906,8 @@ git commit -m "feat(schedule): implement WeekCalendar component"
         'flex-1 truncate',
         task.status === 'cancelled' ? 'text-muted-foreground line-through' : '',
       ]"
-    >{{ task.title }}</span>
+      >{{ task.title }}</span
+    >
   </button>
 </template>
 
@@ -1879,10 +1930,7 @@ defineEmits<{ select: [id: string] }>();
       :class="colorClass"
       @click="collapsed = !collapsed"
     >
-      <Icon
-        :icon="collapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'"
-        class="h-3 w-3"
-      />
+      <Icon :icon="collapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'" class="h-3 w-3" />
       <span>{{ label }}</span>
       <span class="ml-1 text-muted-foreground">({{ tasks.length }})</span>
     </button>
@@ -1990,6 +2038,7 @@ git commit -m "feat(schedule): implement TaskBoard/TaskGroup/TaskItem components
 ### Task 13: TimelinePanel + TimelineEntry 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/schedule/TimelinePanel.vue`
 - Create: `src/renderer/src/components/schedule/TimelineEntry.vue`
 
@@ -2011,8 +2060,11 @@ git commit -m "feat(schedule): implement TaskBoard/TaskGroup/TaskItem components
       <div
         :class="[
           'mt-1.5 h-2 w-2 rounded-full',
-          entry.source === 'task_auto' ? 'bg-violet-400' :
-          entry.source === 'note' ? 'bg-emerald-400' : 'bg-slate-400',
+          entry.source === 'task_auto'
+            ? 'bg-violet-400'
+            : entry.source === 'note'
+              ? 'bg-emerald-400'
+              : 'bg-slate-400',
         ]"
       />
       <div class="w-px flex-1 bg-border" />
@@ -2080,6 +2132,7 @@ git commit -m "feat(schedule): implement TimelinePanel and TimelineEntry compone
 ### Task 14: NoteInput 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/schedule/NoteInput.vue`
 
 - [ ] **Step 1: 实现 NoteInput.vue**
@@ -2136,6 +2189,7 @@ git commit -m "feat(schedule): implement NoteInput component"
 ### Task 15: TaskDetailDialog 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/schedule/TaskDetailDialog.vue`
 
 - [ ] **Step 1: 实现 TaskDetailDialog.vue**
@@ -2198,10 +2252,7 @@ git commit -m "feat(schedule): implement NoteInput component"
       <div class="mb-4">
         <div class="mb-1 flex items-center justify-between">
           <span class="text-xs text-muted-foreground">附件</span>
-          <button
-            class="text-xs text-violet-400 hover:text-violet-300"
-            @click="pickFile"
-          >
+          <button class="text-xs text-violet-400 hover:text-violet-300" @click="pickFile">
             + 添加
           </button>
         </div>
@@ -2218,10 +2269,7 @@ git commit -m "feat(schedule): implement NoteInput component"
               class="flex items-center justify-between rounded px-2 py-1 hover:bg-muted/50"
             >
               <span class="truncate">{{ att.fileName }}</span>
-              <button
-                class="text-muted-foreground hover:text-red-400"
-                @click="removeAtt(att.id)"
-              >
+              <button class="text-muted-foreground hover:text-red-400" @click="removeAtt(att.id)">
                 <Icon icon="lucide:x" class="h-3 w-3" />
               </button>
             </div>
@@ -2320,7 +2368,12 @@ async function removeAtt(id: number): Promise<void> {
 
 function formatTime(ms?: number): string {
   if (!ms) return "";
-  return new Date(ms).toLocaleString("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return new Date(ms).toLocaleString("zh-CN", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 </script>
 ```
@@ -2337,6 +2390,7 @@ git commit -m "feat(schedule): implement TaskDetailDialog component"
 ### Task 16: TimelineAddDialog 组件
 
 **Files:**
+
 - Create: `src/renderer/src/components/schedule/TimelineAddDialog.vue`
 
 - [ ] **Step 1: 实现 TimelineAddDialog.vue**
@@ -2439,6 +2493,7 @@ git commit -m "feat(schedule): implement TimelineAddDialog component"
 ### Task 17: 组装 SchedulePanel
 
 **Files:**
+
 - Modify: `src/renderer/src/views/SchedulePanel.vue`
 
 - [ ] **Step 1: 完整实现 SchedulePanel.vue**
@@ -2477,7 +2532,10 @@ git commit -m "feat(schedule): implement TimelineAddDialog component"
     <TaskDetailDialog
       v-model:open="showTaskDetail"
       :task-id="selectedTaskId"
-      @changed="store.fetchTasks(); store.fetchTimeline()"
+      @changed="
+        store.fetchTasks();
+        store.fetchTimeline();
+      "
     />
     <TimelineAddDialog
       v-model:open="showTimelineAdd"
@@ -2578,6 +2636,7 @@ git commit -m "style: format and lint schedule feature"
 ### Task 19: 删除旧测试 + 构建 CLI
 
 **Files:**
+
 - Modify: `resources/slime-cli.js`（rebuild）
 
 - [ ] **Step 1: 重新构建 CLI**

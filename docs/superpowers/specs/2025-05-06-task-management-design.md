@@ -27,13 +27,13 @@
 
 ### 状态标识规则
 
-| 状态 | checkbox | emoji | 说明 |
-|------|----------|-------|------|
-| todo | `- [ ]` | 无 | 待办 |
-| in_progress | `- [ ]` | 🔄 | 进行中 |
-| done | `- [x]` | ✅ | 已完成 |
-| cancelled | `- [x]` | ❌ | 已取消 |
-| archived | `- [x]` | ✅/❌ | 已归档（保留原状态 emoji） |
+| 状态        | checkbox | emoji | 说明                       |
+| ----------- | -------- | ----- | -------------------------- |
+| todo        | `- [ ]`  | 无    | 待办                       |
+| in_progress | `- [ ]`  | 🔄    | 进行中                     |
+| done        | `- [x]`  | ✅    | 已完成                     |
+| cancelled   | `- [x]`  | ❌    | 已取消                     |
+| archived    | `- [x]`  | ✅/❌ | 已归档（保留原状态 emoji） |
 
 ### 任务 ID
 
@@ -47,14 +47,14 @@
 
 ```typescript
 interface Task {
-  id: string
-  description: string
-  status: "todo" | "in_progress" | "done" | "cancelled" | "archived"
-  createdAt: string       // 本地时间 ISO 8601，如 2025-05-06T14:30:22
-  startedAt?: string
-  completedAt?: string
-  cancelledAt?: string
-  archivedAt?: string
+  id: string;
+  description: string;
+  status: "todo" | "in_progress" | "done" | "cancelled" | "archived";
+  createdAt: string; // 本地时间 ISO 8601，如 2025-05-06T14:30:22
+  startedAt?: string;
+  completedAt?: string;
+  cancelledAt?: string;
+  archivedAt?: string;
 }
 ```
 
@@ -104,10 +104,10 @@ resources/skills/moss-tasks/
 
 ### 端口
 
-| 环境 | 端口 | 判断方式 |
-|------|------|----------|
-| prod（`app.isPackaged`） | `40001` | `app.isPackaged === true` |
-| dev | `40002` | `app.isPackaged === false` |
+| 环境                     | 端口    | 判断方式                   |
+| ------------------------ | ------- | -------------------------- |
+| prod（`app.isPackaged`） | `40001` | `app.isPackaged === true`  |
+| dev                      | `40002` | `app.isPackaged === false` |
 
 端口通过 `SLIME_TASK_PORT` env 变量注入到 exec 环境，CLI 从该变量读取。
 
@@ -158,6 +158,7 @@ allowedAgents: ["moss-ai"],  // 其他 agent 暂不开放
 ```
 
 错误输出：
+
 ```
 Error: task 20250506143022 not found
 Error: task 20250506143022 cannot transition from done to in_progress
@@ -174,7 +175,7 @@ Error: task 20250506143022 cannot transition from done to in_progress
 ```typescript
 const dashboardProviders: Record<string, () => Promise<Record<string, unknown>>> = {
   "moss-ai": () => taskManager.getDashboardData(),
-}
+};
 ```
 
 ### IPC 接口
@@ -187,6 +188,7 @@ taskPresenter.getServerPort()            → number
 ### 同步链路
 
 **会话打开时（主动拉取）：**
+
 ```
 ChatroomPanel watch(activeSessionId)
   → agent 有 dashboard 配置
@@ -196,6 +198,7 @@ ChatroomPanel watch(activeSessionId)
 ```
 
 **CLI 写入后（实时推送）：**
+
 ```
 slime-cli task <write op>
   → HTTP PATCH/POST /tasks/...
@@ -236,8 +239,8 @@ moss agentSoul 不涉及任务管理内容。
 
 ## 环境隔离
 
-| 维度 | prod | dev |
-|------|------|-----|
-| HTTP 端口 | 40001 | 40002 |
+| 维度          | prod                   | dev                        |
+| ------------- | ---------------------- | -------------------------- |
+| HTTP 端口     | 40001                  | 40002                      |
 | Tasks.md 路径 | `{vaultPath}/Tasks.md` | `{vaultPath}/Tasks-dev.md` |
-| 判断方式 | `app.isPackaged` | `!app.isPackaged` |
+| 判断方式      | `app.isPackaged`       | `!app.isPackaged`          |
