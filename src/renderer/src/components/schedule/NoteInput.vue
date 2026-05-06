@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="mb-1 text-xs font-medium text-muted-foreground">随笔</div>
+    <div class="mb-1 text-sm font-semibold text-foreground">碎片记录</div>
     <div class="flex gap-2">
       <textarea
         v-model="text"

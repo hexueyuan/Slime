@@ -1,5 +1,9 @@
 <template>
   <div class="flex items-center gap-1">
+    <span class="mr-1 whitespace-nowrap text-sm font-semibold text-foreground"
+      >第{{ weekNum }}周</span
+    >
+
     <button
       class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted"
       @click="prevWeek"
@@ -32,8 +36,6 @@
     >
       <Icon icon="lucide:chevron-right" class="h-3 w-3" />
     </button>
-
-    <span class="ml-1 whitespace-nowrap text-[10px] text-muted-foreground">第{{ weekNum }}周</span>
   </div>
 </template>
 
