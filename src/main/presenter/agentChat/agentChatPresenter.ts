@@ -5,7 +5,7 @@ import * as sessionDao from "@/db/models/agentSessionDao";
 import * as configDao from "@/db/models/agentSessionConfigDao";
 import * as agentDao from "@/db/models/agentDao";
 import { eventBus } from "@/eventbus";
-import { CHAT_STREAM_EVENTS, AGENT_EVENTS } from "@shared/events";
+import { CHAT_STREAM_EVENTS } from "@shared/events";
 import { logger } from "@/utils";
 import { buildContext, buildSkillListXML } from "./contextBuilder";
 import type { CoreMessage } from "./contextBuilder";
@@ -228,10 +228,6 @@ export class AgentChatPresenter {
           this.pendingQuestions.set(sessionId, { toolCallId: id, resolve });
         });
         this.contentPresenter.clearContent(sessionId);
-      } else if (name === "dashboard_update") {
-        const { data } = parsedArgs as { data: Record<string, unknown> };
-        eventBus.sendToRenderer(AGENT_EVENTS.DASHBOARD_UPDATE, { sessionId, data });
-        result = "Dashboard updated";
       } else {
         result = await this.toolPresenter.callTool(sessionId, name, parsedArgs);
       }
@@ -354,22 +350,6 @@ export class AgentChatPresenter {
             Object.entries(allAiSdkTools).filter(([k]) => !disabledTools.includes(k)),
           )
         : { ...allAiSdkTools };
-
-    // Inject dashboard_update tool if agent has dashboard config
-    if (agent?.config?.dashboard) {
-      filteredAiSdkTools["dashboard_update"] = {
-        description: "更新仪表盘显示数据，将数据注入仪表盘模版并刷新渲染",
-        inputSchema: z.object({
-          data: z
-            .record(z.string(), z.unknown())
-            .describe("注入 HTML 模版的键值对，key 对应模版中的 {{key}} 占位符"),
-        }),
-        execute: async ({ data }: { data: Record<string, unknown> }) => {
-          eventBus.sendToRenderer(AGENT_EVENTS.DASHBOARD_UPDATE, { sessionId, data });
-          return "Dashboard updated";
-        },
-      };
-    }
 
     const tools = this.convertTools(filteredAiSdkTools);
 

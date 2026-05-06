@@ -1,4 +1,4 @@
-import { CHAT_STREAM_EVENTS, AGENT_EVENTS } from "@shared/events";
+import { CHAT_STREAM_EVENTS } from "@shared/events";
 import type { AssistantMessageBlock } from "@shared/types/agent";
 import type { useAgentChatStore } from "./agentChat";
 
@@ -16,11 +16,6 @@ interface StreamEndData {
 interface StreamErrorData {
   sessionId: string;
   error: string;
-}
-
-interface DashboardUpdateData {
-  sessionId: string;
-  data: Record<string, unknown>;
 }
 
 export function setupAgentChatIpc(
@@ -56,15 +51,6 @@ export function setupAgentChatIpc(
     }
   });
   unsubs.push(unsubError);
-
-  const unsubDashboard = window.electron.ipcRenderer.on(
-    AGENT_EVENTS.DASHBOARD_UPDATE,
-    (payload: unknown) => {
-      const d = payload as DashboardUpdateData;
-      store.setDashboardData(d.sessionId, d.data);
-    },
-  );
-  unsubs.push(unsubDashboard);
 
   return () => unsubs.forEach((fn) => fn());
 }

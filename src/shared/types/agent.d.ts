@@ -10,10 +10,6 @@ export type UserProfile = {
   avatar?: AgentAvatar;
 };
 
-export interface AgentDashboard {
-  template: string;
-}
-
 export interface AgentConfig {
   capabilityRequirements?: string[];
   /** @deprecated 使用 agentSoul 替代 */
@@ -32,8 +28,6 @@ export interface AgentConfig {
   disabledSkills?: string[];
   /** 启用 Anthropic extended thinking 模式 */
   enableThinking?: boolean;
-  /** 仪表盘配置，仅内置 Agent 使用 */
-  dashboard?: AgentDashboard;
 }
 
 export interface Agent {

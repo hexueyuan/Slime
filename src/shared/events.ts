@@ -51,7 +51,6 @@ export const GATEWAY_EVENTS = {
 
 export const AGENT_EVENTS = {
   CHANGED: "agent:changed",
-  DASHBOARD_UPDATE: "agent:dashboard:update",
 } as const;
 
 export const CHAT_STREAM_EVENTS = {

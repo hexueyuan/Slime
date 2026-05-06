@@ -25,19 +25,6 @@
       >
         预览
       </button>
-      <button
-        v-if="showDashboard"
-        data-testid="chat-tab-dashboard"
-        class="px-4 py-2 text-sm font-medium transition-colors"
-        :class="
-          activeTab === 'dashboard'
-            ? 'text-foreground border-b-2 border-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        "
-        @click="$emit('update:activeTab', 'dashboard')"
-      >
-        仪表盘
-      </button>
     </div>
     <div class="min-h-0 flex-1 overflow-hidden">
       <ToolPanel
@@ -59,11 +46,6 @@
         @interaction-submit="onInteractionSubmit"
         @progress-cancel="onProgressCancel"
       />
-      <AgentDashboardPanel
-        v-else-if="activeTab === 'dashboard' && dashboardTemplate"
-        :template="dashboardTemplate"
-        :data="dashboardData ?? {}"
-      />
     </div>
   </div>
 </template>
@@ -74,24 +56,20 @@ import type { AssistantMessageBlock as AgentMessageBlock } from "@shared/types/a
 import ToolPanel from "@/components/function/ToolPanel.vue";
 import ContentDispatcher from "@/components/function/ContentDispatcher.vue";
 import ThoughtChainPanel from "@/components/chat/ThoughtChainPanel.vue";
-import AgentDashboardPanel from "@/components/chat/AgentDashboardPanel.vue";
 import { useContentStore } from "@/stores/content";
 import { usePresenter } from "@/composables/usePresenter";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
 
 defineProps<{
-  activeTab: "tools" | "preview" | "dashboard";
+  activeTab: "tools" | "preview";
   toolCallBlocks: AssistantMessageBlock[];
   selectedToolCallId?: string | null;
   thoughtChainBlocks?: AgentMessageBlock[] | null;
-  dashboardTemplate?: string | null;
-  dashboardData?: Record<string, unknown>;
-  showDashboard?: boolean;
 }>();
 
 defineEmits<{
-  "update:activeTab": [tab: "tools" | "preview" | "dashboard"];
+  "update:activeTab": [tab: "tools" | "preview"];
   "select-tool-call": [id: string | null];
 }>();
 

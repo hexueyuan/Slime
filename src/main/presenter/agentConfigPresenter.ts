@@ -26,9 +26,6 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
 
   setConfigPresenter(cp: ConfigPresenter): void {
     this.configPresenter = cp;
-    import("@/agents/moss").then(({ setMossConfigPresenter }) => {
-      setMossConfigPresenter(cp);
-    });
   }
 
   async listLocalSkills(agentId: string): Promise<SkillInfo[]> {
