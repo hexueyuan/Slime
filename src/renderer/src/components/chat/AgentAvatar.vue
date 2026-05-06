@@ -6,7 +6,7 @@ import type { AgentAvatar } from "@shared/types/agent";
 
 const props = defineProps<{
   avatar?: AgentAvatar | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }>();
 
 const agentConfig = usePresenter("agentConfigPresenter");
@@ -15,6 +15,7 @@ const sizeMap = {
   sm: { box: "h-6 w-6", icon: "h-3.5 w-3.5", text: "text-[10px]" },
   md: { box: "h-8 w-8", icon: "h-4 w-4", text: "text-xs" },
   lg: { box: "h-12 w-12", icon: "h-6 w-6", text: "text-sm" },
+  xl: { box: "h-24 w-24", icon: "h-12 w-12", text: "text-2xl" },
 };
 
 const s = sizeMap[props.size ?? "md"];
