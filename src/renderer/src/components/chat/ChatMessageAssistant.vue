@@ -12,6 +12,7 @@ import { useAgentChatStore } from "@/stores/agentChat";
 import { useAgentStore } from "@/stores/agent";
 import { formatMessageTime } from "@/utils/formatTime";
 import AgentAvatarComp from "./AgentAvatar.vue";
+import { useProfileModal } from "@/composables/useProfileModal";
 
 const props = defineProps<{
   message?: ChatMessageRecord;
@@ -29,6 +30,7 @@ const emit = defineEmits<{
 
 const chatStore = useAgentChatStore();
 const agentStore = useAgentStore();
+const { open: openProfile } = useProfileModal();
 
 const agentAvatar = computed<AgentAvatarType | null>(
   () => agentStore.agents.find((a) => a.id === props.agentId)?.avatar ?? null,
@@ -117,7 +119,12 @@ function regenerate() {
 <template>
   <div class="group mb-4 flex items-start gap-2">
     <!-- Avatar -->
-    <AgentAvatarComp :avatar="agentAvatar" size="lg" />
+    <AgentAvatarComp
+      :avatar="agentAvatar"
+      size="lg"
+      class="cursor-pointer"
+      @click="agentId && openProfile({ type: 'agent', agentId })"
+    />
 
     <!-- Bubble column -->
     <div class="flex max-w-[85%] flex-col items-start">
