@@ -38,10 +38,15 @@ export class DevPresenter implements IDevPresenter {
       if (!existsSync(configPath)) continue;
 
       const config = JSON.parse(readFileSync(configPath, "utf-8"));
+      const promptPath = join(entryPath, "prompt.md");
       const soulPath = join(entryPath, "soul.md");
-      const soul = existsSync(soulPath) ? readFileSync(soulPath, "utf-8") : "";
+      const prompt = existsSync(promptPath)
+        ? readFileSync(promptPath, "utf-8")
+        : existsSync(soulPath)
+          ? readFileSync(soulPath, "utf-8")
+          : "";
 
-      results.push({ id: entry, config, soul });
+      results.push({ id: entry, config, prompt });
     }
     return results;
   }
@@ -54,22 +59,27 @@ export class DevPresenter implements IDevPresenter {
     if (!existsSync(configPath)) return null;
 
     const config = JSON.parse(await readFile(configPath, "utf-8"));
+    const promptPath = join(dir, "prompt.md");
     const soulPath = join(dir, "soul.md");
-    const soul = existsSync(soulPath) ? await readFile(soulPath, "utf-8") : "";
+    const prompt = existsSync(promptPath)
+      ? await readFile(promptPath, "utf-8")
+      : existsSync(soulPath)
+        ? await readFile(soulPath, "utf-8")
+        : "";
 
-    return { id: agentId, config, soul };
+    return { id: agentId, config, prompt };
   }
 
   async saveBuiltinAgent(
     agentId: string,
     config: Record<string, unknown>,
-    soul: string,
+    prompt: string,
   ): Promise<void> {
     this.assertDev();
     const dir = join(this.agentsSrcDir, agentId);
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, "config.json"), JSON.stringify(config, null, 2) + "\n", "utf-8");
-    await writeFile(join(dir, "soul.md"), soul, "utf-8");
+    await writeFile(join(dir, "prompt.md"), prompt, "utf-8");
   }
 
   async createBuiltinAgent(agentId: string): Promise<void> {
@@ -78,7 +88,7 @@ export class DevPresenter implements IDevPresenter {
     if (existsSync(dir)) throw new Error(`Agent '${agentId}' already exists`);
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, "config.json"), JSON.stringify({ name: agentId }, null, 2) + "\n");
-    await writeFile(join(dir, "soul.md"), "");
+    await writeFile(join(dir, "prompt.md"), "");
   }
 
   async deleteBuiltinAgent(agentId: string): Promise<void> {
