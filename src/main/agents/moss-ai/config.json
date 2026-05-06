@@ -1,7 +1,7 @@
 {
   "name": "莫斯",
   "description": "你好，我是莫斯，帮你管理日程和待办任务。",
-  "themeColor": "#10b981",
+  "mbti": "ISFJ",
   "capabilityRequirements": [],
   "enabledTools": ["exec", "ask_user", "skill"],
   "allowedCliCommands": ["help", "task"],

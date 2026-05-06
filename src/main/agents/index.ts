@@ -8,7 +8,6 @@ export interface BuiltinAgentDef {
   name: string;
   description?: string;
   avatar?: AgentAvatar;
-  themeColor?: string;
   mbti?: MBTIType;
   config: AgentConfig;
 }
@@ -17,7 +16,6 @@ interface AgentConfigJson {
   name: string;
   description?: string;
   avatar?: AgentAvatar;
-  themeColor?: string;
   mbti?: MBTIType;
   capabilityRequirements?: string[];
   disabledTools?: string[];
@@ -42,17 +40,21 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
     if (!statSync(dir).isDirectory()) continue;
 
     const configPath = join(dir, "config.json");
-    const soulPath = join(dir, "soul.md");
     if (!existsSync(configPath)) continue;
 
     const cfg: AgentConfigJson = JSON.parse(readFileSync(configPath, "utf-8"));
-    const soul = existsSync(soulPath) ? readFileSync(soulPath, "utf-8").trim() : undefined;
+    const promptPath = join(dir, "prompt.md");
+    const soulPath = join(dir, "soul.md");
+    const prompt = existsSync(promptPath)
+      ? readFileSync(promptPath, "utf-8").trim()
+      : existsSync(soulPath)
+        ? readFileSync(soulPath, "utf-8").trim()
+        : undefined;
 
     const {
       name,
       description,
       avatar,
-      themeColor,
       mbti,
       capabilityRequirements,
       disabledTools,
@@ -71,7 +73,6 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       name,
       description,
       avatar,
-      themeColor,
       mbti,
       config: {
         capabilityRequirements,
@@ -84,7 +85,7 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
         maxTokens,
         mcpTools,
         disabledSkills,
-        agentSoul: soul,
+        additionalPrompt: prompt,
       },
     });
   }
