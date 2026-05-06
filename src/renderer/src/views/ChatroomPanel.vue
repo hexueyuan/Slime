@@ -65,7 +65,7 @@ const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
 });
 
 // Function panel state
-const activeTab = ref<"tools" | "preview">("tools");
+const activeTab = ref<"tools" | "preview" | "dashboard">("tools");
 const selectedToolCallId = ref<string | null>(null);
 const showStreamingThought = ref(false);
 const selectedThoughtMessageId = ref<string | null>(null);
