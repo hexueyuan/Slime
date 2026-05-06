@@ -32,6 +32,18 @@
             :class="task.status === 'in_progress' ? 'text-amber-400' : 'text-foreground'"
             >{{ task.title }}</span
           >
+          <span
+            v-if="task.assigneeType === 'agent' && task.assigneeId"
+            class="shrink-0 rounded bg-violet-500/15 px-1 text-[10px] text-violet-400"
+            >{{ task.assigneeId }}</span
+          >
+          <span
+            v-if="task.scheduledAt"
+            class="flex shrink-0 items-center gap-0.5 text-[10px] text-blue-400"
+          >
+            <Icon icon="lucide:clock" class="h-2.5 w-2.5" />
+            <Icon v-if="task.repeatInterval" icon="lucide:repeat" class="h-2.5 w-2.5" />
+          </span>
           <span class="shrink-0 text-[10px] text-muted-foreground">{{
             formatDate(task.createdAt)
           }}</span>
@@ -64,6 +76,18 @@
             "
             >{{ task.title }}</span
           >
+          <span
+            v-if="task.assigneeType === 'agent' && task.assigneeId"
+            class="shrink-0 rounded bg-violet-500/15 px-1 text-[10px] text-violet-400"
+            >{{ task.assigneeId }}</span
+          >
+          <span
+            v-if="task.scheduledAt"
+            class="flex shrink-0 items-center gap-0.5 text-[10px] text-blue-400"
+          >
+            <Icon icon="lucide:clock" class="h-2.5 w-2.5" />
+            <Icon v-if="task.repeatInterval" icon="lucide:repeat" class="h-2.5 w-2.5" />
+          </span>
           <span class="shrink-0 text-[10px] text-muted-foreground">{{
             formatDate(task.finishedAt)
           }}</span>

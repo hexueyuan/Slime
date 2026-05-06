@@ -47,6 +47,32 @@
         />
       </div>
 
+      <!-- 归属人 -->
+      <div class="mb-4">
+        <div class="mb-1 text-xs text-muted-foreground">归属人</div>
+        <select
+          :value="assigneeId ?? '__user__'"
+          class="w-full rounded-md border border-border bg-muted/30 px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+          @change="onAssigneeChange"
+        >
+          <option value="__user__">我</option>
+          <option v-for="agent in agents" :key="agent.id" :value="agent.id">
+            {{ agent.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- 定时设置 -->
+      <div class="mb-4">
+        <div class="mb-1 text-xs text-muted-foreground">定时</div>
+        <ScheduleConfig
+          :scheduled-at="scheduledAt"
+          :repeat-interval="repeatInterval"
+          @update:scheduled-at="onScheduledAtChange"
+          @update:repeat-interval="onRepeatIntervalChange"
+        />
+      </div>
+
       <div class="mb-4">
         <div class="mb-1 flex items-center justify-between">
           <span class="text-xs text-muted-foreground">附件</span>
@@ -76,7 +102,9 @@
       </div>
 
       <div class="text-[11px] text-muted-foreground/60">
-        创建于 {{ formatTime(task?.createdAt) }}
+        <span v-if="task?.creatorType === 'agent'">由 {{ task.creatorId }} 创建</span>
+        <span v-else>由我创建</span>
+        · 创建于 {{ formatTime(task?.createdAt) }}
         <span v-if="task?.startedAt"> · 开始于 {{ formatTime(task.startedAt) }}</span>
         <span v-if="task?.finishedAt"> · 结束于 {{ formatTime(task.finishedAt) }}</span>
       </div>
@@ -88,6 +116,8 @@
 import { ref, watch } from "vue";
 import { Icon } from "@iconify/vue";
 import type { Task, TaskStatus, TaskAttachment } from "@shared/types/schedule";
+import ScheduleConfig from "./ScheduleConfig.vue";
+import type { ActorType } from "@shared/types/schedule";
 
 const ipc = window.electron.ipcRenderer;
 
@@ -98,6 +128,11 @@ const task = ref<Task | null>(null);
 const title = ref("");
 const detail = ref("");
 const attachments = ref<TaskAttachment[]>([]);
+const assigneeType = ref<ActorType>("user");
+const assigneeId = ref<string | undefined>(undefined);
+const scheduledAt = ref<number | undefined>(undefined);
+const repeatInterval = ref<number | undefined>(undefined);
+const agents = ref<{ id: string; name: string }[]>([]);
 
 const statuses = [
   { value: "todo" as const, label: "待办" },
@@ -114,6 +149,15 @@ watch(
     task.value = tasks.find((t) => t.id === props.taskId) ?? null;
     title.value = task.value?.title ?? "";
     detail.value = task.value?.detail ?? "";
+    assigneeType.value = task.value?.assigneeType ?? "user";
+    assigneeId.value = task.value?.assigneeId;
+    scheduledAt.value = task.value?.scheduledAt;
+    repeatInterval.value = task.value?.repeatInterval;
+    const agentList = (await ipc.invoke("presenter:call", "agentConfig", "listAgents")) as {
+      id: string;
+      name: string;
+    }[];
+    agents.value = agentList;
     attachments.value = (await ipc.invoke("task:getAttachments", props.taskId)) as TaskAttachment[];
   },
 );
@@ -179,5 +223,45 @@ function formatTime(ms?: number): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function onAssigneeChange(e: Event): void {
+  const value = (e.target as HTMLSelectElement).value;
+  if (value === "__user__") {
+    assigneeType.value = "user";
+    assigneeId.value = undefined;
+  } else {
+    assigneeType.value = "agent";
+    assigneeId.value = value;
+  }
+  saveAssignee();
+}
+
+async function saveAssignee(): Promise<void> {
+  if (!props.taskId) return;
+  await ipc.invoke("task:updateTask", props.taskId, {
+    assigneeType: assigneeType.value,
+    assigneeId: assigneeId.value ?? null,
+  });
+  emit("changed");
+}
+
+function onScheduledAtChange(value: number | undefined): void {
+  scheduledAt.value = value;
+  saveSchedule();
+}
+
+function onRepeatIntervalChange(value: number | undefined): void {
+  repeatInterval.value = value;
+  saveSchedule();
+}
+
+async function saveSchedule(): Promise<void> {
+  if (!props.taskId) return;
+  await ipc.invoke("task:updateTask", props.taskId, {
+    scheduledAt: scheduledAt.value ?? null,
+    repeatInterval: repeatInterval.value ?? null,
+  });
+  emit("changed");
 }
 </script>
