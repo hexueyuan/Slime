@@ -6,7 +6,7 @@ import { copyAttachment } from "../tasks/attachmentService";
 import { createTaskServer } from "../tasks/taskServer";
 import { eventBus } from "../eventbus";
 import { TASK_EVENTS } from "../../shared/events";
-import type { TaskStatus } from "@shared/types/schedule";
+import type { TaskStatus, ActorType } from "@shared/types/schedule";
 
 const TASK_SERVER_PORT_PROD = 40001;
 const TASK_SERVER_PORT_DEV = 40002;
@@ -53,7 +53,7 @@ class TaskPresenter {
         fields: {
           title?: string;
           detail?: string;
-          assigneeType?: string;
+          assigneeType?: ActorType;
           assigneeId?: string;
           scheduledAt?: number | null;
           repeatInterval?: number | null;
