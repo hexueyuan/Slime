@@ -63,6 +63,7 @@
         :agent="selectedCustomAgent"
         :is-builtin="selectedIsBuiltin"
         :is-dev="isDev"
+        @saved="onSaved"
       />
       <div v-else class="flex h-full items-center justify-center text-sm text-muted-foreground">
         选择一个 Agent 进行编辑
@@ -127,6 +128,11 @@ async function createBuiltinAgent() {
   await devPresenter.createBuiltinAgent(id);
   builtinAgents.value = (await devPresenter.listBuiltinAgents()) as BuiltinAgentInfo[];
   selectBuiltin(id);
+}
+
+async function onSaved() {
+  builtinAgents.value = (await devPresenter.listBuiltinAgents()) as BuiltinAgentInfo[];
+  await agentStore.fetchAgents();
 }
 
 onMounted(async () => {

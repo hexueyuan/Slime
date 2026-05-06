@@ -214,6 +214,8 @@ const props = defineProps<{
   isDev: boolean;
 }>();
 
+const emit = defineEmits<{ saved: [] }>();
+
 const PRESET_COLORS = [
   "#a855f7",
   "#10b981",
@@ -332,6 +334,7 @@ async function save() {
         enableThinking: form.enableThinking || undefined,
       };
       await devPresenter.saveBuiltinAgent(props.agentInfo.id, config, form.soul);
+      emit("saved");
     } else if (props.agent) {
       await agentStore.updateAgent(props.agent.id, {
         name: form.name,
@@ -348,6 +351,7 @@ async function save() {
           agentSoul: form.soul || undefined,
         },
       });
+      emit("saved");
     }
   } finally {
     saving.value = false;
