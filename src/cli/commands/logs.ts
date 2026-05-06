@@ -77,6 +77,5 @@ export const logsCommand: CommandDef = {
   slime-cli logs --key error --tail 20  # 查看最后 20 条错误日志
   slime-cli logs --clear            # 清空今日日志`,
   allowedRoles: ["builtin-agent"],
-  allowedAgents: ["hal-ai"],
   run: runLogs,
 };

@@ -62,7 +62,10 @@ function createTool(config: {
 }
 
 export class ToolPresenter {
-  private sessionContexts = new Map<string, { agentId: string; agentType: string }>();
+  private sessionContexts = new Map<
+    string,
+    { agentId: string; agentType: string; allowedCliCommands?: string[] }
+  >();
 
   constructor(
     private filePresenter: FilePresenter,
@@ -73,8 +76,13 @@ export class ToolPresenter {
     private skillPresenter?: SkillPresenter,
   ) {}
 
-  setSessionContext(sessionId: string, agentId: string, agentType: string): void {
-    this.sessionContexts.set(sessionId, { agentId, agentType });
+  setSessionContext(
+    sessionId: string,
+    agentId: string,
+    agentType: string,
+    allowedCliCommands?: string[],
+  ): void {
+    this.sessionContexts.set(sessionId, { agentId, agentType, allowedCliCommands });
   }
 
   async getToolSet(sessionId: string) {
@@ -137,6 +145,9 @@ export class ToolPresenter {
                 SLIME_USER_ID: sessionCtx.agentId,
                 SLIME_DATA_DIR: app.getPath("userData"),
                 SLIME_TASK_PORT: String(taskPresenter.getPort()),
+                ...(sessionCtx.allowedCliCommands
+                  ? { SLIME_ALLOWED_COMMANDS: sessionCtx.allowedCliCommands.join(",") }
+                  : {}),
               }
             : {};
           const fallbackPath = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
