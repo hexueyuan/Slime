@@ -7,6 +7,7 @@ import SessionMcpSettings from "./SessionMcpSettings.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
+import { getMBTIColor } from "@shared/constants/mbti";
 
 const props = defineProps<{
   selectedToolCallId?: string | null;
@@ -49,7 +50,7 @@ function onStop() {
   <div
     v-if="session"
     class="relative flex h-full flex-col"
-    :style="{ '--agent-color': agent?.themeColor ?? '#a855f7' }"
+    :style="{ '--agent-color': getMBTIColor(agent?.mbti ?? 'INTJ') }"
   >
     <!-- Top bar -->
     <div class="flex items-center gap-2 border-b border-border px-4 py-2">

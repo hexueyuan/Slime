@@ -6,6 +6,7 @@ import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
 import type { Agent } from "@shared/types/agent";
+import { getMBTIColor } from "@shared/constants/mbti";
 
 const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
@@ -29,7 +30,7 @@ async function onSend(content: string) {
 }
 
 function agentColor(agent: Agent): string {
-  return agent.themeColor ?? "#a855f7";
+  return getMBTIColor(agent.mbti ?? "INTJ");
 }
 </script>
 
