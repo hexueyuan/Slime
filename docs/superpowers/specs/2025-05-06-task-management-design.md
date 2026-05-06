@@ -39,6 +39,10 @@
 
 时间戳格式：`YYYYMMDDHHmmss`，新增任务时取当前时间生成。
 
+### 时间格式
+
+所有时间字段均使用**本地时间** ISO 8601 格式，不带时区后缀，例如：`2025-05-06T14:30:22`。
+
 ### TypeScript 类型
 
 ```typescript
@@ -46,7 +50,7 @@ interface Task {
   id: string
   description: string
   status: "todo" | "in_progress" | "done" | "cancelled" | "archived"
-  createdAt: string       // ISO 8601
+  createdAt: string       // 本地时间 ISO 8601，如 2025-05-06T14:30:22
   startedAt?: string
   completedAt?: string
   cancelledAt?: string
