@@ -7,6 +7,12 @@ interface Task {
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;
+  creatorType: string;
+  creatorId?: string;
+  assigneeType: string;
+  assigneeId?: string;
+  scheduledAt?: number;
+  repeatInterval?: number;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -43,11 +49,21 @@ function formatTime(ms?: number): string {
 function formatTask(t: Task): string {
   const parts = [
     `[${t.id}] ${t.title} [${STATUS_LABEL[t.status] ?? t.status}]`,
-    `created:${formatTime(t.createdAt)}`,
+    `creator:${t.creatorType}/${t.creatorId ?? "-"}`,
   ];
+  if (t.assigneeId) parts.push(`assignee:${t.assigneeType}/${t.assigneeId}`);
+  if (t.scheduledAt) parts.push(`scheduled:${formatTime(t.scheduledAt)}`);
+  if (t.repeatInterval) parts.push(`repeat:${t.repeatInterval}min`);
+  parts.push(`created:${formatTime(t.createdAt)}`);
   if (t.startedAt) parts.push(`started:${formatTime(t.startedAt)}`);
   if (t.finishedAt) parts.push(`finished:${formatTime(t.finishedAt)}`);
   return parts.join(" ");
+}
+
+function parseFlag(args: string[], flag: string): string | undefined {
+  const idx = args.indexOf(flag);
+  if (idx < 0) return undefined;
+  return args[idx + 1];
 }
 
 async function runAsync(args: string[]): Promise<void> {
@@ -56,7 +72,7 @@ async function runAsync(args: string[]): Promise<void> {
   if (!sub || sub === "help") {
     process.stdout.write(
       `task <subcommand> [args]
-  add <描述>                   新增待办任务
+  add <描述> --creator-type <user|agent> --creator-id <id> [--assignee-type <user|agent>] [--assignee-id <id>] [--scheduled-at <timestamp_ms>] [--repeat <minutes>]
   start <id>                   待办 → 进行中
   done <id>                    进行中 → 已完成
   cancel <id>                  任意状态 → 已取消
@@ -69,9 +85,48 @@ async function runAsync(args: string[]): Promise<void> {
   }
 
   if (sub === "add") {
-    const title = rest.join(" ").trim();
+    const creatorType = parseFlag(rest, "--creator-type");
+    const creatorId = parseFlag(rest, "--creator-id");
+    const assigneeType = parseFlag(rest, "--assignee-type");
+    const assigneeId = parseFlag(rest, "--assignee-id");
+    const scheduledAtStr = parseFlag(rest, "--scheduled-at");
+    const repeatStr = parseFlag(rest, "--repeat");
+
+    if (!creatorType) throw new Error("--creator-type is required (user|agent)");
+    if (!creatorId) throw new Error("--creator-id is required");
+    if (creatorType !== "user" && creatorType !== "agent") {
+      throw new Error(`--creator-type must be 'user' or 'agent', got '${creatorType}'`);
+    }
+    if (assigneeType && assigneeType !== "user" && assigneeType !== "agent") {
+      throw new Error(`--assignee-type must be 'user' or 'agent', got '${assigneeType}'`);
+    }
+
+    const flagNames = [
+      "--creator-type",
+      "--creator-id",
+      "--assignee-type",
+      "--assignee-id",
+      "--scheduled-at",
+      "--repeat",
+    ];
+    const titleParts: string[] = [];
+    for (let i = 0; i < rest.length; i++) {
+      if (flagNames.includes(rest[i])) {
+        i++;
+        continue;
+      }
+      titleParts.push(rest[i]);
+    }
+    const title = titleParts.join(" ").trim();
     if (!title) throw new Error("title is required");
-    const task = (await httpRequest("POST", "/tasks", { title })) as Task;
+
+    const body: Record<string, unknown> = { title, creatorType, creatorId };
+    if (assigneeType) body.assigneeType = assigneeType;
+    if (assigneeId) body.assigneeId = assigneeId;
+    if (scheduledAtStr) body.scheduledAt = Number(scheduledAtStr);
+    if (repeatStr) body.repeatInterval = Number(repeatStr);
+
+    const task = (await httpRequest("POST", "/tasks", body)) as Task;
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "start") {
     if (!rest[0]) throw new Error("id is required");
@@ -109,8 +164,7 @@ export const taskCommand: CommandDef = {
   name: "task",
   description: "任务管理（待办/进行中/已完成/已取消）",
   detail: "task <subcommand> — add/start/done/cancel/list/get",
-  allowedRoles: ["builtin-agent"],
-  allowedAgents: ["moss-ai"],
+  allowedRoles: ["builtin-agent", "user"],
   run(args) {
     runAsync(args).catch((e: unknown) => {
       process.stderr.write(`Error: ${e instanceof Error ? e.message : String(e)}\n`);
