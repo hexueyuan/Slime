@@ -4,7 +4,6 @@ import SessionList from "../components/chat/SessionList.vue";
 import NewThread from "../components/chat/NewThread.vue";
 import ChatView from "../components/chat/ChatView.vue";
 import ChatFunctionPanel from "../components/chat/ChatFunctionPanel.vue";
-import AgentEditDialog from "../components/chat/AgentEditDialog.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
@@ -18,15 +17,6 @@ const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
 const chatStore = useAgentChatStore();
 const contentStore = useContentStore();
-
-// Agent edit dialog
-const agentEditOpen = ref(false);
-const agentEditId = ref<string | undefined>(undefined);
-
-function openAgentEdit(agentId?: string) {
-  agentEditId.value = agentId;
-  agentEditOpen.value = true;
-}
 
 // IPC event listeners
 const cleanupChatIpc = setupAgentChatIpc(chatStore, () => sessionStore.activeSessionId);
@@ -192,7 +182,6 @@ function onShowThoughtChain(messageId?: string) {
         <ChatView
           v-else
           :selected-tool-call-id="selectedToolCallId"
-          @open-agent-edit="openAgentEdit($event)"
           @select-tool-call="onSelectToolCall"
           @show-thought-chain="onShowThoughtChain"
         />
@@ -219,12 +208,5 @@ function onShowThoughtChain(messageId?: string) {
         />
       </div>
     </div>
-
-    <!-- Agent edit dialog -->
-    <AgentEditDialog
-      v-model:open="agentEditOpen"
-      :agent-id="agentEditId"
-      @saved="agentStore.fetchAgents()"
-    />
   </div>
 </template>

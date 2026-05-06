@@ -13,7 +13,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  openAgentEdit: [agentId: string];
   "select-tool-call": [id: string];
   "show-thought-chain": [];
 }>();
@@ -65,14 +64,6 @@ function onStop() {
         @click="showMcpSettings = true"
       >
         <Icon icon="lucide:plug" class="h-4 w-4" />
-      </button>
-      <button
-        v-if="agent"
-        class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-        title="Agent 设置"
-        @click="emit('openAgentEdit', agent!.id)"
-      >
-        <Icon icon="lucide:settings" class="h-4 w-4" />
       </button>
     </div>
 

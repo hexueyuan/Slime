@@ -1,26 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { onMounted } from "vue";
 import { Icon } from "@iconify/vue";
 import { useAgentStore } from "@/stores/agent";
 import AgentAvatar from "@/components/chat/AgentAvatar.vue";
-import AgentEditDialog from "@/components/chat/AgentEditDialog.vue";
 
 const agentStore = useAgentStore();
 
-const editOpen = ref(false);
-const editAgentId = ref<string | undefined>(undefined);
-
 onMounted(() => agentStore.fetchAgents());
-
-function openNew() {
-  editAgentId.value = undefined;
-  editOpen.value = true;
-}
-
-function openEdit(id: string) {
-  editAgentId.value = id;
-  editOpen.value = true;
-}
 
 async function onDelete(id: string) {
   if (!window.confirm("确定删除该 Agent？")) return;
@@ -33,14 +19,6 @@ async function onDelete(id: string) {
     <!-- Header -->
     <div class="mb-4 flex items-center justify-between">
       <h3 class="text-sm font-semibold text-foreground">Agent 管理</h3>
-      <button
-        data-testid="new-agent-btn"
-        class="flex items-center gap-1 rounded-md bg-violet-600 px-3 py-1.5 text-xs text-white hover:bg-violet-500"
-        @click="openNew"
-      >
-        <Icon icon="lucide:plus" class="h-3.5 w-3.5" />
-        新建 Agent
-      </button>
     </div>
 
     <!-- List -->
@@ -69,14 +47,6 @@ async function onDelete(id: string) {
         <div class="flex shrink-0 items-center gap-1">
           <button
             v-if="!agent.protected"
-            data-testid="edit-btn"
-            class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            @click="openEdit(agent.id)"
-          >
-            <Icon icon="lucide:pencil" class="h-3.5 w-3.5" />
-          </button>
-          <button
-            v-if="!agent.protected"
             data-testid="delete-btn"
             class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-red-400"
             @click="onDelete(agent.id)"
@@ -93,11 +63,5 @@ async function onDelete(id: string) {
         暂无 Agent
       </div>
     </div>
-
-    <AgentEditDialog
-      v-model:open="editOpen"
-      :agent-id="editAgentId"
-      @saved="agentStore.fetchAgents()"
-    />
   </div>
 </template>
