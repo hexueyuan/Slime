@@ -2,17 +2,20 @@
 import { ref, computed, onMounted } from "vue";
 import { Icon } from "@iconify/vue";
 import { useAgentChatStore } from "@/stores/agentChat";
+import { usePresenter } from "@/composables/usePresenter";
 import AgentAvatar from "@/components/chat/AgentAvatar.vue";
 import type { AgentAvatar as AgentAvatarType } from "@shared/types/agent";
 
 const chatStore = useAgentChatStore();
+const agentConfig = usePresenter("agentConfigPresenter");
 
 const name = ref("");
-const avatarType = ref<"icon" | "monogram">("monogram");
+const avatarType = ref<"icon" | "monogram" | "image">("monogram");
 const avatarIcon = ref("lucide:user");
 const avatarColor = ref("#3b82f6");
 const avatarText = ref("U");
 const avatarBgColor = ref("#3b82f6");
+const avatarImagePath = ref("");
 const saved = ref(false);
 
 const PRESET_ICONS = [
@@ -32,6 +35,9 @@ const currentAvatar = computed<AgentAvatarType>(() => {
   if (avatarType.value === "icon") {
     return { kind: "lucide", icon: avatarIcon.value, color: avatarColor.value };
   }
+  if (avatarType.value === "image") {
+    return { kind: "image", path: avatarImagePath.value };
+  }
   return { kind: "monogram", text: avatarText.value || "U", backgroundColor: avatarBgColor.value };
 });
 
@@ -44,6 +50,9 @@ onMounted(async () => {
       avatarType.value = "icon";
       avatarIcon.value = profile.avatar.icon ?? "lucide:user";
       avatarColor.value = profile.avatar.color ?? "#3b82f6";
+    } else if (profile.avatar?.kind === "image") {
+      avatarType.value = "image";
+      avatarImagePath.value = profile.avatar.path ?? "";
     } else if (profile.avatar?.kind === "monogram") {
       avatarType.value = "monogram";
       avatarText.value = profile.avatar.text ?? "U";
@@ -56,6 +65,13 @@ async function onSave() {
   await chatStore.saveUserProfile({ name: name.value || undefined, avatar: currentAvatar.value });
   saved.value = true;
   setTimeout(() => (saved.value = false), 2000);
+}
+
+async function pickImage() {
+  const path = await agentConfig.pickAvatar();
+  if (path) {
+    avatarImagePath.value = path;
+  }
 }
 </script>
 
@@ -105,6 +121,17 @@ async function onSave() {
           @click="avatarType = 'monogram'"
         >
           文字
+        </button>
+        <button
+          :class="[
+            'rounded px-2 py-1 text-xs',
+            avatarType === 'image'
+              ? 'bg-violet-500/20 text-violet-400'
+              : 'text-muted-foreground hover:bg-muted',
+          ]"
+          @click="avatarType = 'image'"
+        >
+          图片
         </button>
       </div>
 
@@ -160,6 +187,16 @@ async function onSave() {
             @click="avatarBgColor = color"
           />
         </div>
+      </div>
+
+      <!-- Image mode -->
+      <div v-else-if="avatarType === 'image'">
+        <button
+          class="rounded-md border border-border px-3 py-1.5 text-sm text-foreground hover:bg-muted"
+          @click="pickImage"
+        >
+          选择图片
+        </button>
       </div>
     </div>
 
