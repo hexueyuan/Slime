@@ -9,7 +9,7 @@ import { eventBus } from "@/eventbus";
 import { AGENT_EVENTS } from "@shared/events";
 import { paths } from "@/utils";
 import { logger } from "@/utils/logger";
-import { getAgentDir, getSoulPath, getSkillsDir } from "@/utils/agentPaths";
+import { getAgentDir, getPromptPath, getSoulPath, getSkillsDir } from "@/utils/agentPaths";
 import type { ConfigPresenter } from "./configPresenter";
 import type { Agent } from "@shared/types/agent";
 import type { SkillInfo } from "@shared/types/skills";
@@ -74,17 +74,18 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
       protected: data.protected ?? false,
       description: data.description,
       avatar: data.avatar,
+      mbti: data.mbti ?? "INTJ",
       config: data.config,
     });
     eventBus.sendToRenderer(AGENT_EVENTS.CHANGED);
-    // 创建文件目录和 SOUL.md（best-effort，失败不阻断）
+    // 创建文件目录和 prompt.md（best-effort，失败不阻断）
     const agentDir = await this.getAgentDirForAgent(agent);
     if (agentDir) {
       try {
         await fs.mkdir(agentDir, { recursive: true });
         await fs.mkdir(getSkillsDir(agentDir), { recursive: true });
         await fs.writeFile(
-          getSoulPath(agentDir),
+          getPromptPath(agentDir),
           `你是${agent.name}，一个人工智能，你的任务是帮助用户解决问题。`,
         );
       } catch (e) {
@@ -184,15 +185,20 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
     return `data:${mime};base64,${data.toString("base64")}`;
   }
 
-  async readSoulMd(agentId: string): Promise<string> {
+  async readPromptMd(agentId: string): Promise<string> {
     const agent = agentDao.getAgentById(getDb(), agentId);
     if (!agent) return "";
     const agentDir = await this.getAgentDirForAgent(agent);
     if (!agentDir) return "";
     try {
-      return await fs.readFile(getSoulPath(agentDir), "utf-8");
+      return await fs.readFile(getPromptPath(agentDir), "utf-8");
     } catch {
-      return "";
+      // fallback: try old SOUL.md
+      try {
+        return await fs.readFile(getSoulPath(agentDir), "utf-8");
+      } catch {
+        return "";
+      }
     }
   }
 

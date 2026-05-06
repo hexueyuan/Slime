@@ -86,12 +86,12 @@ describe("AgentConfigPresenter", () => {
     expect(mockEventBus.sendToRenderer).toHaveBeenCalledWith(AGENT_EVENTS.CHANGED);
   });
 
-  it("createAgent writes default SOUL.md with agent name", async () => {
+  it("createAgent writes default prompt.md with agent name", async () => {
     const agentName = "MyBot";
     mockAgentDao.createAgent.mockReturnValue({ id: "gen-id", name: agentName, type: "custom" });
     await p.createAgent({ name: agentName });
     expect(mockFs.writeFile).toHaveBeenCalledWith(
-      expect.stringContaining("SOUL.md"),
+      expect.stringContaining("prompt.md"),
       `你是${agentName}，一个人工智能，你的任务是帮助用户解决问题。`,
     );
   });

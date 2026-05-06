@@ -336,7 +336,7 @@ export class AgentChatPresenter {
     const agentSystemPrompt = agentSoulFromConfig
       ? agentSoulFromConfig
       : this.agentConfigPresenter
-        ? await this.agentConfigPresenter.readSoulMd(session.agentId)
+        ? await this.agentConfigPresenter.readPromptMd(session.agentId)
         : "";
 
     // Build context — contextBuilder deduplicates newUserContent from history

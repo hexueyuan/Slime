@@ -367,7 +367,7 @@ async function loadCustom(agent: Agent) {
   form.enableThinking = cfg.enableThinking || false;
   currentAvatar.value = agent.avatar ?? null;
   // Load soul from file
-  const soul = (await agentConfigPresenter.readSoulMd(agent.id)) as string;
+  const soul = (await agentConfigPresenter.readPromptMd(agent.id)) as string;
   form.soul = soul || "";
 }
 

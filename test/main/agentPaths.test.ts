@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { getAgentDir, getSoulPath, getSkillsDir } from "../../src/main/utils/agentPaths";
+import {
+  getAgentDir,
+  getPromptPath,
+  getSoulPath,
+  getSkillsDir,
+} from "../../src/main/utils/agentPaths";
 import { join } from "path";
 
 const builtinAgent = { id: "hal-ai", name: "哈尔", type: "builtin" };
@@ -18,6 +23,12 @@ describe("getAgentDir", () => {
   it("vault path uses agent name under {vault}/Slime/", () => {
     const result = getAgentDir(customAgent, "/vault", "/home/.slime/agents");
     expect(result).toBe("/vault/Slime/我的Agent");
+  });
+});
+
+describe("getPromptPath", () => {
+  it("returns prompt.md under agentDir", () => {
+    expect(getPromptPath("/some/dir")).toBe(join("/some/dir", "prompt.md"));
   });
 });
 
