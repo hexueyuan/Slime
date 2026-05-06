@@ -8,6 +8,7 @@
       <div class="min-h-0 flex-1 px-4 py-3">
         <TaskBoard
           :tasks="store.tasks"
+          :selected-date="store.selectedDate"
           @select-task="openTaskDetail"
           @create-task="createNewTask"
         />

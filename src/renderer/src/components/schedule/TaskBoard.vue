@@ -1,9 +1,9 @@
 <template>
   <div class="flex h-full flex-col">
-    <!-- 上半：待办 + 进行中 -->
+    <!-- 上半：今日待办 -->
     <div class="flex-1 overflow-y-auto border-b border-border pb-2">
       <div class="mb-2 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-foreground">待办 / 进行中</h2>
+        <h2 class="text-sm font-semibold text-foreground">今日待办</h2>
         <button
           class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted"
           title="新建任务"
@@ -51,9 +51,9 @@
       </div>
     </div>
 
-    <!-- 下半：已完成 + 已取消 -->
+    <!-- 下半：今日已完成 / 已取消 -->
     <div class="flex-1 overflow-y-auto pt-2">
-      <h2 class="mb-2 text-sm font-semibold text-muted-foreground">已完成 / 已取消</h2>
+      <h2 class="mb-2 text-sm font-semibold text-muted-foreground">今日已完成 / 已取消</h2>
       <div v-if="finishedTasks.length === 0" class="py-4 text-center text-xs text-muted-foreground">
         暂无记录
       </div>
@@ -102,8 +102,13 @@ import { computed } from "vue";
 import { Icon } from "@iconify/vue";
 import type { Task } from "@shared/types/schedule";
 
-const props = defineProps<{ tasks: Task[] }>();
+const props = defineProps<{ tasks: Task[]; selectedDate: string }>();
 defineEmits<{ selectTask: [id: string]; createTask: [] }>();
+
+function toDateStr(ms?: number): string {
+  if (!ms) return "";
+  return new Date(ms).toISOString().slice(0, 10);
+}
 
 // 按创建时间排序分配序号 #1, #2, ...
 const taskSeqMap = computed(() => {
@@ -115,17 +120,26 @@ const taskSeqMap = computed(() => {
   return map;
 });
 
-// 待办+进行中，按创建时间排序（最新在前）
+// 今日待办：普通任务(无定时) + 定时任务(scheduledAt 在所选日期)，状态为 todo/in_progress
 const activeTasks = computed(() =>
   props.tasks
-    .filter((t) => t.status === "todo" || t.status === "in_progress")
+    .filter((t) => {
+      if (t.status !== "todo" && t.status !== "in_progress") return false;
+      // 无定时 = 普通任务，始终显示
+      if (!t.scheduledAt) return true;
+      // 有定时：scheduledAt 在所选日期
+      return toDateStr(t.scheduledAt) === props.selectedDate;
+    })
     .sort((a, b) => b.createdAt - a.createdAt),
 );
 
-// 已完成+已取消，按结束时间排序（最新在前）
+// 今日已完成/已取消：finishedAt 在所选日期
 const finishedTasks = computed(() =>
   props.tasks
-    .filter((t) => t.status === "done" || t.status === "cancelled")
+    .filter((t) => {
+      if (t.status !== "done" && t.status !== "cancelled") return false;
+      return toDateStr(t.finishedAt) === props.selectedDate;
+    })
     .sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0)),
 );
 
