@@ -88,33 +88,80 @@ export class DevPresenter implements IDevPresenter {
     await rm(dir, { recursive: true });
   }
 
+  private get builtinSkillsDir(): string {
+    return join(process.cwd(), "resources", "skills");
+  }
+
   async listGlobalSkills(): Promise<SkillManifest[]> {
-    const dir = this.skillsSrcDir;
-    if (!existsSync(dir)) return [];
-
     const results: SkillManifest[] = [];
-    for (const entry of readdirSync(dir)) {
-      const entryPath = join(dir, entry);
-      if (!statSync(entryPath).isDirectory()) continue;
 
-      const manifestPath = join(entryPath, "manifest.json");
-      if (!existsSync(manifestPath)) continue;
-
-      try {
-        const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-        if (manifest.name) {
-          results.push({
-            name: manifest.name,
-            description: manifest.description || "",
-            version: manifest.version,
-            author: manifest.author,
-          });
+    // Scan builtin skills (resources/skills/, uses SKILL.md frontmatter)
+    const builtinDir = this.builtinSkillsDir;
+    if (existsSync(builtinDir)) {
+      for (const entry of readdirSync(builtinDir)) {
+        const entryPath = join(builtinDir, entry);
+        if (!statSync(entryPath).isDirectory()) continue;
+        const skillMd = join(entryPath, "SKILL.md");
+        if (!existsSync(skillMd)) continue;
+        try {
+          const content = readFileSync(skillMd, "utf-8");
+          const fm = this.parseSkillFrontmatter(content);
+          if (fm) {
+            results.push({
+              name: fm.name,
+              description: fm.description,
+              source: "builtin",
+            });
+          }
+        } catch {
+          // skip
         }
-      } catch {
-        // skip invalid manifests
       }
     }
+
+    // Scan installed skills (src/main/skills/, uses manifest.json)
+    const dir = this.skillsSrcDir;
+    if (existsSync(dir)) {
+      for (const entry of readdirSync(dir)) {
+        const entryPath = join(dir, entry);
+        if (!statSync(entryPath).isDirectory()) continue;
+        const manifestPath = join(entryPath, "manifest.json");
+        if (!existsSync(manifestPath)) continue;
+        try {
+          const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+          if (manifest.name) {
+            results.push({
+              name: manifest.name,
+              description: manifest.description || "",
+              version: manifest.version,
+              author: manifest.author,
+              source: "installed",
+            });
+          }
+        } catch {
+          // skip
+        }
+      }
+    }
+
     return results;
+  }
+
+  private parseSkillFrontmatter(content: string): { name: string; description: string } | null {
+    const match = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!match) return null;
+    const raw = match[1];
+    let name = "";
+    let description = "";
+    for (const line of raw.split("\n")) {
+      const kv = line.match(/^(\w[\w-]*):\s*(.*)/);
+      if (kv) {
+        if (kv[1] === "name") name = kv[2].trim();
+        if (kv[1] === "description") description = kv[2].trim();
+      }
+    }
+    if (!name) return null;
+    return { name, description };
   }
 
   async installSkill(sourcePath: string): Promise<{ success: boolean; error?: string }> {

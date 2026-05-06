@@ -9,6 +9,7 @@ export interface SkillManifest {
   description: string;
   version?: string;
   author?: string;
+  source?: "builtin" | "installed";
 }
 
 export interface IDevPresenter {

@@ -11,12 +11,12 @@ const isDev = ref(false);
 const installing = ref(false);
 
 onMounted(async () => {
-  isDev.value = await devPresenter.isDev();
+  isDev.value = (await devPresenter.isDev()) as boolean;
   await refreshSkills();
 });
 
 async function refreshSkills() {
-  skills.value = await devPresenter.listGlobalSkills();
+  skills.value = (await devPresenter.listGlobalSkills()) as SkillManifest[];
 }
 
 async function installSkill() {
@@ -44,7 +44,7 @@ async function uninstallSkill(name: string) {
 <template>
   <div class="h-full overflow-y-auto p-4">
     <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-sm font-medium text-foreground">全局 Skills</h2>
+      <h2 class="text-sm font-medium text-foreground">Skills</h2>
       <button
         v-if="isDev"
         :disabled="installing"
@@ -56,7 +56,7 @@ async function uninstallSkill(name: string) {
       </button>
     </div>
 
-    <div v-if="skills.length === 0" class="text-sm text-muted-foreground">暂无已安装的 Skill</div>
+    <div v-if="skills.length === 0" class="text-sm text-muted-foreground">暂无 Skill</div>
 
     <div class="space-y-2">
       <div
@@ -65,7 +65,15 @@ async function uninstallSkill(name: string) {
         class="flex items-center justify-between rounded-md border border-border px-3 py-2"
       >
         <div>
-          <div class="text-sm font-medium text-foreground">{{ skill.name }}</div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-sm font-medium text-foreground">{{ skill.name }}</span>
+            <span
+              v-if="skill.source === 'builtin'"
+              class="rounded bg-violet-500/15 px-1 py-0.5 text-[10px] text-violet-400"
+            >
+              内置
+            </span>
+          </div>
           <div class="text-xs text-muted-foreground">{{ skill.description }}</div>
           <div v-if="skill.version" class="text-xs text-muted-foreground">
             v{{ skill.version }}
@@ -73,7 +81,7 @@ async function uninstallSkill(name: string) {
           </div>
         </div>
         <button
-          v-if="isDev"
+          v-if="isDev && skill.source !== 'builtin'"
           class="text-xs text-red-400 hover:text-red-300"
           @click="uninstallSkill(skill.name)"
         >
