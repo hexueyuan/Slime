@@ -360,6 +360,7 @@ function migrate(instance: BetterSqlite3.Database): void {
   try {
     instance.exec("ALTER TABLE relay_logs ADD COLUMN log_date TEXT NOT NULL DEFAULT ''");
     // Column was added, need to backfill and create indexes/trigger
+    console.log("[migrate] log_date column added, creating trigger and indexes");
     instance.exec(`
       UPDATE relay_logs SET log_date = date(created_at) WHERE log_date = '';
       CREATE TRIGGER IF NOT EXISTS trg_relay_logs_set_log_date
@@ -372,8 +373,9 @@ function migrate(instance: BetterSqlite3.Database): void {
       CREATE INDEX IF NOT EXISTS idx_relay_logs_date_duration ON relay_logs(log_date, duration_ms);
     `);
   } catch (e) {
-    // Column already exists, create missing indexes/trigger
+    // Column might already exist or table might not have expected structure
     const cols = instance.prepare("PRAGMA table_info(relay_logs)").all() as { name: string }[];
+    console.log("[migrate] ALTER TABLE failed, columns:", cols.map((c) => c.name).join(", "));
     if (cols.some((c) => c.name === "log_date")) {
       // Column exists but indexes/trigger might be missing
       instance.exec(`
@@ -386,6 +388,9 @@ function migrate(instance: BetterSqlite3.Database): void {
         CREATE INDEX IF NOT EXISTS idx_relay_logs_date_channel ON relay_logs(log_date, channel_id);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_date_duration ON relay_logs(log_date, duration_ms);
       `);
+    } else {
+      // Column doesn't exist - this shouldn't happen, but try to add it again
+      console.error("[migrate] log_date column missing, table structure unexpected");
     }
   }
 }
