@@ -414,10 +414,10 @@ export function getStatsDailyTrend(
                cache_read_tokens, cache_write_tokens
         FROM stats_daily WHERE date >= ? AND date < ?
         UNION ALL
-        SELECT date(created_at) AS date, 1, input_tokens, output_tokens, cost,
+        SELECT date(created_at, 'localtime') AS date, 1, input_tokens, output_tokens, cost,
                cache_read_tokens, cache_write_tokens
-        FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
-          AND date(created_at) NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
+        FROM relay_logs WHERE date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') < ?
+          AND date(created_at, 'localtime') NOT IN (SELECT DISTINCT date FROM stats_daily WHERE date >= ? AND date < ?)
       )
       GROUP BY date ORDER BY date`,
     )
@@ -450,11 +450,11 @@ export function getStatsHourlyTrend(
                cache_read_tokens, cache_write_tokens
         FROM stats_hourly WHERE date >= ? AND date < ?
         UNION ALL
-        SELECT date(created_at), CAST(strftime('%H', created_at) AS INTEGER),
+        SELECT date(created_at, 'localtime'), CAST(strftime('%H', created_at, 'localtime') AS INTEGER),
                1, input_tokens, output_tokens, cost,
                cache_read_tokens, cache_write_tokens
-        FROM relay_logs WHERE date(created_at) >= ? AND date(created_at) < ?
-          AND (date(created_at) || '_' || CAST(strftime('%H', created_at) AS INTEGER))
+        FROM relay_logs WHERE date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') < ?
+          AND (date(created_at, 'localtime') || '_' || CAST(strftime('%H', created_at, 'localtime') AS INTEGER))
             NOT IN (SELECT date || '_' || hour FROM stats_hourly WHERE date >= ? AND date < ?)
       )
       GROUP BY date, hour ORDER BY date, hour`,
