@@ -34,9 +34,13 @@ async function installSkill() {
   }
 }
 
-async function uninstallSkill(name: string) {
+async function uninstallSkill(name: string, source?: string) {
   if (!confirm(`确认卸载 Skill "${name}"?`)) return;
-  await devPresenter.uninstallSkill(name);
+  if (source === "builtin") {
+    await devPresenter.uninstallBuiltinSkill(name);
+  } else {
+    await devPresenter.uninstallSkill(name);
+  }
   await refreshSkills();
 }
 </script>
@@ -81,9 +85,9 @@ async function uninstallSkill(name: string) {
           </div>
         </div>
         <button
-          v-if="isDev && skill.source !== 'builtin'"
+          v-if="isDev"
           class="text-xs text-red-400 hover:text-red-300"
-          @click="uninstallSkill(skill.name)"
+          @click="uninstallSkill(skill.name, skill.source)"
         >
           卸载
         </button>

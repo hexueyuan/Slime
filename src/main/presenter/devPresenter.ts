@@ -231,6 +231,13 @@ export class DevPresenter implements IDevPresenter {
     await rm(dir, { recursive: true });
   }
 
+  async uninstallBuiltinSkill(skillName: string): Promise<void> {
+    this.assertDev();
+    const dir = join(this.builtinSkillsDir, skillName);
+    if (!existsSync(dir)) return;
+    await rm(dir, { recursive: true });
+  }
+
   async listAvailableTools(): Promise<string[]> {
     return [
       "read",
