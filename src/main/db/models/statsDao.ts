@@ -19,7 +19,7 @@ export function aggregateToHourly(db: BetterSqlite3.Database, beforeDate: string
          cache_read_tokens, cache_write_tokens, cost, success_count, fail_count, avg_latency_ms)
       SELECT
         log_date AS date,
-        CAST(strftime('%H', created_at) AS INTEGER) AS hour,
+        CAST(strftime('%H', created_at, 'localtime') AS INTEGER) AS hour,
         model_name,
         COALESCE(channel_id, 0),
         COUNT(*),
@@ -350,13 +350,13 @@ export function getChannelStabilityHourly(
          WHERE channel_id = ? AND date >= ? AND date < ?
            AND (success_count + fail_count) > 0
          UNION ALL
-         SELECT log_date || 'T' || printf('%02d', CAST(strftime('%H', created_at) AS INTEGER)),
+         SELECT log_date || 'T' || printf('%02d', CAST(strftime('%H', created_at, 'localtime') AS INTEGER)),
                 CASE WHEN status = 'success' THEN 1 ELSE 0 END,
                 CASE WHEN status = 'error' THEN 1 ELSE 0 END,
                 CASE WHEN status = 'success' THEN duration_ms END
          FROM relay_logs
          WHERE channel_id = ? AND log_date >= ? AND log_date < ?
-           AND (log_date || '_' || CAST(strftime('%H', created_at) AS INTEGER))
+           AND (log_date || '_' || CAST(strftime('%H', created_at, 'localtime') AS INTEGER))
              NOT IN (SELECT date || '_' || hour FROM stats_hourly WHERE channel_id = ? AND date >= ? AND date < ?)
        )
        GROUP BY hour
@@ -455,11 +455,11 @@ export function getStatsHourlyTrend(
                cache_read_tokens, cache_write_tokens
         FROM stats_hourly WHERE date >= ? AND date < ?
         UNION ALL
-        SELECT log_date, CAST(strftime('%H', created_at) AS INTEGER),
+        SELECT log_date, CAST(strftime('%H', created_at, 'localtime') AS INTEGER),
                1, input_tokens, output_tokens, cost,
                cache_read_tokens, cache_write_tokens
         FROM relay_logs WHERE log_date >= ? AND log_date < ?
-          AND (log_date || '_' || CAST(strftime('%H', created_at) AS INTEGER))
+          AND (log_date || '_' || CAST(strftime('%H', created_at, 'localtime') AS INTEGER))
             NOT IN (SELECT date || '_' || hour FROM stats_hourly WHERE date >= ? AND date < ?)
       )
       GROUP BY date, hour ORDER BY date, hour`,
