@@ -10,12 +10,16 @@ export type UserProfile = {
   avatar?: AgentAvatar;
 };
 
+export interface AgentDashboard {
+  template: string;
+}
+
 export interface AgentConfig {
   capabilityRequirements?: string[];
   /** @deprecated 使用 agentSoul 替代 */
   systemPrompt?: string;
-  /** 内置 agent 的系统 prompt，非空时优先于 SOUL.md */
-  agentSoul?: string;
+  /** 内置 agent 的系统 prompt，非空时优先于 SOUL.md。支持异步函数用于动态注入运行时数据 */
+  agentSoul?: string | (() => Promise<string>);
   temperature?: number;
   contextLength?: number;
   maxTokens?: number;
@@ -28,6 +32,8 @@ export interface AgentConfig {
   disabledSkills?: string[];
   /** 启用 Anthropic extended thinking 模式 */
   enableThinking?: boolean;
+  /** 仪表盘配置，仅内置 Agent 使用 */
+  dashboard?: AgentDashboard;
 }
 
 export interface Agent {

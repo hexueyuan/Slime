@@ -315,7 +315,12 @@ export class AgentChatPresenter {
           : null;
 
     // Read system prompt: agentSoul in config takes priority over SOUL.md
-    const agentSoulFromConfig = agent?.config?.agentSoul ?? null;
+    const agentSoulRaw = agent?.config?.agentSoul ?? null;
+    const agentSoulFromConfig = agentSoulRaw
+      ? typeof agentSoulRaw === "function"
+        ? await agentSoulRaw()
+        : agentSoulRaw
+      : null;
     const agentSystemPrompt = agentSoulFromConfig
       ? agentSoulFromConfig
       : this.agentConfigPresenter
