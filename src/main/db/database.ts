@@ -286,14 +286,18 @@ CREATE TABLE IF NOT EXISTS notes (
 `;
 
 function migrate(instance: BetterSqlite3.Database): void {
+  console.log("[migrate] Starting migration...");
   // Add raw_request_body column if it doesn't exist
   const cols = instance.prepare("PRAGMA table_info(relay_logs)").all() as { name: string }[];
+  console.log("[migrate] relay_logs columns:", cols.map(c => c.name));
   if (!cols.some((c) => c.name === "raw_request_body")) {
+    console.log("[migrate] Adding raw_request_body column");
     instance.exec("ALTER TABLE relay_logs ADD COLUMN raw_request_body TEXT");
   }
   // Add theme_color column to agents if it doesn't exist
   const agentCols = instance.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
   if (!agentCols.some((c) => c.name === "theme_color")) {
+    console.log("[migrate] Adding theme_color column");
     instance.exec("ALTER TABLE agents ADD COLUMN theme_color TEXT");
   }
   // Add schedule tables if they don't exist (v0.5 migration)
@@ -402,8 +406,18 @@ function createDb(dbPath: string): BetterSqlite3.Database {
   const instance = new Database(dbPath);
   instance.pragma("journal_mode = WAL");
   instance.pragma("foreign_keys = ON");
-  instance.exec(DDL);
-  migrate(instance);
+  try {
+    instance.exec(DDL);
+  } catch (e) {
+    console.error("[createDb] DDL execution failed:", e);
+    throw e;
+  }
+  try {
+    migrate(instance);
+  } catch (e) {
+    console.error("[createDb] Migration failed:", e);
+    throw e;
+  }
   return instance;
 }
 

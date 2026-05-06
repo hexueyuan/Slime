@@ -20,7 +20,7 @@ function canAccess(cmd, ctx) {
   return true;
 }
 function getTodayLogPath(dataDir) {
-  const date = /* @__PURE__ */ new Date().toISOString().split("T")[0];
+  const date = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   return join(dataDir, "logs", `slime-${date}.log`);
 }
 function formatLogLine(raw) {
@@ -29,8 +29,7 @@ function formatLogLine(raw) {
     const { timestamp, level, message, ...meta } = obj;
     const levelStr = `[${(level ?? "?").toUpperCase()}]`.padEnd(7);
     const metaStr = Object.keys(meta).length ? "  " + JSON.stringify(meta) : "";
-    const localTime = timestamp ? new Date(timestamp).toLocaleString() : timestamp;
-    return `${levelStr} ${localTime}  ${message}${metaStr}`;
+    return `${levelStr} ${timestamp}  ${message}${metaStr}`;
   } catch {
     return raw;
   }
@@ -43,10 +42,7 @@ function readLogs(dataDir, opts) {
   const logPath = getTodayLogPath(dataDir);
   if (!existsSync(logPath)) return [];
   const raw = readFileSync(logPath, "utf-8");
-  let lines = raw
-    .split("\n")
-    .filter((l) => l.trim() !== "")
-    .map(formatLogLine);
+  let lines = raw.split("\n").filter((l) => l.trim() !== "").map(formatLogLine);
   if (opts.key) {
     const lower = opts.key.toLowerCase();
     lines = lines.filter((l) => l.toLowerCase().includes(lower));
@@ -133,13 +129,13 @@ const logsCommand = {
   slime-cli logs --clear            # 清空今日日志`,
   allowedRoles: ["builtin-agent"],
   allowedAgents: ["hal-ai"],
-  run: runLogs,
+  run: runLogs
 };
 const STATUS_LABEL = {
   todo: "待办",
   in_progress: "进行中",
   done: "已完成",
-  cancelled: "已取消",
+  cancelled: "已取消"
 };
 function getBaseUrl() {
   const port = process.env["SLIME_TASK_PORT"];
@@ -152,7 +148,7 @@ async function httpRequest(method, path, body) {
   const res = await fetch(`${getBaseUrl()}${path}`, {
     method,
     headers,
-    body: body !== void 0 ? JSON.stringify(body) : void 0,
+    body: body !== void 0 ? JSON.stringify(body) : void 0
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error);
@@ -165,18 +161,27 @@ function formatTime(ms) {
 function formatTask(t) {
   const parts = [
     `[${t.id}] ${t.title} [${STATUS_LABEL[t.status] ?? t.status}]`,
-    `created:${formatTime(t.createdAt)}`,
+    `creator:${t.creatorType}/${t.creatorId ?? "-"}`
   ];
+  if (t.assigneeId) parts.push(`assignee:${t.assigneeType}/${t.assigneeId}`);
+  if (t.scheduledAt) parts.push(`scheduled:${formatTime(t.scheduledAt)}`);
+  if (t.repeatInterval) parts.push(`repeat:${t.repeatInterval}min`);
+  parts.push(`created:${formatTime(t.createdAt)}`);
   if (t.startedAt) parts.push(`started:${formatTime(t.startedAt)}`);
   if (t.finishedAt) parts.push(`finished:${formatTime(t.finishedAt)}`);
   return parts.join(" ");
+}
+function parseFlag(args, flag) {
+  const idx = args.indexOf(flag);
+  if (idx < 0) return void 0;
+  return args[idx + 1];
 }
 async function runAsync(args) {
   const [sub, ...rest] = args;
   if (!sub || sub === "help") {
     process.stdout.write(
       `task <subcommand> [args]
-  add <描述>                   新增待办任务
+  add <描述> --creator-type <user|agent> --creator-id <id> [--assignee-type <user|agent>] [--assignee-id <id>] [--scheduled-at <timestamp_ms>] [--repeat <minutes>]
   start <id>                   待办 → 进行中
   done <id>                    进行中 → 已完成
   cancel <id>                  任意状态 → 已取消
@@ -184,14 +189,49 @@ async function runAsync(args) {
   get <id>                     查询单个任务详情
 
 状态值: todo | in_progress | done | cancelled
-`,
+`
     );
     return;
   }
   if (sub === "add") {
-    const title = rest.join(" ").trim();
+    const creatorType = parseFlag(rest, "--creator-type");
+    const creatorId = parseFlag(rest, "--creator-id");
+    const assigneeType = parseFlag(rest, "--assignee-type");
+    const assigneeId = parseFlag(rest, "--assignee-id");
+    const scheduledAtStr = parseFlag(rest, "--scheduled-at");
+    const repeatStr = parseFlag(rest, "--repeat");
+    if (!creatorType) throw new Error("--creator-type is required (user|agent)");
+    if (!creatorId) throw new Error("--creator-id is required");
+    if (creatorType !== "user" && creatorType !== "agent") {
+      throw new Error(`--creator-type must be 'user' or 'agent', got '${creatorType}'`);
+    }
+    if (assigneeType && assigneeType !== "user" && assigneeType !== "agent") {
+      throw new Error(`--assignee-type must be 'user' or 'agent', got '${assigneeType}'`);
+    }
+    const flagNames = [
+      "--creator-type",
+      "--creator-id",
+      "--assignee-type",
+      "--assignee-id",
+      "--scheduled-at",
+      "--repeat"
+    ];
+    const titleParts = [];
+    for (let i = 0; i < rest.length; i++) {
+      if (flagNames.includes(rest[i])) {
+        i++;
+        continue;
+      }
+      titleParts.push(rest[i]);
+    }
+    const title = titleParts.join(" ").trim();
     if (!title) throw new Error("title is required");
-    const task = await httpRequest("POST", "/tasks", { title });
+    const body = { title, creatorType, creatorId };
+    if (assigneeType) body.assigneeType = assigneeType;
+    if (assigneeId) body.assigneeId = assigneeId;
+    if (scheduledAtStr) body.scheduledAt = Number(scheduledAtStr);
+    if (repeatStr) body.repeatInterval = Number(repeatStr);
+    const task = await httpRequest("POST", "/tasks", body);
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "start") {
     if (!rest[0]) throw new Error("id is required");
@@ -228,15 +268,14 @@ const taskCommand = {
   name: "task",
   description: "任务管理（待办/进行中/已完成/已取消）",
   detail: "task <subcommand> — add/start/done/cancel/list/get",
-  allowedRoles: ["builtin-agent"],
-  allowedAgents: ["moss-ai"],
+  allowedRoles: ["builtin-agent", "user"],
   run(args) {
     runAsync(args).catch((e) => {
       process.stderr.write(`Error: ${e instanceof Error ? e.message : String(e)}
 `);
       process.exit(1);
     });
-  },
+  }
 };
 function buildHelp(commands2, ctx) {
   const visible = commands2.filter((cmd) => canAccess(cmd, ctx));
@@ -245,7 +284,7 @@ function buildHelp(commands2, ctx) {
     "",
     "用法: slime-cli <command> [options]",
     "",
-    "命令:",
+    "命令:"
   ];
   for (const cmd of visible) {
     lines.push(`  ${cmd.name.padEnd(20)}${cmd.description}`);
@@ -277,7 +316,7 @@ function makeHelpCommand(commands2) {
   slime-cli help            列出当前角色可用的全部命令
   slime-cli help <command>  显示指定命令的详细说明`,
     allowedRoles: ["user", "builtin-agent", "external-agent"],
-    run: (args, ctx) => runHelp(args, ctx, commands2),
+    run: (args, ctx) => runHelp(args, ctx, commands2)
   };
 }
 const allCommands = [logsCommand, taskCommand];
