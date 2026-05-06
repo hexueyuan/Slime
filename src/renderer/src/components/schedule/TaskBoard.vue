@@ -40,6 +40,9 @@
               <Icon icon="lucide:clock" class="h-2.5 w-2.5" />
               <Icon v-if="task.repeatInterval" icon="lucide:repeat" class="h-2.5 w-2.5" />
             </span>
+            <span class="shrink-0 text-[10px] text-muted-foreground">{{
+              formatDate(task.createdAt)
+            }}</span>
           </div>
           <div class="flex items-center gap-3 pl-[36px] text-[10px] text-muted-foreground">
             <span class="flex items-center gap-1">
@@ -89,6 +92,9 @@
               <Icon icon="lucide:clock" class="h-2.5 w-2.5" />
               <Icon v-if="task.repeatInterval" icon="lucide:repeat" class="h-2.5 w-2.5" />
             </span>
+            <span class="shrink-0 text-[10px] text-muted-foreground">{{
+              formatDate(task.finishedAt)
+            }}</span>
           </div>
           <div class="flex items-center gap-3 pl-[36px] text-[10px] text-muted-foreground">
             <span class="flex items-center gap-1">
@@ -193,4 +199,18 @@ const finishedTasks = computed(() =>
     })
     .sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0)),
 );
+
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+
+function formatDate(ms?: number): string {
+  if (!ms) return "";
+  const d = new Date(ms);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const w = WEEKDAYS[d.getDay()];
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${y}/${m}/${day}（周${w}）${h}:${min}`;
+}
 </script>
