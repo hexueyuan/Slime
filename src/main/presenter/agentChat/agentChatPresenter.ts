@@ -18,6 +18,7 @@ import type { SkillPresenter } from "../skillPresenter";
 import type { AgentConfigPresenter } from "../agentConfigPresenter";
 import { createLLMClient } from "@/llm";
 import type { LLMClient, Tool } from "@/llm";
+import { BUILTIN_AGENTS } from "@/agents";
 
 const MAX_STEPS = 128;
 
@@ -227,6 +228,10 @@ export class AgentChatPresenter {
           this.pendingQuestions.set(sessionId, { toolCallId: id, resolve });
         });
         this.contentPresenter.clearContent(sessionId);
+      } else if (name === "dashboard_update") {
+        const { data } = parsedArgs as { data: Record<string, unknown> };
+        eventBus.sendToRenderer(AGENT_EVENTS.DASHBOARD_UPDATE, { sessionId, data });
+        result = "Dashboard updated";
       } else {
         result = await this.toolPresenter.callTool(sessionId, name, parsedArgs);
       }
@@ -315,7 +320,13 @@ export class AgentChatPresenter {
           : null;
 
     // Read system prompt: agentSoul in config takes priority over SOUL.md
-    const agentSoulRaw = agent?.config?.agentSoul ?? null;
+    // For builtin agents, agentSoul function is not persisted to DB — fall back to in-memory BUILTIN_AGENTS
+    const agentSoulRaw =
+      agent?.type === "builtin"
+        ? (BUILTIN_AGENTS.find((b) => b.id === agent.id)?.config?.agentSoul ??
+          agent?.config?.agentSoul ??
+          null)
+        : (agent?.config?.agentSoul ?? null);
     const agentSoulFromConfig = agentSoulRaw
       ? typeof agentSoulRaw === "function"
         ? await agentSoulRaw()
