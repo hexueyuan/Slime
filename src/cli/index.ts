@@ -1,9 +1,10 @@
 import { getCallerContext } from "./auth";
 import { canAccess } from "./registry";
 import { logsCommand } from "./commands/logs";
+import { taskCommand } from "./commands/task";
 import { makeHelpCommand } from "./commands/help";
 
-const allCommands = [logsCommand];
+const allCommands = [logsCommand, taskCommand];
 const helpCommand = makeHelpCommand(allCommands);
 const commands = [helpCommand, ...allCommands];
 
