@@ -91,23 +91,8 @@ CREATE TABLE IF NOT EXISTS relay_logs (
   error TEXT,
   request_body TEXT,
   response_body TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  log_date TEXT NOT NULL DEFAULT ''
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
-
-CREATE TRIGGER IF NOT EXISTS trg_relay_logs_set_log_date
-AFTER INSERT ON relay_logs
-WHEN NEW.log_date = ''
-BEGIN
-  UPDATE relay_logs SET log_date = date(NEW.created_at) WHERE id = NEW.id;
-END;
-
-CREATE INDEX IF NOT EXISTS idx_relay_logs_created ON relay_logs(created_at);
-CREATE INDEX IF NOT EXISTS idx_relay_logs_model ON relay_logs(model_name);
-CREATE INDEX IF NOT EXISTS idx_relay_logs_channel ON relay_logs(channel_id);
-CREATE INDEX IF NOT EXISTS idx_relay_logs_log_date ON relay_logs(log_date);
-CREATE INDEX IF NOT EXISTS idx_relay_logs_date_channel ON relay_logs(log_date, channel_id);
-CREATE INDEX IF NOT EXISTS idx_relay_logs_date_duration ON relay_logs(log_date, duration_ms);
 
 CREATE TABLE IF NOT EXISTS stats_hourly (
   date TEXT NOT NULL,
@@ -372,6 +357,9 @@ function migrate(instance: BetterSqlite3.Database): void {
       BEGIN
         UPDATE relay_logs SET log_date = date(NEW.created_at) WHERE id = NEW.id;
       END;
+      CREATE INDEX IF NOT EXISTS idx_relay_logs_created ON relay_logs(created_at);
+      CREATE INDEX IF NOT EXISTS idx_relay_logs_model ON relay_logs(model_name);
+      CREATE INDEX IF NOT EXISTS idx_relay_logs_channel ON relay_logs(channel_id);
       CREATE INDEX IF NOT EXISTS idx_relay_logs_log_date ON relay_logs(log_date);
       CREATE INDEX IF NOT EXISTS idx_relay_logs_date_channel ON relay_logs(log_date, channel_id);
       CREATE INDEX IF NOT EXISTS idx_relay_logs_date_duration ON relay_logs(log_date, duration_ms);
@@ -388,6 +376,9 @@ function migrate(instance: BetterSqlite3.Database): void {
         BEGIN
           UPDATE relay_logs SET log_date = date(NEW.created_at) WHERE id = NEW.id;
         END;
+        CREATE INDEX IF NOT EXISTS idx_relay_logs_created ON relay_logs(created_at);
+        CREATE INDEX IF NOT EXISTS idx_relay_logs_model ON relay_logs(model_name);
+        CREATE INDEX IF NOT EXISTS idx_relay_logs_channel ON relay_logs(channel_id);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_log_date ON relay_logs(log_date);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_date_channel ON relay_logs(log_date, channel_id);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_date_duration ON relay_logs(log_date, duration_ms);
@@ -397,6 +388,7 @@ function migrate(instance: BetterSqlite3.Database): void {
       console.error("[migrate] log_date column missing, table structure unexpected");
     }
   }
+  console.log("[migrate] Migration complete");
 }
 
 function createDb(dbPath: string): BetterSqlite3.Database {
