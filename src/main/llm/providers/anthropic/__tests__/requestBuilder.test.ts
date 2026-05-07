@@ -17,13 +17,31 @@ describe("buildAnthropicRequest", () => {
     expect(result.tools).toBeUndefined();
   });
 
-  it("system 消息提取到独立字段", () => {
+  it("system 消息提取到独立字段（字符串格式）", () => {
     const messages: CoreMessage[] = [
       { role: "system", content: "You are helpful." },
       { role: "user", content: "hi" },
     ];
     const result = buildAnthropicRequest(messages, {}, baseOptions);
     expect(result.system).toBe("You are helpful.");
+    expect(result.messages).toEqual([{ role: "user", content: "hi" }]);
+  });
+
+  it("system 消息提取到独立字段（数组格式，含 cache_control）", () => {
+    const messages: CoreMessage[] = [
+      {
+        role: "system",
+        content: [
+          { type: "text", text: "identity block", cache_control: { type: "ephemeral" } },
+          { type: "text", text: "constraints block", cache_control: { type: "ephemeral" } },
+        ],
+      },
+      { role: "user", content: "hi" },
+    ];
+    const result = buildAnthropicRequest(messages, {}, baseOptions);
+    expect(Array.isArray(result.system)).toBe(true);
+    expect((result.system as any[])[0].text).toBe("identity block");
+    expect((result.system as any[])[0].cache_control).toEqual({ type: "ephemeral" });
     expect(result.messages).toEqual([{ role: "user", content: "hi" }]);
   });
 
@@ -80,27 +98,32 @@ describe("buildAnthropicRequest", () => {
     });
   });
 
-  it("includes cache_control for automatic caching", () => {
+  it("顶层无 cache_control 字段（per-block cache_control 在 system blocks 里）", () => {
     const messages: CoreMessage[] = [{ role: "user", content: "hello" }];
     const result = buildAnthropicRequest(messages, {}, baseOptions);
-    expect(result.cache_control).toEqual({ type: "ephemeral" });
+    expect((result as any).cache_control).toBeUndefined();
   });
 
-  it("cache_control does not affect existing request structure", () => {
+  it("user 消息数组内容（含 cache_control blocks）透传", () => {
     const messages: CoreMessage[] = [
-      { role: "system", content: "be helpful" },
-      { role: "user", content: "hi" },
-    ];
-    const tools: Record<string, Tool> = {
-      read: {
-        description: "read",
-        parameters: { type: "object", properties: {} },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "<system-reminder>\nskills list\n</system-reminder>",
+            cache_control: { type: "ephemeral" },
+          },
+          { type: "text", text: "actual user input" },
+        ],
       },
-    };
-    const result = buildAnthropicRequest(messages, tools, baseOptions);
-    expect(result.system).toBe("be helpful");
-    expect(result.messages).toEqual([{ role: "user", content: "hi" }]);
-    expect(result.tools).toBeDefined();
-    expect(result.cache_control).toEqual({ type: "ephemeral" });
+    ];
+    const result = buildAnthropicRequest(messages, {}, baseOptions);
+    const userMsg = result.messages[0];
+    expect(Array.isArray(userMsg.content)).toBe(true);
+    const blocks = userMsg.content as any[];
+    expect(blocks[0].type).toBe("text");
+    expect(blocks[0].cache_control).toEqual({ type: "ephemeral" });
+    expect(blocks[1].text).toBe("actual user input");
   });
 });

@@ -24,8 +24,22 @@ const userName = computed(() => chatStore.userProfile?.name ?? "你");
 
 const copied = ref(false);
 
+const displayText = computed(() => {
+  const raw = props.message.content;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.type === "text") {
+      const lastBlock = parsed[parsed.length - 1];
+      return lastBlock?.text ?? raw;
+    }
+  } catch {
+    // 纯字符串，直接使用
+  }
+  return raw;
+});
+
 async function copyMessage() {
-  await navigator.clipboard.writeText(props.message.content);
+  await navigator.clipboard.writeText(displayText.value);
   copied.value = true;
   setTimeout(() => (copied.value = false), 1500);
 }
@@ -47,7 +61,7 @@ async function copyMessage() {
 
       <!-- Purple bubble -->
       <div class="rounded-xl bg-violet-600 px-3 py-2 text-sm text-white">
-        <div class="whitespace-pre-wrap">{{ message.content }}</div>
+        <div class="whitespace-pre-wrap">{{ displayText }}</div>
       </div>
 
       <!-- Action bar -->

@@ -4,6 +4,7 @@ import type {
   AnthropicRequestBody,
   AnthropicMessage,
   AnthropicContentBlock,
+  AnthropicSystemBlock,
   AnthropicTool,
 } from "./types";
 
@@ -13,10 +14,15 @@ export function buildAnthropicRequest(
   options: ChatOptions,
 ): AnthropicRequestBody {
   // 提取 system 消息
-  let system: string | undefined;
+  let system: string | AnthropicSystemBlock[] | undefined;
   const filtered = messages.filter((m) => {
     if (m.role === "system") {
-      system = m.content as string;
+      const c = m.content;
+      if (Array.isArray(c)) {
+        system = c as AnthropicSystemBlock[];
+      } else {
+        system = c as string;
+      }
       return false;
     }
     return true;
@@ -44,7 +50,6 @@ export function buildAnthropicRequest(
     messages: anthropicMessages,
     tools: anthropicTools,
     temperature: options.temperature,
-    cache_control: { type: "ephemeral" },
   };
 
   if (options.thinkingBudget != null) {
@@ -57,10 +62,24 @@ export function buildAnthropicRequest(
 
 function convertMessage(m: CoreMessage): AnthropicMessage {
   if (m.role === "system") {
-    return { role: "user", content: m.content };
+    return { role: "user", content: m.content as string };
   }
 
   if (m.role === "user") {
+    if (Array.isArray(m.content)) {
+      // 数组格式：直接透传 text blocks（含 cache_control）
+      const blocks: AnthropicContentBlock[] = (
+        m.content as Array<{ type: string; text: string; cache_control?: { type: string } }>
+      ).map((b) => {
+        const block: AnthropicContentBlock & { cache_control?: { type: string } } = {
+          type: "text" as const,
+          text: b.text,
+        };
+        if (b.cache_control) (block as any).cache_control = b.cache_control;
+        return block;
+      });
+      return { role: "user", content: blocks };
+    }
     return { role: "user", content: m.content };
   }
 
@@ -96,7 +115,12 @@ function convertMessage(m: CoreMessage): AnthropicMessage {
       };
     }
     // text / reasoning_content 等
-    return { type: "text" as const, text: String(part.text ?? "") };
+    const block: AnthropicContentBlock & { cache_control?: { type: string } } = {
+      type: "text" as const,
+      text: String(part.text ?? ""),
+    };
+    if (part.cache_control) block.cache_control = part.cache_control as { type: string };
+    return block;
   });
   return { role: "assistant", content: blocks };
 }

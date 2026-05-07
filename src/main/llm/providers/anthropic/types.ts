@@ -1,15 +1,20 @@
 /**
  * Anthropic API 请求体
  */
+export type AnthropicSystemBlock = {
+  type: "text";
+  text: string;
+  cache_control?: { type: string };
+};
+
 export interface AnthropicRequestBody {
   model: string;
   max_tokens: number;
   stream: boolean;
-  system?: string;
+  system?: string | AnthropicSystemBlock[];
   messages: AnthropicMessage[];
   tools?: AnthropicTool[];
   temperature?: number;
-  cache_control?: { type: string; ttl?: string };
   /** Extended thinking 配置 */
   thinking?: { type: "enabled"; budget_tokens: number };
 }
@@ -43,6 +48,7 @@ export interface AnthropicTool {
   name: string;
   description?: string;
   input_schema: Record<string, unknown>;
+  cache_control?: { type: string };
 }
 
 /**

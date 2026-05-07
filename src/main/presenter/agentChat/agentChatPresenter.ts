@@ -8,7 +8,7 @@ import { eventBus } from "@/eventbus";
 import { CHAT_STREAM_EVENTS } from "@shared/events";
 import { logger } from "@/utils";
 import { buildContext, buildSkillListXML } from "./contextBuilder";
-import type { CoreMessage } from "./contextBuilder";
+import type { CoreMessage, UserContentBlock } from "./contextBuilder";
 import type { AssistantMessageBlock } from "@shared/types/agent";
 import type { CapabilityRequirement } from "@shared/types/gateway";
 import type { GatewayPresenter } from "../gatewayPresenter";
@@ -16,9 +16,9 @@ import type { ToolPresenter } from "../toolPresenter";
 import type { ContentPresenter } from "../contentPresenter";
 import type { SkillPresenter } from "../skillPresenter";
 import type { AgentConfigPresenter } from "../agentConfigPresenter";
+import type { ConfigPresenter } from "../configPresenter";
 import { createLLMClient } from "@/llm";
 import type { LLMClient, Tool } from "@/llm";
-import { MBTI_MAP } from "@shared/constants/mbti";
 
 const MAX_STEPS = 128;
 
@@ -44,6 +44,7 @@ export class AgentChatPresenter {
     private contentPresenter: ContentPresenter,
     private skillPresenter?: SkillPresenter,
     private agentConfigPresenter?: AgentConfigPresenter,
+    private configPresenter?: ConfigPresenter,
   ) {}
 
   getSessionState(sessionId: string): "idle" | "generating" | "error" {
@@ -289,16 +290,8 @@ export class AgentChatPresenter {
       return;
     }
 
-    // Save user message
+    // Save user message (seq reserved; actual write happens after buildContext)
     const userSeq = messageDao.getNextOrderSeq(db, sessionId);
-    messageDao.createMessage(db, {
-      id: crypto.randomUUID(),
-      sessionId,
-      orderSeq: userSeq,
-      role: "user",
-      content,
-      status: "sent",
-    });
 
     // Build skill list for this agent
     const skillListXML =
@@ -320,25 +313,50 @@ export class AgentChatPresenter {
             )
           : null;
 
-    // Build system prompt: MBTI personality + additional prompt (prompt.md)
-    const mbtiPrompt = agent?.mbti ? (MBTI_MAP[agent.mbti]?.personality ?? "") : "";
-    const additionalPrompt = agent?.config?.additionalPrompt ?? "";
+    // Resolve additionalPrompt from config or prompt file
+    const additionalPromptFromConfig = agent?.config?.additionalPrompt ?? "";
     const promptFromFile =
-      !additionalPrompt && this.agentConfigPresenter
+      !additionalPromptFromConfig && this.agentConfigPresenter
         ? await this.agentConfigPresenter.readPromptMd(session.agentId)
         : "";
-    const rawPrompt = additionalPrompt || promptFromFile;
-    const agentSystemPrompt = mbtiPrompt
-      ? rawPrompt
-        ? mbtiPrompt + "\n\n" + rawPrompt
-        : mbtiPrompt
-      : rawPrompt;
+    const additionalPrompt = additionalPromptFromConfig || promptFromFile;
 
-    // Build context — contextBuilder deduplicates newUserContent from history
+    // Get userName from user profile
+    let userName: string | undefined;
+    if (this.configPresenter) {
+      const profile = (await this.configPresenter.get("app.userProfile")) as
+        | { name?: string }
+        | null
+        | undefined;
+      userName = profile?.name ?? undefined;
+    }
+
+    // Build context with new structured format
     const messages: CoreMessage[] = buildContext(sessionId, content, db, {
-      agentSystemPrompt,
-      skillListXML,
+      agent: agent ? { id: session.agentId, name: agent.name, mbti: agent.mbti as any } : undefined,
+      additionalPrompt: additionalPrompt || undefined,
+      skillsXML: skillListXML || undefined,
+      userName,
     });
+
+    // Store user message: use blocks JSON if agent path (includes additionalPrompt/skillsXML/reminder)
+    const newUserMsg = messages[messages.length - 1];
+    let storageContent = content;
+    if (agent && Array.isArray(newUserMsg.content)) {
+      const blocks = (newUserMsg.content as UserContentBlock[]).map(
+        ({ cache_control: _, ...rest }) => rest,
+      );
+      storageContent = JSON.stringify(blocks);
+    }
+    messageDao.createMessage(db, {
+      id: crypto.randomUUID(),
+      sessionId,
+      orderSeq: userSeq,
+      role: "user",
+      content: storageContent,
+      status: "sent",
+    });
+
     const client = this.createClient();
 
     // Filter tools by enabledTools whitelist
@@ -496,7 +514,19 @@ export class AgentChatPresenter {
 
     messageDao.deleteMessage(db, lastAssistant.id);
     messageDao.deleteMessage(db, lastUser.id);
-    await this.chat(sessionId, lastUser.content);
+
+    // Extract plain text from blocks JSON if needed
+    let retryContent = lastUser.content;
+    try {
+      const parsed = JSON.parse(lastUser.content);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.type === "text") {
+        const lastBlock = parsed[parsed.length - 1];
+        retryContent = lastBlock?.text ?? lastUser.content;
+      }
+    } catch {
+      // not JSON, use as-is
+    }
+    await this.chat(sessionId, retryContent);
   }
 
   answerQuestion(sessionId: string, toolCallId: string, answer: string): void {

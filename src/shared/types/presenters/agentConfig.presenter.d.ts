@@ -8,7 +8,7 @@ export interface IAgentConfigPresenter {
   updateAgent(id: string, data: Partial<Agent>): Promise<Agent>;
   deleteAgent(id: string): Promise<void>;
   pickAvatar(): Promise<string | null>;
-  getAvatarUrl(relativePath: string): Promise<string>;
+  getAvatarUrl(relativePath: string): Promise<string | null>;
   listLocalSkills(agentId: string): Promise<SkillInfo[]>;
   readPromptMd(agentId: string): Promise<string>;
   getAgentSkillsDir(agentId: string): Promise<string | null>;
