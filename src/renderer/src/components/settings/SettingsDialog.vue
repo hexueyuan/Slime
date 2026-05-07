@@ -54,17 +54,6 @@
           <button
             :class="[
               'rounded-md px-3 py-1.5 text-left text-sm',
-              activeTab === 'agents'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50',
-            ]"
-            @click="activeTab = 'agents'"
-          >
-            Agent
-          </button>
-          <button
-            :class="[
-              'rounded-md px-3 py-1.5 text-left text-sm',
               activeTab === 'mcp'
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:bg-muted/50',
@@ -90,7 +79,6 @@
           <ProfileSettings v-if="activeTab === 'profile'" />
           <GatewaySettings v-else-if="activeTab === 'gateway'" />
           <GeneralSettings v-else-if="activeTab === 'general'" />
-          <AgentSettings v-else-if="activeTab === 'agents'" />
           <MCPSettings v-else-if="activeTab === 'mcp'" />
           <UpdateSettings v-else-if="activeTab === 'update'" />
         </div>
@@ -104,14 +92,13 @@ import { ref, onMounted, onUnmounted } from "vue";
 import GatewaySettings from "./GatewaySettings.vue";
 import ProfileSettings from "./ProfileSettings.vue";
 import GeneralSettings from "./GeneralSettings.vue";
-import AgentSettings from "./AgentSettings.vue";
 import UpdateSettings from "./UpdateSettings.vue";
 import MCPSettings from "./MCPSettings.vue";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();
 
-const activeTab = ref<"profile" | "gateway" | "general" | "agents" | "mcp" | "update">("profile");
+const activeTab = ref<"profile" | "gateway" | "general" | "mcp" | "update">("profile");
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") emit("update:open", false);
