@@ -1,108 +1,68 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdirSync, rmSync, writeFileSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SkillPresenter } from "@/presenter/skillPresenter";
+import * as loader from "@/skills/loader";
 
-const testRoot = join(tmpdir(), `slime-skills-pres-${Date.now()}`);
-const builtinDir = join(testRoot, "builtin");
-const localDir = join(testRoot, "local");
+vi.mock("@/skills/loader", () => ({
+  scanSkills: vi.fn(),
+  loadSkillContent: vi.fn(),
+}));
 
-function writeSkill(dir: string, name: string, description: string) {
-  const skillDir = join(dir, name);
-  mkdirSync(skillDir, { recursive: true });
-  const lines = [
-    `---`,
-    `name: ${name}`,
-    `description: ${description}`,
-    "---",
-    "",
-    `# ${name}`,
-    "",
-    "Content here.",
-  ];
-  writeFileSync(join(skillDir, "SKILL.md"), lines.join("\n"));
-}
+vi.mock("@/utils", () => ({
+  paths: {
+    marketSkillsDir: "/market",
+  },
+}));
 
-beforeEach(() => {
-  mkdirSync(builtinDir, { recursive: true });
-  mkdirSync(localDir, { recursive: true });
-});
+const skillA = {
+  name: "guide",
+  description: "Guide skill.",
+  source: "builtin" as const,
+  baseDir: "/market/guide",
+  filePath: "/market/guide/SKILL.md",
+};
 
-afterEach(() => {
-  rmSync(testRoot, { recursive: true, force: true });
-});
+const skillB = {
+  name: "debugging",
+  description: "Debug skill.",
+  source: "builtin" as const,
+  baseDir: "/market/debugging",
+  filePath: "/market/debugging/SKILL.md",
+};
 
 describe("SkillPresenter", () => {
-  it("loads builtin skills filtered by enabledSkills", () => {
-    writeSkill(builtinDir, "guide", "Guide skill.");
-    writeSkill(builtinDir, "secret", "Secret skill.");
+  let sp: SkillPresenter;
 
-    const sp = new SkillPresenter(builtinDir, testRoot);
-    const list = sp.getSkillList("hal-ai", undefined, ["guide"]);
-
-    expect(list).toHaveLength(1);
-    expect(list[0].name).toBe("guide");
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(loader.scanSkills).mockReturnValue([skillA, skillB]);
+    sp = new SkillPresenter();
   });
 
-  it("loads local skills filtered by enabledSkills", () => {
-    writeSkill(localDir, "debugging", "Debug.");
-    writeSkill(localDir, "review", "Review.");
-
-    const sp = new SkillPresenter(builtinDir, testRoot);
-    const list = sp.getSkillList("agent-1", localDir, ["debugging"]);
-
+  it("loads skills filtered by enabledSkills", () => {
+    const list = sp.getSkillList("hal-ai", undefined, ["guide"]);
     expect(list).toHaveLength(1);
-    expect(list[0].name).toBe("debugging");
+    expect(list[0].name).toBe("guide");
   });
 
   it("returns empty when enabledSkills is empty", () => {
-    writeSkill(builtinDir, "guide", "Guide.");
-    writeSkill(localDir, "debugging", "Debug.");
-
-    const sp = new SkillPresenter(builtinDir, testRoot);
-    const list = sp.getSkillList("hal-ai", localDir, []);
-
+    const list = sp.getSkillList("hal-ai", undefined, []);
     expect(list).toEqual([]);
   });
 
-  it("merges builtin and local skills (builtin first)", () => {
-    writeSkill(builtinDir, "guide", "Guide.");
-    writeSkill(localDir, "debugging", "Debug.");
-
-    const sp = new SkillPresenter(builtinDir, testRoot);
-    const list = sp.getSkillList("hal-ai", localDir, ["guide", "debugging"]);
-
-    expect(list).toHaveLength(2);
-    expect(list[0].name).toBe("guide");
-    expect(list[1].name).toBe("debugging");
-  });
-
-  it("builtin overrides local with same name", () => {
-    writeSkill(builtinDir, "debugging", "Builtin debug.");
-    writeSkill(localDir, "debugging", "Local debug.");
-
-    const sp = new SkillPresenter(builtinDir, testRoot);
-    const list = sp.getSkillList("hal-ai", localDir, ["debugging"]);
-
-    expect(list).toHaveLength(1);
-    expect(list[0].description).toBe("Builtin debug.");
-  });
-
   it("returns empty array when no enabledSkills provided", () => {
-    writeSkill(builtinDir, "guide", "Guide.");
-
-    const sp = new SkillPresenter(builtinDir, testRoot);
     const list = sp.getSkillList("unknown-agent");
     expect(list).toEqual([]);
   });
 
-  it("getSkillList returns SkillInfo array (no filePath exposed)", () => {
-    writeSkill(builtinDir, "guide", "Guide.");
+  it("returns multiple skills when all are enabled", () => {
+    const list = sp.getSkillList("hal-ai", undefined, ["guide", "debugging"]);
+    expect(list).toHaveLength(2);
+    expect(list.map((s) => s.name)).toContain("guide");
+    expect(list.map((s) => s.name)).toContain("debugging");
+  });
 
-    const sp = new SkillPresenter(builtinDir, testRoot);
+  it("getSkillList returns SkillInfo array (no filePath/baseDir exposed)", () => {
     const list = sp.getSkillList("hal-ai", undefined, ["guide"]);
-
     expect(list[0]).not.toHaveProperty("filePath");
     expect(list[0]).not.toHaveProperty("baseDir");
     expect(list[0]).toHaveProperty("name");
@@ -110,32 +70,21 @@ describe("SkillPresenter", () => {
     expect(list[0]).toHaveProperty("source");
   });
 
-  it("loadSkill returns full SKILL.md content", () => {
-    writeSkill(localDir, "debugging", "Debug skill.");
-
-    const sp = new SkillPresenter(builtinDir, testRoot);
-    // populate cache via getSkillList with agentSkillsDir
-    sp.getSkillList("agent-1", localDir, ["debugging"]);
-    const content = sp.loadSkill("debugging");
-
-    expect(content).toContain("---");
-    expect(content).toContain("name: debugging");
-    expect(content).toContain("# debugging");
+  it("loadSkill returns content for known skill", () => {
+    vi.mocked(loader.loadSkillContent).mockReturnValue(
+      "---\nname: guide\n---\n# guide\nContent here.",
+    );
+    sp.getSkillList("hal-ai", undefined, ["guide"]); // populate cache
+    const content = sp.loadSkill("guide");
+    expect(content).toContain("name: guide");
+    expect(content).toContain("# guide");
   });
 
   it("loadSkill throws for unknown skill", () => {
-    const sp = new SkillPresenter(builtinDir, testRoot);
     expect(() => sp.loadSkill("nonexistent")).toThrow('Skill "nonexistent" not found');
   });
 
-  it("listLocalSkillsForAgent returns all local skills for an agent", () => {
-    writeSkill(localDir, "a", "A.");
-    writeSkill(localDir, "b", "B.");
-
-    const sp = new SkillPresenter(builtinDir, testRoot);
-    const list = sp.listLocalSkillsForAgent("agent-1", localDir);
-
-    expect(list).toHaveLength(2);
-    expect(list.map((s) => s.name).sort()).toEqual(["a", "b"]);
+  it("listLocalSkillsForAgent always returns []", () => {
+    expect(sp.listLocalSkillsForAgent("agent-1", "/some/local/dir")).toEqual([]);
   });
 });

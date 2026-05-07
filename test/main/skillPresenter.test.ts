@@ -7,20 +7,18 @@ vi.mock("../../src/main/skills/loader", () => ({
   loadSkillContent: vi.fn(),
 }));
 
-const mockBuiltinSkill = {
-  name: "hal-skill",
-  description: "builtin",
-  source: "builtin" as const,
-  baseDir: "/builtin/hal-skill",
-  filePath: "/builtin/hal-skill/SKILL.md",
-};
+vi.mock("../../src/main/utils", () => ({
+  paths: {
+    marketSkillsDir: "/market",
+  },
+}));
 
-const mockLocalSkill = {
-  name: "my-skill",
-  description: "local",
-  source: "local" as const,
-  baseDir: "/agents/abc123/skills/my-skill",
-  filePath: "/agents/abc123/skills/my-skill/SKILL.md",
+const mockMarketSkill = {
+  name: "hal-skill",
+  description: "market skill",
+  source: "builtin" as const,
+  baseDir: "/market/hal-skill",
+  filePath: "/market/hal-skill/SKILL.md",
 };
 
 describe("SkillPresenter", () => {
@@ -28,41 +26,55 @@ describe("SkillPresenter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    presenter = new SkillPresenter("/builtin", "/agents");
-    vi.mocked(loader.scanSkills).mockImplementation((dir: string) => {
-      if (dir.includes("builtin")) return [mockBuiltinSkill];
-      if (dir.includes("abc123")) return [mockLocalSkill];
-      return [];
-    });
+    vi.mocked(loader.scanSkills).mockReturnValue([mockMarketSkill]);
+    presenter = new SkillPresenter();
   });
 
-  it("getSkillList returns builtin skills when in enabledSkills", () => {
+  it("getSkillList returns market skill when in enabledSkills", () => {
     const result = presenter.getSkillList("hal-ai", undefined, ["hal-skill"]);
     expect(result.map((s) => s.name)).toContain("hal-skill");
   });
 
-  it("getSkillList excludes builtin skills not in enabledSkills", () => {
+  it("getSkillList excludes skills not in enabledSkills", () => {
     const result = presenter.getSkillList("hal-ai", undefined, ["other-skill"]);
     expect(result.map((s) => s.name)).not.toContain("hal-skill");
   });
 
-  it("getSkillList returns local skills when in enabledSkills", () => {
-    const result = presenter.getSkillList("abc123", "/agents/abc123/skills", ["my-skill"]);
-    expect(result.map((s) => s.name)).toContain("my-skill");
-  });
-
-  it("getSkillList excludes local skills not in enabledSkills", () => {
-    const result = presenter.getSkillList("abc123", "/agents/abc123/skills", ["other-skill"]);
-    expect(result.map((s) => s.name)).not.toContain("my-skill");
-  });
-
   it("getSkillList returns empty when enabledSkills is empty", () => {
-    const result = presenter.getSkillList("abc123", "/agents/abc123/skills", []);
+    const result = presenter.getSkillList("hal-ai", undefined, []);
     expect(result).toEqual([]);
   });
 
-  it("getSkillList does NOT return local skills when agentSkillsDir not provided", () => {
-    const result = presenter.getSkillList("abc123", undefined, ["my-skill"]);
-    expect(result.map((s) => s.name)).not.toContain("my-skill");
+  it("getSkillList returns empty when no enabledSkills provided", () => {
+    const result = presenter.getSkillList("hal-ai");
+    expect(result).toEqual([]);
+  });
+
+  it("agentSkillsDir param is ignored (no-op)", () => {
+    const result = presenter.getSkillList("hal-ai", "/some/local/dir", ["hal-skill"]);
+    expect(result.map((s) => s.name)).toContain("hal-skill");
+  });
+
+  it("listLocalSkillsForAgent always returns []", () => {
+    expect(presenter.listLocalSkillsForAgent("agent-1", "/some/dir")).toEqual([]);
+  });
+
+  it("loadSkill returns content for known skill", () => {
+    vi.mocked(loader.loadSkillContent).mockReturnValue("# hal-skill\nContent.");
+    const content = presenter.loadSkill("hal-skill");
+    expect(content).toContain("hal-skill");
+  });
+
+  it("loadSkill throws for unknown skill", () => {
+    expect(() => presenter.loadSkill("nonexistent")).toThrow('Skill "nonexistent" not found');
+  });
+
+  it("returned SkillInfo has name, description, source but no filePath/baseDir", () => {
+    const list = presenter.getSkillList("hal-ai", undefined, ["hal-skill"]);
+    expect(list[0]).toHaveProperty("name");
+    expect(list[0]).toHaveProperty("description");
+    expect(list[0]).toHaveProperty("source");
+    expect(list[0]).not.toHaveProperty("filePath");
+    expect(list[0]).not.toHaveProperty("baseDir");
   });
 });
