@@ -3,6 +3,50 @@ import type BetterSqlite3 from "better-sqlite3";
 import * as taskDao from "./taskDao";
 import { agentRegistry } from "../agents/agentRegistry";
 import type { TaskStatus } from "@shared/types/schedule";
+import { readdirSync, existsSync, readFileSync } from "fs";
+import { join } from "path";
+import { paths } from "@/utils/paths";
+import { MBTI_MAP } from "@shared/constants/mbti";
+
+interface SkillItem {
+  name: string;
+  description: string;
+  source: "builtin" | "market";
+}
+
+function scanSkillDir(dir: string, source: "builtin" | "market"): SkillItem[] {
+  if (!existsSync(dir)) return [];
+  const items: SkillItem[] = [];
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  for (const entry of entries) {
+    const mdPath = join(dir, entry, "SKILL.md");
+    if (!existsSync(mdPath)) continue;
+    let content: string;
+    try {
+      content = readFileSync(mdPath, "utf-8");
+    } catch {
+      continue;
+    }
+    const match = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!match) continue;
+    const raw = match[1];
+    let name = "";
+    let description = "";
+    for (const line of raw.split("\n")) {
+      const kv = line.match(/^(\w[\w-]*):\s*(.+)/);
+      if (!kv) continue;
+      if (kv[1] === "name") name = kv[2].trim();
+      if (kv[1] === "description") description = kv[2].trim();
+    }
+    if (name && description) items.push({ name, description, source });
+  }
+  return items;
+}
 
 function msToHHmm(ms: number): string {
   const d = new Date(ms);
@@ -187,6 +231,37 @@ export function createTaskServer(
     const task = taskDao.getTask(db, req.params.id);
     if (!task) return reply.status(404).send({ error: `task ${req.params.id} not found` });
     return reply.send(task);
+  });
+
+  app.get("/agents", async (_req, reply) => {
+    const agents = agentRegistry.list();
+    const result = agents.map((a) => ({
+      id: a.id,
+      name: a.name,
+      source: a.type === "builtin" ? "builtin" : "market",
+      mbti: a.mbti,
+    }));
+    return reply.send(result);
+  });
+
+  app.get<{ Params: { id: string } }>("/agents/:id", async (req, reply) => {
+    const agent = agentRegistry.getById(req.params.id);
+    if (!agent) return reply.status(404).send({ error: `agent not found: ${req.params.id}` });
+    const mbtiProfile = MBTI_MAP[agent.mbti];
+    return reply.send({
+      id: agent.id,
+      name: agent.name,
+      source: agent.type === "builtin" ? "builtin" : "market",
+      mbti: agent.mbti,
+      mbtiDescription: mbtiProfile?.personality ?? "",
+      description: agent.description,
+    });
+  });
+
+  app.get("/skills", async (_req, reply) => {
+    const builtin = scanSkillDir(paths.builtinSkillsDir, "builtin");
+    const market = scanSkillDir(paths.marketSkillsDir, "market");
+    return reply.send([...builtin, ...market]);
   });
 
   return app;
