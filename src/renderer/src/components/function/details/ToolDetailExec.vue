@@ -48,7 +48,17 @@ const parsedParams = computed(() => {
 const parsedResponse = computed(() => {
   if (!props.response) return null;
   try {
-    return JSON.parse(props.response);
+    const parsed = JSON.parse(props.response);
+    if (typeof parsed === "string") {
+      // Double-serialized error string: try parse inner JSON after stripping "Error: " prefix
+      const inner = parsed.replace(/^Error:\s*/, "");
+      try {
+        return JSON.parse(inner);
+      } catch {
+        return { stderr: parsed, exit_code: 1 };
+      }
+    }
+    return parsed;
   } catch {
     return null;
   }

@@ -57,9 +57,11 @@ export function insertLogs(
     INSERT INTO relay_logs
       (api_key_id, group_name, channel_id, channel_name, model_name,
        input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
-       cost, duration_ms, status, error, request_body, raw_request_body, response_body, ttft_ms)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       cost, duration_ms, status, error, request_body, raw_request_body, response_body, ttft_ms, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
+  const now = new Date();
+  const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   const tx = db.transaction(() => {
     for (const log of logs) {
       insert.run(
@@ -80,6 +82,7 @@ export function insertLogs(
         log.rawRequestBody ?? null,
         log.responseBody ?? null,
         log.ttftMs ?? null,
+        createdAt,
       );
     }
   });

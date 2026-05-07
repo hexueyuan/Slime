@@ -221,7 +221,7 @@ describe("statsDao 稳定性查询", () => {
 
   it("getChannelStabilityMinute 返回最近30分钟按分钟聚合数据", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-05-03T14:35:00Z"));
+    vi.setSystemTime(new Date(2026, 4, 3, 14, 35, 0)); // 本地时间 14:35
     try {
       const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
 
@@ -260,7 +260,7 @@ describe("statsDao 稳定性查询", () => {
 
   it("getChannelStabilityMinute channel_id 隔离", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-05-03T14:35:00Z"));
+    vi.setSystemTime(new Date(2026, 4, 3, 14, 35, 0)); // 本地时间 14:35
     try {
       const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
 

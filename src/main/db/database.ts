@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS relay_logs (
   error TEXT,
   request_body TEXT,
   response_body TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 
 CREATE TABLE IF NOT EXISTS stats_hourly (

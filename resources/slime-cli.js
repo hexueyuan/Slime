@@ -16,6 +16,9 @@ function getCallerContext() {
 }
 function canAccess(cmd, ctx) {
   if (!cmd.allowedRoles.includes(ctx.role)) return false;
+  if (cmd.allowedAgents && ctx.role === "builtin-agent") {
+    if (!cmd.allowedAgents.includes(ctx.userId)) return false;
+  }
   const allowed = process.env.SLIME_ALLOWED_COMMANDS;
   if (allowed !== void 0) {
     const list = allowed.split(",").map((s) => s.trim());

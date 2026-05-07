@@ -379,7 +379,8 @@ export function getChannelStabilityMinute(
   db: BetterSqlite3.Database,
   channelId: number,
 ): MinutePoint[] {
-  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString().replace("T", " ").slice(0, 19);
+  const d = new Date(Date.now() - 30 * 60 * 1000);
+  const since = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
   const rows = db
     .prepare(
       `SELECT

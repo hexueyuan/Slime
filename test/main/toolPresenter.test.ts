@@ -75,7 +75,7 @@ describe("ToolPresenter", () => {
         "browser_wait",
         "browser_close",
         "web_fetch",
-        "Skill",
+        "skill",
       ]),
     );
     expect(Object.keys(tools)).toHaveLength(20);
