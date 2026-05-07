@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { initDb, closeDb, getDb } from "@/db";
-import * as agentDao from "@/db/models/agentDao";
 import * as messageDao from "@/db/models/agentMessageDao";
 import * as configDao from "@/db/models/agentSessionConfigDao";
 import type BetterSqlite3 from "better-sqlite3";
@@ -9,7 +8,14 @@ vi.mock("@/eventbus", () => ({
   eventBus: { sendToRenderer: vi.fn() },
 }));
 
+vi.mock("@/agents/agentRegistry", () => ({
+  agentRegistry: {
+    getById: vi.fn(),
+  },
+}));
+
 import { eventBus } from "@/eventbus";
+import { agentRegistry } from "@/agents/agentRegistry";
 import { AgentChatPresenterAdapter } from "@/presenter/agentChatPresenterAdapter";
 import { SESSION_EVENTS } from "@shared/events";
 
@@ -27,8 +33,8 @@ function makeMockEngine() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(agentRegistry.getById).mockReturnValue(undefined);
   db = initDb(":memory:");
-  agentDao.ensureBuiltin(db);
 });
 
 afterEach(() => {
@@ -41,7 +47,11 @@ describe("AgentChatPresenter integration", () => {
 
   beforeEach(() => {
     engine = makeMockEngine();
-    adapter = new AgentChatPresenterAdapter(engine);
+    adapter = new AgentChatPresenterAdapter(engine, {
+      select: vi.fn(() => ({ matched: {}, missing: [] })),
+      getPort: vi.fn(() => 8930),
+      getInternalKey: vi.fn(() => "sk-test"),
+    } as any);
   });
 
   describe("session lifecycle", () => {
@@ -111,8 +121,8 @@ describe("AgentChatPresenter integration", () => {
   });
 
   describe("session config copies agent config", () => {
-    it("copies custom agent config to session config", async () => {
-      agentDao.createAgent(db, {
+    it("copies capabilityRequirements from agent to session config", async () => {
+      vi.mocked(agentRegistry.getById).mockReturnValue({
         id: "custom-agent",
         name: "Custom",
         type: "custom",
@@ -121,18 +131,15 @@ describe("AgentChatPresenter integration", () => {
         mbti: "ENFP",
         config: {
           capabilityRequirements: ["reasoning", "chat"],
-          temperature: 0.3,
-          maxTokens: 2048,
-          subagentEnabled: false,
         },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
       const session = await adapter.createSession("custom-agent");
       const config = configDao.getConfigById(db, session.id)!;
       expect(config.capabilityRequirements).toEqual(["reasoning", "chat"]);
       expect(config.systemPrompt).toBeNull();
-      expect(config.temperature).toBe(0.3);
-      expect(config.maxTokens).toBe(2048);
     });
   });
 

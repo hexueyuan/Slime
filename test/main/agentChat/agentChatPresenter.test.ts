@@ -13,7 +13,11 @@ vi.mock("@/db", () => ({
 vi.mock("@/db/models/agentMessageDao");
 vi.mock("@/db/models/agentSessionDao");
 vi.mock("@/db/models/agentSessionConfigDao");
-vi.mock("@/db/models/agentDao");
+vi.mock("@/agents/agentRegistry", () => ({
+  agentRegistry: {
+    getById: vi.fn(),
+  },
+}));
 
 vi.mock("@/eventbus", () => ({
   eventBus: { sendToRenderer: vi.fn() },
@@ -35,7 +39,7 @@ import { eventBus } from "@/eventbus";
 import * as messageDao from "@/db/models/agentMessageDao";
 import * as sessionDao from "@/db/models/agentSessionDao";
 import * as configDao from "@/db/models/agentSessionConfigDao";
-import * as agentDao from "@/db/models/agentDao";
+import { agentRegistry } from "@/agents/agentRegistry";
 import { CHAT_STREAM_EVENTS } from "@shared/events";
 import { AgentChatPresenter } from "@/presenter/agentChat/agentChatPresenter";
 
@@ -104,7 +108,7 @@ function setupDefaultMocks() {
     updatedAt: Date.now(),
   });
   vi.mocked(configDao.getConfigById).mockReturnValue(undefined);
-  vi.mocked(agentDao.getAgentById).mockReturnValue({
+  vi.mocked(agentRegistry.getById).mockReturnValue({
     id: "agent-1",
     name: "Test",
     type: "builtin",
