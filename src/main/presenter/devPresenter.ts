@@ -1,6 +1,7 @@
 import { app } from "electron";
 import { join } from "path";
 import { existsSync, readdirSync, statSync, readFileSync } from "fs";
+import { paths } from "@/utils";
 import { readFile, writeFile, mkdir, rm, cp } from "fs/promises";
 import { execSync } from "child_process";
 import { tmpdir } from "os";
@@ -149,6 +150,30 @@ export class DevPresenter implements IDevPresenter {
       }
     }
 
+    // Scan market skills (~/.slime/slime-market/skills/, uses SKILL.md frontmatter)
+    const marketDir = paths.marketSkillsDir;
+    if (existsSync(marketDir)) {
+      for (const entry of readdirSync(marketDir)) {
+        const entryPath = join(marketDir, entry);
+        if (!statSync(entryPath).isDirectory()) continue;
+        const skillMd = join(entryPath, "SKILL.md");
+        if (!existsSync(skillMd)) continue;
+        try {
+          const content = readFileSync(skillMd, "utf-8");
+          const fm = this.parseSkillFrontmatter(content);
+          if (fm) {
+            results.push({
+              name: fm.name,
+              description: fm.description,
+              source: "market",
+            });
+          }
+        } catch {
+          // skip
+        }
+      }
+    }
+
     return results;
   }
 
@@ -238,9 +263,16 @@ export class DevPresenter implements IDevPresenter {
 
   async getSkillContent(
     skillName: string,
-    source: "builtin" | "installed",
+    source: "builtin" | "installed" | "market",
   ): Promise<string | null> {
-    const dir = source === "builtin" ? this.builtinSkillsDir : this.skillsSrcDir;
+    let dir: string;
+    if (source === "builtin") {
+      dir = this.builtinSkillsDir;
+    } else if (source === "market") {
+      dir = paths.marketSkillsDir;
+    } else {
+      dir = this.skillsSrcDir;
+    }
     const skillDir = join(dir, skillName);
     const skillMd = join(skillDir, "SKILL.md");
     if (existsSync(skillMd)) return readFileSync(skillMd, "utf-8");
@@ -252,11 +284,18 @@ export class DevPresenter implements IDevPresenter {
 
   async saveSkillContent(
     skillName: string,
-    source: "builtin" | "installed",
+    source: "builtin" | "installed" | "market",
     content: string,
   ): Promise<void> {
     this.assertDev();
-    const dir = source === "builtin" ? this.builtinSkillsDir : this.skillsSrcDir;
+    let dir: string;
+    if (source === "builtin") {
+      dir = this.builtinSkillsDir;
+    } else if (source === "market") {
+      dir = paths.marketSkillsDir;
+    } else {
+      dir = this.skillsSrcDir;
+    }
     const skillDir = join(dir, skillName);
     const skillMd = join(skillDir, "SKILL.md");
     await writeFile(skillMd, content, "utf-8");
@@ -265,6 +304,12 @@ export class DevPresenter implements IDevPresenter {
   async uninstallBuiltinSkill(skillName: string): Promise<void> {
     this.assertDev();
     const dir = join(this.builtinSkillsDir, skillName);
+    if (!existsSync(dir)) return;
+    await rm(dir, { recursive: true });
+  }
+
+  async uninstallMarketSkill(skillName: string): Promise<void> {
+    const dir = join(paths.marketSkillsDir, skillName);
     if (!existsSync(dir)) return;
     await rm(dir, { recursive: true });
   }

@@ -9,7 +9,7 @@ export interface SkillManifest {
   description: string;
   version?: string;
   author?: string;
-  source?: "builtin" | "installed";
+  source?: "builtin" | "installed" | "market";
 }
 
 export interface IDevPresenter {
@@ -22,10 +22,14 @@ export interface IDevPresenter {
   installSkill(sourcePath: string): Promise<{ success: boolean; error?: string }>;
   uninstallSkill(skillName: string): Promise<void>;
   uninstallBuiltinSkill(skillName: string): Promise<void>;
-  getSkillContent(skillName: string, source: "builtin" | "installed"): Promise<string | null>;
+  uninstallMarketSkill(skillName: string): Promise<void>;
+  getSkillContent(
+    skillName: string,
+    source: "builtin" | "installed" | "market",
+  ): Promise<string | null>;
   saveSkillContent(
     skillName: string,
-    source: "builtin" | "installed",
+    source: "builtin" | "installed" | "market",
     content: string,
   ): Promise<void>;
   listAvailableTools(): Promise<string[]>;

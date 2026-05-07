@@ -65,6 +65,8 @@ async function uninstallSkill(skill: SkillManifest) {
   if (!confirm(`确认卸载 Skill "${skill.name}"?`)) return;
   if (skill.source === "builtin") {
     await devPresenter.uninstallBuiltinSkill(skill.name);
+  } else if (skill.source === "market") {
+    await devPresenter.uninstallMarketSkill(skill.name);
   } else {
     await devPresenter.uninstallSkill(skill.name);
   }
@@ -75,7 +77,7 @@ async function uninstallSkill(skill: SkillManifest) {
   await refreshSkills();
 }
 
-const readonly = computed(() => !isDev.value && selectedSkill.value?.source === "builtin");
+const readonly = computed(() => selectedSkill.value?.source === "builtin" && !isDev.value);
 </script>
 
 <template>
@@ -113,6 +115,12 @@ const readonly = computed(() => !isDev.value && selectedSkill.value?.source === 
                 class="shrink-0 rounded bg-violet-500/15 px-1 py-0.5 text-[10px] text-violet-400"
               >
                 内置
+              </span>
+              <span
+                v-else-if="skill.source === 'market'"
+                class="shrink-0 rounded bg-blue-500/15 px-1 py-0.5 text-[10px] text-blue-400"
+              >
+                Market
               </span>
             </div>
           </div>
