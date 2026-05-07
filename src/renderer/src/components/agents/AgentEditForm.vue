@@ -4,7 +4,7 @@
       <!-- ID (builtin only) -->
       <div v-if="isBuiltin">
         <label class="text-xs font-medium text-muted-foreground">ID</label>
-        <div class="mt-1 text-sm text-foreground font-mono">{{ agentInfo?.id }}</div>
+        <div class="mt-1 text-sm text-foreground font-mono">{{ agent?.id ?? agentInfo?.id }}</div>
       </div>
 
       <!-- 头像 -->
@@ -381,7 +381,7 @@ watch(
 watch(
   () => props.agent,
   (agent) => {
-    if (agent && !props.isBuiltin) loadCustom(agent);
+    if (agent) loadCustom(agent);
   },
   { immediate: true },
 );
@@ -389,7 +389,21 @@ watch(
 async function save() {
   saving.value = true;
   try {
-    if (props.isBuiltin && props.agentInfo) {
+    if (props.isBuiltin && props.agent) {
+      const config: Record<string, unknown> = {
+        name: form.name,
+        description: form.description,
+        mbti: form.mbti,
+        capabilityRequirements: form.capabilityRequirements,
+        enabledTools: form.enabledTools,
+        allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
+        enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
+        subagentEnabled: form.subagentEnabled || undefined,
+        enableThinking: form.enableThinking || undefined,
+      };
+      await devPresenter.saveBuiltinAgent(props.agent.id, config, form.additionalPrompt);
+      emit("saved");
+    } else if (props.isBuiltin && props.agentInfo) {
       const config: Record<string, unknown> = {
         name: form.name,
         description: form.description,

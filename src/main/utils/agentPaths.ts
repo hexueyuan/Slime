@@ -17,14 +17,9 @@ export function getAgentDir(
   return join(defaultAgentsDir, agent.id);
 }
 
-/** prompt.md 绝对路径 */
+/** PROMPT.md 绝对路径 */
 export function getPromptPath(agentDir: string): string {
-  return join(agentDir, "prompt.md");
-}
-
-/** @deprecated fallback 用 — SOUL.md 旧路径 */
-export function getSoulPath(agentDir: string): string {
-  return join(agentDir, "SOUL.md");
+  return join(agentDir, "PROMPT.md");
 }
 
 /** skills 子目录绝对路径 */

@@ -6,8 +6,8 @@ import type { MBTIType } from "@shared/constants/mbti";
 import { MBTI_TEMPERATURE } from "@shared/constants/mbti";
 import { paths } from "@/utils";
 import { logger } from "@/utils/logger";
-import { BUILTIN_AGENTS } from "./index";
-import { loadMarketAgents } from "./marketLoader";
+import { loadBuiltinAgents } from "./index";
+import { loadAgentsFromDir } from "./agentLoader";
 
 class AgentRegistry {
   private agents = new Map<string, Agent>();
@@ -15,26 +15,14 @@ class AgentRegistry {
   load(): void {
     this.agents.clear();
 
-    // 1. Load hal-ai (builtin, protected)
-    for (const def of BUILTIN_AGENTS) {
-      const now = Date.now();
-      this.agents.set(def.id, {
-        id: def.id,
-        name: def.name,
-        type: "builtin",
-        enabled: true,
-        protected: true,
-        description: def.description,
-        avatar: def.avatar,
-        mbti: def.mbti ?? "INTJ",
-        config: def.config,
-        createdAt: now,
-        updatedAt: now,
-      });
+    // 1. Builtin agents (re-read from disk)
+    const builtins = loadBuiltinAgents();
+    for (const agent of builtins) {
+      this.agents.set(agent.id, agent);
     }
 
-    // 2. Load market agents
-    const marketAgents = loadMarketAgents(paths.marketAgentsDir);
+    // 2. Market agents
+    const marketAgents = loadAgentsFromDir(paths.marketAgentsDir, "custom");
     for (const agent of marketAgents) {
       if (this.agents.has(agent.id)) {
         logger.warn("[AgentRegistry] duplicate id, skipping market agent", { id: agent.id });
@@ -46,7 +34,6 @@ class AgentRegistry {
 
   list(): Agent[] {
     const arr = Array.from(this.agents.values());
-    // protected first, then by name
     return arr.sort((a, b) => {
       if (a.protected !== b.protected) return a.protected ? -1 : 1;
       return a.name.localeCompare(b.name);
@@ -162,7 +149,6 @@ class AgentRegistry {
 
     // Handle avatar
     if (data.avatarSourcePath !== undefined) {
-      // Remove old avatar files
       for (const ext of [".png", ".jpg", ".jpeg", ".webp"]) {
         const old = join(dir, `avatar${ext}`);
         if (existsSync(old)) await unlink(old).catch(() => {});

@@ -6,11 +6,17 @@
         <button
           v-for="a in agentStore.agents"
           :key="a.id"
-          class="w-full rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-muted/50"
+          class="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted/50"
           :class="{ 'bg-muted': selectedId === a.id }"
           @click="selectAgent(a.id)"
         >
-          {{ a.name }}
+          <span class="truncate text-foreground">{{ a.name }}</span>
+          <span
+            v-if="a.type === 'builtin'"
+            class="shrink-0 rounded bg-violet-500/15 px-1 py-0.5 text-[10px] text-violet-400"
+          >
+            内置
+          </span>
         </button>
 
         <div
@@ -41,8 +47,8 @@
         v-if="selectedAgent"
         :key="selectedAgent.id"
         :agent="selectedAgent"
-        :is-builtin="false"
-        :is-dev="false"
+        :is-builtin="selectedAgent.type === 'builtin'"
+        :is-dev="isDev"
         @saved="onSaved"
       />
       <div v-else class="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -55,11 +61,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useAgentStore } from "@/stores/agent";
+import { usePresenter } from "@/composables/usePresenter";
 import AgentEditForm from "./AgentEditForm.vue";
 
 const agentStore = useAgentStore();
+const devPresenter = usePresenter("devPresenter");
 
 const selectedId = ref<string | null>(null);
+const isDev = ref(false);
 
 const selectedAgent = computed(
   () => agentStore.agents.find((a) => a.id === selectedId.value) || null,
@@ -81,6 +90,7 @@ async function onSaved() {
 }
 
 onMounted(async () => {
+  isDev.value = (await devPresenter.isDev()) as boolean;
   await agentStore.fetchAgents();
 });
 </script>

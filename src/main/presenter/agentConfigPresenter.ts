@@ -71,17 +71,21 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
     return result.filePaths[0];
   }
 
-  async getAvatarUrl(avatarPath: string): Promise<string> {
-    const data = await readFile(avatarPath);
-    const ext = extname(avatarPath).toLowerCase();
-    const mimeMap: Record<string, string> = {
-      ".png": "image/png",
-      ".jpg": "image/jpeg",
-      ".jpeg": "image/jpeg",
-      ".webp": "image/webp",
-    };
-    const mime = mimeMap[ext] || "image/png";
-    return `data:${mime};base64,${data.toString("base64")}`;
+  async getAvatarUrl(avatarPath: string): Promise<string | null> {
+    try {
+      const data = await readFile(avatarPath);
+      const ext = extname(avatarPath).toLowerCase();
+      const mimeMap: Record<string, string> = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+      };
+      const mime = mimeMap[ext] || "image/png";
+      return `data:${mime};base64,${data.toString("base64")}`;
+    } catch {
+      return null;
+    }
   }
 
   async readPromptMd(agentId: string): Promise<string> {

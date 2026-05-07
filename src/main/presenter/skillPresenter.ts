@@ -12,7 +12,7 @@ export class SkillPresenter {
     if (!this.marketCache) {
       this.marketCache = scanSkills(paths.marketSkillsDir).map((s) => ({
         ...s,
-        source: "builtin" as const,
+        source: "local" as const,
       }));
     }
     return this.marketCache;

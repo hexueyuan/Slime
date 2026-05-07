@@ -4,11 +4,14 @@ import { existsSync, readdirSync, statSync, readFileSync } from "fs";
 import { readFile, writeFile, mkdir, rm, cp } from "fs/promises";
 import { execSync } from "child_process";
 import { tmpdir } from "os";
+import { eventBus } from "@/eventbus";
+import { AGENT_EVENTS } from "@shared/events";
+import { agentRegistry } from "@/agents/agentRegistry";
 import type { IDevPresenter, BuiltinAgentInfo, SkillManifest } from "@shared/types/presenters";
 
 export class DevPresenter implements IDevPresenter {
   private get agentsSrcDir(): string {
-    return join(process.cwd(), "src", "main", "agents");
+    return join(process.cwd(), "resources", "agents");
   }
 
   private get skillsSrcDir(): string {
@@ -34,17 +37,12 @@ export class DevPresenter implements IDevPresenter {
       const entryPath = join(dir, entry);
       if (!statSync(entryPath).isDirectory()) continue;
 
-      const configPath = join(entryPath, "config.json");
+      const configPath = join(entryPath, "AGENT.json");
       if (!existsSync(configPath)) continue;
 
       const config = JSON.parse(readFileSync(configPath, "utf-8"));
-      const promptPath = join(entryPath, "prompt.md");
-      const soulPath = join(entryPath, "soul.md");
-      const prompt = existsSync(promptPath)
-        ? readFileSync(promptPath, "utf-8")
-        : existsSync(soulPath)
-          ? readFileSync(soulPath, "utf-8")
-          : "";
+      const promptPath = join(entryPath, "PROMPT.md");
+      const prompt = existsSync(promptPath) ? readFileSync(promptPath, "utf-8") : "";
 
       results.push({ id: entry, config, prompt });
     }
@@ -55,17 +53,12 @@ export class DevPresenter implements IDevPresenter {
     const dir = join(this.agentsSrcDir, agentId);
     if (!existsSync(dir)) return null;
 
-    const configPath = join(dir, "config.json");
+    const configPath = join(dir, "AGENT.json");
     if (!existsSync(configPath)) return null;
 
     const config = JSON.parse(await readFile(configPath, "utf-8"));
-    const promptPath = join(dir, "prompt.md");
-    const soulPath = join(dir, "soul.md");
-    const prompt = existsSync(promptPath)
-      ? await readFile(promptPath, "utf-8")
-      : existsSync(soulPath)
-        ? await readFile(soulPath, "utf-8")
-        : "";
+    const promptPath = join(dir, "PROMPT.md");
+    const prompt = existsSync(promptPath) ? await readFile(promptPath, "utf-8") : "";
 
     return { id: agentId, config, prompt };
   }
@@ -78,8 +71,10 @@ export class DevPresenter implements IDevPresenter {
     this.assertDev();
     const dir = join(this.agentsSrcDir, agentId);
     await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, "config.json"), JSON.stringify(config, null, 2) + "\n", "utf-8");
-    await writeFile(join(dir, "prompt.md"), prompt, "utf-8");
+    await writeFile(join(dir, "AGENT.json"), JSON.stringify(config, null, 2) + "\n", "utf-8");
+    await writeFile(join(dir, "PROMPT.md"), prompt, "utf-8");
+    agentRegistry.load();
+    eventBus.sendToRenderer(AGENT_EVENTS.CHANGED);
   }
 
   async createBuiltinAgent(agentId: string): Promise<void> {
@@ -87,8 +82,8 @@ export class DevPresenter implements IDevPresenter {
     const dir = join(this.agentsSrcDir, agentId);
     if (existsSync(dir)) throw new Error(`Agent '${agentId}' already exists`);
     await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, "config.json"), JSON.stringify({ name: agentId }, null, 2) + "\n");
-    await writeFile(join(dir, "prompt.md"), "");
+    await writeFile(join(dir, "AGENT.json"), JSON.stringify({ name: agentId }, null, 2) + "\n");
+    await writeFile(join(dir, "PROMPT.md"), "");
   }
 
   async deleteBuiltinAgent(agentId: string): Promise<void> {

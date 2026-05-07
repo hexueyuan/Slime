@@ -1,6 +1,7 @@
 import { readdirSync, statSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 import type { Agent, AgentConfig, AgentAvatar } from "@shared/types/agent";
+import type { AgentType } from "@shared/types/agent";
 import type { MBTIType } from "@shared/constants/mbti";
 import { logger } from "@/utils/logger";
 
@@ -27,29 +28,22 @@ function findAvatar(dir: string): AgentAvatar | undefined {
   return undefined;
 }
 
-function parseAgentJson(raw: string): AgentJson | null {
-  try {
-    const obj = JSON.parse(raw);
-    if (!obj.name || !obj.mbti) return null;
-    return obj as AgentJson;
-  } catch {
-    return null;
-  }
-}
-
-export function loadMarketAgents(marketAgentsDir: string): Agent[] {
-  if (!existsSync(marketAgentsDir)) return [];
+/**
+ * 从指定目录加载 agents。每个子目录为一个 agent，包含 AGENT.json + PROMPT.md + avatar.*
+ */
+export function loadAgentsFromDir(baseDir: string, type: AgentType): Agent[] {
+  if (!existsSync(baseDir)) return [];
 
   const agents: Agent[] = [];
   let entries: string[];
   try {
-    entries = readdirSync(marketAgentsDir);
+    entries = readdirSync(baseDir);
   } catch {
     return [];
   }
 
   for (const entry of entries) {
-    const dir = join(marketAgentsDir, entry);
+    const dir = join(baseDir, entry);
     try {
       if (!statSync(dir).isDirectory()) continue;
     } catch {
@@ -59,27 +53,25 @@ export function loadMarketAgents(marketAgentsDir: string): Agent[] {
     const jsonPath = join(dir, "AGENT.json");
     if (!existsSync(jsonPath)) continue;
 
-    let raw: string;
+    let cfg: AgentJson;
     try {
-      raw = readFileSync(jsonPath, "utf-8");
+      const raw = readFileSync(jsonPath, "utf-8");
+      const obj = JSON.parse(raw);
+      if (!obj.name || !obj.mbti) {
+        logger.warn("[agentLoader] invalid AGENT.json", { dir });
+        continue;
+      }
+      cfg = obj as AgentJson;
     } catch {
-      logger.warn("[marketLoader] failed to read AGENT.json", { dir });
+      logger.warn("[agentLoader] failed to read AGENT.json", { dir });
       continue;
     }
 
-    const cfg = parseAgentJson(raw);
-    if (!cfg) {
-      logger.warn("[marketLoader] invalid AGENT.json", { dir });
-      continue;
-    }
-
-    // Read PROMPT.md
     const promptPath = join(dir, "PROMPT.md");
     const additionalPrompt = existsSync(promptPath)
       ? readFileSync(promptPath, "utf-8").trim()
       : undefined;
 
-    // allowedCliCommands: auto-inject "help" if non-empty
     const cliCmds = cfg.allowedCliCommands ?? [];
     const finalCliCmds =
       cliCmds.length > 0 && !cliCmds.includes("help") ? ["help", ...cliCmds] : cliCmds;
@@ -101,9 +93,9 @@ export function loadMarketAgents(marketAgentsDir: string): Agent[] {
     agents.push({
       id: entry,
       name: cfg.name,
-      type: "custom",
+      type,
       enabled: true,
-      protected: false,
+      protected: type === "builtin",
       description: cfg.description,
       avatar,
       mbti: cfg.mbti,

@@ -75,7 +75,7 @@ async function uninstallSkill(skill: SkillManifest) {
   await refreshSkills();
 }
 
-const readonly = computed(() => !isDev.value);
+const readonly = computed(() => !isDev.value && selectedSkill.value?.source === "builtin");
 </script>
 
 <template>

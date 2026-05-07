@@ -11,7 +11,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
   - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state；schedule 表：tasks, notes, timeline_entries, attachments）
   - `gateway/`: LLM Gateway 核心（router, balancer, circuit, keypool, relay, server, outbound adapters, inbound handlers, stats, auth）
   - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool）
-  - `agents/`: 内置 Agent 定义（index.ts BUILTIN_AGENTS 注册表 + `<id>/config.json` + `<id>/prompt.md`）
+  - `agents/`: Agent 加载（agentLoader.ts 通用加载 + index.ts BUILTIN_AGENTS 注册表），定义文件在 `resources/agents/<id>/AGENT.json` + `PROMPT.md`
   - `skills/`: 全局 Skill 目录（`<name>/manifest.json` + 实现文件）
   - `mcp/`: MCP Client（types, transport/stdio+SSE, mcpClient, healthChecker）
   - `tasks/`: Schedule 任务系统（taskDao, taskServer/Fastify HTTP, attachmentService）
@@ -102,7 +102,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 | ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                                                   |
 | WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                                               |
 | GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                                                           |
-| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup），ensureBuiltin 创建 HalAI                                                                                           |
+| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup）                                                                                                                     |
 | AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                                                     |
 | MCPServerPresenter        | MCP Server 生命周期管理：连接/发现工具/健康检查/CRUD + 会话工具状态；客户端 Map 管理                                                                                                                           |
 | TaskPresenter             | Schedule 任务系统 IPC：task CRUD + 状态流转 + 附件 + timeline + notes；委托 taskDao/taskServer                                                                                                                 |
@@ -232,7 +232,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - **AgentChatPresenter**: 核心对话引擎，128-step agentic loop，streamText + tool call + tool execution
 - **CHAT_STREAM_EVENTS**: 独立于 evolution 的 STREAM_EVENTS（chat:stream:response/end/error），避免事件冲突
 - **SubagentPresenter**: fork-inherit(继承父上下文摘要) / fork-new(干净上下文)，最大深度 1，5 分钟超时
-- **AgentConfigPresenter**: Agent CRUD + ensureBuiltin（HalAI, id='hal-ai', protected, capabilityRequirements=['reasoning']）
+- **AgentConfigPresenter**: Agent CRUD + 头像管理，委托 agentRegistry 管理 agent 列表
 - **AgentChatPresenterAdapter**: 封装 session CRUD + 委托 chat 控制给 AgentChatPresenter
 - **Context Builder**: token 估算(len/4)，summary 注入，turn history 裁剪，4096 reserve
 - **视图切换**: App.vue 四视图（chatroom/gateway/agents/evolab），默认 chatroom，EvoLab 隐藏(v-if="false")

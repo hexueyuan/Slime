@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  getAgentDir,
-  getPromptPath,
-  getSoulPath,
-  getSkillsDir,
-} from "../../src/main/utils/agentPaths";
+import { getAgentDir, getPromptPath, getSkillsDir } from "../../src/main/utils/agentPaths";
 import { join } from "path";
 
 const builtinAgent = { id: "hal-ai", name: "哈尔", type: "builtin" };
@@ -27,14 +22,8 @@ describe("getAgentDir", () => {
 });
 
 describe("getPromptPath", () => {
-  it("returns prompt.md under agentDir", () => {
-    expect(getPromptPath("/some/dir")).toBe(join("/some/dir", "prompt.md"));
-  });
-});
-
-describe("getSoulPath", () => {
-  it("returns SOUL.md under agentDir", () => {
-    expect(getSoulPath("/some/dir")).toBe(join("/some/dir", "SOUL.md"));
+  it("returns PROMPT.md under agentDir", () => {
+    expect(getPromptPath("/some/dir")).toBe(join("/some/dir", "PROMPT.md"));
   });
 });
 
