@@ -1,8 +1,6 @@
 ---
 name: moss-weekly
 description: 生成周报，汇总本周每日记录和任务完成情况
-agentIds:
-  - moss-ai
 ---
 
 # 周报生成指南

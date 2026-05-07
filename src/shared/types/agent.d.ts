@@ -23,8 +23,6 @@ export interface AgentConfig {
   enabledTools?: string[];
   subagentEnabled?: boolean;
   mcpTools?: string[]; // "{server_id}/{tool_name}"[]
-  /** skill 黑名单（被禁用的 skill 不注入 systemPrompt） */
-  disabledSkills?: string[];
   /** 启用的 skill 名称白名单 */
   enabledSkills?: string[];
   /** 允许的 slime-cli 命令白名单 */

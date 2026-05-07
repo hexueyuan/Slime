@@ -88,7 +88,9 @@ function parseLogsArgs(args) {
 function runLogs(args, ctx) {
   const opts = parseLogsArgs(args);
   if (opts.head !== void 0 && opts.tail !== void 0) {
-    process.stdout.write("Error: --head and --tail are mutually exclusive\n");
+    process.stdout.write(
+      "Error: --head 和 --tail 不能同时使用\n\n两者互斥：--head 取前 N 行，--tail 取后 N 行，只能选一个。\n\n运行 `slime-cli help logs` 查看完整用法说明。\n",
+    );
     process.exit(1);
   }
   if (opts.clear) {
@@ -120,24 +122,39 @@ function runLogs(args, ctx) {
 const logsCommand = {
   name: "logs",
   description: "查看和管理 Slime 运行日志（仅限今日日志文件）",
-  detail: `用法: slime-cli logs [options]
+  detail: `logs — 查看和管理 Slime 应用运行日志（仅今日日志）
+
+用法: slime-cli logs [选项]
 
 选项:
-  --key <keyword>   关键词过滤（大小写不敏感，匹配日志消息和 meta 字段）
-  --tail <n>        输出最后 n 行（与 --head 互斥）
-  --head <n>        输出前 n 行（与 --tail 互斥）
-  --clear           清空今日日志文件（保留文件，截断为空）
+  --key <关键词>   按关键词过滤（大小写不敏感，匹配日志消息和 meta 字段）
+  --tail <n>       输出最后 n 行（与 --head 互斥）
+  --head <n>       输出前 n 行（与 --tail 互斥）
+  --clear          清空今日日志文件（保留文件，截断为空）
 
-可组合使用: slime-cli logs --key error --tail 20
-  先按关键词过滤，再取尾部 20 条。
+说明:
+  日志文件路径: {dataDir}/logs/slime-YYYY-MM-DD.log
+  选项可组合: 先按 --key 过滤，再按 --tail/--head 截取
 
 示例:
-  slime-cli logs                    # 输出今日全部日志
-  slime-cli logs --key gateway      # 过滤包含 "gateway" 的日志
-  slime-cli logs --tail 50          # 查看最后 50 条日志
-  slime-cli logs --key error --tail 20  # 查看最后 20 条错误日志
-  slime-cli logs --clear            # 清空今日日志`,
-  allowedRoles: ["builtin-agent"],
+  # ✅ 查看全部今日日志
+  slime-cli logs
+
+  # ✅ 过滤包含 "gateway" 的日志
+  slime-cli logs --key gateway
+
+  # ✅ 查看最后 50 条
+  slime-cli logs --tail 50
+
+  # ✅ 组合使用：过滤后取最后 20 条
+  slime-cli logs --key error --tail 20
+
+  # ✅ 清空今日日志
+  slime-cli logs --clear
+
+  # ❌ --head 和 --tail 不能同时用（报错）
+  slime-cli logs --head 10 --tail 10`,
+  allowedRoles: ["builtin-agent", "user"],
   run: runLogs,
 };
 const STATUS_LABEL = {
@@ -189,15 +206,38 @@ async function runAsync(args) {
   const [sub, ...rest] = args;
   if (!sub || sub === "help") {
     process.stdout.write(
-      `task <subcommand> [args]
-  add <描述> --creator-type <user|agent> --creator-id <id> [--assignee-type <user|agent>] [--assignee-id <id>] [--scheduled-at <timestamp_ms>] [--repeat <minutes>]
-  start <id>                   待办 → 进行中
-  done <id>                    进行中 → 已完成
-  cancel <id>                  任意状态 → 已取消
-  list [--status <状态>]       列表查询
-  get <id>                     查询单个任务详情
+      `task — 创建和管理待办任务
+
+用法: slime-cli task <subcommand> [参数]
+
+子命令:
+  add <标题> [选项]      创建新任务
+  start <id>            待办 → 进行中
+  done <id>             进行中 → 已完成
+  cancel <id>           任意状态 → 已取消
+  list [--status <值>]  列出任务（可按状态过滤）
+  get <id>              查看任务详情
+
+add 选项:
+  --creator-type <值>   [必填] 创建者身份。取值: user（用户创建）或 agent（Agent 自主创建）
+  --creator-id <值>     [必填] 创建者 ID。user 填用户名，agent 填 agent ID
+  --assignee-type <值>  [可选] 执行者身份。取值: user 或 agent
+  --assignee-id <值>    [可选] 执行者 ID
+  --scheduled-at <值>   [可选] 计划时间，Unix 毫秒时间戳
+  --repeat <值>         [可选] 重复间隔（分钟）
 
 状态值: todo | in_progress | done | cancelled
+
+示例:
+  # ✅ 用户创建任务
+  slime-cli task add "修复Bug" --creator-type user --creator-id hexueyuan
+
+  # ✅ Agent 自主创建
+  slime-cli task add "巡检" --creator-type agent --creator-id hal-ai
+
+  # ❌ 缺少 creator-id（报错）
+  slime-cli task add "测试" --creator-type user
+
 `,
     );
     return;
@@ -209,13 +249,42 @@ async function runAsync(args) {
     const assigneeId = parseFlag(rest, "--assignee-id");
     const scheduledAtStr = parseFlag(rest, "--scheduled-at");
     const repeatStr = parseFlag(rest, "--repeat");
-    if (!creatorType) throw new Error("--creator-type is required (user|agent)");
-    if (!creatorId) throw new Error("--creator-id is required");
+    if (!creatorType) {
+      throw new Error(
+        '--creator-type is required\n\n取值: user（用户创建）或 agent（Agent 自主创建）\n示例: slime-cli task add "任务标题" --creator-type user --creator-id <你的用户名>\n\n运行 `slime-cli help task` 查看完整用法说明。',
+      );
+    }
+    if (!creatorId) {
+      throw new Error(
+        `--creator-id is required
+
+--creator-id 为创建者 ID。当前 --creator-type=${creatorType}，` +
+          (creatorType === "user"
+            ? "应填写用户名（如 hexueyuan）。"
+            : "应填写 agent ID（如 hal-ai）。") +
+          `
+示例: slime-cli task add "任务标题" --creator-type ${creatorType} --creator-id <ID>
+
+运行 \`slime-cli help task\` 查看完整用法说明。`,
+      );
+    }
     if (creatorType !== "user" && creatorType !== "agent") {
-      throw new Error(`--creator-type must be 'user' or 'agent', got '${creatorType}'`);
+      throw new Error(
+        `--creator-type 值无效: '${creatorType}'
+
+仅允许: user（用户创建）或 agent（Agent 自主创建）
+
+运行 \`slime-cli help task\` 查看完整用法说明。`,
+      );
     }
     if (assigneeType && assigneeType !== "user" && assigneeType !== "agent") {
-      throw new Error(`--assignee-type must be 'user' or 'agent', got '${assigneeType}'`);
+      throw new Error(
+        `--assignee-type 值无效: '${assigneeType}'
+
+仅允许: user 或 agent
+
+运行 \`slime-cli help task\` 查看完整用法说明。`,
+      );
     }
     const flagNames = [
       "--creator-type",
@@ -234,7 +303,11 @@ async function runAsync(args) {
       titleParts.push(rest[i]);
     }
     const title = titleParts.join(" ").trim();
-    if (!title) throw new Error("title is required");
+    if (!title) {
+      throw new Error(
+        '任务标题不能为空\n\n用法: slime-cli task add "任务标题" --creator-type <user|agent> --creator-id <ID>\n\n运行 `slime-cli help task` 查看完整用法说明。',
+      );
+    }
     const body = { title, creatorType, creatorId };
     if (assigneeType) body.assigneeType = assigneeType;
     if (assigneeId) body.assigneeId = assigneeId;
@@ -243,21 +316,37 @@ async function runAsync(args) {
     const task = await httpRequest("POST", "/tasks", body);
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "start") {
-    if (!rest[0]) throw new Error("id is required");
+    if (!rest[0]) {
+      throw new Error(
+        "缺少任务 ID\n\n用法: slime-cli task start <id>\n\n运行 `slime-cli help task` 查看完整用法说明。",
+      );
+    }
     const task = await httpRequest("PATCH", `/tasks/${rest[0]}/start`);
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "done") {
-    if (!rest[0]) throw new Error("id is required");
+    if (!rest[0]) {
+      throw new Error(
+        "缺少任务 ID\n\n用法: slime-cli task done <id>\n\n运行 `slime-cli help task` 查看完整用法说明。",
+      );
+    }
     const task = await httpRequest("PATCH", `/tasks/${rest[0]}/done`);
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "cancel") {
-    if (!rest[0]) throw new Error("id is required");
+    if (!rest[0]) {
+      throw new Error(
+        "缺少任务 ID\n\n用法: slime-cli task cancel <id>\n\n运行 `slime-cli help task` 查看完整用法说明。",
+      );
+    }
     const task = await httpRequest("PATCH", `/tasks/${rest[0]}/cancel`);
     process.stdout.write(formatTask(task) + "\n");
   } else if (sub === "list") {
     const statusIdx = rest.indexOf("--status");
     const status = statusIdx >= 0 ? rest[statusIdx + 1] : void 0;
-    if (statusIdx >= 0 && !rest[statusIdx + 1]) throw new Error("--status requires a value");
+    if (statusIdx >= 0 && !rest[statusIdx + 1]) {
+      throw new Error(
+        "--status 需要指定值\n\n取值: todo | in_progress | done | cancelled\n\n运行 `slime-cli help task` 查看完整用法说明。",
+      );
+    }
     const qs = status ? `?status=${status}` : "";
     const tasks = await httpRequest("GET", `/tasks${qs}`);
     if (tasks.length === 0) {
@@ -266,17 +355,71 @@ async function runAsync(args) {
       tasks.forEach((t) => process.stdout.write(formatTask(t) + "\n"));
     }
   } else if (sub === "get") {
-    if (!rest[0]) throw new Error("id is required");
+    if (!rest[0]) {
+      throw new Error(
+        "缺少任务 ID\n\n用法: slime-cli task get <id>\n\n运行 `slime-cli help task` 查看完整用法说明。",
+      );
+    }
     const task = await httpRequest("GET", `/tasks/${rest[0]}`);
     process.stdout.write(formatTask(task) + "\n");
   } else {
-    throw new Error(`unknown subcommand: ${sub}`);
+    throw new Error(
+      `未知子命令: ${sub}
+
+可用子命令: add | start | done | cancel | list | get
+
+运行 \`slime-cli help task\` 查看完整用法说明。`,
+    );
   }
 }
 const taskCommand = {
   name: "task",
   description: "任务管理（待办/进行中/已完成/已取消）",
-  detail: "task <subcommand> — add/start/done/cancel/list/get",
+  detail: `task — 创建和管理待办任务
+
+用法:
+  slime-cli task <subcommand> [参数]
+
+子命令:
+  add <标题> [选项]      创建新任务
+  start <id>            将任务状态设为"进行中"
+  done <id>             将任务状态设为"已完成"
+  cancel <id>           将任务状态设为"已取消"
+  list [--status <值>]  列出任务（可按状态过滤）
+  get <id>              查看任务详情
+
+add 选项:
+  --creator-type <值>   [必填] 创建者身份。取值: user（用户创建）或 agent（Agent 自主创建）
+  --creator-id <值>     [必填] 创建者 ID。若 creator-type=user 填用户名；若 creator-type=agent 填 agent ID
+  --assignee-type <值>  [可选] 执行者身份。取值: user 或 agent
+  --assignee-id <值>    [可选] 执行者 ID。同 creator-id 规则
+  --scheduled-at <值>   [可选] 计划执行时间，Unix 毫秒时间戳
+  --repeat <值>         [可选] 重复间隔（分钟）
+
+状态值: todo | in_progress | done | cancelled
+
+示例:
+  # ✅ 用户创建任务
+  slime-cli task add "修复登录Bug" --creator-type user --creator-id hexueyuan
+
+  # ✅ Agent 自主创建任务
+  slime-cli task add "每日巡检" --creator-type agent --creator-id hal-ai
+
+  # ✅ 指定执行者和计划时间
+  slime-cli task add "代码评审" --creator-type user --creator-id hexueyuan --assignee-type agent --assignee-id hal-ai --scheduled-at 1715100000000
+
+  # ✅ 状态流转
+  slime-cli task start 3
+  slime-cli task done 3
+
+  # ✅ 按状态筛选
+  slime-cli task list --status todo
+
+  # ❌ 缺少 --creator-id（报错: --creator-id is required）
+  slime-cli task add "测试" --creator-type user
+
+  # ❌ creator-type 值错误（报错: --creator-type must be 'user' or 'agent'）
+  slime-cli task add "测试" --creator-type admin --creator-id foo`,
   allowedRoles: ["builtin-agent", "user"],
   run(args) {
     runAsync(args).catch((e) => {
@@ -310,8 +453,12 @@ function runHelp(args, ctx, commands2) {
   const name = args[0];
   const cmd = commands2.find((c) => c.name === name);
   if (!cmd || !canAccess(cmd, ctx)) {
-    process.stdout.write(`Unknown command: ${name}
-`);
+    process.stdout.write(
+      `Error: 未知命令 '${name}'
+
+运行 \`slime-cli help\` 查看当前可用命令列表。
+`,
+    );
     process.exit(1);
   }
   process.stdout.write(cmd.detail + "\n");
@@ -348,8 +495,12 @@ function main() {
   const cmdName = args[0];
   const cmd = commands.find((c) => c.name === cmdName);
   if (!cmd || !canAccess(cmd, ctx)) {
-    process.stderr.write(`Unknown command: ${cmdName}
-`);
+    process.stderr.write(
+      `Error: 未知命令 '${cmdName}'
+
+运行 \`slime-cli help\` 查看当前可用命令列表。
+`,
+    );
     process.exit(1);
   }
   cmd.run(args.slice(1), ctx);

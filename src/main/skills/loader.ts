@@ -78,7 +78,6 @@ export function scanSkills(dir: string): Skill[] {
       source: "local",
       baseDir: skillDir,
       filePath: mdPath,
-      agentIds: fm.agentIds,
     });
   }
 

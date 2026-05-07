@@ -28,7 +28,9 @@ export function runHelp(args: string[], ctx: CallerContext, commands: CommandDef
   const name = args[0];
   const cmd = commands.find((c) => c.name === name);
   if (!cmd || !canAccess(cmd, ctx)) {
-    process.stdout.write(`Unknown command: ${name}\n`);
+    process.stdout.write(
+      `Error: 未知命令 '${name}'\n\n运行 \`slime-cli help\` 查看当前可用命令列表。\n`,
+    );
     process.exit(1);
   }
 

@@ -1,8 +1,6 @@
 ---
 name: moss-diary
 description: 管理每日记录，按年/周/日期组织在 Obsidian Vault 中
-agentIds:
-  - moss-ai
 ---
 
 # 每日记录指南

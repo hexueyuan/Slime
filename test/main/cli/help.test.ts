@@ -73,7 +73,7 @@ describe("runHelp", () => {
     expect(output.join("")).toContain("logs detail");
   });
 
-  it("prints Unknown command for inaccessible command", () => {
+  it("prints error for inaccessible command", () => {
     let exitCode: number | undefined;
     vi.spyOn(process, "exit").mockImplementation((code?: number) => {
       exitCode = code;
@@ -81,6 +81,6 @@ describe("runHelp", () => {
     });
     expect(() => runHelp(["logs"], userCtx, allCmds)).toThrow("exit");
     expect(exitCode).toBe(1);
-    expect(output.join("")).toContain("Unknown command: logs");
+    expect(output.join("")).toContain("未知命令 'logs'");
   });
 });

@@ -28,7 +28,6 @@ interface AgentConfigJson {
   contextLength?: number;
   maxTokens?: number;
   mcpTools?: string[];
-  disabledSkills?: string[];
 }
 
 function getAgentsDir(): string {
@@ -73,7 +72,6 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       contextLength,
       maxTokens,
       mcpTools,
-      disabledSkills,
     } = cfg;
 
     agents.push({
@@ -93,7 +91,6 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
         contextLength,
         maxTokens,
         mcpTools,
-        disabledSkills,
         additionalPrompt: prompt,
       },
     });

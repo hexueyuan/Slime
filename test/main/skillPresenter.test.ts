@@ -13,7 +13,6 @@ const mockBuiltinSkill = {
   source: "builtin" as const,
   baseDir: "/builtin/hal-skill",
   filePath: "/builtin/hal-skill/SKILL.md",
-  agentIds: ["hal-ai"],
 };
 
 const mockLocalSkill = {
@@ -37,23 +36,33 @@ describe("SkillPresenter", () => {
     });
   });
 
-  it("getSkillList returns builtin skills for matching agentId", () => {
-    const result = presenter.getSkillList("hal-ai");
+  it("getSkillList returns builtin skills when in enabledSkills", () => {
+    const result = presenter.getSkillList("hal-ai", undefined, ["hal-skill"]);
     expect(result.map((s) => s.name)).toContain("hal-skill");
   });
 
-  it("getSkillList returns local skills from agent dir, excluding disabled", () => {
-    const result = presenter.getSkillList("abc123", "/agents/abc123/skills", []);
+  it("getSkillList excludes builtin skills not in enabledSkills", () => {
+    const result = presenter.getSkillList("hal-ai", undefined, ["other-skill"]);
+    expect(result.map((s) => s.name)).not.toContain("hal-skill");
+  });
+
+  it("getSkillList returns local skills when in enabledSkills", () => {
+    const result = presenter.getSkillList("abc123", "/agents/abc123/skills", ["my-skill"]);
     expect(result.map((s) => s.name)).toContain("my-skill");
   });
 
-  it("getSkillList excludes disabled skills", () => {
-    const result = presenter.getSkillList("abc123", "/agents/abc123/skills", ["my-skill"]);
+  it("getSkillList excludes local skills not in enabledSkills", () => {
+    const result = presenter.getSkillList("abc123", "/agents/abc123/skills", ["other-skill"]);
     expect(result.map((s) => s.name)).not.toContain("my-skill");
   });
 
+  it("getSkillList returns empty when enabledSkills is empty", () => {
+    const result = presenter.getSkillList("abc123", "/agents/abc123/skills", []);
+    expect(result).toEqual([]);
+  });
+
   it("getSkillList does NOT return local skills when agentSkillsDir not provided", () => {
-    const result = presenter.getSkillList("abc123");
+    const result = presenter.getSkillList("abc123", undefined, ["my-skill"]);
     expect(result.map((s) => s.name)).not.toContain("my-skill");
   });
 });

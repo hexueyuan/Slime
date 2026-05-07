@@ -60,7 +60,7 @@ describe("scanSkills", () => {
     expect(result).toHaveLength(0);
   });
 
-  it("parses agentIds from frontmatter", () => {
+  it("ignores unknown frontmatter fields gracefully", () => {
     mkdirSync(join(skillsDir, "guide"), { recursive: true });
     writeFileSync(
       join(skillsDir, "guide", "SKILL.md"),
@@ -68,7 +68,8 @@ describe("scanSkills", () => {
     );
 
     const result = scanSkills(skillsDir);
-    expect(result[0].agentIds).toEqual(["hal-ai", "another-agent"]);
+    expect(result[0].name).toBe("guide");
+    expect(result[0]).not.toHaveProperty("agentIds");
   });
 
   it("skips skills with invalid frontmatter", () => {

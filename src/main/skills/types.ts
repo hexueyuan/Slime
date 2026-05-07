@@ -1,7 +1,6 @@
 export interface SkillFrontmatter {
   name: string;
   description: string;
-  agentIds?: string[];
 }
 
 export interface Skill {
@@ -10,5 +9,4 @@ export interface Skill {
   source: "builtin" | "local";
   baseDir: string;
   filePath: string;
-  agentIds?: string[];
 }

@@ -29,7 +29,9 @@ function main(): void {
   const cmd = commands.find((c) => c.name === cmdName);
 
   if (!cmd || !canAccess(cmd, ctx)) {
-    process.stderr.write(`Unknown command: ${cmdName}\n`);
+    process.stderr.write(
+      `Error: 未知命令 '${cmdName}'\n\n运行 \`slime-cli help\` 查看当前可用命令列表。\n`,
+    );
     process.exit(1);
   }
 

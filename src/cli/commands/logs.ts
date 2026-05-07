@@ -27,7 +27,11 @@ export function runLogs(args: string[], ctx: CallerContext): void {
   const opts = parseLogsArgs(args);
 
   if (opts.head !== undefined && opts.tail !== undefined) {
-    process.stdout.write("Error: --head and --tail are mutually exclusive\n");
+    process.stdout.write(
+      "Error: --head 和 --tail 不能同时使用\n\n" +
+        "两者互斥：--head 取前 N 行，--tail 取后 N 行，只能选一个。\n\n" +
+        "运行 `slime-cli help logs` 查看完整用法说明。\n",
+    );
     process.exit(1);
   }
 
@@ -59,23 +63,38 @@ export function runLogs(args: string[], ctx: CallerContext): void {
 export const logsCommand: CommandDef = {
   name: "logs",
   description: "查看和管理 Slime 运行日志（仅限今日日志文件）",
-  detail: `用法: slime-cli logs [options]
+  detail: `logs — 查看和管理 Slime 应用运行日志（仅今日日志）
+
+用法: slime-cli logs [选项]
 
 选项:
-  --key <keyword>   关键词过滤（大小写不敏感，匹配日志消息和 meta 字段）
-  --tail <n>        输出最后 n 行（与 --head 互斥）
-  --head <n>        输出前 n 行（与 --tail 互斥）
-  --clear           清空今日日志文件（保留文件，截断为空）
+  --key <关键词>   按关键词过滤（大小写不敏感，匹配日志消息和 meta 字段）
+  --tail <n>       输出最后 n 行（与 --head 互斥）
+  --head <n>       输出前 n 行（与 --tail 互斥）
+  --clear          清空今日日志文件（保留文件，截断为空）
 
-可组合使用: slime-cli logs --key error --tail 20
-  先按关键词过滤，再取尾部 20 条。
+说明:
+  日志文件路径: {dataDir}/logs/slime-YYYY-MM-DD.log
+  选项可组合: 先按 --key 过滤，再按 --tail/--head 截取
 
 示例:
-  slime-cli logs                    # 输出今日全部日志
-  slime-cli logs --key gateway      # 过滤包含 "gateway" 的日志
-  slime-cli logs --tail 50          # 查看最后 50 条日志
-  slime-cli logs --key error --tail 20  # 查看最后 20 条错误日志
-  slime-cli logs --clear            # 清空今日日志`,
-  allowedRoles: ["builtin-agent"],
+  # ✅ 查看全部今日日志
+  slime-cli logs
+
+  # ✅ 过滤包含 "gateway" 的日志
+  slime-cli logs --key gateway
+
+  # ✅ 查看最后 50 条
+  slime-cli logs --tail 50
+
+  # ✅ 组合使用：过滤后取最后 20 条
+  slime-cli logs --key error --tail 20
+
+  # ✅ 清空今日日志
+  slime-cli logs --clear
+
+  # ❌ --head 和 --tail 不能同时用（报错）
+  slime-cli logs --head 10 --tail 10`,
+  allowedRoles: ["builtin-agent", "user"],
   run: runLogs,
 };

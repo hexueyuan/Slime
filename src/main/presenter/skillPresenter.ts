@@ -29,13 +29,12 @@ export class SkillPresenter {
     return this.agentSkillCache.get(agentId)!;
   }
 
-  getSkillList(agentId: string, agentSkillsDir?: string, disabledSkills?: string[]): SkillInfo[] {
-    const builtins = this.loadBuiltinCache().filter((s) => s.agentIds?.includes(agentId));
+  getSkillList(agentId: string, agentSkillsDir?: string, enabledSkills?: string[]): SkillInfo[] {
+    const enabledSet = new Set(enabledSkills ?? []);
+    const builtins = this.loadBuiltinCache().filter((s) => enabledSet.has(s.name));
 
     const locals: Skill[] = agentSkillsDir ? this.loadAgentSkillCache(agentId, agentSkillsDir) : [];
-
-    const disabledSet = new Set(disabledSkills ?? []);
-    const filteredLocals = locals.filter((s) => !disabledSet.has(s.name));
+    const filteredLocals = locals.filter((s) => enabledSet.has(s.name));
 
     // builtin overrides local with same name
     const builtinNames = new Set(builtins.map((s) => s.name));

@@ -308,7 +308,7 @@ export class AgentChatPresenter {
             this.skillPresenter.getSkillList(
               session.agentId,
               (await this.agentConfigPresenter.getAgentSkillsDir(session.agentId)) ?? undefined,
-              agent?.config?.disabledSkills ?? [],
+              agent?.config?.enabledSkills ?? [],
             ),
           )
         : this.skillPresenter
@@ -316,7 +316,7 @@ export class AgentChatPresenter {
               this.skillPresenter.getSkillList(
                 session.agentId,
                 undefined,
-                agent?.config?.disabledSkills,
+                agent?.config?.enabledSkills,
               ),
             )
           : null;
