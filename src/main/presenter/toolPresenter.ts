@@ -296,7 +296,7 @@ export class ToolPresenter {
       browser_wait: createTool(makeBrowserWaitTool(this.browserSession)),
       browser_close: createTool(makeBrowserCloseTool(this.browserSession)),
       web_fetch: createTool(makeWebFetchTool()),
-      Skill: createTool({
+      skill: createTool({
         description: `Execute a skill within the main conversation.
 
 When users ask you to perform tasks, check if any of the available skills match. Skills provide specialized capabilities and domain knowledge.

@@ -8,8 +8,9 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "dev": "electron-rebuild -f -w better-sqlite3 && electron-vite dev --watch",
-    "build": "pnpm run typecheck && electron-vite build && pnpm run build:cli",
+    "build": "pnpm run typecheck && electron-vite build && pnpm run build:cli && pnpm run sync:agents",
     "build:cli": "vite build --config vite.cli.config.ts",
+    "sync:agents": "rsync -a --include='*/' --include='config.json' --include='prompt.md' --exclude='*' src/main/agents/ resources/agents/",
     "build:unpack": "pnpm run build && electron-builder --dir",
     "rebuild:electron": "rm -f node_modules/better-sqlite3/build/Release/better_sqlite3.node && electron-rebuild -f -w better-sqlite3",
     "build:mac": "pnpm run build && pnpm run rebuild:electron && electron-builder --mac",
