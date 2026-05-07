@@ -1,5 +1,5 @@
 import type BetterSqlite3 from "better-sqlite3";
-import * as agentDao from "@/db/models/agentDao";
+import { agentRegistry } from "@/agents/agentRegistry";
 import * as sessionDao from "@/db/models/agentSessionDao";
 import * as mcpDao from "@/db/models/mcpDao";
 import type { MCPServerPresenter } from "./mcpServerPresenter";
@@ -22,7 +22,7 @@ export class MCPToolBridge {
     const session = sessionDao.getSessionById(this.db, sessionId);
     if (!session) return {};
 
-    const agent = agentDao.getAgentById(this.db, session.agentId);
+    const agent = agentRegistry.getById(session.agentId);
     const mcpTools = agent?.config?.mcpTools;
     if (!mcpTools || mcpTools.length === 0) return {};
 

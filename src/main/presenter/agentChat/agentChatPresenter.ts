@@ -3,7 +3,7 @@ import { getDb } from "@/db";
 import * as messageDao from "@/db/models/agentMessageDao";
 import * as sessionDao from "@/db/models/agentSessionDao";
 import * as configDao from "@/db/models/agentSessionConfigDao";
-import * as agentDao from "@/db/models/agentDao";
+import { agentRegistry } from "@/agents/agentRegistry";
 import { eventBus } from "@/eventbus";
 import { CHAT_STREAM_EVENTS } from "@shared/events";
 import { logger } from "@/utils";
@@ -18,7 +18,6 @@ import type { SkillPresenter } from "../skillPresenter";
 import type { AgentConfigPresenter } from "../agentConfigPresenter";
 import { createLLMClient } from "@/llm";
 import type { LLMClient, Tool } from "@/llm";
-import { BUILTIN_AGENTS } from "@/agents";
 import { MBTI_MAP } from "@shared/constants/mbti";
 
 const MAX_STEPS = 128;
@@ -264,7 +263,7 @@ export class AgentChatPresenter {
       return;
     }
     const config = configDao.getConfigById(db, sessionId);
-    const agent = agentDao.getAgentById(db, session.agentId);
+    const agent = agentRegistry.getById(session.agentId);
 
     // Inject session context for exec tool env injection
     this.toolPresenter.setSessionContext(
@@ -323,12 +322,7 @@ export class AgentChatPresenter {
 
     // Build system prompt: MBTI personality + additional prompt (prompt.md)
     const mbtiPrompt = agent?.mbti ? (MBTI_MAP[agent.mbti]?.personality ?? "") : "";
-    const additionalPrompt =
-      agent?.type === "builtin"
-        ? (BUILTIN_AGENTS.find((b) => b.id === agent.id)?.config?.additionalPrompt ??
-          agent?.config?.additionalPrompt ??
-          "")
-        : (agent?.config?.additionalPrompt ?? "");
+    const additionalPrompt = agent?.config?.additionalPrompt ?? "";
     const promptFromFile =
       !additionalPrompt && this.agentConfigPresenter
         ? await this.agentConfigPresenter.readPromptMd(session.agentId)
@@ -372,8 +366,8 @@ export class AgentChatPresenter {
           {
             model: groupName,
             maxTokens: agent?.config?.enableThinking
-              ? (config?.maxTokens ?? agent?.config?.maxTokens ?? 16000)
-              : (config?.maxTokens ?? agent?.config?.maxTokens ?? undefined),
+              ? (config?.maxTokens ?? 32768)
+              : (config?.maxTokens ?? undefined),
             thinkingBudget: agent?.config?.enableThinking ? 10000 : undefined,
           },
           sessionId,

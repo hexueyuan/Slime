@@ -2,7 +2,7 @@ import { getDb } from "@/db";
 import * as sessionDao from "@/db/models/agentSessionDao";
 import * as configDao from "@/db/models/agentSessionConfigDao";
 import * as messageDao from "@/db/models/agentMessageDao";
-import * as agentDao from "@/db/models/agentDao";
+import { agentRegistry } from "@/agents/agentRegistry";
 import { eventBus } from "@/eventbus";
 import { SESSION_EVENTS } from "@shared/events";
 import type { SessionRecord, ChatMessageRecord, SessionMetadata } from "@shared/types/agent";
@@ -28,15 +28,15 @@ export class AgentChatPresenterAdapter {
     });
 
     // Copy agent config to session config
-    const agent = agentDao.getAgentById(db, agentId);
+    const agent = agentRegistry.getById(agentId);
     const agentConfig = agent?.config;
     configDao.createConfig(db, {
       id,
       capabilityRequirements: agentConfig?.capabilityRequirements ?? ["reasoning"],
       systemPrompt: null,
-      temperature: agentConfig?.temperature ?? null,
-      contextLength: agentConfig?.contextLength ?? null,
-      maxTokens: agentConfig?.maxTokens ?? null,
+      temperature: null,
+      contextLength: null,
+      maxTokens: null,
     });
 
     const session = sessionDao.getSessionById(db, id)!;
@@ -104,7 +104,7 @@ export class AgentChatPresenterAdapter {
     let groupName = selectResult.matched["chat"]?.groupName;
     if (!groupName) {
       const config = configDao.getConfigById(db, sessionId);
-      const agent = agentDao.getAgentById(db, session.agentId);
+      const agent = agentRegistry.getById(session.agentId);
       const capReqs = (config?.capabilityRequirements ??
         agent?.config?.capabilityRequirements ?? ["reasoning"]) as any;
       selectResult = this.gatewayPresenter.select(capReqs);

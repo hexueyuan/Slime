@@ -1,7 +1,7 @@
 import Fastify, { FastifyInstance } from "fastify";
 import type BetterSqlite3 from "better-sqlite3";
 import * as taskDao from "./taskDao";
-import { getAgentById } from "../db/models/agentDao";
+import { agentRegistry } from "../agents/agentRegistry";
 import type { TaskStatus } from "@shared/types/schedule";
 
 function msToHHmm(ms: number): string {
@@ -50,7 +50,7 @@ export function createTaskServer(
       if (!creatorId) {
         return reply.status(400).send({ error: "creatorId is required when creatorType=agent" });
       }
-      if (!getAgentById(db, creatorId)) {
+      if (!agentRegistry.getById(creatorId)) {
         return reply.status(400).send({ error: `agent not found: ${creatorId}` });
       }
     }
@@ -73,7 +73,7 @@ export function createTaskServer(
             .status(400)
             .send({ error: "assigneeId is required when assigneeType=agent" });
         }
-        if (!getAgentById(db, assigneeId)) {
+        if (!agentRegistry.getById(assigneeId)) {
           return reply.status(400).send({ error: `assignee agent not found: ${assigneeId}` });
         }
       }
