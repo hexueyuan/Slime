@@ -12,32 +12,33 @@
 
 ## File Structure
 
-| Action | Path | Responsibility |
-|--------|------|---------------|
-| Create | `src/main/agents/marketLoader.ts` | Scan market agents dir, parse AGENT.json, return Agent[] |
-| Create | `src/main/agents/agentRegistry.ts` | In-memory registry: load hal-ai + market agents, provide getById/list/create/update/delete |
-| Modify | `src/main/agents/index.ts` | Only load hal-ai (single builtin) |
-| Modify | `src/main/utils/paths.ts` | Add marketDir, marketAgentsDir, marketSkillsDir |
-| Modify | `src/shared/constants/mbti.ts` | Add MBTI_TEMPERATURE mapping |
-| Modify | `src/shared/types/agent.d.ts` | Remove AgentType enum, simplify Agent interface |
-| Modify | `src/main/presenter/agentConfigPresenter.ts` | Replace agentDao calls with agentRegistry |
-| Modify | `src/main/presenter/agentChat/agentChatPresenter.ts` | Replace agentDao.getAgentById with registry |
-| Modify | `src/main/presenter/agentChatPresenterAdapter.ts` | Replace agentDao.getAgentById with registry |
-| Modify | `src/main/presenter/mcpToolBridge.ts` | Replace agentDao.getAgentById with registry |
-| Modify | `src/main/tasks/taskServer.ts` | Replace agentDao.getAgentById with registry |
-| Modify | `src/main/presenter/skillPresenter.ts` | Change builtin source to marketSkillsDir |
-| Modify | `src/main/db/database.ts` | Remove agents table DDL |
-| Delete | `src/main/db/models/agentDao.ts` | Entirely replaced by agentRegistry |
-| Modify | `src/main/db/index.ts` | Remove agentDao re-export |
-| Modify | `src/renderer/src/stores/agent.ts` | No change needed (calls presenter IPC, transparent) |
-| Modify | `src/renderer/src/components/agents/AgentEditForm.vue` | Add ID input, remove temperature/maxTokens fields |
-| Modify | `src/renderer/src/components/agents/AgentManageTab.vue` | Remove builtin/custom split |
+| Action | Path                                                    | Responsibility                                                                             |
+| ------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Create | `src/main/agents/marketLoader.ts`                       | Scan market agents dir, parse AGENT.json, return Agent[]                                   |
+| Create | `src/main/agents/agentRegistry.ts`                      | In-memory registry: load hal-ai + market agents, provide getById/list/create/update/delete |
+| Modify | `src/main/agents/index.ts`                              | Only load hal-ai (single builtin)                                                          |
+| Modify | `src/main/utils/paths.ts`                               | Add marketDir, marketAgentsDir, marketSkillsDir                                            |
+| Modify | `src/shared/constants/mbti.ts`                          | Add MBTI_TEMPERATURE mapping                                                               |
+| Modify | `src/shared/types/agent.d.ts`                           | Remove AgentType enum, simplify Agent interface                                            |
+| Modify | `src/main/presenter/agentConfigPresenter.ts`            | Replace agentDao calls with agentRegistry                                                  |
+| Modify | `src/main/presenter/agentChat/agentChatPresenter.ts`    | Replace agentDao.getAgentById with registry                                                |
+| Modify | `src/main/presenter/agentChatPresenterAdapter.ts`       | Replace agentDao.getAgentById with registry                                                |
+| Modify | `src/main/presenter/mcpToolBridge.ts`                   | Replace agentDao.getAgentById with registry                                                |
+| Modify | `src/main/tasks/taskServer.ts`                          | Replace agentDao.getAgentById with registry                                                |
+| Modify | `src/main/presenter/skillPresenter.ts`                  | Change builtin source to marketSkillsDir                                                   |
+| Modify | `src/main/db/database.ts`                               | Remove agents table DDL                                                                    |
+| Delete | `src/main/db/models/agentDao.ts`                        | Entirely replaced by agentRegistry                                                         |
+| Modify | `src/main/db/index.ts`                                  | Remove agentDao re-export                                                                  |
+| Modify | `src/renderer/src/stores/agent.ts`                      | No change needed (calls presenter IPC, transparent)                                        |
+| Modify | `src/renderer/src/components/agents/AgentEditForm.vue`  | Add ID input, remove temperature/maxTokens fields                                          |
+| Modify | `src/renderer/src/components/agents/AgentManageTab.vue` | Remove builtin/custom split                                                                |
 
 ---
 
 ### Task 1: Add path constants and MBTI temperature
 
 **Files:**
+
 - Modify: `src/main/utils/paths.ts`
 - Modify: `src/shared/constants/mbti.ts`
 
@@ -65,14 +66,26 @@ Append at end of file before closing:
 ```typescript
 export const MBTI_TEMPERATURE: Record<MBTIType, number> = {
   // xTxJ: 严谨、结构化
-  INTJ: 0.3, ISTJ: 0.3, ENTJ: 0.3, ESTJ: 0.3,
+  INTJ: 0.3,
+  ISTJ: 0.3,
+  ENTJ: 0.3,
+  ESTJ: 0.3,
   // xTxP: 逻辑但灵活
-  INTP: 0.5, ISTP: 0.5, ENTP: 0.5, ESTP: 0.5,
+  INTP: 0.5,
+  ISTP: 0.5,
+  ENTP: 0.5,
+  ESTP: 0.5,
   // xFxJ: 有条理但温和
-  INFJ: 0.4, ISFJ: 0.4, ENFJ: 0.4, ESFJ: 0.4,
+  INFJ: 0.4,
+  ISFJ: 0.4,
+  ENFJ: 0.4,
+  ESFJ: 0.4,
   // xFxP: 随性、开放
-  INFP: 0.7, ISFP: 0.7, ENFP: 0.7, ESFP: 0.7,
-}
+  INFP: 0.7,
+  ISFP: 0.7,
+  ENFP: 0.7,
+  ESFP: 0.7,
+};
 ```
 
 - [ ] **Step 3: Commit**
@@ -87,6 +100,7 @@ git commit -m "feat: add market paths and MBTI temperature mapping"
 ### Task 2: Simplify Agent type definitions
 
 **Files:**
+
 - Modify: `src/shared/types/agent.d.ts`
 
 - [ ] **Step 1: Replace AgentType with isBuiltin flag**
@@ -98,17 +112,17 @@ Change the `Agent` interface:
 // Keep AgentType for backwards compat but mark deprecated
 
 export interface Agent {
-  id: string
-  name: string
-  type: AgentType  // keep for now, but effectively unused for new logic
-  enabled: boolean
-  protected: boolean
-  description?: string
-  avatar?: AgentAvatar | null
-  mbti: MBTIType
-  config?: AgentConfig | null
-  createdAt: number
-  updatedAt: number
+  id: string;
+  name: string;
+  type: AgentType; // keep for now, but effectively unused for new logic
+  enabled: boolean;
+  protected: boolean;
+  description?: string;
+  avatar?: AgentAvatar | null;
+  mbti: MBTIType;
+  config?: AgentConfig | null;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -117,6 +131,7 @@ Actually — keep `AgentType` and `Agent` interface unchanged for this task to m
 - [ ] **Step 2: Remove temperature and maxTokens from AgentConfig**
 
 In `AgentConfig` interface, remove:
+
 ```typescript
 // Remove these two lines:
   temperature?: number
@@ -139,98 +154,98 @@ Move on to Task 3.
 ### Task 3: Create marketLoader.ts
 
 **Files:**
+
 - Create: `src/main/agents/marketLoader.ts`
 
 - [ ] **Step 1: Write marketLoader.ts**
 
 ```typescript
-import { readdirSync, statSync, readFileSync, existsSync } from 'fs'
-import { join, extname } from 'path'
-import type { Agent, AgentConfig, AgentAvatar } from '@shared/types/agent'
-import type { MBTIType } from '@shared/constants/mbti'
-import { MBTI_TEMPERATURE } from '@shared/constants/mbti'
-import { logger } from '@/utils/logger'
+import { readdirSync, statSync, readFileSync, existsSync } from "fs";
+import { join, extname } from "path";
+import type { Agent, AgentConfig, AgentAvatar } from "@shared/types/agent";
+import type { MBTIType } from "@shared/constants/mbti";
+import { MBTI_TEMPERATURE } from "@shared/constants/mbti";
+import { logger } from "@/utils/logger";
 
 interface AgentJson {
-  name: string
-  description?: string
-  mbti: MBTIType
-  capabilityRequirements?: string[]
-  enabledTools?: string[]
-  enabledSkills?: string[]
-  allowedCliCommands?: string[]
-  enableThinking?: boolean
-  subagentEnabled?: boolean
-  mcpTools?: string[]
+  name: string;
+  description?: string;
+  mbti: MBTIType;
+  capabilityRequirements?: string[];
+  enabledTools?: string[];
+  enabledSkills?: string[];
+  allowedCliCommands?: string[];
+  enableThinking?: boolean;
+  subagentEnabled?: boolean;
+  mcpTools?: string[];
 }
 
-const AVATAR_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp']
+const AVATAR_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
 
 function findAvatar(dir: string): AgentAvatar | undefined {
   for (const ext of AVATAR_EXTENSIONS) {
-    const p = join(dir, `avatar${ext}`)
-    if (existsSync(p)) return { kind: 'image', path: p }
+    const p = join(dir, `avatar${ext}`);
+    if (existsSync(p)) return { kind: "image", path: p };
   }
-  return undefined
+  return undefined;
 }
 
 function parseAgentJson(raw: string): AgentJson | null {
   try {
-    const obj = JSON.parse(raw)
-    if (!obj.name || !obj.mbti) return null
-    return obj as AgentJson
+    const obj = JSON.parse(raw);
+    if (!obj.name || !obj.mbti) return null;
+    return obj as AgentJson;
   } catch {
-    return null
+    return null;
   }
 }
 
 export function loadMarketAgents(marketAgentsDir: string): Agent[] {
-  if (!existsSync(marketAgentsDir)) return []
+  if (!existsSync(marketAgentsDir)) return [];
 
-  const agents: Agent[] = []
-  let entries: string[]
+  const agents: Agent[] = [];
+  let entries: string[];
   try {
-    entries = readdirSync(marketAgentsDir)
+    entries = readdirSync(marketAgentsDir);
   } catch {
-    return []
+    return [];
   }
 
   for (const entry of entries) {
-    const dir = join(marketAgentsDir, entry)
+    const dir = join(marketAgentsDir, entry);
     try {
-      if (!statSync(dir).isDirectory()) continue
+      if (!statSync(dir).isDirectory()) continue;
     } catch {
-      continue
+      continue;
     }
 
-    const jsonPath = join(dir, 'AGENT.json')
-    if (!existsSync(jsonPath)) continue
+    const jsonPath = join(dir, "AGENT.json");
+    if (!existsSync(jsonPath)) continue;
 
-    let raw: string
+    let raw: string;
     try {
-      raw = readFileSync(jsonPath, 'utf-8')
+      raw = readFileSync(jsonPath, "utf-8");
     } catch {
-      logger.warn('[marketLoader] failed to read AGENT.json', { dir })
-      continue
+      logger.warn("[marketLoader] failed to read AGENT.json", { dir });
+      continue;
     }
 
-    const cfg = parseAgentJson(raw)
+    const cfg = parseAgentJson(raw);
     if (!cfg) {
-      logger.warn('[marketLoader] invalid AGENT.json', { dir })
-      continue
+      logger.warn("[marketLoader] invalid AGENT.json", { dir });
+      continue;
     }
 
     // Read PROMPT.md
-    const promptPath = join(dir, 'PROMPT.md')
+    const promptPath = join(dir, "PROMPT.md");
     const additionalPrompt = existsSync(promptPath)
-      ? readFileSync(promptPath, 'utf-8').trim()
-      : undefined
+      ? readFileSync(promptPath, "utf-8").trim()
+      : undefined;
 
     // allowedCliCommands: auto-inject "help" if non-empty
-    const cliCmds = cfg.allowedCliCommands ?? []
-    const finalCliCmds = cliCmds.length > 0 && !cliCmds.includes('help')
-      ? ['help', ...cliCmds]
-      : cliCmds
+    const cliCmds = cfg.allowedCliCommands ?? [];
+    const finalCliCmds =
+      cliCmds.length > 0 && !cliCmds.includes("help") ? ["help", ...cliCmds] : cliCmds;
 
     const config: AgentConfig = {
       capabilityRequirements: cfg.capabilityRequirements,
@@ -241,15 +256,15 @@ export function loadMarketAgents(marketAgentsDir: string): Agent[] {
       subagentEnabled: cfg.subagentEnabled,
       mcpTools: cfg.mcpTools,
       additionalPrompt,
-    }
+    };
 
-    const avatar = findAvatar(dir)
-    const now = Date.now()
+    const avatar = findAvatar(dir);
+    const now = Date.now();
 
     agents.push({
       id: entry,
       name: cfg.name,
-      type: 'custom',
+      type: "custom",
       enabled: true,
       protected: false,
       description: cfg.description,
@@ -258,10 +273,10 @@ export function loadMarketAgents(marketAgentsDir: string): Agent[] {
       config,
       createdAt: now,
       updatedAt: now,
-    })
+    });
   }
 
-  return agents
+  return agents;
 }
 ```
 
@@ -277,6 +292,7 @@ git commit -m "feat: add marketLoader to scan agents from filesystem"
 ### Task 4: Create agentRegistry.ts
 
 **Files:**
+
 - Create: `src/main/agents/agentRegistry.ts`
 - Modify: `src/main/agents/index.ts`
 
@@ -285,53 +301,65 @@ git commit -m "feat: add marketLoader to scan agents from filesystem"
 Replace the entire file:
 
 ```typescript
-import type { AgentConfig, AgentAvatar } from '@shared/types/agent'
-import type { MBTIType } from '@shared/constants/mbti'
-import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
-import { app } from 'electron'
+import type { AgentConfig, AgentAvatar } from "@shared/types/agent";
+import type { MBTIType } from "@shared/constants/mbti";
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
+import { app } from "electron";
 
 export interface BuiltinAgentDef {
-  id: string
-  name: string
-  description?: string
-  avatar?: AgentAvatar
-  mbti?: MBTIType
-  config: AgentConfig
+  id: string;
+  name: string;
+  description?: string;
+  avatar?: AgentAvatar;
+  mbti?: MBTIType;
+  config: AgentConfig;
 }
 
 interface AgentConfigJson {
-  name: string
-  description?: string
-  avatar?: AgentAvatar
-  mbti?: MBTIType
-  capabilityRequirements?: string[]
-  enabledTools?: string[]
-  allowedCliCommands?: string[]
-  enabledSkills?: string[]
-  subagentEnabled?: boolean
-  enableThinking?: boolean
-  mcpTools?: string[]
+  name: string;
+  description?: string;
+  avatar?: AgentAvatar;
+  mbti?: MBTIType;
+  capabilityRequirements?: string[];
+  enabledTools?: string[];
+  allowedCliCommands?: string[];
+  enabledSkills?: string[];
+  subagentEnabled?: boolean;
+  enableThinking?: boolean;
+  mcpTools?: string[];
 }
 
 function getHalDir(): string {
   if (app.isPackaged) {
-    return join(app.getAppPath(), '..', 'resources', 'agents', 'hal-ai')
+    return join(app.getAppPath(), "..", "resources", "agents", "hal-ai");
   }
-  return join(process.cwd(), 'src', 'main', 'agents', 'hal-ai')
+  return join(process.cwd(), "src", "main", "agents", "hal-ai");
 }
 
 function loadHalAi(): BuiltinAgentDef {
-  const dir = getHalDir()
-  const configPath = join(dir, 'config.json')
-  const cfg: AgentConfigJson = JSON.parse(readFileSync(configPath, 'utf-8'))
-  const promptPath = join(dir, 'prompt.md')
-  const prompt = existsSync(promptPath) ? readFileSync(promptPath, 'utf-8').trim() : undefined
+  const dir = getHalDir();
+  const configPath = join(dir, "config.json");
+  const cfg: AgentConfigJson = JSON.parse(readFileSync(configPath, "utf-8"));
+  const promptPath = join(dir, "prompt.md");
+  const prompt = existsSync(promptPath) ? readFileSync(promptPath, "utf-8").trim() : undefined;
 
-  const { name, description, avatar, mbti, capabilityRequirements, enabledTools, enabledSkills, allowedCliCommands, subagentEnabled, enableThinking, mcpTools } = cfg
+  const {
+    name,
+    description,
+    avatar,
+    mbti,
+    capabilityRequirements,
+    enabledTools,
+    enabledSkills,
+    allowedCliCommands,
+    subagentEnabled,
+    enableThinking,
+    mcpTools,
+  } = cfg;
 
   return {
-    id: 'hal-ai',
+    id: "hal-ai",
     name: name,
     description,
     avatar,
@@ -346,86 +374,95 @@ function loadHalAi(): BuiltinAgentDef {
       mcpTools,
       additionalPrompt: prompt,
     },
-  }
+  };
 }
 
-export const HAL_AI: BuiltinAgentDef = loadHalAi()
-export const BUILTIN_AGENTS: BuiltinAgentDef[] = [HAL_AI]
+export const HAL_AI: BuiltinAgentDef = loadHalAi();
+export const BUILTIN_AGENTS: BuiltinAgentDef[] = [HAL_AI];
 ```
 
 - [ ] **Step 2: Write agentRegistry.ts**
 
 ```typescript
-import { existsSync } from 'fs'
-import { writeFile, mkdir, copyFile, unlink, readFile, rm } from 'fs/promises'
-import { join, extname } from 'path'
-import type { Agent, AgentAvatar, AgentConfig } from '@shared/types/agent'
-import type { MBTIType } from '@shared/constants/mbti'
-import { MBTI_TEMPERATURE } from '@shared/constants/mbti'
-import { paths } from '@/utils'
-import { logger } from '@/utils/logger'
-import { BUILTIN_AGENTS } from './index'
-import { loadMarketAgents } from './marketLoader'
+import { existsSync } from "fs";
+import { writeFile, mkdir, copyFile, unlink, readFile, rm } from "fs/promises";
+import { join, extname } from "path";
+import type { Agent, AgentAvatar, AgentConfig } from "@shared/types/agent";
+import type { MBTIType } from "@shared/constants/mbti";
+import { MBTI_TEMPERATURE } from "@shared/constants/mbti";
+import { paths } from "@/utils";
+import { logger } from "@/utils/logger";
+import { BUILTIN_AGENTS } from "./index";
+import { loadMarketAgents } from "./marketLoader";
 
 class AgentRegistry {
-  private agents = new Map<string, Agent>()
+  private agents = new Map<string, Agent>();
 
   load(): void {
-    this.agents.clear()
+    this.agents.clear();
 
     // 1. Load hal-ai (builtin, protected)
     for (const def of BUILTIN_AGENTS) {
-      const now = Date.now()
+      const now = Date.now();
       this.agents.set(def.id, {
         id: def.id,
         name: def.name,
-        type: 'builtin',
+        type: "builtin",
         enabled: true,
         protected: true,
         description: def.description,
         avatar: def.avatar,
-        mbti: def.mbti ?? 'INTJ',
+        mbti: def.mbti ?? "INTJ",
         config: def.config,
         createdAt: now,
         updatedAt: now,
-      })
+      });
     }
 
     // 2. Load market agents
-    const marketAgents = loadMarketAgents(paths.marketAgentsDir)
+    const marketAgents = loadMarketAgents(paths.marketAgentsDir);
     for (const agent of marketAgents) {
       if (this.agents.has(agent.id)) {
-        logger.warn('[AgentRegistry] duplicate id, skipping market agent', { id: agent.id })
-        continue
+        logger.warn("[AgentRegistry] duplicate id, skipping market agent", { id: agent.id });
+        continue;
       }
-      this.agents.set(agent.id, agent)
+      this.agents.set(agent.id, agent);
     }
   }
 
   list(): Agent[] {
-    const arr = Array.from(this.agents.values())
+    const arr = Array.from(this.agents.values());
     // protected first, then by name
     return arr.sort((a, b) => {
-      if (a.protected !== b.protected) return a.protected ? -1 : 1
-      return a.name.localeCompare(b.name)
-    })
+      if (a.protected !== b.protected) return a.protected ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
   }
 
   getById(id: string): Agent | undefined {
-    return this.agents.get(id)
+    return this.agents.get(id);
   }
 
-  async create(id: string, data: { name: string; description?: string; mbti: MBTIType; config?: AgentConfig; avatarSourcePath?: string }): Promise<Agent> {
-    if (this.agents.has(id)) throw new Error(`Agent id already exists: ${id}`)
-    if (!/^[a-z][a-z0-9-]*$/.test(id) || id.length > 50) throw new Error('Invalid agent id')
+  async create(
+    id: string,
+    data: {
+      name: string;
+      description?: string;
+      mbti: MBTIType;
+      config?: AgentConfig;
+      avatarSourcePath?: string;
+    },
+  ): Promise<Agent> {
+    if (this.agents.has(id)) throw new Error(`Agent id already exists: ${id}`);
+    if (!/^[a-z][a-z0-9-]*$/.test(id) || id.length > 50) throw new Error("Invalid agent id");
 
-    const dir = join(paths.marketAgentsDir, id)
-    await mkdir(dir, { recursive: true })
+    const dir = join(paths.marketAgentsDir, id);
+    await mkdir(dir, { recursive: true });
 
     // Write AGENT.json
     const agentJson: Record<string, unknown> = {
       name: data.name,
-      description: data.description ?? '',
+      description: data.description ?? "",
       mbti: data.mbti,
       capabilityRequirements: data.config?.capabilityRequirements ?? [],
       enabledTools: data.config?.enabledTools ?? [],
@@ -434,27 +471,27 @@ class AgentRegistry {
       enableThinking: data.config?.enableThinking ?? false,
       subagentEnabled: data.config?.subagentEnabled ?? false,
       mcpTools: data.config?.mcpTools ?? [],
-    }
-    await writeFile(join(dir, 'AGENT.json'), JSON.stringify(agentJson, null, 2), 'utf-8')
+    };
+    await writeFile(join(dir, "AGENT.json"), JSON.stringify(agentJson, null, 2), "utf-8");
 
     // Write PROMPT.md
-    const prompt = data.config?.additionalPrompt ?? ''
-    await writeFile(join(dir, 'PROMPT.md'), prompt, 'utf-8')
+    const prompt = data.config?.additionalPrompt ?? "";
+    await writeFile(join(dir, "PROMPT.md"), prompt, "utf-8");
 
     // Copy avatar
-    let avatar: AgentAvatar | undefined
+    let avatar: AgentAvatar | undefined;
     if (data.avatarSourcePath) {
-      const ext = extname(data.avatarSourcePath)
-      const dest = join(dir, `avatar${ext}`)
-      await copyFile(data.avatarSourcePath, dest)
-      avatar = { kind: 'image', path: dest }
+      const ext = extname(data.avatarSourcePath);
+      const dest = join(dir, `avatar${ext}`);
+      await copyFile(data.avatarSourcePath, dest);
+      avatar = { kind: "image", path: dest };
     }
 
-    const now = Date.now()
+    const now = Date.now();
     const agent: Agent = {
       id,
       name: data.name,
-      type: 'custom',
+      type: "custom",
       enabled: true,
       protected: false,
       description: data.description,
@@ -463,29 +500,38 @@ class AgentRegistry {
       config: data.config,
       createdAt: now,
       updatedAt: now,
-    }
-    this.agents.set(id, agent)
-    return agent
+    };
+    this.agents.set(id, agent);
+    return agent;
   }
 
-  async update(id: string, data: Partial<{ name: string; description: string; mbti: MBTIType; config: AgentConfig; avatarSourcePath: string | null }>): Promise<Agent> {
-    const agent = this.agents.get(id)
-    if (!agent) throw new Error(`Agent not found: ${id}`)
-    if (agent.protected) throw new Error('Cannot modify protected agent')
+  async update(
+    id: string,
+    data: Partial<{
+      name: string;
+      description: string;
+      mbti: MBTIType;
+      config: AgentConfig;
+      avatarSourcePath: string | null;
+    }>,
+  ): Promise<Agent> {
+    const agent = this.agents.get(id);
+    if (!agent) throw new Error(`Agent not found: ${id}`);
+    if (agent.protected) throw new Error("Cannot modify protected agent");
 
-    const dir = join(paths.marketAgentsDir, id)
+    const dir = join(paths.marketAgentsDir, id);
 
     // Update in-memory
-    if (data.name !== undefined) agent.name = data.name
-    if (data.description !== undefined) agent.description = data.description
-    if (data.mbti !== undefined) agent.mbti = data.mbti
-    if (data.config !== undefined) agent.config = data.config
-    agent.updatedAt = Date.now()
+    if (data.name !== undefined) agent.name = data.name;
+    if (data.description !== undefined) agent.description = data.description;
+    if (data.mbti !== undefined) agent.mbti = data.mbti;
+    if (data.config !== undefined) agent.config = data.config;
+    agent.updatedAt = Date.now();
 
     // Rewrite AGENT.json
     const agentJson: Record<string, unknown> = {
       name: agent.name,
-      description: agent.description ?? '',
+      description: agent.description ?? "",
       mbti: agent.mbti,
       capabilityRequirements: agent.config?.capabilityRequirements ?? [],
       enabledTools: agent.config?.enabledTools ?? [],
@@ -494,48 +540,48 @@ class AgentRegistry {
       enableThinking: agent.config?.enableThinking ?? false,
       subagentEnabled: agent.config?.subagentEnabled ?? false,
       mcpTools: agent.config?.mcpTools ?? [],
-    }
-    await writeFile(join(dir, 'AGENT.json'), JSON.stringify(agentJson, null, 2), 'utf-8')
+    };
+    await writeFile(join(dir, "AGENT.json"), JSON.stringify(agentJson, null, 2), "utf-8");
 
     // Rewrite PROMPT.md
-    await writeFile(join(dir, 'PROMPT.md'), agent.config?.additionalPrompt ?? '', 'utf-8')
+    await writeFile(join(dir, "PROMPT.md"), agent.config?.additionalPrompt ?? "", "utf-8");
 
     // Handle avatar
     if (data.avatarSourcePath !== undefined) {
       // Remove old avatar files
-      for (const ext of ['.png', '.jpg', '.jpeg', '.webp']) {
-        const old = join(dir, `avatar${ext}`)
-        if (existsSync(old)) await unlink(old).catch(() => {})
+      for (const ext of [".png", ".jpg", ".jpeg", ".webp"]) {
+        const old = join(dir, `avatar${ext}`);
+        if (existsSync(old)) await unlink(old).catch(() => {});
       }
       if (data.avatarSourcePath) {
-        const ext = extname(data.avatarSourcePath)
-        const dest = join(dir, `avatar${ext}`)
-        await copyFile(data.avatarSourcePath, dest)
-        agent.avatar = { kind: 'image', path: dest }
+        const ext = extname(data.avatarSourcePath);
+        const dest = join(dir, `avatar${ext}`);
+        await copyFile(data.avatarSourcePath, dest);
+        agent.avatar = { kind: "image", path: dest };
       } else {
-        agent.avatar = undefined
+        agent.avatar = undefined;
       }
     }
 
-    return agent
+    return agent;
   }
 
   async delete(id: string): Promise<void> {
-    const agent = this.agents.get(id)
-    if (!agent) throw new Error(`Agent not found: ${id}`)
-    if (agent.protected) throw new Error('Cannot delete protected agent')
+    const agent = this.agents.get(id);
+    if (!agent) throw new Error(`Agent not found: ${id}`);
+    if (agent.protected) throw new Error("Cannot delete protected agent");
 
-    const dir = join(paths.marketAgentsDir, id)
-    await rm(dir, { recursive: true, force: true })
-    this.agents.delete(id)
+    const dir = join(paths.marketAgentsDir, id);
+    await rm(dir, { recursive: true, force: true });
+    this.agents.delete(id);
   }
 
   getTemperature(agent: Agent): number {
-    return MBTI_TEMPERATURE[agent.mbti] ?? 0.5
+    return MBTI_TEMPERATURE[agent.mbti] ?? 0.5;
   }
 }
 
-export const agentRegistry = new AgentRegistry()
+export const agentRegistry = new AgentRegistry();
 ```
 
 - [ ] **Step 3: Commit**
@@ -550,30 +596,31 @@ git commit -m "feat: add agentRegistry as single source of truth for agents"
 ### Task 5: Rewire agentConfigPresenter.ts
 
 **Files:**
+
 - Modify: `src/main/presenter/agentConfigPresenter.ts`
 
 - [ ] **Step 1: Replace entire file**
 
 ```typescript
-import { dialog } from 'electron'
-import { join, extname } from 'path'
-import { mkdir, copyFile, readFile } from 'fs/promises'
-import { existsSync, readFileSync } from 'fs'
-import { eventBus } from '@/eventbus'
-import { AGENT_EVENTS } from '@shared/events'
-import { paths } from '@/utils'
-import { logger } from '@/utils/logger'
-import { agentRegistry } from '@/agents/agentRegistry'
-import type { Agent } from '@shared/types/agent'
-import type { SkillInfo } from '@shared/types/skills'
-import type { IAgentConfigPresenter } from '@shared/types/presenters/agentConfig.presenter'
-import type { SkillPresenter } from './skillPresenter'
+import { dialog } from "electron";
+import { join, extname } from "path";
+import { mkdir, copyFile, readFile } from "fs/promises";
+import { existsSync, readFileSync } from "fs";
+import { eventBus } from "@/eventbus";
+import { AGENT_EVENTS } from "@shared/events";
+import { paths } from "@/utils";
+import { logger } from "@/utils/logger";
+import { agentRegistry } from "@/agents/agentRegistry";
+import type { Agent } from "@shared/types/agent";
+import type { SkillInfo } from "@shared/types/skills";
+import type { IAgentConfigPresenter } from "@shared/types/presenters/agentConfig.presenter";
+import type { SkillPresenter } from "./skillPresenter";
 
 export class AgentConfigPresenter implements IAgentConfigPresenter {
-  private skillPresenter?: SkillPresenter
+  private skillPresenter?: SkillPresenter;
 
   setSkillPresenter(sp: SkillPresenter): void {
-    this.skillPresenter = sp
+    this.skillPresenter = sp;
   }
 
   setConfigPresenter(): void {
@@ -581,27 +628,27 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
   }
 
   async init(): Promise<void> {
-    agentRegistry.load()
+    agentRegistry.load();
   }
 
   async listAgents(): Promise<Agent[]> {
-    return agentRegistry.list()
+    return agentRegistry.list();
   }
 
   async getAgent(id: string): Promise<Agent | null> {
-    return agentRegistry.getById(id) ?? null
+    return agentRegistry.getById(id) ?? null;
   }
 
   async createAgent(data: Partial<Agent> & { id: string }): Promise<Agent> {
     const agent = await agentRegistry.create(data.id, {
-      name: data.name || 'New Agent',
+      name: data.name || "New Agent",
       description: data.description,
-      mbti: data.mbti ?? 'INTJ',
+      mbti: data.mbti ?? "INTJ",
       config: data.config ?? undefined,
       avatarSourcePath: undefined,
-    })
-    eventBus.sendToRenderer(AGENT_EVENTS.CHANGED)
-    return agent
+    });
+    eventBus.sendToRenderer(AGENT_EVENTS.CHANGED);
+    return agent;
   }
 
   async updateAgent(id: string, data: Partial<Agent>): Promise<Agent> {
@@ -610,88 +657,88 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
       description: data.description,
       mbti: data.mbti,
       config: data.config ?? undefined,
-    })
-    eventBus.sendToRenderer(AGENT_EVENTS.CHANGED)
-    return agent
+    });
+    eventBus.sendToRenderer(AGENT_EVENTS.CHANGED);
+    return agent;
   }
 
   async deleteAgent(id: string): Promise<void> {
-    await agentRegistry.delete(id)
-    eventBus.sendToRenderer(AGENT_EVENTS.CHANGED)
+    await agentRegistry.delete(id);
+    eventBus.sendToRenderer(AGENT_EVENTS.CHANGED);
   }
 
   async pickAvatar(agentId: string): Promise<string | null> {
     const result = await dialog.showOpenDialog({
-      title: '选择头像图片',
-      filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
-      properties: ['openFile'],
-    })
-    if (result.canceled || result.filePaths.length === 0) return null
+      title: "选择头像图片",
+      filters: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp"] }],
+      properties: ["openFile"],
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
 
-    const src = result.filePaths[0]
-    const ext = extname(src) || '.png'
+    const src = result.filePaths[0];
+    const ext = extname(src) || ".png";
 
     // Copy to agent directory
-    const dir = join(paths.marketAgentsDir, agentId)
-    if (!existsSync(dir)) return null
+    const dir = join(paths.marketAgentsDir, agentId);
+    if (!existsSync(dir)) return null;
 
     // Remove existing avatar
-    for (const e of ['.png', '.jpg', '.jpeg', '.webp']) {
-      const old = join(dir, `avatar${e}`)
+    for (const e of [".png", ".jpg", ".jpeg", ".webp"]) {
+      const old = join(dir, `avatar${e}`);
       if (existsSync(old)) {
-        const { unlink } = await import('fs/promises')
-        await unlink(old).catch(() => {})
+        const { unlink } = await import("fs/promises");
+        await unlink(old).catch(() => {});
       }
     }
 
-    const dest = join(dir, `avatar${ext}`)
-    await copyFile(src, dest)
-    return dest
+    const dest = join(dir, `avatar${ext}`);
+    await copyFile(src, dest);
+    return dest;
   }
 
   async getAvatarUrl(avatarPath: string): Promise<string> {
     // avatarPath is now absolute path to avatar file in agent dir
-    const data = await readFile(avatarPath)
-    const ext = extname(avatarPath).toLowerCase()
+    const data = await readFile(avatarPath);
+    const ext = extname(avatarPath).toLowerCase();
     const mimeMap: Record<string, string> = {
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.webp': 'image/webp',
-    }
-    const mime = mimeMap[ext] || 'image/png'
-    return `data:${mime};base64,${data.toString('base64')}`
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".webp": "image/webp",
+    };
+    const mime = mimeMap[ext] || "image/png";
+    return `data:${mime};base64,${data.toString("base64")}`;
   }
 
   async readPromptMd(agentId: string): Promise<string> {
-    const agent = agentRegistry.getById(agentId)
-    if (!agent) return ''
+    const agent = agentRegistry.getById(agentId);
+    if (!agent) return "";
     // Builtin: read from app resources
     if (agent.protected) {
-      return agent.config?.additionalPrompt ?? ''
+      return agent.config?.additionalPrompt ?? "";
     }
     // Market: read PROMPT.md from agent dir
-    const promptPath = join(paths.marketAgentsDir, agentId, 'PROMPT.md')
+    const promptPath = join(paths.marketAgentsDir, agentId, "PROMPT.md");
     try {
-      return readFileSync(promptPath, 'utf-8')
+      return readFileSync(promptPath, "utf-8");
     } catch {
-      return ''
+      return "";
     }
   }
 
   async getAgentSkillsDir(_agentId: string): Promise<string | null> {
     // Skills are now global in market, no per-agent skill dir
-    return null
+    return null;
   }
 
   async getAgentDir(agentId: string): Promise<string | null> {
-    const agent = agentRegistry.getById(agentId)
-    if (!agent || agent.protected) return null
-    return join(paths.marketAgentsDir, agentId)
+    const agent = agentRegistry.getById(agentId);
+    if (!agent || agent.protected) return null;
+    return join(paths.marketAgentsDir, agentId);
   }
 
   async listLocalSkills(_agentId: string): Promise<SkillInfo[]> {
-    return []
+    return [];
   }
 }
 ```
@@ -708,6 +755,7 @@ git commit -m "refactor: rewrite agentConfigPresenter to use agentRegistry"
 ### Task 6: Rewire agentChatPresenter and related consumers
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentChatPresenter.ts`
 - Modify: `src/main/presenter/agentChatPresenterAdapter.ts`
 - Modify: `src/main/presenter/mcpToolBridge.ts`
@@ -716,18 +764,23 @@ git commit -m "refactor: rewrite agentConfigPresenter to use agentRegistry"
 - [ ] **Step 1: agentChatPresenter.ts — replace agentDao import**
 
 Replace:
+
 ```typescript
 import * as agentDao from "@/db/models/agentDao";
 ```
+
 With:
+
 ```typescript
 import { agentRegistry } from "@/agents/agentRegistry";
 ```
 
 Replace all `agentDao.getAgentById(db, ...)` calls with `agentRegistry.getById(...)`:
+
 - Line 267: `const agent = agentDao.getAgentById(db, session.agentId);` → `const agent = agentRegistry.getById(session.agentId);`
 
 Also in the system prompt section (~line 326-331), simplify additionalPrompt logic. Since both builtin and custom now have `config.additionalPrompt` populated by the loader, replace:
+
 ```typescript
 const additionalPrompt =
   agent?.type === "builtin"
@@ -741,16 +794,20 @@ const promptFromFile =
     : "";
 const rawPrompt = additionalPrompt || promptFromFile;
 ```
+
 With:
+
 ```typescript
-const additionalPrompt = agent?.config?.additionalPrompt ?? '';
-const promptFromFile = !additionalPrompt && this.agentConfigPresenter
-  ? await this.agentConfigPresenter.readPromptMd(session.agentId)
-  : '';
+const additionalPrompt = agent?.config?.additionalPrompt ?? "";
+const promptFromFile =
+  !additionalPrompt && this.agentConfigPresenter
+    ? await this.agentConfigPresenter.readPromptMd(session.agentId)
+    : "";
 const rawPrompt = additionalPrompt || promptFromFile;
 ```
 
 For maxTokens (~line 374-376), replace `agent?.config?.maxTokens` with hardcoded 32768:
+
 ```typescript
 maxTokens: agent?.config?.enableThinking
   ? (config?.maxTokens ?? 32768)
@@ -760,37 +817,45 @@ maxTokens: agent?.config?.enableThinking
 - [ ] **Step 2: agentChatPresenterAdapter.ts — replace agentDao import**
 
 Replace:
+
 ```typescript
 import * as agentDao from "@/db/models/agentDao";
 ```
+
 With:
+
 ```typescript
 import { agentRegistry } from "@/agents/agentRegistry";
 ```
 
 Replace all occurrences:
+
 - Line 31: `const agent = agentDao.getAgentById(db, agentId);` → `const agent = agentRegistry.getById(agentId);`
 - Line 107: `const agent = agentDao.getAgentById(db, session.agentId);` → `const agent = agentRegistry.getById(session.agentId);`
 
 Also in createSession config copy (line 38), remove temperature/maxTokens:
+
 ```typescript
 configDao.createConfig(db, {
   id,
-  capabilityRequirements: agentConfig?.capabilityRequirements ?? ['reasoning'],
+  capabilityRequirements: agentConfig?.capabilityRequirements ?? ["reasoning"],
   systemPrompt: null,
   temperature: null,
   contextLength: null,
   maxTokens: null,
-})
+});
 ```
 
 - [ ] **Step 3: mcpToolBridge.ts — replace agentDao import**
 
 Replace:
+
 ```typescript
 import * as agentDao from "@/db/models/agentDao";
 ```
+
 With:
+
 ```typescript
 import { agentRegistry } from "@/agents/agentRegistry";
 ```
@@ -800,15 +865,19 @@ Replace: `agentDao.getAgentById(this.db, session.agentId)` → `agentRegistry.ge
 - [ ] **Step 4: taskServer.ts — replace agentDao import**
 
 Replace:
+
 ```typescript
 import { getAgentById } from "../db/models/agentDao";
 ```
+
 With:
+
 ```typescript
 import { agentRegistry } from "../agents/agentRegistry";
 ```
 
 Replace both usages:
+
 - `if (!getAgentById(db, creatorId))` → `if (!agentRegistry.getById(creatorId))`
 - `if (!getAgentById(db, assigneeId))` → `if (!agentRegistry.getById(assigneeId))`
 
@@ -826,6 +895,7 @@ git commit -m "refactor: replace all agentDao usage with agentRegistry"
 ### Task 7: Update SkillPresenter to use market skills dir
 
 **Files:**
+
 - Modify: `src/main/presenter/skillPresenter.ts`
 
 - [ ] **Step 1: Change constructor and builtin source**
@@ -833,13 +903,13 @@ git commit -m "refactor: replace all agentDao usage with agentRegistry"
 The `SkillPresenter` constructor currently takes `builtinDir` and `_agentsBaseDir`. Change it to use `marketSkillsDir` as the primary source:
 
 ```typescript
-import type { SkillInfo } from '@shared/types/skills'
-import type { Skill } from '@/skills/types'
-import { scanSkills, loadSkillContent } from '@/skills/loader'
-import { paths } from '@/utils'
+import type { SkillInfo } from "@shared/types/skills";
+import type { Skill } from "@/skills/types";
+import { scanSkills, loadSkillContent } from "@/skills/loader";
+import { paths } from "@/utils";
 
 export class SkillPresenter {
-  private marketCache: Skill[] | null = null
+  private marketCache: Skill[] | null = null;
 
   constructor() {}
 
@@ -847,30 +917,30 @@ export class SkillPresenter {
     if (!this.marketCache) {
       this.marketCache = scanSkills(paths.marketSkillsDir).map((s) => ({
         ...s,
-        source: 'builtin' as const,
-      }))
+        source: "builtin" as const,
+      }));
     }
-    return this.marketCache
+    return this.marketCache;
   }
 
   getSkillList(_agentId: string, _agentSkillsDir?: string, enabledSkills?: string[]): SkillInfo[] {
-    const enabledSet = new Set(enabledSkills ?? [])
-    const skills = this.loadMarketCache().filter((s) => enabledSet.has(s.name))
-    return skills.map(({ name, description, source }) => ({ name, description, source }))
+    const enabledSet = new Set(enabledSkills ?? []);
+    const skills = this.loadMarketCache().filter((s) => enabledSet.has(s.name));
+    return skills.map(({ name, description, source }) => ({ name, description, source }));
   }
 
   loadSkill(name: string): string {
-    const skill = this.loadMarketCache()?.find((s) => s.name === name)
-    if (skill) return loadSkillContent(skill.filePath)
-    throw new Error(`Skill "${name}" not found`)
+    const skill = this.loadMarketCache()?.find((s) => s.name === name);
+    if (skill) return loadSkillContent(skill.filePath);
+    throw new Error(`Skill "${name}" not found`);
   }
 
   listLocalSkillsForAgent(_agentId: string, _dir: string): SkillInfo[] {
-    return []
+    return [];
   }
 
   invalidateCache(): void {
-    this.marketCache = null
+    this.marketCache = null;
   }
 
   invalidateAgentCache(_agentId: string): void {
@@ -886,7 +956,7 @@ Find where SkillPresenter is constructed (likely in Presenter.init or similar) a
 ```typescript
 // Old: new SkillPresenter(paths.builtinSkillsDir, paths.agentsDir)
 // New:
-new SkillPresenter()
+new SkillPresenter();
 ```
 
 - [ ] **Step 3: Commit**
@@ -901,6 +971,7 @@ git commit -m "refactor: SkillPresenter uses market skills dir"
 ### Task 8: Remove agents table and agentDao
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 - Delete: `src/main/db/models/agentDao.ts`
 - Modify: `src/main/db/index.ts`
@@ -918,6 +989,7 @@ rm src/main/db/models/agentDao.ts
 - [ ] **Step 3: Remove re-export from db/index.ts**
 
 Remove:
+
 ```typescript
 export * from "./models/agentDao";
 ```
@@ -942,11 +1014,13 @@ git commit -m "chore: remove agents table DDL and agentDao"
 ### Task 9: Update UI — AgentEditForm
 
 **Files:**
+
 - Modify: `src/renderer/src/components/agents/AgentEditForm.vue`
 
 - [ ] **Step 1: Add agent ID input field (for create mode)**
 
 Add a new field before the name field:
+
 ```html
 <div v-if="isCreateMode" class="space-y-1">
   <label class="text-xs text-muted-foreground">英文ID（全小写，短横线分隔）</label>
@@ -962,27 +1036,30 @@ Add a new field before the name field:
 ```
 
 Add `id` to form reactive:
+
 ```typescript
 const form = reactive({
-  id: '',  // new
-  name: '',
+  id: "", // new
+  name: "",
   // ... rest unchanged
-})
+});
 ```
 
 Add validation:
+
 ```typescript
 const idError = computed(() => {
-  if (!isCreateMode.value || !form.id) return ''
-  if (!/^[a-z][a-z0-9-]*$/.test(form.id)) return '只允许小写字母、数字和短横线，必须字母开头'
-  if (form.id.length > 50) return '最长50字符'
-  return ''
-})
+  if (!isCreateMode.value || !form.id) return "";
+  if (!/^[a-z][a-z0-9-]*$/.test(form.id)) return "只允许小写字母、数字和短横线，必须字母开头";
+  if (form.id.length > 50) return "最长50字符";
+  return "";
+});
 ```
 
 - [ ] **Step 2: Remove temperature and maxTokens fields from the form UI**
 
 Remove the "参数" section that contains temperature and maxTokens inputs. Remove from `form` reactive:
+
 ```typescript
 // Remove:
 temperature: undefined as number | undefined,
@@ -992,12 +1069,13 @@ maxTokens: undefined as number | undefined,
 - [ ] **Step 3: Update save logic to pass id on create**
 
 Modify the create path to pass `form.id`:
+
 ```typescript
 await agentStore.createAgent({
   id: form.id,
   name: form.name,
   // ... rest
-})
+});
 ```
 
 - [ ] **Step 4: Commit**
@@ -1012,6 +1090,7 @@ git commit -m "feat: AgentEditForm add ID input, remove temperature/maxTokens"
 ### Task 10: Update UI — AgentManageTab
 
 **Files:**
+
 - Modify: `src/renderer/src/components/agents/AgentManageTab.vue`
 
 - [ ] **Step 1: Remove builtin/custom split**
@@ -1027,10 +1106,13 @@ Remove the "+ 新建内置 Agent" button and related `isDev`/`builtinAgents` log
 - [ ] **Step 3: Add empty state hint when no market agents**
 
 When agent list only has hal-ai (no market agents), show a hint:
+
 ```html
 <div v-if="agents.length <= 1" class="p-4 text-xs text-muted-foreground text-center">
   <p>克隆 slime-market 获取更多 Agent：</p>
-  <code class="text-xs">git clone https://github.com/hexueyuan/slime-market ~/.slime/slime-market</code>
+  <code class="text-xs"
+    >git clone https://github.com/hexueyuan/slime-market ~/.slime/slime-market</code
+  >
 </div>
 ```
 
@@ -1046,6 +1128,7 @@ git commit -m "feat: AgentManageTab unified agent list"
 ### Task 11: Remove moss-ai from Slime source, prepare slime-market
 
 **Files:**
+
 - Delete: `src/main/agents/moss-ai/` (entire directory)
 
 - [ ] **Step 1: Delete moss-ai directory from Slime**
@@ -1066,11 +1149,13 @@ git commit -m "chore: remove moss-ai from source (migrated to slime-market)"
 ### Task 12: Fix SkillPresenter instantiation and Presenter.init wiring
 
 **Files:**
+
 - Modify: `src/main/presenter/index.ts` (or wherever Presenter initializes sub-presenters)
 
 - [ ] **Step 1: Find and update Presenter init**
 
 Search for where `SkillPresenter` is constructed and `agentConfigPresenter.init()` is called. Update:
+
 - SkillPresenter: remove constructor args
 - agentConfigPresenter.init(): now calls `agentRegistry.load()` internally
 - Remove `agentDao.ensureBuiltin(getDb())` call

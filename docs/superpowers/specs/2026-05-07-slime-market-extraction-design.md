@@ -58,20 +58,21 @@ slime-market/
 
 **字段说明：**
 
-| 字段 | 必填 | 默认值 | 说明 |
-|------|------|--------|------|
-| name | 是 | - | 显示名称（中文） |
-| description | 否 | "" | Agent 描述 |
-| mbti | 是 | - | 16 种 MBTI 类型之一 |
-| capabilityRequirements | 否 | [] | LLM 能力需求 |
-| enabledTools | 否 | [] | 工具白名单 |
-| enabledSkills | 否 | [] | Skill 引用（全局 skill 名称） |
-| allowedCliCommands | 否 | [] | CLI 命令白名单（非空时自动注入 help） |
-| enableThinking | 否 | false | 是否启用 thinking |
-| subagentEnabled | 否 | false | 是否启用子 agent |
-| mcpTools | 否 | [] | MCP 工具白名单 |
+| 字段                   | 必填 | 默认值 | 说明                                  |
+| ---------------------- | ---- | ------ | ------------------------------------- |
+| name                   | 是   | -      | 显示名称（中文）                      |
+| description            | 否   | ""     | Agent 描述                            |
+| mbti                   | 是   | -      | 16 种 MBTI 类型之一                   |
+| capabilityRequirements | 否   | []     | LLM 能力需求                          |
+| enabledTools           | 否   | []     | 工具白名单                            |
+| enabledSkills          | 否   | []     | Skill 引用（全局 skill 名称）         |
+| allowedCliCommands     | 否   | []     | CLI 命令白名单（非空时自动注入 help） |
+| enableThinking         | 否   | false  | 是否启用 thinking                     |
+| subagentEnabled        | 否   | false  | 是否启用子 agent                      |
+| mcpTools               | 否   | []     | MCP 工具白名单                        |
 
 **移除的字段：**
+
 - `maxTokens`：固定 32768，运行时硬编码
 - `temperature`：由 MBTI 自动推导
 
@@ -99,14 +100,26 @@ Agent 目录下的 `avatar.png`/`avatar.jpg`/`avatar.webp`。可选，不存在�
 ```typescript
 const MBTI_TEMPERATURE: Record<MBTIType, number> = {
   // xTxJ: 严谨、结构化
-  INTJ: 0.3, ISTJ: 0.3, ENTJ: 0.3, ESTJ: 0.3,
+  INTJ: 0.3,
+  ISTJ: 0.3,
+  ENTJ: 0.3,
+  ESTJ: 0.3,
   // xTxP: 逻辑但灵活
-  INTP: 0.5, ISTP: 0.5, ENTP: 0.5, ESTP: 0.5,
+  INTP: 0.5,
+  ISTP: 0.5,
+  ENTP: 0.5,
+  ESTP: 0.5,
   // xFxJ: 有条理但温和
-  INFJ: 0.4, ISFJ: 0.4, ENFJ: 0.4, ESFJ: 0.4,
+  INFJ: 0.4,
+  ISFJ: 0.4,
+  ENFJ: 0.4,
+  ESFJ: 0.4,
   // xFxP: 随性、开放
-  INFP: 0.7, ISFP: 0.7, ENFP: 0.7, ESFP: 0.7,
-}
+  INFP: 0.7,
+  ISFP: 0.7,
+  ENFP: 0.7,
+  ESFP: 0.7,
+};
 ```
 
 ## 加载架构
@@ -141,21 +154,21 @@ const MBTI_TEMPERATURE: Record<MBTIType, number> = {
 
 ### 新增
 
-| 文件 | 职责 |
-|------|------|
+| 文件                              | 职责                                                   |
+| --------------------------------- | ------------------------------------------------------ |
 | `src/main/agents/marketLoader.ts` | 扫描 market agents 目录，解析 AGENT.json，返回 Agent[] |
-| `src/shared/constants/mbti.ts` | 新增 `MBTI_TEMPERATURE` 映射 |
-| `src/main/utils/paths.ts` | 新增 `marketDir`/`marketAgentsDir`/`marketSkillsDir` |
+| `src/shared/constants/mbti.ts`    | 新增 `MBTI_TEMPERATURE` 映射                           |
+| `src/main/utils/paths.ts`         | 新增 `marketDir`/`marketAgentsDir`/`marketSkillsDir`   |
 
 ### 修改
 
-| 文件 | 变更 |
-|------|------|
-| `src/main/agents/index.ts` | 只加载 hal-ai |
+| 文件                                         | 变更                                                     |
+| -------------------------------------------- | -------------------------------------------------------- |
+| `src/main/agents/index.ts`                   | 只加载 hal-ai                                            |
 | `src/main/presenter/agentConfigPresenter.ts` | 重写：列表=hal + market；CRUD 改为文件读写；删除 DB 依赖 |
-| `src/main/presenter/skillPresenter.ts` | 全局 skill 源改为 `~/.slime/slime-market/skills/` |
-| `src/main/db/database.ts` | 删除 `agents` 表 DDL；`agent_sessions.agent_id` 去外键 |
-| `src/main/db/models/agentDao.ts` | 删除 agent CRUD 函数，保留 session 相关 |
+| `src/main/presenter/skillPresenter.ts`       | 全局 skill 源改为 `~/.slime/slime-market/skills/`        |
+| `src/main/db/database.ts`                    | 删除 `agents` 表 DDL；`agent_sessions.agent_id` 去外键   |
+| `src/main/db/models/agentDao.ts`             | 删除 agent CRUD 函数，保留 session 相关                  |
 
 ### 废弃
 
@@ -165,11 +178,11 @@ const MBTI_TEMPERATURE: Record<MBTIType, number> = {
 
 ### UI 适配
 
-| 组件 | 变更 |
-|------|------|
-| AgentManageTab | 列表不再区分 builtin/custom 分组 |
-| AgentEditForm | 移除 maxTokens/temperature 字段；新增英文 ID 输入（创建时，校验唯一）；头像选择后拷贝到 agent 目录 |
-| SessionList | agent 不存在时显示"已移除" |
+| 组件           | 变更                                                                                               |
+| -------------- | -------------------------------------------------------------------------------------------------- |
+| AgentManageTab | 列表不再区分 builtin/custom 分组                                                                   |
+| AgentEditForm  | 移除 maxTokens/temperature 字段；新增英文 ID 输入（创建时，校验唯一）；头像选择后拷贝到 agent 目录 |
+| SessionList    | agent 不存在时显示"已移除"                                                                         |
 
 ### 渲染进程 Store
 
@@ -203,6 +216,7 @@ const MBTI_TEMPERATURE: Record<MBTIType, number> = {
 ## slime-market 仓库初始化
 
 从 Slime 迁移：
+
 - `src/main/agents/moss-ai/config.json` → `agents/moss-ai/AGENT.json`（字段精简）
 - `src/main/agents/moss-ai/prompt.md` → `agents/moss-ai/PROMPT.md`
 - moss-ai 头像 → `agents/moss-ai/avatar.png`
@@ -211,5 +225,6 @@ const MBTI_TEMPERATURE: Record<MBTIType, number> = {
 ## 首次使用引导
 
 Slime 启动时检测 `~/.slime/slime-market/` 不存在：
+
 - Agent 列表只显示 hal-ai
 - AgentPanel 提示用户 clone 仓库获取更多 Agent
