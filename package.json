@@ -1,6 +1,6 @@
 {
   "name": "slime",
-  "version": "0.7.4",
+  "version": "0.8.0",
   "description": "Self-evolving software powered by AI",
   "author": "hexueyuan",
   "type": "module",
