@@ -115,3 +115,26 @@ export function getMBTIColor(mbti: MBTIType): string {
 export function getMBTIPersonality(mbti: MBTIType): string {
   return MBTI_MAP[mbti].personality;
 }
+
+export const MBTI_TEMPERATURE: Record<MBTIType, number> = {
+  // xTxJ: 严谨、结构化
+  INTJ: 0.3,
+  ISTJ: 0.3,
+  ENTJ: 0.3,
+  ESTJ: 0.3,
+  // xTxP: 逻辑但灵活
+  INTP: 0.5,
+  ISTP: 0.5,
+  ENTP: 0.5,
+  ESTP: 0.5,
+  // xFxJ: 有条理但温和
+  INFJ: 0.4,
+  ISFJ: 0.4,
+  ENFJ: 0.4,
+  ESFJ: 0.4,
+  // xFxP: 随性、开放
+  INFP: 0.7,
+  ISFP: 0.7,
+  ENFP: 0.7,
+  ESFP: 0.7,
+};
