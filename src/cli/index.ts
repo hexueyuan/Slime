@@ -4,8 +4,10 @@ import { logsCommand } from "./commands/logs";
 import { taskCommand } from "./commands/task";
 import { makeHelpCommand } from "./commands/help";
 import { agentCommand } from "./commands/agent";
+import { skillCommand } from "./commands/skill";
+import { configCommand } from "./commands/config";
 
-const allCommands = [logsCommand, taskCommand, agentCommand];
+const allCommands = [logsCommand, taskCommand, agentCommand, skillCommand, configCommand];
 const helpCommand = makeHelpCommand(allCommands);
 const commands = [helpCommand, ...allCommands];
 
