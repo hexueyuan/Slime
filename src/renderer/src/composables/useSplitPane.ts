@@ -3,30 +3,38 @@ import { ref, watch, onUnmounted, type Ref } from "vue";
 interface UseSplitPaneOptions {
   containerRef: Ref<HTMLElement | null>;
   defaultRatio?: number;
+  defaultRightPx?: number; // 若设置，初始右侧宽度固定为此值（优先于 defaultRatio）
   minLeftPx?: number;
   minRightPx?: number;
 }
 
 export function useSplitPane(options: UseSplitPaneOptions) {
-  const { containerRef, defaultRatio = 0.35, minLeftPx = 0, minRightPx = 0 } = options;
+  const {
+    containerRef,
+    defaultRatio = 0.35,
+    defaultRightPx,
+    minLeftPx = 0,
+    minRightPx = 0,
+  } = options;
 
-  const leftWidth = ref(0);
+  // 用 rightWidth 代替 leftWidth，右侧固定宽，左侧 flex-1，避免初始值为 0 导致右侧抢占空间
+  const rightWidth = ref(defaultRightPx ?? minRightPx);
   const isDragging = ref(false);
 
   function clamp(value: number): number {
     const containerWidth = containerRef.value?.clientWidth ?? 0;
-    if (containerWidth === 0) return 0;
-    const max = containerWidth - minRightPx;
-    return Math.min(Math.max(value, minLeftPx), max);
+    if (containerWidth === 0) return value;
+    const minRight = minRightPx;
+    const maxRight = containerWidth - minLeftPx;
+    return Math.min(Math.max(value, minRight), maxRight);
   }
 
   function recalc() {
     const containerWidth = containerRef.value?.clientWidth ?? 0;
-    if (containerWidth === 0) {
-      leftWidth.value = 0;
-      return;
-    }
-    leftWidth.value = clamp(containerWidth * defaultRatio);
+    if (containerWidth === 0) return;
+    const target =
+      defaultRightPx !== undefined ? defaultRightPx : containerWidth * (1 - defaultRatio);
+    rightWidth.value = clamp(target);
   }
 
   // Use ResizeObserver to recalc when container gets actual size
@@ -66,11 +74,11 @@ export function useSplitPane(options: UseSplitPaneOptions) {
   );
 
   let startX = 0;
-  let startWidth = 0;
+  let startRightWidth = 0;
 
   function onMouseMove(e: MouseEvent) {
-    const delta = e.clientX - startX;
-    leftWidth.value = clamp(startWidth + delta);
+    const delta = startX - e.clientX; // 向左拖 = 右侧变宽
+    rightWidth.value = clamp(startRightWidth + delta);
   }
 
   function onMouseUp() {
@@ -83,7 +91,7 @@ export function useSplitPane(options: UseSplitPaneOptions) {
 
   function onMouseDown(e: MouseEvent) {
     startX = e.clientX;
-    startWidth = leftWidth.value;
+    startRightWidth = rightWidth.value;
     isDragging.value = true;
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
@@ -96,7 +104,7 @@ export function useSplitPane(options: UseSplitPaneOptions) {
   }
 
   function onResize() {
-    leftWidth.value = clamp(leftWidth.value);
+    rightWidth.value = clamp(rightWidth.value);
   }
 
   onUnmounted(() => {
@@ -105,5 +113,5 @@ export function useSplitPane(options: UseSplitPaneOptions) {
     document.removeEventListener("mouseup", onMouseUp);
   });
 
-  return { leftWidth, isDragging, onMouseDown, resetToDefault };
+  return { rightWidth, isDragging, onMouseDown, resetToDefault };
 }

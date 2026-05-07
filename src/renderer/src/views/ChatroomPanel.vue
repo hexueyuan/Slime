@@ -47,9 +47,9 @@ function onSessionSelect(id: string) {
 
 // Split pane（mainRef 绑在 center+right 的包裹 div 上）
 const mainRef = ref<HTMLElement | null>(null);
-const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
+const { rightWidth, onMouseDown, resetToDefault } = useSplitPane({
   containerRef: mainRef,
-  defaultRatio: 0.65,
+  defaultRightPx: 320,
   minLeftPx: 280,
   minRightPx: 320,
 });
@@ -177,7 +177,7 @@ function onShowThoughtChain(messageId?: string) {
     <!-- Center + Right: Split pane area -->
     <div ref="mainRef" class="flex min-w-0 flex-1 overflow-hidden">
       <!-- Center: Chat area -->
-      <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
+      <div class="min-w-[280px] flex-1 overflow-hidden">
         <NewThread v-if="!sessionStore.activeSessionId" />
         <ChatView
           v-else
@@ -197,7 +197,7 @@ function onShowThoughtChain(messageId?: string) {
       </div>
 
       <!-- Right: Function panel -->
-      <div class="min-w-[320px] flex-1 overflow-hidden">
+      <div class="shrink-0 overflow-hidden" :style="{ width: rightWidth + 'px' }">
         <ChatFunctionPanel
           :active-tab="activeTab"
           :tool-call-blocks="toolCallBlocks"
