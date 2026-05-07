@@ -13,21 +13,23 @@
 
 在现有 Fastify taskServer（端口 `SLIME_TASK_PORT`）上新增 6 个路由：
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/agents` | 列出全部 agent（builtin + market） |
-| GET | `/agents/:id` | 获取指定 agent 详情 |
-| GET | `/skills` | 列出全部 skill（builtin + market） |
-| GET | `/config` | 列出全部 config key-value |
-| GET | `/config/:key` | 查询单个 key |
-| PUT | `/config/:key` | 修改单个 key（白名单限制） |
+| 方法 | 路径           | 说明                               |
+| ---- | -------------- | ---------------------------------- |
+| GET  | `/agents`      | 列出全部 agent（builtin + market） |
+| GET  | `/agents/:id`  | 获取指定 agent 详情                |
+| GET  | `/skills`      | 列出全部 skill（builtin + market） |
+| GET  | `/config`      | 列出全部 config key-value          |
+| GET  | `/config/:key` | 查询单个 key                       |
+| PUT  | `/config/:key` | 修改单个 key（白名单限制）         |
 
 **数据来源：**
-- agents → `agentRegistry.list()` / `agentRegistry.getById(id)`
-- skills → 扫描 `paths.builtinSkillsDir`（source: "builtin"）+ `paths.marketSkillsDir`（source: "market"）
-- config → `ConfigPresenter.get` / `ConfigPresenter.set`
+
+- agents → `agentRegistry.list()` / `agentRegistry.getById(id)`；`GET /agents/:id` 响应额外注入 `mbtiDescription`（从 `MBTI_PROFILES` 取）
+- skills → 独立扫描两个目录：`paths.builtinSkillsDir`（source: "builtin"）和 `paths.marketSkillsDir`（source: "market"）；不复用 `skills/loader.ts` 的 source 字段
+- config → `GET /config` 返回完整 JSON 对象；`GET /config/:key` 单 key 查询；`PUT /config/:key` 调用 `ConfigPresenter.set`
 
 **config 写入白名单：**
+
 - `obsidian.vaultPath`
 - `gateway.port`
 
@@ -95,16 +97,20 @@ list 输出格式（每行一个）:
 ## 涉及文件
 
 **新增：**
+
 - `src/cli/commands/agent.ts`
 - `src/cli/commands/skill.ts`
 - `src/cli/commands/config.ts`
 
 **修改：**
+
 - `src/cli/index.ts` — 注册三个新命令
 - `src/main/tasks/taskServer.ts` — 新增 6 个路由
 
 **删除：**
+
 - `src/renderer/src/components/settings/AgentSettings.vue`
 
 **修改（删除 tab）：**
+
 - `src/renderer/src/components/settings/SettingsDialog.vue`
