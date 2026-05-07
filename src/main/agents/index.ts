@@ -1,6 +1,6 @@
 import type { AgentConfig, AgentAvatar } from "@shared/types/agent";
 import type { MBTIType } from "@shared/constants/mbti";
-import { readdirSync, statSync, readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { app } from "electron";
 
@@ -24,79 +24,55 @@ interface AgentConfigJson {
   enabledSkills?: string[];
   subagentEnabled?: boolean;
   enableThinking?: boolean;
-  temperature?: number;
-  contextLength?: number;
-  maxTokens?: number;
   mcpTools?: string[];
 }
 
-function getAgentsDir(): string {
+function getHalDir(): string {
   if (app.isPackaged) {
-    return join(app.getAppPath(), "..", "resources", "agents");
+    return join(app.getAppPath(), "..", "resources", "agents", "hal-ai");
   }
-  return join(process.cwd(), "src", "main", "agents");
+  return join(process.cwd(), "src", "main", "agents", "hal-ai");
 }
 
-function loadBuiltinAgents(): BuiltinAgentDef[] {
-  const agentsDir = getAgentsDir();
-  const agents: BuiltinAgentDef[] = [];
+function loadHalAi(): BuiltinAgentDef {
+  const dir = getHalDir();
+  const configPath = join(dir, "config.json");
+  const cfg: AgentConfigJson = JSON.parse(readFileSync(configPath, "utf-8"));
+  const promptPath = join(dir, "prompt.md");
+  const prompt = existsSync(promptPath) ? readFileSync(promptPath, "utf-8").trim() : undefined;
 
-  for (const entry of readdirSync(agentsDir)) {
-    const dir = join(agentsDir, entry);
-    if (!statSync(dir).isDirectory()) continue;
+  const {
+    name,
+    description,
+    avatar,
+    mbti,
+    capabilityRequirements,
+    enabledTools,
+    enabledSkills,
+    allowedCliCommands,
+    subagentEnabled,
+    enableThinking,
+    mcpTools,
+  } = cfg;
 
-    const configPath = join(dir, "config.json");
-    if (!existsSync(configPath)) continue;
-
-    const cfg: AgentConfigJson = JSON.parse(readFileSync(configPath, "utf-8"));
-    const promptPath = join(dir, "prompt.md");
-    const soulPath = join(dir, "soul.md");
-    const prompt = existsSync(promptPath)
-      ? readFileSync(promptPath, "utf-8").trim()
-      : existsSync(soulPath)
-        ? readFileSync(soulPath, "utf-8").trim()
-        : undefined;
-
-    const {
-      name,
-      description,
-      avatar,
-      mbti,
+  return {
+    id: "hal-ai",
+    name,
+    description,
+    avatar,
+    mbti,
+    config: {
       capabilityRequirements,
       enabledTools,
       enabledSkills,
       allowedCliCommands,
       subagentEnabled,
       enableThinking,
-      temperature,
-      contextLength,
-      maxTokens,
       mcpTools,
-    } = cfg;
-
-    agents.push({
-      id: entry,
-      name,
-      description,
-      avatar,
-      mbti,
-      config: {
-        capabilityRequirements,
-        enabledTools,
-        enabledSkills,
-        allowedCliCommands,
-        subagentEnabled,
-        enableThinking,
-        temperature,
-        contextLength,
-        maxTokens,
-        mcpTools,
-        additionalPrompt: prompt,
-      },
-    });
-  }
-
-  return agents;
+      additionalPrompt: prompt,
+    },
+  };
 }
 
-export const BUILTIN_AGENTS: BuiltinAgentDef[] = loadBuiltinAgents();
+export const HAL_AI: BuiltinAgentDef = loadHalAi();
+export const BUILTIN_AGENTS: BuiltinAgentDef[] = [HAL_AI];
