@@ -11,7 +11,7 @@ import { useSessionStore } from "@/stores/session";
 import type { AssistantMessageBlock } from "@shared/types/chat";
 
 const mainRef = ref<HTMLElement | null>(null);
-const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
+const { rightWidth, onMouseDown, resetToDefault } = useSplitPane({
   containerRef: mainRef,
   defaultRatio: 0.65,
   minLeftPx: 280,
@@ -126,7 +126,7 @@ function onSelectToolCall(id: string | null) {
       </div>
     </div>
     <div class="flex min-h-0 flex-1 overflow-hidden">
-      <div class="shrink-0 overflow-hidden" :style="{ width: leftWidth + 'px' }">
+      <div class="min-w-[280px] flex-1 overflow-hidden">
         <EvolabChatPanel
           :selected-tool-call-id="selectedToolCallId"
           @select-tool-call="onSelectToolCall"
@@ -139,7 +139,7 @@ function onSelectToolCall(id: string | null) {
       >
         <div class="absolute inset-y-0 -left-1 -right-1" />
       </div>
-      <div class="min-w-[320px] flex-1 overflow-hidden">
+      <div class="shrink-0 overflow-hidden" :style="{ width: rightWidth + 'px' }">
         <FunctionPanel
           :active-tab="activeTab"
           :tool-call-blocks="toolCallBlocks"
