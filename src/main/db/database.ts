@@ -141,22 +141,6 @@ CREATE TABLE IF NOT EXISTS models (
 
 CREATE INDEX IF NOT EXISTS idx_models_channel ON models(channel_id);
 
-CREATE TABLE IF NOT EXISTS agents (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL DEFAULT 'custom',
-  enabled INTEGER NOT NULL DEFAULT 1,
-  protected INTEGER NOT NULL DEFAULT 0,
-  description TEXT,
-  avatar_json TEXT,
-  theme_color TEXT,
-  mbti TEXT NOT NULL DEFAULT 'INTJ',
-  config_json TEXT,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_agents_enabled ON agents(enabled);
-
 CREATE TABLE IF NOT EXISTS agent_sessions (
   id TEXT PRIMARY KEY,
   agent_id TEXT NOT NULL,
@@ -277,11 +261,6 @@ function migrate(instance: BetterSqlite3.Database): void {
   if (!cols.some((c) => c.name === "raw_request_body")) {
     instance.exec("ALTER TABLE relay_logs ADD COLUMN raw_request_body TEXT");
   }
-  // Add theme_color column to agents if it doesn't exist
-  const agentCols = instance.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
-  if (!agentCols.some((c) => c.name === "theme_color")) {
-    instance.exec("ALTER TABLE agents ADD COLUMN theme_color TEXT");
-  }
   // Add schedule tables if they don't exist (v0.5 migration)
   const tables = instance
     .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'")
@@ -341,11 +320,6 @@ function migrate(instance: BetterSqlite3.Database): void {
     CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_type, assignee_id);
     CREATE INDEX IF NOT EXISTS idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
   `);
-  // Add mbti column to agents (MBTI personality system)
-  const agentColsMbti = instance.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
-  if (!agentColsMbti.some((c) => c.name === "mbti")) {
-    instance.exec("ALTER TABLE agents ADD COLUMN mbti TEXT NOT NULL DEFAULT 'INTJ'");
-  }
   // Add log_date column to relay_logs for indexed date filtering
   // Try to add column; ignore if already exists
   try {
