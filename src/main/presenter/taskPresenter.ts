@@ -7,6 +7,7 @@ import { createTaskServer } from "../tasks/taskServer";
 import { eventBus } from "../eventbus";
 import { TASK_EVENTS } from "../../shared/events";
 import type { TaskStatus, ActorType } from "@shared/types/schedule";
+import type { IConfigPresenter } from "@shared/types/presenters";
 
 function msToHHmm(ms: number): string {
   const d = new Date(ms);
@@ -22,7 +23,11 @@ class TaskPresenter {
   private port: number = TASK_SERVER_PORT_DEV;
   private vaultPath: string | null = null;
 
-  async init(db: BetterSqlite3.Database, vaultPath: string): Promise<void> {
+  async init(
+    db: BetterSqlite3.Database,
+    vaultPath: string,
+    configStore?: IConfigPresenter,
+  ): Promise<void> {
     await this.destroy();
     this.db = db;
     this.vaultPath = vaultPath;
@@ -30,7 +35,11 @@ class TaskPresenter {
     const isDev = !app.isPackaged;
     this.port = isDev ? TASK_SERVER_PORT_DEV : TASK_SERVER_PORT_PROD;
 
-    this.server = createTaskServer(db, () => this.emitTasksChanged());
+    this.server = createTaskServer(db, () => this.emitTasksChanged(), {
+      get: (key) => configStore?.get(key) ?? Promise.resolve(null),
+      set: (key, value) => configStore?.set(key, value) ?? Promise.resolve(false),
+      readAll: () => configStore?.readAll() ?? Promise.resolve({}),
+    });
     await this.server.listen({ port: this.port, host: "127.0.0.1" });
 
     this.registerIpc();

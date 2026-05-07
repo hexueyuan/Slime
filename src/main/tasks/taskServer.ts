@@ -8,6 +8,12 @@ import { join } from "path";
 import { paths } from "@/utils/paths";
 import { MBTI_MAP } from "@shared/constants/mbti";
 
+interface ConfigStore {
+  get: (key: string) => Promise<unknown>;
+  set: (key: string, value: unknown) => Promise<boolean>;
+  readAll: () => Promise<Record<string, unknown>>;
+}
+
 interface SkillItem {
   name: string;
   description: string;
@@ -56,6 +62,7 @@ function msToHHmm(ms: number): string {
 export function createTaskServer(
   db: BetterSqlite3.Database,
   onTasksChanged: () => void,
+  configStore: ConfigStore,
 ): FastifyInstance {
   const app = Fastify({ logger: false });
 
@@ -263,6 +270,38 @@ export function createTaskServer(
     const market = scanSkillDir(paths.marketSkillsDir, "market");
     return reply.send([...builtin, ...market]);
   });
+
+  const CONFIG_WRITABLE_KEYS = ["obsidian.vaultPath", "gateway.port"];
+
+  app.get("/config", async (_req, reply) => {
+    const all = await configStore.readAll();
+    return reply.send(all);
+  });
+
+  app.get<{ Params: { key: string } }>("/config/:key", async (req, reply) => {
+    const value = await configStore.get(req.params.key);
+    if (value === null || value === undefined) {
+      return reply.status(404).send({ error: `config key not found: ${req.params.key}` });
+    }
+    return reply.send({ key: req.params.key, value });
+  });
+
+  app.put<{ Params: { key: string }; Body: { value: unknown } }>(
+    "/config/:key",
+    async (req, reply) => {
+      const { key } = req.params;
+      if (!CONFIG_WRITABLE_KEYS.includes(key)) {
+        return reply
+          .status(403)
+          .send({
+            error: `key '${key}' is not writable. Allowed: ${CONFIG_WRITABLE_KEYS.join(", ")}`,
+          });
+      }
+      const { value } = req.body;
+      await configStore.set(key, value);
+      return reply.send({ key, value });
+    },
+  );
 
   return app;
 }

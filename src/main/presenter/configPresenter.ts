@@ -19,4 +19,8 @@ export class ConfigPresenter implements IConfigPresenter {
     logger.debug("Config set", { key });
     return true;
   }
+
+  async readAll(): Promise<Record<string, unknown>> {
+    return this.store.read();
+  }
 }
