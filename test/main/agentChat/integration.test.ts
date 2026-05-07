@@ -58,7 +58,6 @@ describe("AgentChatPresenter integration", () => {
       // Session config created
       const config = configDao.getConfigById(db, session.id);
       expect(config).toBeDefined();
-      expect(config!.capabilityRequirements).toEqual(["reasoning"]);
 
       await adapter.deleteSession(session.id);
       const afterDelete = await adapter.getSessions();

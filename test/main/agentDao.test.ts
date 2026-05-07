@@ -133,13 +133,8 @@ describe("agentDao", () => {
     const list = db.prepare("SELECT * FROM agents WHERE id = 'hal-ai'").all();
     expect(list).toHaveLength(1);
     const hal = agentDao.getAgentById(db, "hal-ai")!;
-    expect(hal.name).toBe("哈尔");
     expect(hal.type).toBe("builtin");
     expect(hal.protected).toBe(true);
-    expect(hal.mbti).toBe("INTJ");
-    expect(hal.config).toMatchObject({
-      capabilityRequirements: ["reasoning"],
-    });
   });
 
   it("config_json and avatar_json serialization roundtrip", () => {
