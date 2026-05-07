@@ -1,65 +1,44 @@
 import type { SkillInfo } from "@shared/types/skills";
 import type { Skill } from "@/skills/types";
 import { scanSkills, loadSkillContent } from "@/skills/loader";
+import { paths } from "@/utils";
 
 export class SkillPresenter {
-  private builtinCache: Skill[] | null = null;
-  private agentSkillCache = new Map<string, Skill[]>();
+  private marketCache: Skill[] | null = null;
 
-  constructor(
-    private builtinDir: string,
-    _agentsBaseDir: string,
-  ) {}
+  constructor() {}
 
-  private loadBuiltinCache(): Skill[] {
-    if (!this.builtinCache) {
-      this.builtinCache = scanSkills(this.builtinDir).map((s) => ({
+  private loadMarketCache(): Skill[] {
+    if (!this.marketCache) {
+      this.marketCache = scanSkills(paths.marketSkillsDir).map((s) => ({
         ...s,
         source: "builtin" as const,
       }));
     }
-    return this.builtinCache;
+    return this.marketCache;
   }
 
-  private loadAgentSkillCache(agentId: string, agentSkillsDir: string): Skill[] {
-    if (!this.agentSkillCache.has(agentId)) {
-      const skills = scanSkills(agentSkillsDir).map((s) => ({ ...s, source: "local" as const }));
-      this.agentSkillCache.set(agentId, skills);
-    }
-    return this.agentSkillCache.get(agentId)!;
-  }
-
-  getSkillList(agentId: string, agentSkillsDir?: string, enabledSkills?: string[]): SkillInfo[] {
+  getSkillList(_agentId: string, _agentSkillsDir?: string, enabledSkills?: string[]): SkillInfo[] {
     const enabledSet = new Set(enabledSkills ?? []);
-    const builtins = this.loadBuiltinCache().filter((s) => enabledSet.has(s.name));
-
-    const locals: Skill[] = agentSkillsDir ? this.loadAgentSkillCache(agentId, agentSkillsDir) : [];
-    const filteredLocals = locals.filter((s) => enabledSet.has(s.name));
-
-    // builtin overrides local with same name
-    const builtinNames = new Set(builtins.map((s) => s.name));
-    const merged = [...builtins, ...filteredLocals.filter((s) => !builtinNames.has(s.name))];
-
-    return merged.map(({ name, description, source }) => ({ name, description, source }));
-  }
-
-  loadSkill(name: string): string {
-    const builtin = this.builtinCache?.find((s) => s.name === name);
-    if (builtin) return loadSkillContent(builtin.filePath);
-
-    for (const skills of this.agentSkillCache.values()) {
-      const found = skills.find((s) => s.name === name);
-      if (found) return loadSkillContent(found.filePath);
-    }
-    throw new Error(`Skill "${name}" not found`);
-  }
-
-  listLocalSkillsForAgent(agentId: string, agentSkillsDir: string): SkillInfo[] {
-    const skills = this.loadAgentSkillCache(agentId, agentSkillsDir);
+    const skills = this.loadMarketCache().filter((s) => enabledSet.has(s.name));
     return skills.map(({ name, description, source }) => ({ name, description, source }));
   }
 
-  invalidateAgentCache(agentId: string): void {
-    this.agentSkillCache.delete(agentId);
+  loadSkill(name: string): string {
+    const skill = this.loadMarketCache()?.find((s) => s.name === name);
+    if (skill) return loadSkillContent(skill.filePath);
+    throw new Error(`Skill "${name}" not found`);
+  }
+
+  listLocalSkillsForAgent(_agentId: string, _dir: string): SkillInfo[] {
+    return [];
+  }
+
+  invalidateCache(): void {
+    this.marketCache = null;
+  }
+
+  invalidateAgentCache(_agentId: string): void {
+    // no-op, agent-specific caches removed
   }
 }
