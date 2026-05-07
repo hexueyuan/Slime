@@ -291,14 +291,18 @@ export function createTaskServer(
     async (req, reply) => {
       const { key } = req.params;
       if (!CONFIG_WRITABLE_KEYS.includes(key)) {
-        return reply
-          .status(403)
-          .send({
-            error: `key '${key}' is not writable. Allowed: ${CONFIG_WRITABLE_KEYS.join(", ")}`,
-          });
+        return reply.status(403).send({
+          error: `key '${key}' is not writable. Allowed: ${CONFIG_WRITABLE_KEYS.join(", ")}`,
+        });
       }
       const { value } = req.body;
-      await configStore.set(key, value);
+      if (value === undefined) {
+        return reply.status(400).send({ error: "value is required" });
+      }
+      const ok = await configStore.set(key, value);
+      if (!ok) {
+        return reply.status(503).send({ error: "config store unavailable" });
+      }
       return reply.send({ key, value });
     },
   );
