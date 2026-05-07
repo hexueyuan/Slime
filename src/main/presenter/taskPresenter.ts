@@ -8,6 +8,11 @@ import { eventBus } from "../eventbus";
 import { TASK_EVENTS } from "../../shared/events";
 import type { TaskStatus, ActorType } from "@shared/types/schedule";
 
+function msToHHmm(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 const TASK_SERVER_PORT_PROD = 40001;
 const TASK_SERVER_PORT_DEV = 40002;
 
@@ -70,7 +75,15 @@ class TaskPresenter {
         taskDao.addTaskAutoTimeline(this.db!, id, `开始: ${task.title}`);
         this.emitTimelineChanged();
       } else if (status === "done" || status === "cancelled") {
-        taskDao.finishTaskAutoTimeline(this.db!, id);
+        const closed = taskDao.finishTaskAutoTimeline(this.db!, id);
+        if (!closed) {
+          const label = status === "done" ? "完成" : "取消";
+          const startTime = msToHHmm(task.startedAt ?? task.createdAt);
+          taskDao.addTaskAutoTimeline(this.db!, id, `${label}: ${task.title}`, {
+            startTime,
+            endTime: msToHHmm(Date.now()),
+          });
+        }
         this.emitTimelineChanged();
       }
       this.emitTasksChanged();

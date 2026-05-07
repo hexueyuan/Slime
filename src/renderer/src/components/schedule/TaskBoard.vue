@@ -93,7 +93,7 @@
               <Icon v-if="task.repeatInterval" icon="lucide:repeat" class="h-2.5 w-2.5" />
             </span>
             <span class="shrink-0 text-[10px] text-muted-foreground">{{
-              formatDate(task.finishedAt)
+              formatTimeRange(task.startedAt, task.finishedAt)
             }}</span>
           </div>
           <div class="flex items-center gap-3 pl-[36px] text-[10px] text-muted-foreground">
@@ -212,5 +212,17 @@ function formatDate(ms?: number): string {
   const h = String(d.getHours()).padStart(2, "0");
   const min = String(d.getMinutes()).padStart(2, "0");
   return `${y}/${m}/${day}（周${w}）${h}:${min}`;
+}
+
+function formatTime(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function formatTimeRange(startMs?: number, endMs?: number): string {
+  if (!startMs && !endMs) return "";
+  if (startMs && endMs) return `${formatTime(startMs)} - ${formatTime(endMs)}`;
+  if (endMs) return formatTime(endMs);
+  return formatTime(startMs!);
 }
 </script>

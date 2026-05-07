@@ -382,17 +382,19 @@ export function addTaskAutoTimeline(
   db: BetterSqlite3.Database,
   taskId: string,
   content: string,
+  opts?: { startTime?: string; endTime?: string },
 ): TimelineEntry {
   return addTimelineEntry(db, {
     date: todayDate(),
-    startTime: nowHHmm(),
+    startTime: opts?.startTime ?? nowHHmm(),
+    endTime: opts?.endTime,
     content,
     source: "task_auto",
     sourceId: taskId,
   });
 }
 
-export function finishTaskAutoTimeline(db: BetterSqlite3.Database, taskId: string): void {
+export function finishTaskAutoTimeline(db: BetterSqlite3.Database, taskId: string): boolean {
   const row = db
     .prepare(
       "SELECT * FROM timeline_entries WHERE source = 'task_auto' AND source_id = ? AND end_time IS NULL ORDER BY created_at DESC LIMIT 1",
@@ -400,5 +402,7 @@ export function finishTaskAutoTimeline(db: BetterSqlite3.Database, taskId: strin
     .get(taskId) as TimelineRow | undefined;
   if (row) {
     db.prepare("UPDATE timeline_entries SET end_time = ? WHERE id = ?").run(nowHHmm(), row.id);
+    return true;
   }
+  return false;
 }

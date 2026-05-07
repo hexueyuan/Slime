@@ -29,7 +29,41 @@ export function useSplitPane(options: UseSplitPaneOptions) {
     leftWidth.value = clamp(containerWidth * defaultRatio);
   }
 
-  watch(containerRef, () => recalc(), { immediate: true });
+  // Use ResizeObserver to recalc when container gets actual size
+  let resizeObserver: ResizeObserver | null = null;
+  let initialized = false;
+
+  watch(
+    containerRef,
+    (el, oldEl) => {
+      if (oldEl && resizeObserver) {
+        resizeObserver.unobserve(oldEl);
+      }
+      if (el) {
+        if (!resizeObserver) {
+          resizeObserver = new ResizeObserver(() => {
+            if (!initialized) {
+              const w = containerRef.value?.clientWidth ?? 0;
+              if (w > 0) {
+                initialized = true;
+                recalc();
+              }
+            } else {
+              onResize();
+            }
+          });
+        }
+        resizeObserver.observe(el);
+        // Try immediate calc in case already laid out
+        const w = el.clientWidth;
+        if (w > 0) {
+          initialized = true;
+          recalc();
+        }
+      }
+    },
+    { immediate: true },
+  );
 
   let startX = 0;
   let startWidth = 0;
@@ -65,9 +99,8 @@ export function useSplitPane(options: UseSplitPaneOptions) {
     leftWidth.value = clamp(leftWidth.value);
   }
 
-  window.addEventListener("resize", onResize);
   onUnmounted(() => {
-    window.removeEventListener("resize", onResize);
+    resizeObserver?.disconnect();
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
   });

@@ -4,6 +4,11 @@ import * as taskDao from "./taskDao";
 import { getAgentById } from "../db/models/agentDao";
 import type { TaskStatus } from "@shared/types/schedule";
 
+function msToHHmm(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export function createTaskServer(
   db: BetterSqlite3.Database,
   onTasksChanged: () => void,
@@ -131,7 +136,14 @@ export function createTaskServer(
   app.patch<{ Params: { id: string } }>("/tasks/:id/done", async (req, reply) => {
     try {
       const task = taskDao.updateTaskStatus(db, req.params.id, "done");
-      taskDao.finishTaskAutoTimeline(db, task.id);
+      const closed = taskDao.finishTaskAutoTimeline(db, task.id);
+      if (!closed) {
+        const startTime = msToHHmm(task.startedAt ?? task.createdAt);
+        taskDao.addTaskAutoTimeline(db, task.id, `完成: ${task.title}`, {
+          startTime,
+          endTime: msToHHmm(Date.now()),
+        });
+      }
       onTasksChanged();
       return reply.send(task);
     } catch (e: unknown) {
@@ -144,7 +156,14 @@ export function createTaskServer(
   app.patch<{ Params: { id: string } }>("/tasks/:id/cancel", async (req, reply) => {
     try {
       const task = taskDao.updateTaskStatus(db, req.params.id, "cancelled");
-      taskDao.finishTaskAutoTimeline(db, task.id);
+      const closed = taskDao.finishTaskAutoTimeline(db, task.id);
+      if (!closed) {
+        const startTime = msToHHmm(task.startedAt ?? task.createdAt);
+        taskDao.addTaskAutoTimeline(db, task.id, `取消: ${task.title}`, {
+          startTime,
+          endTime: msToHHmm(Date.now()),
+        });
+      }
       onTasksChanged();
       return reply.send(task);
     } catch (e: unknown) {
