@@ -3,27 +3,7 @@
   "description": "你好我是哈尔，使用Slime有问题都可以来找我～",
   "mbti": "INTJ",
   "capabilityRequirements": ["reasoning"],
-  "enabledTools": [
-    "read",
-    "write",
-    "edit",
-    "exec",
-    "list_dir",
-    "ask_user",
-    "open_url",
-    "browser_navigate",
-    "browser_screenshot",
-    "browser_click",
-    "browser_type",
-    "browser_scroll",
-    "browser_select",
-    "browser_hover",
-    "browser_close",
-    "browser_wait",
-    "web_fetch",
-    "skill",
-    "subagent"
-  ],
+  "enabledTools": ["read", "write", "edit", "exec", "ask_user", "open", "Skill"],
   "allowedCliCommands": ["help", "logs"],
   "enableThinking": true
 }

@@ -172,9 +172,14 @@ describe("ToolPresenter", () => {
     });
 
     it("should allow git status", async () => {
-      const result = (await tp.callTool("s1", "exec", { command: "git status" })) as any;
-      // may fail if not a git repo, but should not be blocked
-      expect(result).toHaveProperty("exit_code");
+      // should not be blocked by blacklist; may throw due to not being a git repo
+      try {
+        const result = (await tp.callTool("s1", "exec", { command: "git status" })) as any;
+        expect(result).toHaveProperty("exit_code");
+      } catch (e: any) {
+        // not blocked, just a git error
+        expect(e.message).not.toContain("blocked");
+      }
     });
   });
 });

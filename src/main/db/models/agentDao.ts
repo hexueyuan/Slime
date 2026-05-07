@@ -137,7 +137,7 @@ export function ensureBuiltin(db: BetterSqlite3.Database): void {
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
        description = excluded.description,
-       avatar_json = excluded.avatar_json,
+       avatar_json = COALESCE(excluded.avatar_json, agents.avatar_json),
        mbti = excluded.mbti,
        config_json = excluded.config_json,
        updated_at = excluded.updated_at`,

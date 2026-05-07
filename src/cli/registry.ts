@@ -5,11 +5,16 @@ export interface CommandDef {
   description: string;
   detail: string;
   allowedRoles: Role[];
+  allowedAgents?: string[];
   run: (args: string[], ctx: CallerContext) => void;
 }
 
 export function canAccess(cmd: CommandDef, ctx: CallerContext): boolean {
   if (!cmd.allowedRoles.includes(ctx.role)) return false;
+  // allowedAgents whitelist for builtin-agent
+  if (cmd.allowedAgents && ctx.role === "builtin-agent") {
+    if (!cmd.allowedAgents.includes(ctx.userId)) return false;
+  }
   // SLIME_ALLOWED_COMMANDS whitelist from agent config
   const allowed = process.env.SLIME_ALLOWED_COMMANDS;
   if (allowed !== undefined) {

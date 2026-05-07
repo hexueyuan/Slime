@@ -16,7 +16,11 @@ function getCallerContext() {
 }
 function canAccess(cmd, ctx) {
   if (!cmd.allowedRoles.includes(ctx.role)) return false;
-  if (cmd.allowedAgents && !cmd.allowedAgents.includes(ctx.userId)) return false;
+  const allowed = process.env.SLIME_ALLOWED_COMMANDS;
+  if (allowed !== void 0) {
+    const list = allowed.split(",").map((s) => s.trim());
+    if (!list.includes(cmd.name)) return false;
+  }
   return true;
 }
 function getTodayLogPath(dataDir) {
@@ -131,7 +135,6 @@ const logsCommand = {
   slime-cli logs --key error --tail 20  # 查看最后 20 条错误日志
   slime-cli logs --clear            # 清空今日日志`,
   allowedRoles: ["builtin-agent"],
-  allowedAgents: ["hal-ai"],
   run: runLogs,
 };
 const STATUS_LABEL = {

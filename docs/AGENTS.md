@@ -11,7 +11,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
   - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state；schedule 表：tasks, notes, timeline_entries, attachments）
   - `gateway/`: LLM Gateway 核心（router, balancer, circuit, keypool, relay, server, outbound adapters, inbound handlers, stats, auth）
   - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool）
-  - `agents/`: 内置 Agent 定义（index.ts BUILTIN_AGENTS 注册表 + `<id>/config.json` + `<id>/soul.md`）
+  - `agents/`: 内置 Agent 定义（index.ts BUILTIN_AGENTS 注册表 + `<id>/config.json` + `<id>/prompt.md`）
   - `skills/`: 全局 Skill 目录（`<name>/manifest.json` + 实现文件）
   - `mcp/`: MCP Client（types, transport/stdio+SSE, mcpClient, healthChecker）
   - `tasks/`: Schedule 任务系统（taskDao, taskServer/Fastify HTTP, attachmentService）

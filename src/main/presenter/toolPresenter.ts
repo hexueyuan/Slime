@@ -187,11 +187,13 @@ export class ToolPresenter {
               killed: e.killed,
               signal: e.signal,
             });
-            return {
+            const exitCode = e.code ?? 1;
+            const result = {
               stdout: e.stdout || "",
               stderr: e.stderr || e.message || "",
-              exit_code: e.code ?? 1,
+              exit_code: exitCode,
             };
+            throw new Error(JSON.stringify(result));
           }
         },
       }),

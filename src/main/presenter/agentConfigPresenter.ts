@@ -43,13 +43,21 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
   private async syncBuiltinAvatars(): Promise<void> {
     const agentsResourceDir = join(paths.projectRoot, "resources", "agents");
     await mkdir(paths.avatarsDir, { recursive: true });
-    const avatarMap: Record<string, string> = {
-      "hal.png": join(agentsResourceDir, "hal.png"),
-      "moss.png": join(agentsResourceDir, "moss.png"),
+    const avatarMap: Record<string, { src: string; agentId: string }> = {
+      "hal.png": { src: join(agentsResourceDir, "hal.png"), agentId: "hal-ai" },
+      "moss.png": { src: join(agentsResourceDir, "moss.png"), agentId: "moss-ai" },
     };
-    for (const [dest, src] of Object.entries(avatarMap)) {
+    const db = getDb();
+    for (const [dest, { src, agentId }] of Object.entries(avatarMap)) {
       try {
         await copyFile(src, join(paths.avatarsDir, dest));
+        // Ensure DB has avatar reference if missing
+        const agent = agentDao.getAgentById(db, agentId);
+        if (agent && !agent.avatar) {
+          agentDao.updateAgent(db, agentId, {
+            avatar: { kind: "image", path: `avatars/${dest}` },
+          });
+        }
       } catch (e) {
         logger.warn("syncBuiltinAvatars: failed to copy", { src, error: e });
       }

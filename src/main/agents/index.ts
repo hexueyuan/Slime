@@ -2,6 +2,7 @@ import type { AgentConfig, AgentAvatar } from "@shared/types/agent";
 import type { MBTIType } from "@shared/constants/mbti";
 import { readdirSync, statSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
+import { app } from "electron";
 
 export interface BuiltinAgentDef {
   id: string;
@@ -30,8 +31,15 @@ interface AgentConfigJson {
   disabledSkills?: string[];
 }
 
+function getAgentsDir(): string {
+  if (app.isPackaged) {
+    return join(app.getAppPath(), "..", "resources", "agents");
+  }
+  return join(process.cwd(), "src", "main", "agents");
+}
+
 function loadBuiltinAgents(): BuiltinAgentDef[] {
-  const agentsDir = __dirname;
+  const agentsDir = getAgentsDir();
   const agents: BuiltinAgentDef[] = [];
 
   for (const entry of readdirSync(agentsDir)) {
@@ -57,6 +65,8 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       mbti,
       capabilityRequirements,
       enabledTools,
+      enabledSkills,
+      allowedCliCommands,
       subagentEnabled,
       enableThinking,
       temperature,
@@ -75,6 +85,8 @@ function loadBuiltinAgents(): BuiltinAgentDef[] {
       config: {
         capabilityRequirements,
         enabledTools,
+        enabledSkills,
+        allowedCliCommands,
         subagentEnabled,
         enableThinking,
         temperature,
