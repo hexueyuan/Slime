@@ -56,23 +56,21 @@ export interface Relay {
 }
 
 function filterForLog(request: InternalRequest): string {
-  const { rawBody: _rawBody, rawHeaders: _rawHeaders, apiKeyId: _apiKeyId, ...rest } = request;
-  const filtered = {
-    ...rest,
-    messages: request.messages.map((msg) => ({
+  if (!request.rawBody) return "{}";
+  const raw = JSON.parse(request.rawBody) as Record<string, unknown>;
+  if (Array.isArray(raw.messages)) {
+    raw.messages = (raw.messages as any[]).map((msg) => ({
       ...msg,
-      content: msg.content.map((c) => {
-        if (c.type === "image") {
-          return {
-            type: "image" as const,
-            source: { type: "url" as const, url: "[image data omitted]" },
-          };
-        }
-        return c;
-      }),
-    })),
-  };
-  return JSON.stringify(filtered);
+      content: Array.isArray(msg.content)
+        ? msg.content.map((c: any) =>
+            c.type === "image" && c.source?.type === "base64"
+              ? { ...c, source: { type: "url", url: "[image data omitted]" } }
+              : c,
+          )
+        : msg.content,
+    }));
+  }
+  return JSON.stringify(raw);
 }
 
 export function createRelay(deps: RelayDeps): Relay {
