@@ -13,28 +13,26 @@ const props = defineProps<{
   points: MinutePoint[];
 }>();
 
-// 生成最近 30 个整分钟的时间串（UTC），与 relay_logs.created_at datetime('now') 对齐
+// 生成最近 30 个整分钟的本地时间串，与 relay_logs.created_at 本地时间对齐
 function getLast30Minutes(): string[] {
   const result: string[] = [];
   const now = new Date();
   const base = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      now.getUTCHours(),
-      now.getUTCMinutes(),
-      0,
-      0,
-    ),
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+    0,
+    0,
   );
   for (let i = 29; i >= 0; i--) {
     const t = new Date(base.getTime() - i * 60 * 1000);
-    const mm = String(t.getUTCMinutes()).padStart(2, "0");
-    const hh = String(t.getUTCHours()).padStart(2, "0");
-    const yyyy = t.getUTCFullYear();
-    const mo = String(t.getUTCMonth() + 1).padStart(2, "0");
-    const dd = String(t.getUTCDate()).padStart(2, "0");
+    const yyyy = t.getFullYear();
+    const mo = String(t.getMonth() + 1).padStart(2, "0");
+    const dd = String(t.getDate()).padStart(2, "0");
+    const hh = String(t.getHours()).padStart(2, "0");
+    const mm = String(t.getMinutes()).padStart(2, "0");
     result.push(`${yyyy}-${mo}-${dd}T${hh}:${mm}`);
   }
   return result;
@@ -53,13 +51,11 @@ const filledPoints = computed(() => {
 
 const hasData = computed(() => props.points.some((p) => p.successCount + p.failCount > 0));
 
-// minute key 是 UTC，转为本地时间显示
+// minute key 已经是本地时间，直接提取 HH:MM 显示
 const xLabels = computed(() =>
   filledPoints.value.map((p) => {
-    const d = new Date(p.minute + "Z"); // append Z to parse as UTC
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mm = String(d.getMinutes()).padStart(2, "0");
-    return `${hh}:${mm}`;
+    const timePart = p.minute.split("T")[1];
+    return timePart;
   }),
 );
 
@@ -123,7 +119,7 @@ const availOption = computed(() => ({
     borderColor: "#333",
     textStyle: { color: "#ccc", fontSize: 11 },
     formatter: (params: Array<{ value: number | null; axisValue: string }>) =>
-      params[0].value !== null
+      params[0].value != null
         ? `${params[0].axisValue}  ${params[0].value}%`
         : `${params[0].axisValue}  无流量`,
   },
@@ -168,7 +164,7 @@ const latencyOption = computed(() => ({
     borderColor: "#333",
     textStyle: { color: "#ccc", fontSize: 11 },
     formatter: (params: Array<{ value: number | null; axisValue: string; seriesName: string }>) =>
-      params[0].value !== null
+      params[0].value != null
         ? `${params[0].axisValue}<br/>${params[0].seriesName} &nbsp; ${formatLatency(params[0].value)}`
         : `${params[0].axisValue}<br/>无流量`,
   },

@@ -110,7 +110,7 @@ const availOption = computed(() => ({
     borderColor: "#333",
     textStyle: { color: "#ccc", fontSize: 11 },
     formatter: (params: Array<{ value: number | null }>) =>
-      params[0].value !== null ? `${params[0].value}%` : "无流量",
+      params[0].value != null ? `${params[0].value}%` : "无流量",
   },
   series: [
     {

@@ -177,3 +177,100 @@ describe("aggregateToHourly 保持本地时间小时", () => {
     expect(rows[1].hour).toBe(22);
   });
 });
+
+describe("getChannelStabilityHourly 本地时间 hour key", () => {
+  it("返回的 hour 格式为 YYYY-MM-DDThh 且基于本地时间", async () => {
+    const { getChannelStabilityHourly } = await import("@/db/models/statsDao");
+
+    // 插入本地时间 10:xx 和 22:xx 的数据
+    db.prepare(`
+      INSERT INTO relay_logs
+        (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+         cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at, log_date)
+      VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 200, 'success', '2026-05-07 10:30:00', '2026-05-07')
+    `).run();
+    db.prepare(`
+      INSERT INTO relay_logs
+        (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+         cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at, log_date)
+      VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 300, 'error', '2026-05-07 22:15:00', '2026-05-07')
+    `).run();
+
+    const points = getChannelStabilityHourly(db, 1, "2026-05-07", "2026-05-08");
+    expect(points).toHaveLength(2);
+    expect(points[0].hour).toBe("2026-05-07T10");
+    expect(points[0].successCount).toBe(1);
+    expect(points[1].hour).toBe("2026-05-07T22");
+    expect(points[1].failCount).toBe(1);
+  });
+});
+
+describe("getChannelStabilityMinute 本地时间 minute key", () => {
+  it("返回的 minute 格式为 YYYY-MM-DDThh:mm 且基于本地时间", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 4, 7, 13, 20, 0)); // 本地时间 13:20
+    try {
+      const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
+
+      // 插入本地时间 13:04 的数据（在 30 分钟内）
+      db.prepare(`
+        INSERT INTO relay_logs
+          (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+           cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at, log_date)
+        VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 3100, 'success', '2026-05-07 13:04:00', '2026-05-07')
+      `).run();
+
+      const points = getChannelStabilityMinute(db, 1);
+      expect(points).toHaveLength(1);
+      expect(points[0].minute).toBe("2026-05-07T13:04");
+      expect(points[0].successCount).toBe(1);
+      expect(points[0].avgLatencyMs).toBe(3100);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("minute key 与前端 getLast30Minutes 本地时间 key 格式一致可匹配", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 4, 7, 13, 20, 0)); // 本地时间 13:20
+    try {
+      const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
+
+      db.prepare(`
+        INSERT INTO relay_logs
+          (group_name, model_name, channel_id, channel_name, input_tokens, output_tokens,
+           cache_read_tokens, cache_write_tokens, cost, duration_ms, status, created_at, log_date)
+        VALUES ('g', 'gpt-4o', 1, 'ch1', 100, 50, 0, 0, 0.001, 200, 'success', '2026-05-07 13:04:00', '2026-05-07')
+      `).run();
+
+      const points = getChannelStabilityMinute(db, 1);
+
+      // 模拟前端 getLast30Minutes 的逻辑（本地时间）
+      const now = new Date();
+      const base = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        now.getHours(),
+        now.getMinutes(),
+        0,
+        0,
+      );
+      const slots: string[] = [];
+      for (let i = 29; i >= 0; i--) {
+        const t = new Date(base.getTime() - i * 60 * 1000);
+        const yyyy = t.getFullYear();
+        const mo = String(t.getMonth() + 1).padStart(2, "0");
+        const dd = String(t.getDate()).padStart(2, "0");
+        const hh = String(t.getHours()).padStart(2, "0");
+        const mm = String(t.getMinutes()).padStart(2, "0");
+        slots.push(`${yyyy}-${mo}-${dd}T${hh}:${mm}`);
+      }
+
+      // DB 返回的 minute key 应该出现在前端生成的 slots 中
+      expect(slots).toContain(points[0].minute);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
