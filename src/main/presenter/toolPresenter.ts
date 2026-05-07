@@ -2,6 +2,7 @@ import { z } from "zod";
 import { exec as execCb } from "child_process";
 import { existsSync } from "fs";
 import { homedir } from "os";
+import { join } from "path";
 import { promisify } from "util";
 import type { FilePresenter } from "./filePresenter";
 import type { ContentPresenter } from "./contentPresenter";
@@ -150,7 +151,9 @@ export class ToolPresenter {
                   : {}),
               }
             : {};
-          const fallbackPath = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+          const slimeBinDir = join(homedir(), ".local", "bin");
+          const basePath = process.env.PATH || "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+          const finalPath = `${slimeBinDir}:${basePath}`;
           try {
             const { stdout, stderr } = await execAsync(command, {
               cwd,
@@ -158,9 +161,9 @@ export class ToolPresenter {
               timeout: timeout_ms,
               maxBuffer: 1024 * 1024,
               env: {
-                PATH: fallbackPath,
                 ...process.env,
                 ...slimeEnv,
+                PATH: finalPath,
               },
             });
             logger.debug("tool:exec:ok", {
