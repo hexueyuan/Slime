@@ -22,6 +22,18 @@
         </div>
       </div>
 
+      <!-- ID (create mode only) -->
+      <div v-if="isCreateMode" class="space-y-1">
+        <label class="text-xs text-muted-foreground">英文ID（全小写，短横线分隔）</label>
+        <input
+          v-model="form.id"
+          type="text"
+          class="w-full rounded border px-2 py-1 text-sm bg-muted"
+          placeholder="my-agent"
+        />
+        <p v-if="idError" class="text-xs text-red-400">{{ idError }}</p>
+      </div>
+
       <!-- 名称 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">名称</label>
@@ -172,34 +184,7 @@
       </div>
 
       <!-- 参数 -->
-      <div>
-        <label class="text-xs font-medium text-muted-foreground">参数</label>
-        <div class="mt-1 grid grid-cols-2 gap-4">
-          <div>
-            <label class="text-xs text-muted-foreground">temperature</label>
-            <input
-              v-model.number="form.temperature"
-              :disabled="readonly"
-              type="number"
-              step="0.1"
-              min="0"
-              max="2"
-              class="mt-0.5 block w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-50"
-            />
-          </div>
-          <div>
-            <label class="text-xs text-muted-foreground">maxTokens</label>
-            <input
-              v-model.number="form.maxTokens"
-              :disabled="readonly"
-              type="number"
-              step="100"
-              min="0"
-              class="mt-0.5 block w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-50"
-            />
-          </div>
-        </div>
-      </div>
+      <!-- removed temperature and maxTokens -->
 
       <!-- 开关 -->
       <div>
@@ -287,6 +272,13 @@ const agentConfigPresenter = usePresenter("agentConfigPresenter");
 const agentStore = useAgentStore();
 
 const readonly = computed(() => props.isBuiltin && !props.isDev);
+const isCreateMode = computed(() => !props.agent && !props.isBuiltin);
+const idError = computed(() => {
+  if (!isCreateMode.value || !form.id) return "";
+  if (!/^[a-z][a-z0-9-]*$/.test(form.id)) return "只允许小写字母、数字和短横线，必须字母开头";
+  if (form.id.length > 50) return "最长50字符";
+  return "";
+});
 const saving = ref(false);
 const saveSuccess = ref(false);
 const availableTools = ref<string[]>([]);
@@ -307,6 +299,7 @@ async function changeAvatar() {
 }
 
 const form = reactive({
+  id: "",
   name: "",
   description: "",
   mbti: "INTJ" as MBTIType,
@@ -315,8 +308,6 @@ const form = reactive({
   enabledTools: [] as string[],
   allowedCliCommands: [] as string[],
   enabledSkills: [] as string[],
-  temperature: undefined as number | undefined,
-  maxTokens: undefined as number | undefined,
   subagentEnabled: false,
   enableThinking: false,
 });
@@ -355,8 +346,6 @@ function loadBuiltin(info: BuiltinAgentInfo) {
   form.enabledTools = ((cfg.enabledTools as string[]) || []).slice();
   form.allowedCliCommands = ((cfg.allowedCliCommands as string[]) || []).slice();
   form.enabledSkills = ((cfg.enabledSkills as string[]) || []).slice();
-  form.temperature = cfg.temperature as number | undefined;
-  form.maxTokens = cfg.maxTokens as number | undefined;
   form.subagentEnabled = (cfg.subagentEnabled as boolean) || false;
   form.enableThinking = (cfg.enableThinking as boolean) || false;
   // Load avatar from DB agent record
@@ -373,8 +362,6 @@ async function loadCustom(agent: Agent) {
   form.enabledTools = (cfg.enabledTools || []).slice();
   form.allowedCliCommands = (cfg.allowedCliCommands || []).slice();
   form.enabledSkills = (cfg.enabledSkills || []).slice();
-  form.temperature = cfg.temperature;
-  form.maxTokens = cfg.maxTokens;
   form.subagentEnabled = cfg.subagentEnabled || false;
   form.enableThinking = cfg.enableThinking || false;
   currentAvatar.value = agent.avatar ?? null;
@@ -411,8 +398,6 @@ async function save() {
         enabledTools: form.enabledTools,
         allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
         enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
-        temperature: form.temperature,
-        maxTokens: form.maxTokens,
         subagentEnabled: form.subagentEnabled || undefined,
         enableThinking: form.enableThinking || undefined,
       };
@@ -428,8 +413,23 @@ async function save() {
           enabledTools: form.enabledTools,
           allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
           enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
-          temperature: form.temperature,
-          maxTokens: form.maxTokens,
+          subagentEnabled: form.subagentEnabled || undefined,
+          enableThinking: form.enableThinking || undefined,
+          additionalPrompt: form.additionalPrompt || undefined,
+        },
+      });
+      emit("saved");
+    } else if (isCreateMode.value) {
+      await agentStore.createAgent({
+        id: form.id,
+        name: form.name,
+        description: form.description,
+        mbti: form.mbti,
+        config: {
+          capabilityRequirements: form.capabilityRequirements,
+          enabledTools: form.enabledTools,
+          allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
+          enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
           subagentEnabled: form.subagentEnabled || undefined,
           enableThinking: form.enableThinking || undefined,
           additionalPrompt: form.additionalPrompt || undefined,
