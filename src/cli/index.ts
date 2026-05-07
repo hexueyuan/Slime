@@ -3,8 +3,9 @@ import { canAccess } from "./registry";
 import { logsCommand } from "./commands/logs";
 import { taskCommand } from "./commands/task";
 import { makeHelpCommand } from "./commands/help";
+import { agentCommand } from "./commands/agent";
 
-const allCommands = [logsCommand, taskCommand];
+const allCommands = [logsCommand, taskCommand, agentCommand];
 const helpCommand = makeHelpCommand(allCommands);
 const commands = [helpCommand, ...allCommands];
 
