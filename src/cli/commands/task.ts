@@ -31,6 +31,8 @@ function getBaseUrl(): string {
 async function httpRequest(method: string, path: string, body?: unknown): Promise<unknown> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
+  const userId = process.env["SLIME_USER_ID"];
+  if (userId) headers["X-Slime-User-Id"] = userId;
   const res = await fetch(`${getBaseUrl()}${path}`, {
     method,
     headers,
@@ -85,23 +87,23 @@ async function runAsync(args: string[]): Promise<void> {
 
 add 选项:
   --creator-type <值>   [必填] 创建者身份。取值: user（用户创建）或 agent（Agent 自主创建）
-  --creator-id <值>     [必填] 创建者 ID。user 填用户名，agent 填 agent ID
+  --creator-id <值>     [agent必填] 创建者 ID。agent 填 agent ID；user 时可省略（从环境获取）
   --assignee-type <值>  [可选] 执行者身份。取值: user 或 agent
-  --assignee-id <值>    [可选] 执行者 ID
-  --scheduled-at <值>   [可选] 计划时间，Unix 毫秒时间戳
-  --repeat <值>         [可选] 重复间隔（分钟）
+  --assignee-id <值>    [可选] 执行者 ID（assignee-type=agent 时必填）
+  --scheduled-at <值>   [可选] 计划时间，Unix 毫秒时间戳（必须为未来时间）
+  --repeat <值>         [可选] 重复间隔（分钟，上限 525600）
 
 状态值: todo | in_progress | done | cancelled
 
 示例:
-  # ✅ 用户创建任务
-  slime-cli task add "修复Bug" --creator-type user --creator-id hexueyuan
+  # ✅ 用户创建任务（自动从环境获取用户ID）
+  slime-cli task add "修复Bug" --creator-type user
 
   # ✅ Agent 自主创建
   slime-cli task add "巡检" --creator-type agent --creator-id hal-ai
 
-  # ❌ 缺少 creator-id（报错）
-  slime-cli task add "测试" --creator-type user
+  # ❌ agent 缺少 creator-id（报错）
+  slime-cli task add "测试" --creator-type agent
 \n`,
     );
     return;
@@ -123,22 +125,18 @@ add 选项:
           "运行 `slime-cli help task` 查看完整用法说明。",
       );
     }
-    if (!creatorId) {
-      throw new Error(
-        "--creator-id is required\n\n" +
-          `--creator-id 为创建者 ID。当前 --creator-type=${creatorType}，` +
-          (creatorType === "user"
-            ? "应填写用户名（如 hexueyuan）。"
-            : "应填写 agent ID（如 hal-ai）。") +
-          "\n" +
-          `示例: slime-cli task add "任务标题" --creator-type ${creatorType} --creator-id <ID>\n\n` +
-          "运行 `slime-cli help task` 查看完整用法说明。",
-      );
-    }
     if (creatorType !== "user" && creatorType !== "agent") {
       throw new Error(
         `--creator-type 值无效: '${creatorType}'\n\n` +
           "仅允许: user（用户创建）或 agent（Agent 自主创建）\n\n" +
+          "运行 `slime-cli help task` 查看完整用法说明。",
+      );
+    }
+    if (creatorType === "agent" && !creatorId) {
+      throw new Error(
+        "--creator-id is required when --creator-type=agent\n\n" +
+          "应填写 agent ID（如 hal-ai）。\n" +
+          `示例: slime-cli task add "任务标题" --creator-type agent --creator-id <agent-id>\n\n` +
           "运行 `slime-cli help task` 查看完整用法说明。",
       );
     }
@@ -175,11 +173,30 @@ add 选项:
       );
     }
 
-    const body: Record<string, unknown> = { title, creatorType, creatorId };
+    const body: Record<string, unknown> = { title, creatorType };
+    if (creatorId) body.creatorId = creatorId;
     if (assigneeType) body.assigneeType = assigneeType;
     if (assigneeId) body.assigneeId = assigneeId;
-    if (scheduledAtStr) body.scheduledAt = Number(scheduledAtStr);
-    if (repeatStr) body.repeatInterval = Number(repeatStr);
+    if (scheduledAtStr) {
+      const n = Number(scheduledAtStr);
+      if (!Number.isInteger(n) || n <= 0) {
+        throw new Error("--scheduled-at 必须为正整数（Unix 毫秒时间戳）");
+      }
+      if (n <= Date.now()) {
+        throw new Error("--scheduled-at 必须为未来时间");
+      }
+      body.scheduledAt = n;
+    }
+    if (repeatStr) {
+      const n = Number(repeatStr);
+      if (!Number.isInteger(n) || n <= 0) {
+        throw new Error("--repeat 必须为正整数（分钟）");
+      }
+      if (n > 525600) {
+        throw new Error("--repeat 不能超过 525600 分钟（1年）");
+      }
+      body.repeatInterval = n;
+    }
 
     const task = (await httpRequest("POST", "/tasks", body)) as Task;
     process.stdout.write(formatTask(task) + "\n");
@@ -255,23 +272,23 @@ export const taskCommand: CommandDef = {
 
 add 选项:
   --creator-type <值>   [必填] 创建者身份。取值: user（用户创建）或 agent（Agent 自主创建）
-  --creator-id <值>     [必填] 创建者 ID。若 creator-type=user 填用户名；若 creator-type=agent 填 agent ID
+  --creator-id <值>     [agent必填] 创建者 ID。agent 填 agent ID；user 时可省略（从环境获取）
   --assignee-type <值>  [可选] 执行者身份。取值: user 或 agent
-  --assignee-id <值>    [可选] 执行者 ID。同 creator-id 规则
-  --scheduled-at <值>   [可选] 计划执行时间，Unix 毫秒时间戳
-  --repeat <值>         [可选] 重复间隔（分钟）
+  --assignee-id <值>    [可选] 执行者 ID（assignee-type=agent 时必填）
+  --scheduled-at <值>   [可选] 计划执行时间，Unix 毫秒时间戳（必须为未来时间）
+  --repeat <值>         [可选] 重复间隔（分钟，上限 525600）
 
 状态值: todo | in_progress | done | cancelled
 
 示例:
-  # ✅ 用户创建任务
-  slime-cli task add "修复登录Bug" --creator-type user --creator-id hexueyuan
+  # ✅ 用户创建任务（自动从环境获取用户ID）
+  slime-cli task add "修复登录Bug" --creator-type user
 
   # ✅ Agent 自主创建任务
   slime-cli task add "每日巡检" --creator-type agent --creator-id hal-ai
 
   # ✅ 指定执行者和计划时间
-  slime-cli task add "代码评审" --creator-type user --creator-id hexueyuan --assignee-type agent --assignee-id hal-ai --scheduled-at 1715100000000
+  slime-cli task add "代码评审" --creator-type user --assignee-type agent --assignee-id hal-ai --scheduled-at 1715100000000
 
   # ✅ 状态流转
   slime-cli task start 3
@@ -280,10 +297,10 @@ add 选项:
   # ✅ 按状态筛选
   slime-cli task list --status todo
 
-  # ❌ 缺少 --creator-id（报错: --creator-id is required）
-  slime-cli task add "测试" --creator-type user
+  # ❌ agent 缺少 --creator-id（报错: --creator-id is required when --creator-type=agent）
+  slime-cli task add "测试" --creator-type agent
 
-  # ❌ creator-type 值错误（报错: --creator-type must be 'user' or 'agent'）
+  # ❌ creator-type 值错误（报错: --creator-type 值无效）
   slime-cli task add "测试" --creator-type admin --creator-id foo`,
   allowedRoles: ["builtin-agent", "user"],
   run(args) {

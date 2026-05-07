@@ -5,6 +5,6 @@
   "capabilityRequirements": ["tool_call", "reasoning"],
   "enabledTools": ["exec", "ask_user", "skill"],
   "allowedCliCommands": ["help", "task"],
-  "enabledSkills": ["slime-task-manage", "moss-diary", "moss-weekly"],
+  "enabledSkills": ["slime-task-manage"],
   "enableThinking": true
 }

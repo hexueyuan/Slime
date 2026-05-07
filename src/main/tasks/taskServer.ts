@@ -1,6 +1,7 @@
 import Fastify, { FastifyInstance } from "fastify";
 import type BetterSqlite3 from "better-sqlite3";
 import * as taskDao from "./taskDao";
+import { getAgentById } from "../db/models/agentDao";
 import type { TaskStatus } from "@shared/types/schedule";
 
 export function createTaskServer(
@@ -25,12 +26,88 @@ export function createTaskServer(
     if (!title || typeof title !== "string") {
       return reply.status(400).send({ error: "title is required" });
     }
+
+    // creatorType 枚举校验
+    const creatorType = req.body.creatorType ?? "user";
+    if (creatorType !== "user" && creatorType !== "agent") {
+      return reply.status(400).send({ error: `invalid creatorType: ${creatorType}` });
+    }
+
+    // creatorId 校验
+    let creatorId: string | undefined;
+    if (creatorType === "user") {
+      creatorId = req.headers["x-slime-user-id"] as string | undefined;
+      if (!creatorId) {
+        return reply.status(400).send({ error: "missing X-Slime-User-Id header for user creator" });
+      }
+    } else {
+      creatorId = req.body.creatorId;
+      if (!creatorId) {
+        return reply.status(400).send({ error: "creatorId is required when creatorType=agent" });
+      }
+      if (!getAgentById(db, creatorId)) {
+        return reply.status(400).send({ error: `agent not found: ${creatorId}` });
+      }
+    }
+
+    // assigneeType 枚举校验
+    const assigneeType = req.body.assigneeType ?? "user";
+    if (assigneeType !== "user" && assigneeType !== "agent") {
+      return reply.status(400).send({ error: `invalid assigneeType: ${assigneeType}` });
+    }
+
+    // assigneeId 校验
+    let assigneeId: string | undefined;
+    if (req.body.assigneeId || req.body.assigneeType) {
+      if (assigneeType === "user") {
+        assigneeId = req.body.assigneeId;
+      } else {
+        assigneeId = req.body.assigneeId;
+        if (!assigneeId) {
+          return reply
+            .status(400)
+            .send({ error: "assigneeId is required when assigneeType=agent" });
+        }
+        if (!getAgentById(db, assigneeId)) {
+          return reply.status(400).send({ error: `assignee agent not found: ${assigneeId}` });
+        }
+      }
+    }
+
+    // scheduledAt 校验
+    if (req.body.scheduledAt !== undefined) {
+      if (typeof req.body.scheduledAt !== "number" || !Number.isInteger(req.body.scheduledAt)) {
+        return reply.status(400).send({ error: "scheduledAt must be an integer (ms timestamp)" });
+      }
+      if (req.body.scheduledAt <= Date.now()) {
+        return reply.status(400).send({ error: "scheduledAt must be in the future" });
+      }
+    }
+
+    // repeatInterval 校验
+    if (req.body.repeatInterval !== undefined) {
+      if (
+        typeof req.body.repeatInterval !== "number" ||
+        !Number.isInteger(req.body.repeatInterval) ||
+        req.body.repeatInterval <= 0
+      ) {
+        return reply
+          .status(400)
+          .send({ error: "repeatInterval must be a positive integer (minutes)" });
+      }
+      if (req.body.repeatInterval > 525600) {
+        return reply
+          .status(400)
+          .send({ error: "repeatInterval exceeds maximum (525600 minutes = 1 year)" });
+      }
+    }
+
     const task = taskDao.createTask(db, {
       title,
-      creatorType: (req.body.creatorType as "user" | "agent") ?? "user",
-      creatorId: req.body.creatorId,
-      assigneeType: (req.body.assigneeType as "user" | "agent") ?? "user",
-      assigneeId: req.body.assigneeId,
+      creatorType,
+      creatorId,
+      assigneeType,
+      assigneeId,
       scheduledAt: req.body.scheduledAt,
       repeatInterval: req.body.repeatInterval,
     });
