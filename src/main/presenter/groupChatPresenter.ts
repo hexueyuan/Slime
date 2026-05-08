@@ -132,11 +132,14 @@ ${recentContext}
 请以 JSON 格式输出：{"targetAgentIds": ["agent-id-1"]}
 只输出 JSON，不要其他内容。`;
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     try {
       const port = this.gatewayPresenter.getPort();
       const apiKey = this.gatewayPresenter.getInternalKey();
       const resp = await fetch(`http://127.0.0.1:${port}/v1/messages`, {
         method: "POST",
+        signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
@@ -149,12 +152,14 @@ ${recentContext}
           messages: [{ role: "user", content: prompt }],
         }),
       });
+      clearTimeout(timeout);
       if (!resp.ok) return [];
       const data = (await resp.json()) as any;
       const textBlock = (data?.content as any[])?.find((b: any) => b.type === "text");
       const json = JSON.parse((textBlock?.text ?? "{}").trim()) as { targetAgentIds?: string[] };
       return (json.targetAgentIds ?? []).filter((id) => session.participantAgentIds.includes(id));
     } catch (err) {
+      clearTimeout(timeout);
       logger.warn("[GroupChatPresenter] moderator routing failed", { err: String(err) });
       return [];
     }

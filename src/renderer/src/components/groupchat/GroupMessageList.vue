@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, computed } from "vue";
 import GroupMessageItem from "./GroupMessageItem.vue";
 import type { GroupChatMessageRecord } from "@shared/types/groupChat";
 
@@ -20,15 +20,22 @@ function scrollToBottom() {
 
 watch(() => props.messages.length, scrollToBottom);
 watch(() => props.typingAgentIds.size, scrollToBottom);
+
+const lastUserMsgIndex = computed(() => {
+  for (let i = props.messages.length - 1; i >= 0; i--) {
+    if (props.messages[i].senderAgentId === null) return i;
+  }
+  return props.messages.length - 1;
+});
 </script>
 
 <template>
   <div ref="listRef" class="flex flex-1 flex-col overflow-y-auto py-2">
     <GroupMessageItem
-      v-for="msg in messages"
+      v-for="(msg, index) in messages"
       :key="msg.id"
       :message="msg"
-      :typing-agent-ids="msg === messages[messages.length - 1] ? typingAgentIds : undefined"
+      :typing-agent-ids="index === lastUserMsgIndex ? typingAgentIds : undefined"
     />
     <div
       v-if="messages.length === 0"

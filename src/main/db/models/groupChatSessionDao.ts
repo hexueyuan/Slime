@@ -75,9 +75,5 @@ export function touchUpdatedAt(db: BetterSqlite3.Database, id: string): void {
 }
 
 export function deleteSession(db: BetterSqlite3.Database, id: string): void {
-  const del = db.transaction(() => {
-    db.prepare("DELETE FROM group_chat_messages WHERE session_id = ?").run(id);
-    db.prepare("DELETE FROM group_chat_sessions WHERE id = ?").run(id);
-  });
-  del();
+  db.prepare("DELETE FROM group_chat_sessions WHERE id = ?").run(id);
 }
