@@ -6,6 +6,7 @@ import GatewayPanel from "./views/GatewayPanel.vue";
 import EvolabPanel from "./views/EvolabPanel.vue";
 import SchedulePanel from "./views/SchedulePanel.vue";
 import AgentPanel from "./views/AgentPanel.vue";
+import GroupChatPanel from "./views/GroupChatPanel.vue";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard.vue";
 import { usePresenter } from "@/composables/usePresenter";
 import ProfileModal from "./components/chat/ProfileModal.vue";
@@ -16,9 +17,12 @@ const viewComponents: Record<string, object> = {
   gateway: markRaw(GatewayPanel),
   evolab: markRaw(EvolabPanel),
   agents: markRaw(AgentPanel),
+  groupchat: markRaw(GroupChatPanel),
 };
 
-const activeView = ref<"chatroom" | "schedule" | "gateway" | "evolab" | "agents">("chatroom");
+const activeView = ref<"chatroom" | "schedule" | "gateway" | "evolab" | "agents" | "groupchat">(
+  "chatroom",
+);
 const currentComponent = shallowRef<object>(viewComponents.chatroom);
 
 watch(activeView, (v) => {
