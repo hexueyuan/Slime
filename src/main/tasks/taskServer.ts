@@ -3,6 +3,7 @@ import type BetterSqlite3 from "better-sqlite3";
 import * as taskDao from "./taskDao";
 import { agentRegistry } from "../agents/agentRegistry";
 import type { TaskStatus } from "@shared/types/schedule";
+import type { UserProfile } from "@shared/types/agent";
 import { readdirSync, existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { paths } from "@/utils/paths";
@@ -268,6 +269,16 @@ export function createTaskServer(
       description: agent.description,
       gender: agent.gender,
       birthday: agent.birthday,
+    });
+  });
+
+  app.get("/user", async (_req, reply) => {
+    const profile = (await configStore.get("app.userProfile")) as UserProfile | null;
+    return reply.send({
+      name: profile?.name ?? "",
+      gender: profile?.gender ?? "unknown",
+      birthday: profile?.birthday ?? null,
+      bio: profile?.bio ?? "",
     });
   });
 

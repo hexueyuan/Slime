@@ -4,29 +4,9 @@
   "mbti": "INTJ",
   "gender": "male",
   "birthday": "2026-04-26",
-  "capabilityRequirements": [
-    "reasoning",
-    "tool_call"
-  ],
-  "enabledTools": [
-    "read",
-    "write",
-    "edit",
-    "exec",
-    "ask_user",
-    "open",
-    "skill"
-  ],
-  "allowedCliCommands": [
-    "help",
-    "logs",
-    "agent",
-    "skill",
-    "config",
-    "task"
-  ],
-  "enabledSkills": [
-    "using-slime"
-  ],
+  "capabilityRequirements": ["reasoning", "tool_call"],
+  "enabledTools": ["read", "write", "edit", "exec", "ask_user", "preview", "skill"],
+  "allowedCliCommands": ["help", "logs", "agent", "skill", "config", "task"],
+  "enabledSkills": ["using-slime"],
   "enableThinking": true
 }

@@ -4,12 +4,15 @@ import { Icon } from "@iconify/vue";
 import { useAgentChatStore } from "@/stores/agentChat";
 import { usePresenter } from "@/composables/usePresenter";
 import AgentAvatar from "@/components/chat/AgentAvatar.vue";
-import type { AgentAvatar as AgentAvatarType } from "@shared/types/agent";
+import type { AgentAvatar as AgentAvatarType, GenderType } from "@shared/types/agent";
 
 const chatStore = useAgentChatStore();
 const agentConfig = usePresenter("agentConfigPresenter");
 
 const name = ref("");
+const gender = ref<GenderType>("unknown");
+const birthday = ref("");
+const bio = ref("");
 const avatarType = ref<"icon" | "monogram" | "image">("monogram");
 const avatarIcon = ref("lucide:user");
 const avatarColor = ref("#3b82f6");
@@ -46,6 +49,9 @@ onMounted(async () => {
   const profile = chatStore.userProfile;
   if (profile) {
     name.value = profile.name ?? "";
+    gender.value = profile.gender ?? "unknown";
+    birthday.value = profile.birthday ?? "";
+    bio.value = profile.bio ?? "";
     if (profile.avatar?.kind === "lucide") {
       avatarType.value = "icon";
       avatarIcon.value = profile.avatar.icon ?? "lucide:user";
@@ -62,7 +68,13 @@ onMounted(async () => {
 });
 
 async function onSave() {
-  await chatStore.saveUserProfile({ name: name.value || undefined, avatar: currentAvatar.value });
+  await chatStore.saveUserProfile({
+    name: name.value || undefined,
+    avatar: currentAvatar.value,
+    gender: gender.value !== "unknown" ? gender.value : undefined,
+    birthday: birthday.value || undefined,
+    bio: bio.value || undefined,
+  });
   saved.value = true;
   setTimeout(() => (saved.value = false), 2000);
 }
@@ -93,6 +105,51 @@ async function pickImage() {
         type="text"
         class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none"
         placeholder="你的名字"
+      />
+    </div>
+
+    <!-- Gender -->
+    <div>
+      <label class="mb-1 block text-xs text-muted-foreground">性别</label>
+      <div class="flex gap-2">
+        <button
+          v-for="opt in [
+            ['unknown', '保密'],
+            ['male', '男'],
+            ['female', '女'],
+          ] as const"
+          :key="opt[0]"
+          :class="[
+            'rounded px-3 py-1 text-xs',
+            gender === opt[0]
+              ? 'bg-violet-500/20 text-violet-400'
+              : 'text-muted-foreground hover:bg-muted',
+          ]"
+          @click="gender = opt[0]"
+        >
+          {{ opt[1] }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Birthday -->
+    <div>
+      <label class="mb-1 block text-xs text-muted-foreground">生日</label>
+      <input
+        v-model="birthday"
+        type="date"
+        class="rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground focus:border-violet-500 focus:outline-none"
+      />
+    </div>
+
+    <!-- Bio -->
+    <div>
+      <label class="mb-1 block text-xs text-muted-foreground">个人介绍</label>
+      <textarea
+        v-model="bio"
+        rows="3"
+        class="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none resize-none"
+        placeholder="简单介绍一下自己"
       />
     </div>
 

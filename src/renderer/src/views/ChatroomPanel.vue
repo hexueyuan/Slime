@@ -7,7 +7,7 @@ import ChatFunctionPanel from "../components/chat/ChatFunctionPanel.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
-import { useContentStore } from "@/stores/content";
+import { useContentStore, setupContentIpc } from "@/stores/content";
 import { setupAgentChatIpc } from "@/stores/agentChatIpc";
 import { useSplitPane } from "@/composables/useSplitPane";
 import { AGENT_EVENTS, SESSION_EVENTS } from "@shared/events";
@@ -20,6 +20,7 @@ const contentStore = useContentStore();
 
 // IPC event listeners
 const cleanupChatIpc = setupAgentChatIpc(chatStore, () => sessionStore.activeSessionId);
+const cleanupContentIpc = setupContentIpc(contentStore);
 
 const cleanupAgentChanged = window.electron.ipcRenderer.on(AGENT_EVENTS.CHANGED, () => {
   agentStore.fetchAgents();
@@ -31,6 +32,7 @@ const cleanupSessionUpdated = window.electron.ipcRenderer.on(SESSION_EVENTS.LIST
 
 onUnmounted(() => {
   cleanupChatIpc();
+  cleanupContentIpc();
   cleanupAgentChanged();
   cleanupSessionUpdated();
 });

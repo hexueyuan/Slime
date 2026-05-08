@@ -12,6 +12,9 @@ export type AgentAvatar =
 export type UserProfile = {
   name?: string;
   avatar?: AgentAvatar;
+  gender?: GenderType;
+  birthday?: string;
+  bio?: string;
 };
 
 export interface AgentConfig {

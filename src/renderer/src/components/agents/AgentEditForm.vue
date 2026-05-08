@@ -1,8 +1,8 @@
 <template>
   <div class="flex h-full flex-col overflow-y-auto p-4">
     <div class="mx-auto w-full max-w-2xl space-y-5">
-      <!-- ID (builtin only) -->
-      <div v-if="isBuiltin">
+      <!-- ID (non-create mode) -->
+      <div>
         <label class="text-xs font-medium text-muted-foreground">ID</label>
         <div class="mt-1 text-sm text-foreground font-mono">{{ agent?.id ?? agentInfo?.id }}</div>
       </div>
@@ -20,18 +20,6 @@
             更换头像
           </button>
         </div>
-      </div>
-
-      <!-- ID (create mode only) -->
-      <div v-if="isCreateMode" class="space-y-1">
-        <label class="text-xs text-muted-foreground">英文ID（全小写，短横线分隔）</label>
-        <input
-          v-model="form.id"
-          type="text"
-          class="w-full rounded border px-2 py-1 text-sm bg-muted"
-          placeholder="my-agent"
-        />
-        <p v-if="idError" class="text-xs text-red-400">{{ idError }}</p>
       </div>
 
       <!-- 名称 -->
@@ -298,13 +286,6 @@ const agentConfigPresenter = usePresenter("agentConfigPresenter");
 const agentStore = useAgentStore();
 
 const readonly = computed(() => props.isBuiltin && !props.isDev);
-const isCreateMode = computed(() => !props.agent && !props.isBuiltin);
-const idError = computed(() => {
-  if (!isCreateMode.value || !form.id) return "";
-  if (!/^[a-z][a-z0-9-]*$/.test(form.id)) return "只允许小写字母、数字和短横线，必须字母开头";
-  if (form.id.length > 50) return "最长50字符";
-  return "";
-});
 const saving = ref(false);
 const saveSuccess = ref(false);
 const availableTools = ref<string[]>([]);
@@ -315,17 +296,12 @@ const currentAvatar = ref<AgentAvatarType | null>(null);
 async function changeAvatar() {
   const path = (await agentConfigPresenter.pickAvatar()) as string | null;
   if (!path) return;
-  const newAvatar: AgentAvatarType = { kind: "image", path };
-  currentAvatar.value = newAvatar;
-  // Persist immediately
   const agentId = props.agentInfo?.id ?? props.agent?.id;
-  if (agentId) {
-    await agentStore.updateAgent(agentId, { avatar: newAvatar });
-  }
+  if (!agentId) return;
+  await agentConfigPresenter.applyAvatar(agentId, path);
 }
 
 const form = reactive({
-  id: "",
   name: "",
   description: "",
   mbti: "INTJ" as MBTIType,
@@ -455,25 +431,6 @@ async function save() {
       emit("saved");
     } else if (props.agent) {
       await agentStore.updateAgent(props.agent.id, {
-        name: form.name,
-        description: form.description,
-        mbti: form.mbti,
-        gender: form.gender !== "unknown" ? form.gender : undefined,
-        birthday: form.birthday || undefined,
-        config: {
-          capabilityRequirements: form.capabilityRequirements,
-          enabledTools: form.enabledTools,
-          allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
-          enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
-          subagentEnabled: form.subagentEnabled || undefined,
-          enableThinking: form.enableThinking || undefined,
-          additionalPrompt: form.additionalPrompt || undefined,
-        },
-      });
-      emit("saved");
-    } else if (isCreateMode.value) {
-      await agentStore.createAgent({
-        id: form.id,
         name: form.name,
         description: form.description,
         mbti: form.mbti,

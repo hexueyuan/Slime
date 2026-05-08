@@ -6,8 +6,16 @@ import { makeHelpCommand } from "./commands/help";
 import { agentCommand } from "./commands/agent";
 import { skillCommand } from "./commands/skill";
 import { configCommand } from "./commands/config";
+import { userCommand } from "./commands/user";
 
-const allCommands = [logsCommand, taskCommand, agentCommand, skillCommand, configCommand];
+const allCommands = [
+  logsCommand,
+  taskCommand,
+  agentCommand,
+  skillCommand,
+  configCommand,
+  userCommand,
+];
 const helpCommand = makeHelpCommand(allCommands);
 const commands = [helpCommand, ...allCommands];
 

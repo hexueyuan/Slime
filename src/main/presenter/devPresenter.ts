@@ -322,7 +322,7 @@ export class DevPresenter implements IDevPresenter {
       "exec",
       "list_dir",
       "ask_user",
-      "open_url",
+      "preview",
       "evolution_start",
       "evolution_plan",
       "evolution_complete",

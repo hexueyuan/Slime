@@ -133,5 +133,6 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
     const ext = extname(srcPath) || ".png";
     await copyFile(srcPath, join(dir, `avatar${ext}`));
     agentRegistry.load();
+    eventBus.sendToRenderer(AGENT_EVENTS.CHANGED);
   }
 }

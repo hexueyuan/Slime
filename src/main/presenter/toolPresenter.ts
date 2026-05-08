@@ -226,7 +226,7 @@ export class ToolPresenter {
           throw new Error("ask_user should be handled by AgentPresenter");
         },
       }),
-      open: createTool({
+      preview: createTool({
         description:
           "Open a file in the preview panel. Supports .md (Markdown), .html (HTML preview), and other text files.",
         parameters: z.object({
