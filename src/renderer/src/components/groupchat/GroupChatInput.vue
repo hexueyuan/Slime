@@ -38,10 +38,9 @@ const filteredMentionAgents = computed(() =>
 
 function onInput(e: Event) {
   const el = e.target as HTMLTextAreaElement;
-  inputValue.value = el.value;
   autoResize();
   const cursorPos = el.selectionStart ?? 0;
-  const textBefore = el.value.slice(0, cursorPos);
+  const textBefore = inputValue.value.slice(0, cursorPos);
   const atIndex = textBefore.lastIndexOf("@");
 
   if (atIndex !== -1 && (atIndex === 0 || textBefore[atIndex - 1] === " ")) {
@@ -69,6 +68,9 @@ function selectMention(agent: Agent) {
   });
 }
 
+// 解析两种格式：
+// 1. 通过下拉选择插入的 "@AgentName " (末尾空格，\S+ 自然截断)
+// 2. 手动输入的 "@AgentName," (末尾逗号，replace 去除)
 function parseMentions(text: string): string[] {
   const regex = /@(\S+)/g;
   const agentIds: string[] = [];
