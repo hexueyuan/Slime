@@ -95,7 +95,7 @@ export class DevPresenter implements IDevPresenter {
   }
 
   private get builtinSkillsDir(): string {
-    return join(process.cwd(), "resources", "skills");
+    return paths.builtinSkillsDir;
   }
 
   async listGlobalSkills(): Promise<SkillManifest[]> {
