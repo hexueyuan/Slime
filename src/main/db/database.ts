@@ -253,6 +253,28 @@ CREATE TABLE IF NOT EXISTS notes (
   content TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS group_chat_sessions (
+  id                    TEXT PRIMARY KEY,
+  title                 TEXT NOT NULL,
+  participant_agent_ids TEXT NOT NULL,
+  moderator_enabled     INTEGER NOT NULL DEFAULT 0,
+  created_at            INTEGER NOT NULL,
+  updated_at            INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS group_chat_messages (
+  id               TEXT PRIMARY KEY,
+  session_id       TEXT NOT NULL REFERENCES group_chat_sessions(id) ON DELETE CASCADE,
+  order_seq        INTEGER NOT NULL,
+  sender_agent_id  TEXT,
+  role             TEXT NOT NULL,
+  content          TEXT NOT NULL,
+  hidden           INTEGER NOT NULL DEFAULT 0,
+  created_at       INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_chat_messages_session ON group_chat_messages(session_id, order_seq);
 `;
 
 function migrate(instance: BetterSqlite3.Database): void {
@@ -320,6 +342,35 @@ function migrate(instance: BetterSqlite3.Database): void {
     CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_type, assignee_id);
     CREATE INDEX IF NOT EXISTS idx_tasks_scheduled ON tasks(scheduled_at) WHERE scheduled_at IS NOT NULL;
   `);
+  // Group chat tables migration (v0.9)
+  const groupChatTable = instance
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='group_chat_sessions'")
+    .get();
+  if (!groupChatTable) {
+    instance.exec(`
+      CREATE TABLE IF NOT EXISTS group_chat_sessions (
+        id                    TEXT PRIMARY KEY,
+        title                 TEXT NOT NULL,
+        participant_agent_ids TEXT NOT NULL,
+        moderator_enabled     INTEGER NOT NULL DEFAULT 0,
+        created_at            INTEGER NOT NULL,
+        updated_at            INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS group_chat_messages (
+        id               TEXT PRIMARY KEY,
+        session_id       TEXT NOT NULL REFERENCES group_chat_sessions(id) ON DELETE CASCADE,
+        order_seq        INTEGER NOT NULL,
+        sender_agent_id  TEXT,
+        role             TEXT NOT NULL,
+        content          TEXT NOT NULL,
+        hidden           INTEGER NOT NULL DEFAULT 0,
+        created_at       INTEGER NOT NULL
+      );
+    `);
+    instance.exec(
+      `CREATE INDEX IF NOT EXISTS idx_group_chat_messages_session ON group_chat_messages(session_id, order_seq);`,
+    );
+  }
   // Add log_date column to relay_logs for indexed date filtering
   // Try to add column; ignore if already exists
   try {
