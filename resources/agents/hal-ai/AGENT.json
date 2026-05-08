@@ -16,8 +16,11 @@
     "skill"
   ],
   "allowedCliCommands": [
-    "help",
-    "logs"
+    "logs",
+    "agent",
+    "skill",
+    "config",
+    "task"
   ],
   "enabledSkills": [
     "using-slime"
