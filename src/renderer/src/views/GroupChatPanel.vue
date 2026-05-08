@@ -25,6 +25,13 @@ const cleanupAgentChanged = window.electron.ipcRenderer.on(AGENT_EVENTS.CHANGED,
 
 onMounted(async () => {
   await Promise.all([agentStore.fetchAgents(), sessionStore.fetchSessions()]);
+  // Check if this is a detached window with a specific session
+  const urlParams = new URLSearchParams(window.location.search);
+  const detachedSessionId = urlParams.get("sessionId");
+  if (urlParams.get("detached") === "1" && detachedSessionId) {
+    sessionStore.setActiveSession(detachedSessionId);
+    await chatStore.fetchMessages(detachedSessionId);
+  }
 });
 
 onUnmounted(() => {

@@ -33,6 +33,13 @@ const configPresenter = usePresenter("configPresenter");
 const needsOnboarding = ref<boolean | null>(null);
 
 onMounted(async () => {
+  // Check if this is a detached group chat window
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("detached") === "1") {
+    activeView.value = "groupchat";
+    needsOnboarding.value = false;
+    return;
+  }
   const onboarded = await configPresenter.get("app.onboarded");
   needsOnboarding.value = !onboarded;
 });
