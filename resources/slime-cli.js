@@ -542,8 +542,10 @@ list 输出格式:
       process.stdout.write("(no agents)\n");
     } else {
       for (const a of agents) {
-        process.stdout.write(`[${a.id}] ${a.name} (${a.source}) ${a.mbti} - ${a.description ?? ""}
-`);
+        process.stdout.write(
+          `[${a.id}] ${a.name} (${a.source}) ${a.mbti} - ${a.description ?? ""}
+`,
+        );
       }
     }
   } else if (sub === "get") {

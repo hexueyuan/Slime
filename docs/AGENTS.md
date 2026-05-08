@@ -27,6 +27,10 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
   - `registry.ts`: CommandDef 类型 + canAccess() 鉴权
   - `commands/help.ts`: help 命令（按角色过滤可见命令）
   - `commands/logs.ts`: logs 命令（查看/过滤/清空当日日志）
+  - `commands/agent.ts`: agent 命令（list/get）
+  - `commands/skill.ts`: skill 命令（list）
+  - `commands/config.ts`: config 命令（list/get/set，白名单写保护）
+  - `commands/task.ts`: task 命令（add/start/done/cancel/list/get）
   - `utils/logReader.ts`: 日志读取/格式化工具
 - `src/preload/`: 安全 IPC 桥接（contextIsolation，暴露 `window.electron.ipcRenderer`）
 - `src/renderer/src/`: Vue 3 渲染进程（components/, composables/, stores/, views/）

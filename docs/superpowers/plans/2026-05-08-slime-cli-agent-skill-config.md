@@ -75,7 +75,7 @@
 }
 ```
 
-- [ ] **Step 1: 在 `taskServer.ts` 顶部新增 import**
+- [x] **Step 1: 在 `taskServer.ts` 顶部新增 import**
 
 在现有 import 块末尾追加：
 
@@ -86,7 +86,7 @@ import { paths } from "@/utils/paths";
 import { MBTI_MAP } from "@shared/constants/mbti";
 ```
 
-- [ ] **Step 2: 新增 `GET /agents` 路由**
+- [x] **Step 2: 新增 `GET /agents` 路由**
 
 在 `return app;` 之前插入：
 
@@ -103,7 +103,7 @@ app.get("/agents", async (_req, reply) => {
 });
 ```
 
-- [ ] **Step 3: 新增 `GET /agents/:id` 路由**
+- [x] **Step 3: 新增 `GET /agents/:id` 路由**
 
 ```ts
 app.get<{ Params: { id: string } }>("/agents/:id", async (req, reply) => {
@@ -121,7 +121,7 @@ app.get<{ Params: { id: string } }>("/agents/:id", async (req, reply) => {
 });
 ```
 
-- [ ] **Step 4: 新增 skill 扫描辅助函数**
+- [x] **Step 4: 新增 skill 扫描辅助函数**
 
 在 `createTaskServer` 函数定义之前添加：
 
@@ -167,7 +167,7 @@ function scanSkillDir(dir: string, source: "builtin" | "market"): SkillItem[] {
 }
 ```
 
-- [ ] **Step 5: 新增 `GET /skills` 路由**
+- [x] **Step 5: 新增 `GET /skills` 路由**
 
 ```ts
 app.get("/skills", async (_req, reply) => {
@@ -177,7 +177,7 @@ app.get("/skills", async (_req, reply) => {
 });
 ```
 
-- [ ] **Step 6: 运行 typecheck 确认无报错**
+- [x] **Step 6: 运行 typecheck 确认无报错**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime
@@ -186,7 +186,7 @@ pnpm run typecheck
 
 期望：无 TS 错误
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/tasks/taskServer.ts
@@ -218,7 +218,7 @@ const CONFIG_WRITABLE_KEYS = ["obsidian.vaultPath", "gateway.port"];
 
 更简单的做法：给 `createTaskServer` 增加一个 `configGet: (key: string) => Promise<unknown>` 和 `configSet: (key: string, value: unknown) => Promise<boolean>` 和 `configReadAll: () => Promise<Record<string, unknown>>` 的简单接口。
 
-- [ ] **Step 1: 修改 `createTaskServer` 签名**
+- [x] **Step 1: 修改 `createTaskServer` 签名**
 
 在 `taskServer.ts` 中，将函数签名改为：
 
@@ -236,7 +236,7 @@ export function createTaskServer(
 ): FastifyInstance {
 ```
 
-- [ ] **Step 2: 新增 config 路由**
+- [x] **Step 2: 新增 config 路由**
 
 在 `return app;` 之前插入：
 
@@ -272,7 +272,7 @@ app.put<{ Params: { key: string }; Body: { value: unknown } }>(
 );
 ```
 
-- [ ] **Step 3: 在 `ConfigPresenter` 中增加 `readAll` 方法**
+- [x] **Step 3: 在 `ConfigPresenter` 中增加 `readAll` 方法**
 
 修改 `src/main/presenter/configPresenter.ts`：
 
@@ -284,7 +284,7 @@ async readAll(): Promise<Record<string, unknown>> {
 
 在类定义中 `get` 方法之前插入。同时在 `IConfigPresenter` 接口（`src/shared/types/presenters/`）中添加对应声明（如果存在）。
 
-- [ ] **Step 4: 更新 IConfigPresenter 接口**
+- [x] **Step 4: 更新 IConfigPresenter 接口**
 
 修改 `src/shared/types/presenters/config.presenter.d.ts`，在 `set` 之后添加：
 
@@ -296,7 +296,7 @@ export interface IConfigPresenter {
 }
 ```
 
-- [ ] **Step 5: 修改 `taskPresenter.ts` 传入 configPresenter**
+- [x] **Step 5: 修改 `taskPresenter.ts` 传入 configPresenter**
 
 在 `taskPresenter.ts` 中：
 
@@ -316,7 +316,7 @@ this.server = createTaskServer(db, () => this.emitTasksChanged(), {
 });
 ```
 
-- [ ] **Step 6: 运行 typecheck**
+- [x] **Step 6: 运行 typecheck**
 
 ```bash
 pnpm run typecheck
@@ -324,7 +324,7 @@ pnpm run typecheck
 
 期望：无 TS 错误
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/tasks/taskServer.ts src/main/presenter/taskPresenter.ts src/main/presenter/configPresenter.ts
@@ -345,7 +345,7 @@ git commit -m "feat(taskServer): add /config routes with whitelist write"
 - `agent list`：每行 `[id] name (builtin|market) MBTI`
 - `agent get <id>`：多行 `name: ...` / `mbti: MBTI — 描述` / `description: ...`
 
-- [ ] **Step 1: 创建 `src/cli/commands/agent.ts`**
+- [x] **Step 1: 创建 `src/cli/commands/agent.ts`**
 
 ```ts
 import type { CommandDef } from "../registry";
@@ -448,7 +448,7 @@ get 输出格式:
 };
 ```
 
-- [ ] **Step 2: 在 `src/cli/index.ts` 注册 agentCommand**
+- [x] **Step 2: 在 `src/cli/index.ts` 注册 agentCommand**
 
 修改：
 
@@ -458,7 +458,7 @@ import { agentCommand } from "./commands/agent";
 const allCommands = [logsCommand, taskCommand, agentCommand];
 ```
 
-- [ ] **Step 3: 运行 typecheck**
+- [x] **Step 3: 运行 typecheck**
 
 ```bash
 pnpm run typecheck
@@ -466,7 +466,7 @@ pnpm run typecheck
 
 期望：无 TS 错误
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/cli/commands/agent.ts src/cli/index.ts
@@ -482,7 +482,7 @@ git commit -m "feat(cli): add agent list/get subcommands"
 - Create: `src/cli/commands/skill.ts`
 - Modify: `src/cli/index.ts`
 
-- [ ] **Step 1: 创建 `src/cli/commands/skill.ts`**
+- [x] **Step 1: 创建 `src/cli/commands/skill.ts`**
 
 ```ts
 import type { CommandDef } from "../registry";
@@ -558,7 +558,7 @@ list 输出格式:
 };
 ```
 
-- [ ] **Step 2: 在 `src/cli/index.ts` 注册 skillCommand**
+- [x] **Step 2: 在 `src/cli/index.ts` 注册 skillCommand**
 
 ```ts
 import { skillCommand } from "./commands/skill";
@@ -566,7 +566,7 @@ import { skillCommand } from "./commands/skill";
 const allCommands = [logsCommand, taskCommand, agentCommand, skillCommand];
 ```
 
-- [ ] **Step 3: 运行 typecheck**
+- [x] **Step 3: 运行 typecheck**
 
 ```bash
 pnpm run typecheck
@@ -574,7 +574,7 @@ pnpm run typecheck
 
 期望：无 TS 错误
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/cli/commands/skill.ts src/cli/index.ts
@@ -590,7 +590,7 @@ git commit -m "feat(cli): add skill list subcommand"
 - Create: `src/cli/commands/config.ts`
 - Modify: `src/cli/index.ts`
 
-- [ ] **Step 1: 创建 `src/cli/commands/config.ts`**
+- [x] **Step 1: 创建 `src/cli/commands/config.ts`**
 
 ```ts
 import type { CommandDef } from "../registry";
@@ -717,7 +717,7 @@ value 解析规则:
 };
 ```
 
-- [ ] **Step 2: 在 `src/cli/index.ts` 注册 configCommand**
+- [x] **Step 2: 在 `src/cli/index.ts` 注册 configCommand**
 
 ```ts
 import { configCommand } from "./commands/config";
@@ -725,7 +725,7 @@ import { configCommand } from "./commands/config";
 const allCommands = [logsCommand, taskCommand, agentCommand, skillCommand, configCommand];
 ```
 
-- [ ] **Step 3: 运行 typecheck**
+- [x] **Step 3: 运行 typecheck**
 
 ```bash
 pnpm run typecheck
@@ -733,7 +733,7 @@ pnpm run typecheck
 
 期望：无 TS 错误
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/cli/commands/config.ts src/cli/index.ts
@@ -749,7 +749,7 @@ git commit -m "feat(cli): add config list/get/set subcommands"
 - Modify: `src/renderer/src/components/settings/SettingsDialog.vue`
 - Delete: `src/renderer/src/components/settings/AgentSettings.vue`
 
-- [ ] **Step 1: 修改 `SettingsDialog.vue`，删除 agents tab 按钮**
+- [x] **Step 1: 修改 `SettingsDialog.vue`，删除 agents tab 按钮**
 
 删除第 54-64 行（agents tab button）：
 
@@ -767,7 +767,7 @@ git commit -m "feat(cli): add config list/get/set subcommands"
 </button>
 ```
 
-- [ ] **Step 2: 删除 `AgentSettings` 渲染分支和 import**
+- [x] **Step 2: 删除 `AgentSettings` 渲染分支和 import**
 
 从 `<div class="flex flex-1 ...">` 内删除：
 
@@ -787,13 +787,13 @@ import AgentSettings from "./AgentSettings.vue";
 const activeTab = ref<"profile" | "gateway" | "general" | "mcp" | "update">("profile");
 ```
 
-- [ ] **Step 3: 删除 `AgentSettings.vue` 文件**
+- [x] **Step 3: 删除 `AgentSettings.vue` 文件**
 
 ```bash
 rm src/renderer/src/components/settings/AgentSettings.vue
 ```
 
-- [ ] **Step 4: 运行 typecheck + lint**
+- [x] **Step 4: 运行 typecheck + lint**
 
 ```bash
 pnpm run typecheck
@@ -802,7 +802,7 @@ pnpm run lint
 
 期望：无错误
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/settings/SettingsDialog.vue
@@ -814,13 +814,13 @@ git commit -m "feat(ui): remove agents tab from Settings dialog"
 
 ## Task 7: 格式化、lint 检查、构建验证
 
-- [ ] **Step 1: 格式化**
+- [x] **Step 1: 格式化**
 
 ```bash
 pnpm run format
 ```
 
-- [ ] **Step 2: Lint**
+- [x] **Step 2: Lint**
 
 ```bash
 pnpm run lint
@@ -828,7 +828,7 @@ pnpm run lint
 
 期望：无错误
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 ```bash
 pnpm run typecheck
@@ -836,7 +836,7 @@ pnpm run typecheck
 
 期望：无错误
 
-- [ ] **Step 4: Commit 格式化变更（如有）**
+- [x] **Step 4: Commit 格式化变更（如有）**
 
 ```bash
 git add -A
