@@ -6,7 +6,7 @@ export interface SkillFrontmatter {
 export interface Skill {
   name: string;
   description: string;
-  source: "builtin" | "local";
+  source: "builtin" | "market";
   baseDir: string;
   filePath: string;
 }

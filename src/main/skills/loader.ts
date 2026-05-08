@@ -75,7 +75,7 @@ export function scanSkills(dir: string): Skill[] {
     skills.push({
       name: fm.name,
       description: fm.description,
-      source: "local",
+      source: "market",
       baseDir: skillDir,
       filePath: mdPath,
     });

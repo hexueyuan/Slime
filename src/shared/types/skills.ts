@@ -2,5 +2,5 @@
 export interface SkillInfo {
   name: string;
   description: string;
-  source: "builtin" | "local";
+  source: "builtin" | "market";
 }

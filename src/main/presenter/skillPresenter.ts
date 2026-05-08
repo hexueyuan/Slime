@@ -4,28 +4,33 @@ import { scanSkills, loadSkillContent } from "@/skills/loader";
 import { paths } from "@/utils";
 
 export class SkillPresenter {
-  private marketCache: Skill[] | null = null;
+  private cache: Skill[] | null = null;
 
   constructor() {}
 
-  private loadMarketCache(): Skill[] {
-    if (!this.marketCache) {
-      this.marketCache = scanSkills(paths.marketSkillsDir).map((s) => ({
+  private loadCache(): Skill[] {
+    if (!this.cache) {
+      const builtin = scanSkills(paths.builtinSkillsDir).map((s) => ({
         ...s,
-        source: "local" as const,
+        source: "builtin" as const,
       }));
+      const market = scanSkills(paths.marketSkillsDir).map((s) => ({
+        ...s,
+        source: "market" as const,
+      }));
+      this.cache = [...builtin, ...market];
     }
-    return this.marketCache;
+    return this.cache;
   }
 
   getSkillList(_agentId: string, _agentSkillsDir?: string, enabledSkills?: string[]): SkillInfo[] {
     const enabledSet = new Set(enabledSkills ?? []);
-    const skills = this.loadMarketCache().filter((s) => enabledSet.has(s.name));
+    const skills = this.loadCache().filter((s) => enabledSet.has(s.name));
     return skills.map(({ name, description, source }) => ({ name, description, source }));
   }
 
   loadSkill(name: string): string {
-    const skill = this.loadMarketCache()?.find((s) => s.name === name);
+    const skill = this.loadCache()?.find((s) => s.name === name);
     if (skill) return loadSkillContent(skill.filePath);
     throw new Error(`Skill "${name}" not found`);
   }
@@ -35,7 +40,7 @@ export class SkillPresenter {
   }
 
   invalidateCache(): void {
-    this.marketCache = null;
+    this.cache = null;
   }
 
   invalidateAgentCache(_agentId: string): void {
