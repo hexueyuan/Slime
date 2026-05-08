@@ -333,7 +333,15 @@ export class AgentChatPresenter {
 
     // Build context with new structured format
     const messages: CoreMessage[] = buildContext(sessionId, content, db, {
-      agent: agent ? { id: session.agentId, name: agent.name, mbti: agent.mbti as any } : undefined,
+      agent: agent
+        ? {
+            id: session.agentId,
+            name: agent.name,
+            mbti: agent.mbti as any,
+            gender: agent.gender,
+            birthday: agent.birthday,
+          }
+        : undefined,
       additionalPrompt: additionalPrompt || undefined,
       skillsXML: skillListXML || undefined,
       userName,

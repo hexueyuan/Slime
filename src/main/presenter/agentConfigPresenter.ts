@@ -38,6 +38,8 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
       name: data.name || "New Agent",
       description: data.description,
       mbti: data.mbti ?? "INTJ",
+      gender: data.gender,
+      birthday: data.birthday,
       config: data.config ?? undefined,
       avatarSourcePath: undefined,
     });
@@ -50,6 +52,8 @@ export class AgentConfigPresenter implements IAgentConfigPresenter {
       name: data.name,
       description: data.description,
       mbti: data.mbti,
+      gender: data.gender,
+      birthday: data.birthday,
       config: data.config ?? undefined,
     });
     eventBus.sendToRenderer(AGENT_EVENTS.CHANGED);

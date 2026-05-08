@@ -1,7 +1,7 @@
 import { existsSync } from "fs";
 import { writeFile, mkdir, copyFile, unlink, rm } from "fs/promises";
 import { join, extname } from "path";
-import type { Agent, AgentAvatar, AgentConfig } from "@shared/types/agent";
+import type { Agent, AgentAvatar, AgentConfig, GenderType } from "@shared/types/agent";
 import type { MBTIType } from "@shared/constants/mbti";
 import { MBTI_TEMPERATURE } from "@shared/constants/mbti";
 import { paths } from "@/utils";
@@ -50,6 +50,8 @@ class AgentRegistry {
       name: string;
       description?: string;
       mbti: MBTIType;
+      gender?: GenderType;
+      birthday?: string;
       config?: AgentConfig;
       avatarSourcePath?: string;
     },
@@ -73,6 +75,8 @@ class AgentRegistry {
       subagentEnabled: data.config?.subagentEnabled ?? false,
       mcpTools: data.config?.mcpTools ?? [],
     };
+    if (data.gender) agentJson.gender = data.gender;
+    if (data.birthday) agentJson.birthday = data.birthday;
     await writeFile(join(dir, "AGENT.json"), JSON.stringify(agentJson, null, 2), "utf-8");
 
     // Write PROMPT.md
@@ -98,6 +102,8 @@ class AgentRegistry {
       description: data.description,
       avatar,
       mbti: data.mbti,
+      gender: data.gender,
+      birthday: data.birthday,
       config: data.config,
       createdAt: now,
       updatedAt: now,
@@ -112,6 +118,8 @@ class AgentRegistry {
       name: string;
       description: string;
       mbti: MBTIType;
+      gender: GenderType;
+      birthday: string;
       config: AgentConfig;
       avatarSourcePath: string | null;
     }>,
@@ -126,6 +134,8 @@ class AgentRegistry {
     if (data.name !== undefined) agent.name = data.name;
     if (data.description !== undefined) agent.description = data.description;
     if (data.mbti !== undefined) agent.mbti = data.mbti;
+    if (data.gender !== undefined) agent.gender = data.gender;
+    if (data.birthday !== undefined) agent.birthday = data.birthday;
     if (data.config !== undefined) agent.config = data.config;
     agent.updatedAt = Date.now();
 
@@ -142,6 +152,8 @@ class AgentRegistry {
       subagentEnabled: agent.config?.subagentEnabled ?? false,
       mcpTools: agent.config?.mcpTools ?? [],
     };
+    if (agent.gender) agentJson.gender = agent.gender;
+    if (agent.birthday) agentJson.birthday = agent.birthday;
     await writeFile(join(dir, "AGENT.json"), JSON.stringify(agentJson, null, 2), "utf-8");
 
     // Rewrite PROMPT.md

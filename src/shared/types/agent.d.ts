@@ -2,6 +2,8 @@ import type { MBTIType } from "../constants/mbti";
 
 export type AgentType = "builtin" | "custom";
 
+export type GenderType = "male" | "female" | "unknown";
+
 export type AgentAvatar =
   | { kind: "lucide"; icon: string; color?: string }
   | { kind: "monogram"; text: string; backgroundColor?: string }
@@ -40,6 +42,8 @@ export interface Agent {
   description?: string;
   avatar?: AgentAvatar | null;
   mbti: MBTIType;
+  gender?: GenderType;
+  birthday?: string; // YYYY-MM-DD
   config?: AgentConfig | null;
   createdAt: number;
   updatedAt: number;

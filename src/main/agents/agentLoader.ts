@@ -1,6 +1,6 @@
 import { readdirSync, statSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
-import type { Agent, AgentConfig, AgentAvatar } from "@shared/types/agent";
+import type { Agent, AgentConfig, AgentAvatar, GenderType } from "@shared/types/agent";
 import type { AgentType } from "@shared/types/agent";
 import type { MBTIType } from "@shared/constants/mbti";
 import { logger } from "@/utils/logger";
@@ -9,6 +9,8 @@ interface AgentJson {
   name: string;
   description?: string;
   mbti: MBTIType;
+  gender?: GenderType;
+  birthday?: string;
   capabilityRequirements?: string[];
   enabledTools?: string[];
   enabledSkills?: string[];
@@ -99,6 +101,8 @@ export function loadAgentsFromDir(baseDir: string, type: AgentType): Agent[] {
       description: cfg.description,
       avatar,
       mbti: cfg.mbti,
+      gender: cfg.gender,
+      birthday: cfg.birthday,
       config,
       createdAt: now,
       updatedAt: now,

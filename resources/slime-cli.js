@@ -525,9 +525,16 @@ async function runAsync$2(args) {
   get <id>      查看指定 agent 详情
 
 list 输出格式:
-  [id] 名字 (builtin|market) MBTI - 简介
+  [id] 名字 (builtin|market) MBTI [性别] [生日] - 简介
   id   — agent 唯一标识，用于 get 子命令
   名字 — agent 的显示名称
+
+get 输出格式:
+  name: <名字>
+  mbti: <类型> — <性格描述>
+  gender: <性别>        （有则显示）
+  birthday: <生日>      （有则显示）
+  description: <描述>
 
 示例:
   slime-cli agent list
@@ -541,9 +548,16 @@ list 输出格式:
     if (agents.length === 0) {
       process.stdout.write("(no agents)\n");
     } else {
+      const genderLabel = { male: "男性", female: "女性" };
       for (const a of agents) {
+        const extra = [
+          a.gender && a.gender !== "unknown" ? genderLabel[a.gender] : "",
+          a.birthday ?? "",
+        ]
+          .filter(Boolean)
+          .join(" ");
         process.stdout.write(
-          `[${a.id}] ${a.name} (${a.source}) ${a.mbti} - ${a.description ?? ""}
+          `[${a.id}] ${a.name} (${a.source}) ${a.mbti}${extra ? " " + extra : ""} - ${a.description ?? ""}
 `,
         );
       }
@@ -555,9 +569,16 @@ list 输出格式:
       );
     }
     const agent = await httpGet$2(`/agents/${rest[0]}`);
+    const genderLabel = { male: "男性", female: "女性", unknown: "未知" };
     process.stdout.write(`name: ${agent.name}
 `);
     process.stdout.write(`mbti: ${agent.mbti} — ${agent.mbtiDescription}
+`);
+    if (agent.gender)
+      process.stdout.write(`gender: ${genderLabel[agent.gender] ?? agent.gender}
+`);
+    if (agent.birthday)
+      process.stdout.write(`birthday: ${agent.birthday}
 `);
     process.stdout.write(`description: ${agent.description ?? ""}
 `);
@@ -581,16 +602,18 @@ const agentCommand = {
 
 子命令:
   list          列出全部 agent（内置 + market）
-  get <id>      查看指定 agent 的名字、MBTI、描述
+  get <id>      查看指定 agent 的名字、MBTI、性别、生日、描述
 
 list 输出格式:
-  [id] 名字 (builtin|market) MBTI - 简介
+  [id] 名字 (builtin|market) MBTI [性别] [生日] - 简介
   id   — agent 唯一标识，用于 get 子命令
   名字 — agent 的显示名称
 
 get 输出格式:
   name: <名字>
   mbti: <类型> — <性格描述>
+  gender: <性别>        （有则显示）
+  birthday: <生日>      （有则显示）
   description: <描述>
 
 示例:

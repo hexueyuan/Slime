@@ -37,9 +37,15 @@ export function buildSystemBlocks(agent: {
   id: string;
   name: string;
   mbti?: MBTIType;
+  gender?: "male" | "female" | "unknown";
+  birthday?: string;
 }): SystemBlock[] {
   const personality = agent.mbti ? (MBTI_MAP[agent.mbti]?.personality ?? "") : "";
-  const identityLine = `你是${agent.name}（${agent.id}）${personality ? "，" + personality : ""}`;
+  const genderMap = { male: "男性", female: "女性", unknown: "" };
+  const genderStr = agent.gender && agent.gender !== "unknown" ? genderMap[agent.gender] : "";
+  const birthdayStr = agent.birthday ? `生于${agent.birthday}` : "";
+  const extraInfo = [genderStr, birthdayStr].filter(Boolean).join("，");
+  const identityLine = `你是${agent.name}（${agent.id}）${extraInfo ? "，" + extraInfo : ""}${personality ? "，" + personality : ""}`;
   return [
     { type: "text", text: identityLine },
     { type: "text", text: SYSTEM_CONSTRAINTS, cache_control: { type: "ephemeral" as const } },
@@ -236,7 +242,13 @@ export function buildContext(
     reserveTokens?: number;
     agentSystemPrompt?: string;
     skillListXML?: string | null;
-    agent?: { id: string; name: string; mbti?: MBTIType };
+    agent?: {
+      id: string;
+      name: string;
+      mbti?: MBTIType;
+      gender?: "male" | "female" | "unknown";
+      birthday?: string;
+    };
     additionalPrompt?: string;
     skillsXML?: string | null;
     userName?: string;

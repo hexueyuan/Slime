@@ -249,6 +249,8 @@ export function createTaskServer(
       source: a.type === "builtin" ? "builtin" : "market",
       mbti: a.mbti,
       description: a.description,
+      gender: a.gender,
+      birthday: a.birthday,
     }));
     return reply.send(result);
   });
@@ -264,6 +266,8 @@ export function createTaskServer(
       mbti: agent.mbti,
       mbtiDescription: mbtiProfile?.personality ?? "",
       description: agent.description,
+      gender: agent.gender,
+      birthday: agent.birthday,
     });
   });
 

@@ -82,6 +82,32 @@
         </div>
       </div>
 
+      <!-- 性别 -->
+      <div>
+        <label class="text-xs font-medium text-muted-foreground">性别</label>
+        <select
+          v-model="form.gender"
+          :disabled="readonly"
+          class="mt-1 block w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-50"
+        >
+          <option value="unknown">未设置</option>
+          <option value="male">男</option>
+          <option value="female">女</option>
+        </select>
+      </div>
+
+      <!-- 出生日期 -->
+      <div>
+        <label class="text-xs font-medium text-muted-foreground">出生日期</label>
+        <input
+          v-model="form.birthday"
+          :disabled="readonly"
+          type="text"
+          placeholder="YYYY-MM-DD"
+          class="mt-1 block w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-50"
+        />
+      </div>
+
       <!-- 附加提示词 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">附加提示词</label>
@@ -234,7 +260,7 @@ import { ref, reactive, watch, onMounted, computed } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useAgentStore } from "@/stores/agent";
 import AgentAvatar from "@/components/chat/AgentAvatar.vue";
-import type { Agent, AgentAvatar as AgentAvatarType } from "@shared/types/agent";
+import type { Agent, AgentAvatar as AgentAvatarType, GenderType } from "@shared/types/agent";
 import type { BuiltinAgentInfo } from "@shared/types/presenters";
 import { type MBTIType, getMBTIColor } from "@shared/constants/mbti";
 
@@ -303,6 +329,8 @@ const form = reactive({
   name: "",
   description: "",
   mbti: "INTJ" as MBTIType,
+  gender: "unknown" as GenderType,
+  birthday: "",
   additionalPrompt: "",
   capabilityRequirements: [] as string[],
   enabledTools: [] as string[],
@@ -341,6 +369,8 @@ function loadBuiltin(info: BuiltinAgentInfo) {
   form.name = (cfg.name as string) || info.id;
   form.description = (cfg.description as string) || "";
   form.mbti = (cfg.mbti as MBTIType) || "INTJ";
+  form.gender = (cfg.gender as GenderType) || "unknown";
+  form.birthday = (cfg.birthday as string) || "";
   form.additionalPrompt = info.prompt || "";
   form.capabilityRequirements = ((cfg.capabilityRequirements as string[]) || []).slice();
   form.enabledTools = ((cfg.enabledTools as string[]) || []).slice();
@@ -357,6 +387,8 @@ async function loadCustom(agent: Agent) {
   form.name = agent.name;
   form.description = agent.description || "";
   form.mbti = agent.mbti || "INTJ";
+  form.gender = agent.gender || "unknown";
+  form.birthday = agent.birthday || "";
   const cfg = agent.config || {};
   form.capabilityRequirements = (cfg.capabilityRequirements || []).slice();
   form.enabledTools = (cfg.enabledTools || []).slice();
@@ -394,6 +426,8 @@ async function save() {
         name: form.name,
         description: form.description,
         mbti: form.mbti,
+        ...(form.gender !== "unknown" && { gender: form.gender }),
+        ...(form.birthday && { birthday: form.birthday }),
         capabilityRequirements: form.capabilityRequirements,
         enabledTools: form.enabledTools,
         allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
@@ -408,6 +442,8 @@ async function save() {
         name: form.name,
         description: form.description,
         mbti: form.mbti,
+        ...(form.gender !== "unknown" && { gender: form.gender }),
+        ...(form.birthday && { birthday: form.birthday }),
         capabilityRequirements: form.capabilityRequirements,
         enabledTools: form.enabledTools,
         allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
@@ -422,6 +458,8 @@ async function save() {
         name: form.name,
         description: form.description,
         mbti: form.mbti,
+        gender: form.gender !== "unknown" ? form.gender : undefined,
+        birthday: form.birthday || undefined,
         config: {
           capabilityRequirements: form.capabilityRequirements,
           enabledTools: form.enabledTools,
@@ -439,6 +477,8 @@ async function save() {
         name: form.name,
         description: form.description,
         mbti: form.mbti,
+        gender: form.gender !== "unknown" ? form.gender : undefined,
+        birthday: form.birthday || undefined,
         config: {
           capabilityRequirements: form.capabilityRequirements,
           enabledTools: form.enabledTools,
