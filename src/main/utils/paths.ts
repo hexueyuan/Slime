@@ -1,5 +1,6 @@
 import { app } from "electron";
 import { join } from "path";
+import { homedir } from "os";
 
 export const paths = {
   get userData() {
@@ -74,6 +75,10 @@ export const paths = {
 
   get marketSkillsDir() {
     return join(this.marketDir, "skills");
+  },
+
+  get slimeHomeDir() {
+    return join(homedir(), app.isPackaged ? ".slime" : ".slime-dev");
   },
 
   /** 实际操作的项目根目录：打包后用 sourceDir，开发时用 cwd */

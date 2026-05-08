@@ -1,5 +1,6 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
 import { join } from "path";
+import { homedir } from "os";
 const VALID_ROLES = ["user", "builtin-agent", "external-agent"];
 function getCallerContext() {
   const role = process.env.SLIME_ROLE;
@@ -157,22 +158,35 @@ const logsCommand = {
   allowedRoles: ["builtin-agent", "user"],
   run: runLogs,
 };
+function readConfPort() {
+  const isDev = process.env["SLIME_DEV_MODE"] === "1";
+  const confFile = join(homedir(), isDev ? ".slime-dev" : ".slime", "slime.config.json");
+  if (!existsSync(confFile)) return null;
+  try {
+    const obj = JSON.parse(readFileSync(confFile, "utf-8"));
+    const p = obj["task_server_port"];
+    return typeof p === "number" ? p : null;
+  } catch {
+    return null;
+  }
+}
+function getBaseUrl() {
+  const isDev = process.env["SLIME_DEV_MODE"] === "1";
+  const fallbackPort = isDev ? 40002 : 40001;
+  const port = process.env["SLIME_TASK_PORT"] ?? String(readConfPort() ?? fallbackPort);
+  return `http://127.0.0.1:${port}`;
+}
 const STATUS_LABEL = {
   todo: "待办",
   in_progress: "进行中",
   done: "已完成",
   cancelled: "已取消",
 };
-function getBaseUrl() {
-  const port = process.env["SLIME_TASK_PORT"];
-  if (!port) throw new Error("SLIME_TASK_PORT not set");
-  return `http://127.0.0.1:${port}`;
-}
 async function httpRequest(method, path, body) {
   const headers = {};
   if (body !== void 0) headers["Content-Type"] = "application/json";
   const userId = process.env["SLIME_USER_ID"];
-  if (userId) headers["X-Slime-User-Id"] = userId;
+  if (userId) headers["X-Slime-User-Id"] = encodeURIComponent(userId);
   const res = await fetch(`${getBaseUrl()}${path}`, {
     method,
     headers,
@@ -204,7 +218,7 @@ function parseFlag(args, flag) {
   if (idx < 0) return void 0;
   return args[idx + 1];
 }
-async function runAsync(args) {
+async function runAsync$3(args) {
   const [sub, ...rest] = args;
   if (!sub || sub === "help") {
     process.stdout.write(
@@ -439,7 +453,7 @@ add 选项:
   slime-cli task add "测试" --creator-type admin --creator-id foo`,
   allowedRoles: ["builtin-agent", "user"],
   run(args) {
-    runAsync(args).catch((e) => {
+    runAsync$3(args).catch((e) => {
       process.stderr.write(`Error: ${e instanceof Error ? e.message : String(e)}
 `);
       process.exit(1);
@@ -492,7 +506,302 @@ function makeHelpCommand(commands2) {
     run: (args, ctx) => runHelp(args, ctx, commands2),
   };
 }
-const allCommands = [logsCommand, taskCommand];
+async function httpGet$2(path) {
+  const res = await fetch(`${getBaseUrl()}${path}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error);
+  return json;
+}
+async function runAsync$2(args) {
+  const [sub, ...rest] = args;
+  if (!sub || sub === "help") {
+    process.stdout.write(
+      `agent — 查看 Agent 列表和详情
+
+用法: slime-cli agent <subcommand>
+
+子命令:
+  list          列出全部 agent
+  get <id>      查看指定 agent 详情
+
+list 输出格式:
+  [id] 名字 (builtin|market) MBTI - 简介
+  id   — agent 唯一标识，用于 get 子命令
+  名字 — agent 的显示名称
+
+示例:
+  slime-cli agent list
+  slime-cli agent get hal-ai
+`,
+    );
+    return;
+  }
+  if (sub === "list") {
+    const agents = await httpGet$2("/agents");
+    if (agents.length === 0) {
+      process.stdout.write("(no agents)\n");
+    } else {
+      for (const a of agents) {
+        process.stdout.write(`[${a.id}] ${a.name} (${a.source}) ${a.mbti} - ${a.description ?? ""}
+`);
+      }
+    }
+  } else if (sub === "get") {
+    if (!rest[0]) {
+      throw new Error(
+        "缺少 agent ID\n\n用法: slime-cli agent get <id>\n\n运行 `slime-cli help agent` 查看完整用法说明。",
+      );
+    }
+    const agent = await httpGet$2(`/agents/${rest[0]}`);
+    process.stdout.write(`name: ${agent.name}
+`);
+    process.stdout.write(`mbti: ${agent.mbti} — ${agent.mbtiDescription}
+`);
+    process.stdout.write(`description: ${agent.description ?? ""}
+`);
+  } else {
+    throw new Error(
+      `未知子命令: ${sub}
+
+可用子命令: list | get
+
+运行 \`slime-cli help agent\` 查看完整用法说明。`,
+    );
+  }
+}
+const agentCommand = {
+  name: "agent",
+  description: "Agent 列表与详情",
+  detail: `agent — 查看 Agent 列表和详情
+
+用法:
+  slime-cli agent <subcommand>
+
+子命令:
+  list          列出全部 agent（内置 + market）
+  get <id>      查看指定 agent 的名字、MBTI、描述
+
+list 输出格式:
+  [id] 名字 (builtin|market) MBTI - 简介
+  id   — agent 唯一标识，用于 get 子命令
+  名字 — agent 的显示名称
+
+get 输出格式:
+  name: <名字>
+  mbti: <类型> — <性格描述>
+  description: <描述>
+
+示例:
+  slime-cli agent list
+  slime-cli agent get hal-ai`,
+  allowedRoles: ["user", "builtin-agent"],
+  run(args) {
+    runAsync$2(args).catch((e) => {
+      process.stderr.write(`Error: ${e instanceof Error ? e.message : String(e)}
+`);
+      process.exit(1);
+    });
+  },
+};
+async function httpGet$1(path) {
+  const res = await fetch(`${getBaseUrl()}${path}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error);
+  return json;
+}
+async function runAsync$1(args) {
+  const [sub] = args;
+  if (!sub || sub === "help") {
+    process.stdout.write(
+      `skill — 查看 Skill 列表
+
+用法: slime-cli skill <subcommand>
+
+子命令:
+  list          列出全部 skill
+
+示例:
+  slime-cli skill list
+`,
+    );
+    return;
+  }
+  if (sub === "list") {
+    const skills = await httpGet$1("/skills");
+    if (skills.length === 0) {
+      process.stdout.write("(no skills)\n");
+    } else {
+      for (const s of skills) {
+        process.stdout.write(`${s.name} (${s.source}) - ${s.description}
+`);
+      }
+    }
+  } else {
+    throw new Error(
+      `未知子命令: ${sub}
+
+可用子命令: list
+
+运行 \`slime-cli help skill\` 查看完整用法说明。`,
+    );
+  }
+}
+const skillCommand = {
+  name: "skill",
+  description: "Skill 列表",
+  detail: `skill — 查看 Skill 列表
+
+用法:
+  slime-cli skill <subcommand>
+
+子命令:
+  list          列出全部 skill（内置 + market）
+
+list 输出格式:
+  name (builtin|market) - description
+
+示例:
+  slime-cli skill list`,
+  allowedRoles: ["user", "builtin-agent"],
+  run(args) {
+    runAsync$1(args).catch((e) => {
+      process.stderr.write(`Error: ${e instanceof Error ? e.message : String(e)}
+`);
+      process.exit(1);
+    });
+  },
+};
+async function httpGet(path) {
+  const res = await fetch(`${getBaseUrl()}${path}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error);
+  return json;
+}
+async function httpPut(path, body) {
+  const res = await fetch(`${getBaseUrl()}${path}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error);
+  return json;
+}
+async function runAsync(args) {
+  const [sub, ...rest] = args;
+  if (!sub || sub === "help") {
+    process.stdout.write(
+      `config — 查询和修改 Slime 配置
+
+用法: slime-cli config <subcommand>
+
+子命令:
+  list              列出全部配置项
+  get <key>         查询单个配置项
+  set <key> <value> 修改配置项（仅白名单 key）
+
+可写入的 key:
+  obsidian.vaultPath
+  gateway.port
+
+示例:
+  slime-cli config list
+  slime-cli config get obsidian.vaultPath
+  slime-cli config set obsidian.vaultPath /Users/me/vault
+`,
+    );
+    return;
+  }
+  if (sub === "list") {
+    const all = await httpGet("/config");
+    const entries = Object.entries(all);
+    if (entries.length === 0) {
+      process.stdout.write("(empty)\n");
+    } else {
+      for (const [k, v] of entries) {
+        process.stdout.write(`${k}=${JSON.stringify(v)}
+`);
+      }
+    }
+  } else if (sub === "get") {
+    if (!rest[0]) {
+      throw new Error(
+        "缺少 key\n\n用法: slime-cli config get <key>\n\n运行 `slime-cli help config` 查看完整用法说明。",
+      );
+    }
+    const result = await httpGet(`/config/${rest[0]}`);
+    process.stdout.write(`${result.key}=${JSON.stringify(result.value)}
+`);
+  } else if (sub === "set") {
+    if (!rest[0]) {
+      throw new Error(
+        "缺少 key\n\n用法: slime-cli config set <key> <value>\n\n运行 `slime-cli help config` 查看完整用法说明。",
+      );
+    }
+    if (rest[1] === void 0) {
+      throw new Error(
+        "缺少 value\n\n用法: slime-cli config set <key> <value>\n\n运行 `slime-cli help config` 查看完整用法说明。",
+      );
+    }
+    let value;
+    try {
+      value = JSON.parse(rest[1]);
+    } catch {
+      value = rest[1];
+    }
+    const result = await httpPut(`/config/${rest[0]}`, { value });
+    process.stdout.write(`${result.key}=${JSON.stringify(result.value)}
+`);
+  } else {
+    throw new Error(
+      `未知子命令: ${sub}
+
+可用子命令: list | get | set
+
+运行 \`slime-cli help config\` 查看完整用法说明。`,
+    );
+  }
+}
+const configCommand = {
+  name: "config",
+  description: "查询和修改 Slime 配置",
+  detail: `config — 查询和修改 Slime 配置
+
+用法:
+  slime-cli config <subcommand>
+
+子命令:
+  list              列出全部配置项
+  get <key>         查询单个配置项
+  set <key> <value> 修改配置项（仅白名单 key）
+
+可写入的 key:
+  obsidian.vaultPath   Obsidian vault 目录路径
+  gateway.port         LLM Gateway 端口号
+
+value 解析规则:
+  先尝试 JSON.parse，失败则作为字符串处理
+  示例: set gateway.port 40000  → 数字 40000
+        set obsidian.vaultPath /path/to/vault  → 字符串
+
+示例:
+  slime-cli config list
+  slime-cli config get obsidian.vaultPath
+  slime-cli config set obsidian.vaultPath /Users/me/vault
+  slime-cli config set gateway.port 40000
+
+  # ❌ 不可写的 key（报错: key is not writable）
+  slime-cli config set app.onboarded true`,
+  allowedRoles: ["user", "builtin-agent"],
+  run(args) {
+    runAsync(args).catch((e) => {
+      process.stderr.write(`Error: ${e instanceof Error ? e.message : String(e)}
+`);
+      process.exit(1);
+    });
+  },
+};
+const allCommands = [logsCommand, taskCommand, agentCommand, skillCommand, configCommand];
 const helpCommand = makeHelpCommand(allCommands);
 const commands = [helpCommand, ...allCommands];
 function main() {

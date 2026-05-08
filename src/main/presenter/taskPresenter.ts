@@ -33,7 +33,11 @@ class TaskPresenter {
     this.vaultPath = vaultPath;
 
     const isDev = !app.isPackaged;
-    this.port = isDev ? TASK_SERVER_PORT_DEV : TASK_SERVER_PORT_PROD;
+    const defaultPort = isDev ? TASK_SERVER_PORT_DEV : TASK_SERVER_PORT_PROD;
+    const cfgPort = configStore
+      ? (((await configStore.get("task_server_port")) as number | null) ?? defaultPort)
+      : defaultPort;
+    this.port = cfgPort;
 
     this.server = createTaskServer(db, () => this.emitTasksChanged(), {
       get: (key) => configStore?.get(key) ?? Promise.resolve(null),

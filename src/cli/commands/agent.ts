@@ -1,10 +1,12 @@
 import type { CommandDef } from "../registry";
+import { getBaseUrl } from "../utils/baseUrl";
 
 interface AgentListItem {
   id: string;
   name: string;
   source: "builtin" | "market";
   mbti: string;
+  description?: string;
 }
 
 interface AgentDetail {
@@ -14,12 +16,6 @@ interface AgentDetail {
   mbti: string;
   mbtiDescription: string;
   description?: string;
-}
-
-function getBaseUrl(): string {
-  const port = process.env["SLIME_TASK_PORT"];
-  if (!port) throw new Error("SLIME_TASK_PORT not set");
-  return `http://127.0.0.1:${port}`;
 }
 
 async function httpGet(path: string): Promise<unknown> {
@@ -34,7 +30,7 @@ async function runAsync(args: string[]): Promise<void> {
 
   if (!sub || sub === "help") {
     process.stdout.write(
-      `agent — 查看 Agent 列表和详情\n\n用法: slime-cli agent <subcommand>\n\n子命令:\n  list          列出全部 agent\n  get <id>      查看指定 agent 详情\n\n示例:\n  slime-cli agent list\n  slime-cli agent get hal-ai\n`,
+      `agent — 查看 Agent 列表和详情\n\n用法: slime-cli agent <subcommand>\n\n子命令:\n  list          列出全部 agent\n  get <id>      查看指定 agent 详情\n\nlist 输出格式:\n  [id] 名字 (builtin|market) MBTI - 简介\n  id   — agent 唯一标识，用于 get 子命令\n  名字 — agent 的显示名称\n\n示例:\n  slime-cli agent list\n  slime-cli agent get hal-ai\n`,
     );
     return;
   }
@@ -45,7 +41,9 @@ async function runAsync(args: string[]): Promise<void> {
       process.stdout.write("(no agents)\n");
     } else {
       for (const a of agents) {
-        process.stdout.write(`[${a.id}] ${a.name} (${a.source}) ${a.mbti}\n`);
+        process.stdout.write(
+          `[${a.id}] ${a.name} (${a.source}) ${a.mbti} - ${a.description ?? ""}\n`,
+        );
       }
     }
   } else if (sub === "get") {
@@ -78,7 +76,9 @@ export const agentCommand: CommandDef = {
   get <id>      查看指定 agent 的名字、MBTI、描述
 
 list 输出格式:
-  [id] name (builtin|market) MBTI
+  [id] 名字 (builtin|market) MBTI - 简介
+  id   — agent 唯一标识，用于 get 子命令
+  名字 — agent 的显示名称
 
 get 输出格式:
   name: <名字>

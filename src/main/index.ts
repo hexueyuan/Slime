@@ -37,6 +37,7 @@ async function bootstrap(): Promise<void> {
 
   const presenter = Presenter.getInstance();
   await presenter.init();
+  await presenter.configPresenter.ensureDefaults();
 
   const mainWindow = createMainWindow();
   eventBus.setWindow(mainWindow);

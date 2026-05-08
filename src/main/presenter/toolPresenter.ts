@@ -146,6 +146,7 @@ export class ToolPresenter {
                 SLIME_USER_ID: sessionCtx.agentId,
                 SLIME_DATA_DIR: app.getPath("userData"),
                 SLIME_TASK_PORT: String(taskPresenter.getPort()),
+                ...(!app.isPackaged ? { SLIME_DEV_MODE: "1" } : {}),
                 ...(sessionCtx.allowedCliCommands
                   ? { SLIME_ALLOWED_COMMANDS: sessionCtx.allowedCliCommands.join(",") }
                   : {}),

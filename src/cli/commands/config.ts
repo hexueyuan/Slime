@@ -1,10 +1,5 @@
 import type { CommandDef } from "../registry";
-
-function getBaseUrl(): string {
-  const port = process.env["SLIME_TASK_PORT"];
-  if (!port) throw new Error("SLIME_TASK_PORT not set");
-  return `http://127.0.0.1:${port}`;
-}
+import { getBaseUrl } from "../utils/baseUrl";
 
 async function httpGet(path: string): Promise<unknown> {
   const res = await fetch(`${getBaseUrl()}${path}`);

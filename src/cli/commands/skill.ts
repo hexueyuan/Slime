@@ -1,15 +1,10 @@
 import type { CommandDef } from "../registry";
+import { getBaseUrl } from "../utils/baseUrl";
 
 interface SkillItem {
   name: string;
   description: string;
   source: "builtin" | "market";
-}
-
-function getBaseUrl(): string {
-  const port = process.env["SLIME_TASK_PORT"];
-  if (!port) throw new Error("SLIME_TASK_PORT not set");
-  return `http://127.0.0.1:${port}`;
 }
 
 async function httpGet(path: string): Promise<unknown> {

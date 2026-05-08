@@ -93,6 +93,7 @@ export function createTaskServer(
     let creatorId: string | undefined;
     if (creatorType === "user") {
       creatorId = req.headers["x-slime-user-id"] as string | undefined;
+      if (creatorId) creatorId = decodeURIComponent(creatorId);
       if (!creatorId) {
         return reply.status(400).send({ error: "missing X-Slime-User-Id header for user creator" });
       }
@@ -247,6 +248,7 @@ export function createTaskServer(
       name: a.name,
       source: a.type === "builtin" ? "builtin" : "market",
       mbti: a.mbti,
+      description: a.description,
     }));
     return reply.send(result);
   });

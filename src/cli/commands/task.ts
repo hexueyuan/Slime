@@ -1,4 +1,5 @@
 import type { CommandDef } from "../registry";
+import { getBaseUrl } from "../utils/baseUrl";
 
 interface Task {
   id: string;
@@ -22,17 +23,11 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "已取消",
 };
 
-function getBaseUrl(): string {
-  const port = process.env["SLIME_TASK_PORT"];
-  if (!port) throw new Error("SLIME_TASK_PORT not set");
-  return `http://127.0.0.1:${port}`;
-}
-
 async function httpRequest(method: string, path: string, body?: unknown): Promise<unknown> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const userId = process.env["SLIME_USER_ID"];
-  if (userId) headers["X-Slime-User-Id"] = userId;
+  if (userId) headers["X-Slime-User-Id"] = encodeURIComponent(userId);
   const res = await fetch(`${getBaseUrl()}${path}`, {
     method,
     headers,
