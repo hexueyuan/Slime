@@ -321,42 +321,47 @@ export function buildContext(
   // 断点④：历史消息倒数第二轮 assistant 最后 text block 打标记
   markHistoryCacheBreakpoint(filtered);
 
-  // 新格式：注入 additionalPrompt / skillsXML / dynamic reminder 到新 user 消息
+  // 新格式：system-reminder 只在第一条 user 消息（无历史）时注入，后续消息只含纯文本
   let newUserMsg: CoreMessage;
   if (options?.agent) {
-    const blocks: UserContentBlock[] = [];
-    const additionalPrompt = options.additionalPrompt;
-    const skillsXML = options.skillsXML;
-    const dynamicReminder = buildDynamicReminder(options.userName);
+    const isFirstMessage = filtered.length === 0 && summaryMessages.length === 0;
+    if (isFirstMessage) {
+      const blocks: UserContentBlock[] = [];
+      const additionalPrompt = options.additionalPrompt;
+      const skillsXML = options.skillsXML;
+      const dynamicReminder = buildDynamicReminder(options.userName);
 
-    if (additionalPrompt) {
-      blocks.push({
-        type: "text",
-        text: `<system-reminder>\n${additionalPrompt}\n</system-reminder>`,
-      });
+      if (additionalPrompt) {
+        blocks.push({
+          type: "text",
+          text: `<system-reminder>\n${additionalPrompt}\n</system-reminder>`,
+        });
+      }
+      if (skillsXML) {
+        // skillsXML 已经包含 <system-reminder> 标签（由 buildSkillListXML 生成）
+        blocks.push({
+          type: "text",
+          text: skillsXML,
+        });
+      }
+      if (dynamicReminder) {
+        blocks.push({
+          type: "text",
+          text: `<system-reminder>\n${dynamicReminder}\n</system-reminder>`,
+        });
+      }
+      // 断点③：最新 user 消息中最后一个 system-reminder block 打标记
+      if (blocks.length > 0) {
+        blocks[blocks.length - 1] = {
+          ...blocks[blocks.length - 1],
+          cache_control: { type: "ephemeral" },
+        };
+      }
+      blocks.push({ type: "text", text: newUserContent });
+      newUserMsg = { role: "user", content: blocks };
+    } else {
+      newUserMsg = { role: "user", content: newUserContent };
     }
-    if (skillsXML) {
-      // skillsXML 已经包含 <system-reminder> 标签（由 buildSkillListXML 生成）
-      blocks.push({
-        type: "text",
-        text: skillsXML,
-      });
-    }
-    if (dynamicReminder) {
-      blocks.push({
-        type: "text",
-        text: `<system-reminder>\n${dynamicReminder}\n</system-reminder>`,
-      });
-    }
-    // 断点③：最新 user 消息中最后一个 system-reminder block 打标记
-    if (blocks.length > 0) {
-      blocks[blocks.length - 1] = {
-        ...blocks[blocks.length - 1],
-        cache_control: { type: "ephemeral" },
-      };
-    }
-    blocks.push({ type: "text", text: newUserContent });
-    newUserMsg = { role: "user", content: blocks };
   } else {
     newUserMsg = { role: "user", content: newUserContent };
   }

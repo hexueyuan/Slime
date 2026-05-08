@@ -363,15 +363,24 @@ export class GatewayPresenter implements IGatewayPresenter {
   // --- Stats ---
 
   getStatsRange(from: string, to: string): DailyStats {
-    return statsDao.getStatsRange(getDb(), from, to);
+    const t0 = Date.now();
+    const r = statsDao.getStatsRange(getDb(), from, to);
+    logger.debug(`[stats] getStatsRange ${Date.now() - t0}ms`);
+    return r;
   }
 
   getStatsByModel(from?: string, to?: string): ModelStats[] {
-    return statsDao.getStatsByModel(getDb(), from, to);
+    const t0 = Date.now();
+    const r = statsDao.getStatsByModel(getDb(), from, to);
+    logger.debug(`[stats] getStatsByModel ${Date.now() - t0}ms`);
+    return r;
   }
 
   getStatsByChannel(from?: string, to?: string): ChannelStats[] {
-    return statsDao.getStatsByChannel(getDb(), from, to);
+    const t0 = Date.now();
+    const r = statsDao.getStatsByChannel(getDb(), from, to);
+    logger.debug(`[stats] getStatsByChannel ${Date.now() - t0}ms`);
+    return r;
   }
 
   getRecentLogs(limit: number, offset: number): RelayLog[] {
@@ -383,31 +392,52 @@ export class GatewayPresenter implements IGatewayPresenter {
   }
 
   getChannelRanking(from: string, to: string): ChannelRankItem[] {
-    return statsDao.getChannelRanking(getDb(), from, to);
+    const t0 = Date.now();
+    const r = statsDao.getChannelRanking(getDb(), from, to);
+    logger.debug(`[stats] getChannelRanking ${Date.now() - t0}ms`);
+    return r;
   }
 
   getModelRanking(from: string, to: string): ModelRankItem[] {
-    return statsDao.getModelRanking(getDb(), from, to);
+    const t0 = Date.now();
+    const r = statsDao.getModelRanking(getDb(), from, to);
+    logger.debug(`[stats] getModelRanking ${Date.now() - t0}ms`);
+    return r;
   }
 
   getLatencyPercentiles(from: string, to: string, channelId?: number): LatencyPercentiles {
-    return statsDao.getLatencyPercentiles(getDb(), from, to, channelId);
+    const t0 = Date.now();
+    const r = statsDao.getLatencyPercentiles(getDb(), from, to, channelId);
+    logger.debug(`[stats] getLatencyPercentiles ${Date.now() - t0}ms`);
+    return r;
   }
 
   getChannelStability(channelId: number, from: string, to: string): StabilityPoint[] {
-    return statsDao.getChannelStabilityHourly(getDb(), channelId, from, to);
+    const t0 = Date.now();
+    const r = statsDao.getChannelStabilityHourly(getDb(), channelId, from, to);
+    logger.debug(`[stats] getChannelStability(channel=${channelId}) ${Date.now() - t0}ms`);
+    return r;
   }
 
   getChannelMinuteStability(channelId: number): MinutePoint[] {
-    return statsDao.getChannelStabilityMinute(getDb(), channelId);
+    const t0 = Date.now();
+    const r = statsDao.getChannelStabilityMinute(getDb(), channelId);
+    logger.debug(`[stats] getChannelMinuteStability(channel=${channelId}) ${Date.now() - t0}ms`);
+    return r;
   }
 
   getStatsDailyTrend(from: string, to: string): TrendPoint[] {
-    return statsDao.getStatsDailyTrend(getDb(), from, to);
+    const t0 = Date.now();
+    const r = statsDao.getStatsDailyTrend(getDb(), from, to);
+    logger.debug(`[stats] getStatsDailyTrend ${Date.now() - t0}ms`);
+    return r;
   }
 
   getStatsHourlyTrend(from: string, to: string): TrendPoint[] {
-    return statsDao.getStatsHourlyTrend(getDb(), from, to);
+    const t0 = Date.now();
+    const r = statsDao.getStatsHourlyTrend(getDb(), from, to);
+    logger.debug(`[stats] getStatsHourlyTrend ${Date.now() - t0}ms`);
+    return r;
   }
 
   // --- Prices ---

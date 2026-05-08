@@ -421,6 +421,107 @@ describe("buildContext", () => {
     const result = buildContext("sess-1", "Hello!", fakeDb);
     expect(result[0]).toEqual({ role: "system", content: "You are a helpful AI assistant." });
   });
+
+  // system-reminder 注入位置测试
+  // 预期：system-reminder blocks 只出现在第1条 user 消息，后续 user 消息是纯文本
+  const agentOpts = {
+    agent: { id: "hal-ai", name: "哈尔" },
+    skillsXML: "<system-reminder>\n- skill-a: do something\n</system-reminder>",
+    additionalPrompt: "只回复中文",
+    userName: "何雪源",
+  };
+
+  it("first user message contains system-reminder blocks + user input", () => {
+    vi.mocked(messageDao.listBySession).mockReturnValue([]);
+    const result = buildContext("sess-1", "你好", fakeDb, agentOpts);
+    const firstUser = result.find((m) => m.role === "user")!;
+    // content 是 blocks array
+    expect(Array.isArray(firstUser.content)).toBe(true);
+    const blocks = firstUser.content as Array<{ type: string; text: string }>;
+    // 最后一个 block 是用户输入
+    expect(blocks[blocks.length - 1].text).toBe("你好");
+    // 前面有 system-reminder block
+    const reminderBlocks = blocks.slice(0, -1);
+    expect(reminderBlocks.length).toBeGreaterThan(0);
+    expect(reminderBlocks.every((b) => b.text.includes("<system-reminder>"))).toBe(true);
+  });
+
+  it("subsequent user messages are plain text without system-reminder", () => {
+    // 模拟已有一轮历史（第1轮已注入过 system-reminder）
+    vi.mocked(messageDao.listBySession).mockReturnValue([
+      makeRecord({
+        orderSeq: 1,
+        role: "user",
+        content: JSON.stringify([
+          { type: "text", text: "<system-reminder>\n- skill-a: do something\n</system-reminder>" },
+          { type: "text", text: "你好" },
+        ]),
+        status: "sent",
+      }),
+      makeRecord({
+        orderSeq: 2,
+        role: "assistant",
+        content: makeAssistantContent([
+          { type: "content", content: "你好！", status: "success", timestamp: 1 },
+        ]),
+        status: "sent",
+      }),
+    ]);
+    const result = buildContext("sess-1", "你几岁", fakeDb, agentOpts);
+    const lastUser = result[result.length - 1];
+    // 第2条用户消息是纯字符串
+    expect(lastUser.role).toBe("user");
+    expect(typeof lastUser.content).toBe("string");
+    expect(lastUser.content).toBe("你几岁");
+  });
+
+  it("system-reminder appears exactly once across a 3-turn conversation", () => {
+    // 模拟已有两轮历史
+    vi.mocked(messageDao.listBySession).mockReturnValue([
+      makeRecord({
+        orderSeq: 1,
+        role: "user",
+        content: JSON.stringify([
+          { type: "text", text: "<system-reminder>\nskills\n</system-reminder>" },
+          { type: "text", text: "你好" },
+        ]),
+        status: "sent",
+      }),
+      makeRecord({
+        orderSeq: 2,
+        role: "assistant",
+        content: makeAssistantContent([
+          { type: "content", content: "你好！", status: "success", timestamp: 1 },
+        ]),
+        status: "sent",
+      }),
+      makeRecord({ orderSeq: 3, role: "user", content: "你几岁", status: "sent" }),
+      makeRecord({
+        orderSeq: 4,
+        role: "assistant",
+        content: makeAssistantContent([
+          { type: "content", content: "我很年轻", status: "success", timestamp: 2 },
+        ]),
+        status: "sent",
+      }),
+    ]);
+    const result = buildContext("sess-1", "现在几点", fakeDb, agentOpts);
+    const userMessages = result.filter((m) => m.role === "user");
+    // 第1条：blocks（含 system-reminder）
+    expect(Array.isArray(userMessages[0].content)).toBe(true);
+    // 第2、3条：纯字符串
+    expect(typeof userMessages[1].content).toBe("string");
+    expect(typeof userMessages[2].content).toBe("string");
+    // 只有第1条含 system-reminder
+    const allText = JSON.stringify(result);
+    const count = (allText.match(/system-reminder/g) ?? []).length;
+    // 第1条 user 消息有 N 个 system-reminder block，但后续不应再出现
+    const firstUserText = JSON.stringify(userMessages[0].content);
+    const restText = JSON.stringify(userMessages.slice(1));
+    expect(restText).not.toContain("system-reminder");
+    expect(firstUserText).toContain("system-reminder");
+    void count; // suppress unused
+  });
 });
 
 describe("buildSkillListXML", () => {

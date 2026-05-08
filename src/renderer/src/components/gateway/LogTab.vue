@@ -58,8 +58,7 @@ function closeDrawer() {
 }
 
 function formatTime(iso: string): string {
-  // SQLite datetime('now') returns UTC without Z suffix; append ' UTC' so JS parses correctly
-  const d = new Date(iso.includes("T") || iso.endsWith("Z") ? iso : iso + " UTC");
+  const d = new Date(iso);
   return d.toLocaleString("zh-CN", {
     month: "2-digit",
     day: "2-digit",
