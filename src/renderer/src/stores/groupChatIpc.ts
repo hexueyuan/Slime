@@ -48,7 +48,7 @@ export function setupGroupChatIpc(
   unsubs.push(unsubTyping);
 
   const unsubDetachedClosed = window.electron.ipcRenderer.on(
-    "detached_window_closed",
+    GROUP_CHAT_EVENTS.DETACHED_CLOSED,
     (data: unknown) => {
       const d = data as DetachedWindowClosedData;
       sessionStore.unmarkDetached(d.sessionId);

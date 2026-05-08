@@ -7,6 +7,7 @@ export const useGroupChatStore = defineStore("groupChat", () => {
   const groupChatPresenter = usePresenter("groupChatPresenter");
 
   const messages = ref<GroupChatMessageRecord[]>([]);
+  /** 只读访问；修改请使用 setTyping/clearMessages */
   const typingAgentIds = ref<Set<string>>(new Set());
   const error = ref<string | null>(null);
 

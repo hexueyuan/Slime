@@ -8,6 +8,7 @@ export const useGroupChatSessionStore = defineStore("groupChatSession", () => {
 
   const sessions = ref<GroupChatSession[]>([]);
   const activeSessionId = ref<string | null>(null);
+  /** 只读访问；修改请使用 markDetached/unmarkDetached */
   const detachedSessionIds = ref<Set<string>>(new Set());
 
   async function fetchSessions() {
@@ -60,7 +61,6 @@ export const useGroupChatSessionStore = defineStore("groupChatSession", () => {
   return {
     sessions,
     activeSessionId,
-    detachedSessionIds,
     fetchSessions,
     setActiveSession,
     createSession,

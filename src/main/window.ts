@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell, nativeImage, ipcMain } from "electron";
 import { join } from "path";
 import { logger } from "@/utils";
 import { paths } from "@/utils/paths";
+import { GROUP_CHAT_EVENTS } from "@shared/events";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -106,7 +107,7 @@ export function createDetachedWindow(sessionId: string): BrowserWindow {
     detachedWindows.delete(sessionId);
     // Notify main window
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("detached_window_closed", { sessionId });
+      mainWindow.webContents.send(GROUP_CHAT_EVENTS.DETACHED_CLOSED, { sessionId });
     }
   });
 
@@ -118,13 +119,13 @@ export function isSessionDetached(sessionId: string): boolean {
   return !!win && !win.isDestroyed();
 }
 
-// IPC: open or focus detached window
-ipcMain.handle("group_chat:open_detached", (_event, sessionId: string) => {
-  createDetachedWindow(sessionId);
-});
+export function registerWindowIpc(): void {
+  ipcMain.handle("group_chat:open_detached", (_event, sessionId: string) => {
+    createDetachedWindow(sessionId);
+  });
 
-// IPC: focus existing detached window
-ipcMain.handle("group_chat:focus_detached", (_event, sessionId: string) => {
-  const win = detachedWindows.get(sessionId);
-  if (win && !win.isDestroyed()) win.focus();
-});
+  ipcMain.handle("group_chat:focus_detached", (_event, sessionId: string) => {
+    const win = detachedWindows.get(sessionId);
+    if (win && !win.isDestroyed()) win.focus();
+  });
+}

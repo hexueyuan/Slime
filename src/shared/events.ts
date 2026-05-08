@@ -73,4 +73,5 @@ export const TASK_EVENTS = {
 export const GROUP_CHAT_EVENTS = {
   MESSAGE_ADDED: "group_chat:message_added", // { sessionId, message: GroupChatMessageRecord }
   AGENT_TYPING: "group_chat:agent_typing", // { sessionId, agentId, isTyping: boolean }
+  DETACHED_CLOSED: "group_chat:detached_closed", // { sessionId }
 } as const;

@@ -2,7 +2,7 @@ import { app, BrowserWindow } from "electron";
 import { electronApp } from "@electron-toolkit/utils";
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
-import { createMainWindow, setIsQuitting } from "./window";
+import { createMainWindow, setIsQuitting, registerWindowIpc } from "./window";
 import { Presenter } from "./presenter";
 import { eventBus } from "./eventbus";
 import { logger, paths } from "./utils";
@@ -40,6 +40,7 @@ async function bootstrap(): Promise<void> {
   await presenter.configPresenter.ensureDefaults();
 
   const mainWindow = createMainWindow();
+  registerWindowIpc();
   eventBus.setWindow(mainWindow);
 
   TrayManager.init(mainWindow);
