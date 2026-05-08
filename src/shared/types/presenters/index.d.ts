@@ -12,6 +12,7 @@ import type { IAgentConfigPresenter } from "./agentConfig.presenter";
 import type { IAgentChatPresenter } from "./agentChat.presenter";
 import type { IMCPServerPresenter } from "./mcpServer.presenter";
 import type { IDevPresenter } from "./dev.presenter";
+import type { IGroupChatPresenter } from "./groupChat.presenter";
 
 export type { IAppPresenter } from "./app.presenter";
 export type { IConfigPresenter } from "./config.presenter";
@@ -26,6 +27,7 @@ export type { IGatewayPresenter } from "./gateway.presenter";
 export type { IAgentConfigPresenter } from "./agentConfig.presenter";
 export type { IAgentChatPresenter } from "./agentChat.presenter";
 export type { IDevPresenter, BuiltinAgentInfo, SkillManifest } from "./dev.presenter";
+export type { IGroupChatPresenter } from "./groupChat.presenter";
 export type { EvolutionStatus, EvolutionNode, EvolutionStage, EvolutionPlan } from "../evolution";
 
 export interface IPresenter {
@@ -43,6 +45,7 @@ export interface IPresenter {
   agentChatPresenter: IAgentChatPresenter;
   mcpServerPresenter: IMCPServerPresenter;
   devPresenter: IDevPresenter;
+  groupChatPresenter: IGroupChatPresenter;
   init(): void | Promise<void>;
   destroy(): Promise<void>;
 }

@@ -25,6 +25,8 @@ import { MCPToolBridge } from "./mcpToolBridge";
 import { DevPresenter } from "./devPresenter";
 import { SkillPresenter } from "./skillPresenter";
 import { taskPresenter } from "./taskPresenter";
+import { GroupChatPresenter } from "./groupChatPresenter";
+import { agentInvokerRegistry } from "./agentChat/agentInvokerRegistry";
 
 type DispatchableKey = Exclude<keyof IPresenter, "init" | "destroy">;
 
@@ -42,6 +44,7 @@ export class Presenter implements IPresenter {
   agentChatPresenter: AgentChatPresenterAdapter;
   mcpServerPresenter: MCPServerPresenter;
   devPresenter: DevPresenter;
+  groupChatPresenter: GroupChatPresenter;
 
   evolutionPresenter: EvolutionPresenter;
 
@@ -96,6 +99,8 @@ export class Presenter implements IPresenter {
       this.contentPresenter,
       this.gatewayPresenter,
     );
+    agentInvokerRegistry.init(this.gatewayPresenter, this.toolPresenter);
+    this.groupChatPresenter = new GroupChatPresenter(this.gatewayPresenter);
   }
 
   static getInstance(): Presenter {
@@ -125,6 +130,7 @@ export class Presenter implements IPresenter {
     "agentChatPresenter",
     "mcpServerPresenter",
     "devPresenter",
+    "groupChatPresenter",
   ]);
 
   private async syncVaultTrustedPath(): Promise<void> {
