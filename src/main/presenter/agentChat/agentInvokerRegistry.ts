@@ -13,6 +13,9 @@ export class AgentInvokerRegistry {
   }
 
   get(agentId: string): AgentInvoker {
+    if (!this.gatewayPresenter || !this.toolPresenter) {
+      throw new Error("AgentInvokerRegistry not initialized. Call init() first.");
+    }
     if (!this.invokers.has(agentId)) {
       this.invokers.set(
         agentId,

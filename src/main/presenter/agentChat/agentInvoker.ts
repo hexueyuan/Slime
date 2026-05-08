@@ -40,7 +40,7 @@ export class AgentInvoker {
     const ctrl = this.abortControllers.get(sessionId);
     if (ctrl) {
       ctrl.abort();
-      this.abortControllers.delete(sessionId);
+      // 不在这里 delete，由 _run() 的 finally 统一清理
     }
   }
 
