@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, nativeImage } from "electron";
+import { app, BrowserWindow, shell, nativeImage, ipcMain } from "electron";
 import { join } from "path";
 import { logger } from "@/utils";
 import { paths } from "@/utils/paths";
@@ -64,3 +64,67 @@ export function createMainWindow(): BrowserWindow {
 
   return mainWindow;
 }
+
+// Map: sessionId -> BrowserWindow（独立窗口）
+const detachedWindows = new Map<string, BrowserWindow>();
+
+export function createDetachedWindow(sessionId: string): BrowserWindow {
+  // 如果已存在，focus 它
+  const existing = detachedWindows.get(sessionId);
+  if (existing && !existing.isDestroyed()) {
+    existing.focus();
+    return existing;
+  }
+
+  const win = new BrowserWindow({
+    width: 800,
+    height: 600,
+    minWidth: 600,
+    minHeight: 400,
+    webPreferences: {
+      preload: join(__dirname, "../preload/index.js"),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+    titleBarStyle: "hiddenInset",
+    title: "群聊",
+  });
+
+  const query = `detached=1&sessionId=${encodeURIComponent(sessionId)}`;
+  if (process.env.ELECTRON_RENDERER_URL) {
+    void win.loadURL(`${process.env.ELECTRON_RENDERER_URL}?${query}`);
+  } else {
+    void win.loadFile(join(__dirname, "../renderer/index.html"), {
+      query: { detached: "1", sessionId },
+    });
+  }
+
+  detachedWindows.set(sessionId, win);
+
+  win.on("closed", () => {
+    detachedWindows.delete(sessionId);
+    // Notify main window
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("detached_window_closed", { sessionId });
+    }
+  });
+
+  return win;
+}
+
+export function isSessionDetached(sessionId: string): boolean {
+  const win = detachedWindows.get(sessionId);
+  return !!win && !win.isDestroyed();
+}
+
+// IPC: open or focus detached window
+ipcMain.handle("group_chat:open_detached", (_event, sessionId: string) => {
+  createDetachedWindow(sessionId);
+});
+
+// IPC: focus existing detached window
+ipcMain.handle("group_chat:focus_detached", (_event, sessionId: string) => {
+  const win = detachedWindows.get(sessionId);
+  if (win && !win.isDestroyed()) win.focus();
+});
