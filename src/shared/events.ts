@@ -69,3 +69,8 @@ export const TASK_EVENTS = {
   TASKS_CHANGED: "task:tasks-changed",
   TIMELINE_CHANGED: "task:timeline-changed",
 } as const;
+
+export const GROUP_CHAT_EVENTS = {
+  MESSAGE_ADDED: "group_chat:message_added", // { sessionId, message: GroupChatMessageRecord }
+  AGENT_TYPING: "group_chat:agent_typing", // { sessionId, agentId, isTyping: boolean }
+} as const;
