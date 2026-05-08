@@ -12,7 +12,7 @@
 
 1. **群聊会话**：多个 Agent 参与同一会话，用户 @ 触发指定 Agent 回复
 2. **AgentInvoker**：每个 Agent 独立执行单元，fire-and-forget 调用，输出推送到指定渠道
-3. **主持人 Agent**：用轻量模型分析用户意图，自动路由到相关 Agent（无需手动 @）
+3. **主持人**：群聊级开关，用轻量模型分析用户意图，自动路由到相关 Agent（无需手动 @），对用户透明
 4. **独立窗口**：双击会话在独立 BrowserWindow 中打开，主窗口保持干净
 5. **后台生成不中断**：切换视图不终止 Agent 生成，结果完成后推送到渠道
 
@@ -22,37 +22,39 @@
 
 ## 一、数据层
 
-### 1.1 复用现有表，新增字段
+### 1.1 独立新建两张表
 
-**`agent_sessions` 表**（新增 `group_chat` session_kind）：
-
-```sql
--- session_kind 新增合法值：'group_chat'
--- metadata_json 在 group_chat 时结构如下：
--- {
---   "participantAgentIds": ["agent-a", "agent-b"],
---   "moderatorAgentId": "agent-moderator"  // 可选
--- }
-```
-
-**`agent_messages` 表新增字段：**
+群聊使用独立表，不复用 `agent_sessions` / `agent_messages`，两套数据完全隔离。
 
 ```sql
-ALTER TABLE agent_messages ADD COLUMN sender_agent_id TEXT;
--- NULL = 用户发的消息
--- 非 NULL = 发言的 Agent id
+-- 群聊会话表
+CREATE TABLE group_chat_sessions (
+  id                    TEXT PRIMARY KEY,
+  title                 TEXT NOT NULL,
+  participant_agent_ids TEXT NOT NULL,   -- JSON array: ["agent-a", "agent-b"]
+  moderator_enabled     INTEGER NOT NULL DEFAULT 0,  -- 0=关闭，1=开启主持人
+  created_at            INTEGER NOT NULL,
+  updated_at            INTEGER NOT NULL
+);
 
-ALTER TABLE agent_messages ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
--- 0 = 正常消息，展示在 UI
--- 1 = 主持人注入的隐藏指令，不展示在 UI
+-- 群聊消息表
+CREATE TABLE group_chat_messages (
+  id               TEXT PRIMARY KEY,
+  session_id       TEXT NOT NULL REFERENCES group_chat_sessions(id) ON DELETE CASCADE,
+  order_seq        INTEGER NOT NULL,   -- Date.now() 时间戳，支持并发写入自然排序
+  sender_agent_id  TEXT,               -- NULL = 用户，非 NULL = 发言的 Agent id
+  role             TEXT NOT NULL,      -- "user" | "assistant"
+  content          TEXT NOT NULL,      -- 用户消息为纯文本；Agent 消息为 AssistantMessageBlock[] JSON
+  hidden           INTEGER NOT NULL DEFAULT 0,  -- 1 = 主持人注入的隐藏指令，不展示 UI
+  created_at       INTEGER NOT NULL
+);
+
+CREATE INDEX idx_group_chat_messages_session ON group_chat_messages(session_id, order_seq);
 ```
 
 ### 1.2 order_seq 策略
 
-| 会话类型 | order_seq 策略 |
-|---------|---------------|
-| regular（单聊） | 递增整数，保持现有逻辑不变 |
-| group_chat | `Date.now()` 毫秒时间戳，支持并发写入自然排序 |
+`group_chat_messages.order_seq` 使用 `Date.now()` 毫秒时间戳，多个 Agent 并发写入时按完成时间自然排序，无需预分配序号。
 
 ### 1.3 类型定义
 
@@ -63,7 +65,7 @@ interface GroupChatSession {
   id: string
   title: string
   participantAgentIds: string[]
-  moderatorAgentId?: string
+  moderatorEnabled: boolean
   createdAt: number
   updatedAt: number
 }
@@ -97,7 +99,7 @@ type OutputChannel = {
 interface InvokeParams {
   messages: GroupChatMessageRecord[]  // 群聊原始消息，由 Invoker 内部转换为 LLM 格式
   outputChannel: OutputChannel
-  hidden?: boolean                    // true = 写入消息时 hidden=1（主持人指令）
+  hidden?: boolean                    // true = 写入消息时 hidden=1（主持人注入的指令）
 }
 
 class AgentInvoker {
@@ -137,7 +139,7 @@ class AgentInvoker {
 
 Agent 生成完毕（agentic loop 结束）后：
 
-1. 将完整消息写入 `agent_messages`（`sender_agent_id = agentId`，`hidden = params.hidden ? 1 : 0`）
+1. 将完整消息写入 `group_chat_messages`（`sender_agent_id = agentId`，`hidden = params.hidden ? 1 : 0`）
 2. 推送事件：
    - `GROUP_CHAT_EVENTS.MESSAGE_ADDED` → 前端追加消息
    - `GROUP_CHAT_EVENTS.AGENT_TYPING` `{ isTyping: false }` → 前端清除 typing 状态
@@ -158,13 +160,17 @@ export const agentInvokerRegistry = new AgentInvokerRegistry()
 
 ---
 
-## 三、主持人 Agent
+## 三、主持人
 
-### 3.1 触发条件
+### 3.1 概述
+
+主持人是群聊级别的开关（`moderator_enabled`），不是一个可见的 Agent 实体，对用户完全透明。开启后，当用户发消息没有手动 @ 任何 Agent 时，由主持人逻辑自动决定路由给哪些 Agent。
+
+### 3.2 触发条件
 
 用户发送消息时：
 - **有 @** → 跳过主持人，直接触发被 @ 的 Agent
-- **无 @，且群聊配置了 `moderatorAgentId`** → 触发主持人分析
+- **无 @，且 `moderator_enabled = true`** → 触发主持人分析
 
 ### 3.2 主持人执行流程
 
@@ -197,7 +203,7 @@ Prompt 要求输出 JSON：
 ```typescript
 class GroupChatPresenter {
   // 会话管理
-  createSession(participantAgentIds: string[], moderatorAgentId?: string): Promise<GroupChatSession>
+  createSession(participantAgentIds: string[], moderatorEnabled?: boolean): Promise<GroupChatSession>
   getSessions(): Promise<GroupChatSession[]>
   deleteSession(sessionId: string): Promise<void>
   updateSessionTitle(sessionId: string, title: string): Promise<void>
@@ -305,7 +311,7 @@ GroupChatPanel（flex h-full）
 └── 右侧：NewGroupThread 或 GroupChatView
     ├── NewGroupThread（无 activeSessionId 时）
     │   ├── 多选 Agent 卡片（必选 ≥2）
-    │   ├── 可选：指定主持人 Agent
+    │   ├── 可选：开启智能路由（主持人）开关
     │   └── 输入第一条消息发送创建
     └── GroupChatView（有 activeSessionId 时）
         ├── 顶部栏（标题可编辑、参与 Agent 头像）
@@ -352,8 +358,9 @@ GroupChatPanel（flex h-full）
 
 | 文件 | 操作 |
 |------|------|
-| `src/main/db/database.ts` | 变更：agent_messages 表新增 sender_agent_id / hidden 字段 |
-| `src/main/db/models/agentMessageDao.ts` | 变更：新增字段的读写支持 |
+| `src/main/db/database.ts` | 变更：新建 group_chat_sessions / group_chat_messages 两张表 |
+| `src/main/db/models/groupChatSessionDao.ts` | 新增：群聊会话 DAO |
+| `src/main/db/models/groupChatMessageDao.ts` | 新增：群聊消息 DAO |
 | `src/shared/types/groupChat.d.ts` | 新增：GroupChatSession / GroupChatMessageRecord 类型 |
 | `src/shared/events.ts` | 变更：追加 GROUP_CHAT_EVENTS |
 | `src/main/presenter/agentChat/agentInvoker.ts` | 新增：AgentInvoker 类 |
