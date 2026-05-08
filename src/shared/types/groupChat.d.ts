@@ -10,7 +10,7 @@ export interface GroupChatSession {
 export interface GroupChatMessageRecord {
   id: string;
   sessionId: string;
-  orderSeq: number; // Date.now() 时间戳，用于排序
+  orderSeq: number;
   senderAgentId: string | null; // null = 用户，非 null = Agent id
   role: "user" | "assistant";
   content: string; // 用户消息为纯文本；Agent 消息为 AssistantMessageBlock[] JSON

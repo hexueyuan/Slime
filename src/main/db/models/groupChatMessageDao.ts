@@ -84,3 +84,7 @@ export function getMessageById(
     | undefined;
   return row ? rowToMessage(row) : undefined;
 }
+
+export function deleteBySession(db: BetterSqlite3.Database, sessionId: string): void {
+  db.prepare("DELETE FROM group_chat_messages WHERE session_id = ?").run(sessionId);
+}
