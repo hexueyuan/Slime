@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import GroupMessageList from "./GroupMessageList.vue";
 import GroupChatInput from "./GroupChatInput.vue";
 import { useGroupChatStore } from "@/stores/groupChat";
@@ -16,6 +16,7 @@ const participantAgentIds = computed(() => session.value?.participantAgentIds ??
 
 const isEditingTitle = ref(false);
 const titleInput = ref("");
+const titleInputRef = ref<HTMLInputElement | null>(null);
 
 async function onSend(content: string, mentionedAgentIds: string[]) {
   if (!sessionStore.activeSessionId) return;
@@ -29,9 +30,11 @@ async function onTitleBlur() {
   isEditingTitle.value = false;
 }
 
-function startEditTitle() {
+async function startEditTitle() {
   titleInput.value = session.value?.title ?? "";
   isEditingTitle.value = true;
+  await nextTick();
+  titleInputRef.value?.focus();
 }
 </script>
 
@@ -41,6 +44,7 @@ function startEditTitle() {
     <div class="flex items-center gap-2 border-b border-border px-4 py-2">
       <div v-if="isEditingTitle" class="flex-1">
         <input
+          ref="titleInputRef"
           v-model="titleInput"
           class="w-full rounded border border-violet-500 bg-transparent px-1 text-sm text-foreground focus:outline-none"
           @blur="onTitleBlur"

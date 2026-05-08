@@ -157,8 +157,10 @@ function onSessionDblclick(sessionId: string) {
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
           @click="
             () => {
-              if (contextMenuSessionId) onRenameStart(contextMenuSessionId);
-              closeContextMenu();
+              if (contextMenuSessionId) {
+                onRenameStart(contextMenuSessionId);
+                closeContextMenu();
+              }
             }
           "
         >
