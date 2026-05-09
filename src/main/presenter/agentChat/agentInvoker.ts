@@ -394,14 +394,18 @@ export class AgentInvoker {
               block.status = "success";
               block.tool_call.output = result;
             }
+            const rawValue = typeof result === "string" ? result : JSON.stringify(result);
+            const MAX_TOOL_RESULT = 20000;
+            const value =
+              rawValue.length > MAX_TOOL_RESULT
+                ? rawValue.slice(0, MAX_TOOL_RESULT) +
+                  `\n\n[truncated: ${rawValue.length - MAX_TOOL_RESULT} chars omitted]`
+                : rawValue;
             toolResultParts.push({
               type: "tool-result",
               toolCallId: tc.id,
               toolName: tc.name,
-              output: {
-                type: "text",
-                value: typeof result === "string" ? result : JSON.stringify(result),
-              },
+              output: { type: "text", value },
             });
           } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err);
