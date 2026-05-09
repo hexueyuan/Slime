@@ -97,7 +97,12 @@ export class AgentInvoker {
     const otherParticipants =
       otherIds.length > 0 ? `群聊中的其他参与者 ID 为：[${otherIds.join(", ")}]。` : "";
     const userInfo = userName ? `当前用户名：${userName}。` : "";
-    const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}`;
+    const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}
+
+群聊行为规则：
+1. 本轮用户消息是历史中最后一条 [用户] 消息，你只需要回答这条消息，不要主动评论或引用之前轮次的内容，除非用户明确提到了历史内容。
+2. 如果用户问题涉及多个参与者（例如"你们几个的 X 是什么"），你只回答属于你自己的部分，不猜测、不评论其他参与者。
+3. 历史消息仅供理解对话背景，不是你需要逐一回应的内容。`;
     reminderContentBlocks.push({
       type: "text",
       text: `<system-reminder>\n${groupContext}\n</system-reminder>`,
