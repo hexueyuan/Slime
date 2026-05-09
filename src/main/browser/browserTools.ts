@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { writeFile, mkdir } from "fs/promises";
+import { dirname, resolve } from "path";
+import { homedir } from "os";
 import type { BrowserSession } from "./browserSession";
 
 export function makeBrowserNavigateTool(session: BrowserSession) {
@@ -162,6 +165,25 @@ export function makeBrowserCloseTool(session: BrowserSession) {
     execute: async () => {
       await session.close();
       return { closed: true };
+    },
+  };
+}
+
+export function makeBrowserSaveTextTool(session: BrowserSession) {
+  return {
+    description:
+      "Get the plain text of the current page and save it to a local file. Returns the saved file path, page title, url and character count. Use after browser_navigate to save page content without flooding context.",
+    parameters: z.object({
+      save_to: z.string().describe("Absolute file path to save the text (~ is expanded)"),
+    }),
+    execute: async ({ save_to }: { save_to: string }) => {
+      const { text, title, url } = await session.getText();
+      const savePath = save_to.startsWith("~") ? resolve(homedir(), save_to.slice(2)) : save_to;
+      await mkdir(dirname(savePath), { recursive: true });
+      const now = new Date().toISOString();
+      const content = `# ${title}\n\n> 来源：${url}\n> 抓取时间：${now}\n\n---\n\n${text}`;
+      await writeFile(savePath, content, "utf-8");
+      return { saved: savePath, title, url, size: content.length };
     },
   };
 }

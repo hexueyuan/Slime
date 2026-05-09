@@ -98,6 +98,15 @@ export class BrowserSession {
     return page.url();
   }
 
+  async getText(): Promise<{ text: string; title: string; url: string }> {
+    const page = await this.ensureReady();
+    const [text, title] = await Promise.all([
+      page.evaluate(() => document.body.innerText) as Promise<string>,
+      page.title(),
+    ]);
+    return { text, title, url: page.url() };
+  }
+
   async screenshot(opts: ScreenshotOpts = {}): Promise<{
     base64: string;
     mimeType: string;
