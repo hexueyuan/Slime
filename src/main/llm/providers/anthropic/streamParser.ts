@@ -24,7 +24,8 @@ export async function* parseAnthropicStream(
       if (payload.content_block?.type === "tool_use") {
         const { id, name } = payload.content_block;
         if (id && name) {
-          toolCalls.set(payload.index ?? 0, { id, name, json: "" });
+          const idx = payload.index ?? 0;
+          toolCalls.set(idx, { id, name, json: "" });
           yield { type: "tool_call_start", id, name };
         }
       } else if (payload.content_block?.type === "thinking") {
@@ -44,7 +45,8 @@ export async function* parseAnthropicStream(
       if (delta.type === "text_delta" && delta.text !== undefined) {
         yield { type: "text", text: delta.text };
       } else if (delta.type === "input_json_delta" && delta.partial_json !== undefined) {
-        const tc = toolCalls.get(payload.index ?? 0);
+        const idx = payload.index ?? 0;
+        const tc = toolCalls.get(idx);
         if (tc) {
           tc.json += delta.partial_json;
           yield { type: "tool_call_delta", id: tc.id, delta: delta.partial_json };
@@ -63,26 +65,27 @@ export async function* parseAnthropicStream(
         }
       }
     } else if (type === "content_block_stop") {
-      const tc = toolCalls.get(payload.index ?? 0);
+      const idx = payload.index ?? 0;
+      const tc = toolCalls.get(idx);
       if (tc) {
         let input: unknown;
         try {
-          input = JSON.parse(tc.json);
+          input = JSON.parse(tc.json || "{}");
         } catch (e) {
           yield {
             type: "error",
             error: `Tool call ${tc.id} JSON invalid: ${(e as Error).message}`,
           };
-          toolCalls.delete(payload.index ?? 0);
+          toolCalls.delete(idx);
           continue;
         }
         yield { type: "tool_call_end", id: tc.id, input };
-        toolCalls.delete(payload.index ?? 0);
+        toolCalls.delete(idx);
       }
-      const tb = thinkingBlocks.get(payload.index ?? 0);
+      const tb = thinkingBlocks.get(idx);
       if (tb) {
         yield { type: "thinking_end", thinking: tb.thinking, signature: tb.signature };
-        thinkingBlocks.delete(payload.index ?? 0);
+        thinkingBlocks.delete(idx);
       }
     } else if (type === "message_delta" && payload.usage) {
       const u = payload.usage;
