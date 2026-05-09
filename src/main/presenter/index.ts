@@ -99,7 +99,13 @@ export class Presenter implements IPresenter {
       this.contentPresenter,
       this.gatewayPresenter,
     );
-    agentInvokerRegistry.init(this.gatewayPresenter, this.toolPresenter);
+    agentInvokerRegistry.init(
+      this.gatewayPresenter,
+      this.toolPresenter,
+      this.configPresenter,
+      this.agentConfigPresenter,
+      skillPresenter,
+    );
     this.groupChatPresenter = new GroupChatPresenter(this.gatewayPresenter);
   }
 

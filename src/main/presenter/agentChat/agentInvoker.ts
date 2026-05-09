@@ -6,14 +6,17 @@ import { agentRegistry } from "@/agents/agentRegistry";
 import { eventBus } from "@/eventbus";
 import { GROUP_CHAT_EVENTS } from "@shared/events";
 import { logger } from "@/utils";
-import { buildSystemBlocks } from "./contextBuilder";
+import { buildSystemBlocks, buildSkillListXML } from "./contextBuilder";
 import { createLLMClient } from "@/llm";
 import type { Tool } from "@/llm";
 import type { GroupChatMessageRecord } from "@shared/types/groupChat";
 import type { AssistantMessageBlock } from "@shared/types/agent";
-import type { CoreMessage } from "./contextBuilder";
+import type { CoreMessage, SystemBlock } from "./contextBuilder";
 import type { GatewayPresenter } from "../gatewayPresenter";
 import type { ToolPresenter } from "../toolPresenter";
+import type { ConfigPresenter } from "../configPresenter";
+import type { AgentConfigPresenter } from "../agentConfigPresenter";
+import type { SkillPresenter } from "../skillPresenter";
 
 const MAX_STEPS = 128;
 
@@ -30,6 +33,9 @@ export class AgentInvoker {
     private agentId: string,
     private gatewayPresenter: GatewayPresenter,
     private toolPresenter: ToolPresenter,
+    private configPresenter: ConfigPresenter,
+    private agentConfigPresenter: AgentConfigPresenter,
+    private skillPresenter: SkillPresenter,
   ) {}
 
   isRunning(sessionId: string): boolean {
@@ -61,21 +67,42 @@ export class AgentInvoker {
       birthday?: string;
     },
     participantAgentIds: string[],
+    additionalPrompt?: string,
+    skillsXML?: string | null,
+    userName?: string,
   ): CoreMessage[] {
-    const systemBlocks = buildSystemBlocks(agent as Parameters<typeof buildSystemBlocks>[0]);
-    const otherIds = participantAgentIds.filter((id) => id !== agentId);
-    if (otherIds.length > 0) {
-      const lastBlock = systemBlocks[systemBlocks.length - 1];
-      systemBlocks[systemBlocks.length - 1] = {
-        ...lastBlock,
-        text:
-          lastBlock.text +
-          `\n你正在参与一个群聊。群聊中的其他参与者 ID 为：[${otherIds.join(", ")}]。消息中以 [agentId]: 开头的内容来自其他参与者。`,
-      };
-    }
+    // System blocks: identity + constraints (不含群聊上下文，群聊上下文放到 user 消息里)
+    const systemBlocks: SystemBlock[] = buildSystemBlocks(
+      agent as Parameters<typeof buildSystemBlocks>[0],
+    );
 
     const messages: CoreMessage[] = [{ role: "system", content: systemBlocks }];
 
+    // 在历史消息之前注入 system-reminder blocks（additionalPrompt / skills / 群聊环境）
+    // 这些作为独立的 user 消息，位于所有历史消息之前
+    const reminderBlocks: string[] = [];
+    if (additionalPrompt) {
+      reminderBlocks.push(`<system-reminder>\n${additionalPrompt}\n</system-reminder>`);
+    }
+    if (skillsXML) {
+      // skillsXML 已由 buildSkillListXML 包含 <system-reminder> 标签
+      reminderBlocks.push(skillsXML);
+    }
+
+    // 群聊环境信息：参与者列表 + 用户名
+    const otherIds = participantAgentIds.filter((id) => id !== agentId);
+    const otherParticipants =
+      otherIds.length > 0 ? `群聊中的其他参与者 ID 为：[${otherIds.join(", ")}]。` : "";
+    const userInfo = userName ? `当前用户名：${userName}。` : "";
+    const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}`;
+    reminderBlocks.push(`<system-reminder>\n${groupContext}\n</system-reminder>`);
+
+    if (reminderBlocks.length > 0) {
+      messages.push({ role: "user", content: reminderBlocks.join("\n") });
+      messages.push({ role: "assistant", content: "好的，我已了解当前环境和设定。" });
+    }
+
+    // 转换群聊历史消息
     for (const msg of groupMessages) {
       if (msg.hidden) {
         messages.push({ role: "user", content: msg.content });
@@ -177,6 +204,23 @@ export class AgentInvoker {
       };
     }
 
+    // 读取 additionalPrompt / skills / userName
+    const additionalPromptFromConfig = agent.config?.additionalPrompt ?? "";
+    const promptFromFile = !additionalPromptFromConfig
+      ? await this.agentConfigPresenter.readPromptMd(this.agentId)
+      : "";
+    const additionalPrompt = additionalPromptFromConfig || promptFromFile || undefined;
+
+    const skillsXML = buildSkillListXML(
+      this.skillPresenter.getSkillList(this.agentId, undefined, agent.config?.enabledSkills ?? []),
+    );
+
+    const profile = (await this.configPresenter.get("app.userProfile")) as
+      | { name?: string }
+      | null
+      | undefined;
+    const userName = profile?.name ?? undefined;
+
     const llmMessages = this.buildLLMMessages(
       this.agentId,
       params.messages,
@@ -188,6 +232,9 @@ export class AgentInvoker {
         birthday: agent.birthday,
       },
       session.participantAgentIds,
+      additionalPrompt,
+      skillsXML,
+      userName,
     );
 
     const blocks: AssistantMessageBlock[] = [];
