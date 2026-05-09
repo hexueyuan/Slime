@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { homedir } from "os";
 import { getDb } from "@/db";
 import * as groupMsgDao from "@/db/models/groupChatMessageDao";
 import * as groupSessionDao from "@/db/models/groupChatSessionDao";
 import { agentRegistry } from "@/agents/agentRegistry";
 import { eventBus } from "@/eventbus";
 import { GROUP_CHAT_EVENTS } from "@shared/events";
-import { logger } from "@/utils";
+import { logger, paths } from "@/utils";
 import { buildSystemBlocks, buildSkillListXML } from "./contextBuilder";
 import { createLLMClient } from "@/llm";
 import type { Tool } from "@/llm";
@@ -17,6 +18,25 @@ import type { ToolPresenter } from "../toolPresenter";
 import type { ConfigPresenter } from "../configPresenter";
 import type { AgentConfigPresenter } from "../agentConfigPresenter";
 import type { SkillPresenter } from "../skillPresenter";
+
+export function estimateMessagesTokens(messages: CoreMessage[]): number {
+  let total = 0;
+  for (const msg of messages) {
+    const c = msg.content;
+    if (typeof c === "string") {
+      total += Math.ceil(c.length / 4);
+    } else if (Array.isArray(c)) {
+      for (const block of c as Array<{ type: string; [key: string]: unknown }>) {
+        const str =
+          block.type === "tool-result"
+            ? JSON.stringify((block as { output?: unknown }).output ?? "")
+            : JSON.stringify(block);
+        total += Math.ceil(str.length / 4);
+      }
+    }
+  }
+  return total;
+}
 
 const MAX_STEPS = 128;
 
@@ -205,6 +225,19 @@ export class AgentInvoker {
     });
 
     const enabledTools = agent.config?.enabledTools ?? [];
+    const sessionWorkDir = paths.sessionWorkDir(sessionId);
+    const agentTrustedPaths = (agent.config?.trustedPaths ?? []).map((p) =>
+      p.startsWith("~") ? p.replace("~", homedir()) : p,
+    );
+    const groupWorkspacePaths = session.workspacePaths ?? [];
+    const trustedPaths = [sessionWorkDir, ...agentTrustedPaths, ...groupWorkspacePaths];
+    this.toolPresenter.setSessionContext(
+      sessionId,
+      this.agentId,
+      agent.type ?? "custom",
+      agent.config?.allowedCliCommands,
+      trustedPaths,
+    );
     const allTools = await this.toolPresenter.getToolSet(sessionId);
     const filteredTools =
       enabledTools.length > 0
@@ -256,6 +289,7 @@ export class AgentInvoker {
       sessionId,
     );
 
+    let lastInputTokens = 0;
     const blocks: AssistantMessageBlock[] = [];
     let stepCount = 0;
 
@@ -348,6 +382,8 @@ export class AgentInvoker {
             }
           } else if (event.type === "error") {
             throw new Error(event.error);
+          } else if (event.type === "usage") {
+            lastInputTokens = event.usage.inputTokens;
           }
         }
 
