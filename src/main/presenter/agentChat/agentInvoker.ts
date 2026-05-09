@@ -41,6 +41,64 @@ export function estimateMessagesTokens(messages: CoreMessage[]): number {
 
 const MAX_STEPS = 128;
 
+export const COMPACTABLE_TOOLS = new Set([
+  "web_fetch",
+  "read",
+  "exec",
+  "browser_get_text",
+  "browser_screenshot",
+  "browser_evaluate",
+]);
+
+export function microCompact(messages: CoreMessage[], keepRecentSteps: number): CoreMessage[] {
+  // locate loop area: first assistant message whose content array contains a tool-call block
+  let loopStartIndex = 3;
+  while (loopStartIndex < messages.length) {
+    const m = messages[loopStartIndex];
+    if (
+      m.role === "assistant" &&
+      Array.isArray(m.content) &&
+      (m.content as Array<{ type: string }>).some((b) => b.type === "tool-call")
+    ) {
+      break;
+    }
+    loopStartIndex++;
+  }
+
+  // collect indices of all tool messages in the loop area
+  const toolIndices: number[] = [];
+  for (let i = loopStartIndex; i < messages.length; i++) {
+    if (messages[i].role === "tool") toolIndices.push(i);
+  }
+
+  // protect the most recent keepRecentSteps steps
+  const compactUpTo = toolIndices.length - keepRecentSteps;
+  if (compactUpTo <= 0) return messages;
+
+  return messages.map((msg, idx) => {
+    if (msg.role !== "tool") return msg;
+    const toolIdx = toolIndices.indexOf(idx);
+    if (toolIdx < 0 || toolIdx >= compactUpTo) return msg;
+
+    const newContent = (
+      msg.content as Array<{
+        type: string;
+        toolCallId: string;
+        toolName: string;
+        output: { type: string; value: string };
+      }>
+    ).map((part) => {
+      if (part.type !== "tool-result") return part;
+      if (!COMPACTABLE_TOOLS.has(part.toolName)) return part;
+      return {
+        ...part,
+        output: { type: "text", value: `[truncated: ${part.toolName} result cleared for context]` },
+      };
+    });
+    return { ...msg, content: newContent };
+  });
+}
+
 interface InvokeParams {
   messages: GroupChatMessageRecord[];
   outputChannel: { type: "group_chat"; sessionId: string };
