@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useAgentStore } from "@/stores/agent";
+import { useAgentChatStore } from "@/stores/agentChat";
 import AgentAvatar from "../chat/AgentAvatar.vue";
 import type { GroupChatMessageRecord } from "@shared/types/groupChat";
-import type { AssistantMessageBlock } from "@shared/types/agent";
+import type { AssistantMessageBlock, AgentAvatar as AgentAvatarType } from "@shared/types/agent";
 
 const props = defineProps<{
   message: GroupChatMessageRecord;
@@ -11,6 +12,7 @@ const props = defineProps<{
 }>();
 
 const agentStore = useAgentStore();
+const chatStore = useAgentChatStore();
 
 const senderAgent = computed(() => {
   if (!props.message.senderAgentId) return null;
@@ -18,6 +20,11 @@ const senderAgent = computed(() => {
 });
 
 const isUser = computed(() => props.message.senderAgentId === null);
+
+const userAvatar = computed<AgentAvatarType>(
+  () =>
+    chatStore.userProfile?.avatar ?? { kind: "monogram", text: "U", backgroundColor: "#3b82f6" },
+);
 
 // Parse assistant blocks and extract text content for display
 const displayContent = computed(() => {
@@ -54,6 +61,7 @@ function formatTime(ts: number): string {
       <div class="max-w-[70%] rounded-2xl rounded-br-sm bg-violet-600 px-3 py-2 text-sm text-white">
         {{ displayContent }}
       </div>
+      <AgentAvatar :avatar="userAvatar" size="sm" />
     </div>
     <div class="text-[10px] text-muted-foreground">{{ formatTime(message.createdAt) }}</div>
     <!-- Typing indicator under user message -->

@@ -6,12 +6,14 @@ import GroupChatView from "../components/groupchat/GroupChatView.vue";
 import { useGroupChatSessionStore } from "@/stores/groupChatSession";
 import { useGroupChatStore } from "@/stores/groupChat";
 import { useAgentStore } from "@/stores/agent";
+import { useAgentChatStore } from "@/stores/agentChat";
 import { setupGroupChatIpc } from "@/stores/groupChatIpc";
 import { AGENT_EVENTS } from "@shared/events";
 
 const sessionStore = useGroupChatSessionStore();
 const chatStore = useGroupChatStore();
 const agentStore = useAgentStore();
+const agentChatStore = useAgentChatStore();
 
 const cleanupGroupChatIpc = setupGroupChatIpc(
   chatStore,
@@ -24,7 +26,11 @@ const cleanupAgentChanged = window.electron.ipcRenderer.on(AGENT_EVENTS.CHANGED,
 });
 
 onMounted(async () => {
-  await Promise.all([agentStore.fetchAgents(), sessionStore.fetchSessions()]);
+  await Promise.all([
+    agentStore.fetchAgents(),
+    sessionStore.fetchSessions(),
+    agentChatStore.fetchUserProfile(),
+  ]);
   // Check if this is a detached window with a specific session
   const urlParams = new URLSearchParams(window.location.search);
   const detachedSessionId = urlParams.get("sessionId");
