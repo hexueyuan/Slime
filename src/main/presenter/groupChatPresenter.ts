@@ -9,12 +9,31 @@ import { logger } from "@/utils";
 import type { GroupChatSession, GroupChatMessageRecord } from "@shared/types/groupChat";
 import type { GatewayPresenter } from "./gatewayPresenter";
 
+export function trimToRecentRounds(
+  messages: GroupChatMessageRecord[],
+  maxRounds: number,
+): GroupChatMessageRecord[] {
+  const roundStartIndices: number[] = [];
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    if (m.senderAgentId === null && !m.hidden) {
+      roundStartIndices.push(i);
+    }
+  }
+
+  if (roundStartIndices.length <= maxRounds) return messages;
+
+  const keepFrom = roundStartIndices[roundStartIndices.length - maxRounds];
+  return messages.slice(keepFrom);
+}
+
 export class GroupChatPresenter {
   constructor(private gatewayPresenter: GatewayPresenter) {}
 
   async createSession(
     participantAgentIds: string[],
     moderatorEnabled?: boolean,
+    workspacePaths?: string[],
   ): Promise<GroupChatSession> {
     const db = getDb();
     const id = crypto.randomUUID();
@@ -25,6 +44,7 @@ export class GroupChatPresenter {
       title,
       participantAgentIds,
       moderatorEnabled: moderatorEnabled ?? false,
+      workspacePaths: workspacePaths ?? [],
     });
     return session;
   }
@@ -43,6 +63,11 @@ export class GroupChatPresenter {
   async updateSessionTitle(sessionId: string, title: string): Promise<void> {
     const db = getDb();
     sessionDao.updateTitle(db, sessionId, title);
+  }
+
+  async updateWorkspacePaths(sessionId: string, workspacePaths: string[]): Promise<void> {
+    const db = getDb();
+    sessionDao.updateWorkspacePaths(db, sessionId, workspacePaths);
   }
 
   async getMessages(sessionId: string): Promise<GroupChatMessageRecord[]> {
@@ -70,7 +95,8 @@ export class GroupChatPresenter {
     sessionDao.touchUpdatedAt(db, sessionId);
     eventBus.sendToRenderer(GROUP_CHAT_EVENTS.MESSAGE_ADDED, { sessionId, message: userMsg });
 
-    const allMessages = messageDao.listBySession(db, sessionId);
+    const rawMessages = messageDao.listBySession(db, sessionId);
+    const allMessages = trimToRecentRounds(rawMessages, 15);
 
     let targetAgentIds: string[] = mentionedAgentIds;
 
