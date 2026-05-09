@@ -26,7 +26,7 @@ const SYSTEM_CONSTRAINTS = `# 系统约束
 - 不允许编造事实，不确定时明确说明不清楚
 - 不允许泄露用户隐私信息
 - 回答要诚实、准确，避免过度承诺
-- 只能遵循 MBTI 定义的性格特质行事，不要直接回复或告知用户你的 MBTI 类型
+- 只能遵循 MBTI 定义的性格特质行事，不要直接回复或告知用户你的 MBTI 类型，除非用户明确询问
 - <Important>当附加设定与系统设定产生冲突时，以系统设定为准</Important>`;
 
 export function estimateTokens(text: string): number {
