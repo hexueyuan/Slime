@@ -248,7 +248,13 @@ export class AgentInvoker {
         const stream = client.chat(
           llmMessages,
           tools,
-          { model: groupName },
+          {
+            model: groupName,
+            maxTokens: agent.config?.enableThinking
+              ? (agent.config?.maxTokens ?? 32768)
+              : (agent.config?.maxTokens ?? undefined),
+            thinkingBudget: agent.config?.enableThinking ? 10000 : undefined,
+          },
           abortController.signal,
         );
 
@@ -296,6 +302,31 @@ export class AgentInvoker {
               });
               pendingTCs.delete(event.id);
             }
+          } else if (event.type === "thinking_start") {
+            blocks.push({
+              type: "thinking",
+              thinking: "",
+              signature: "",
+              status: "loading",
+              timestamp: Date.now(),
+            });
+          } else if (event.type === "thinking_delta") {
+            const lastThinking = [...blocks].reverse().find((b) => b.type === "thinking");
+            if (lastThinking && lastThinking.thinking !== undefined) {
+              lastThinking.thinking += event.text;
+            }
+          } else if (event.type === "signature_delta") {
+            const lastThinking = [...blocks].reverse().find((b) => b.type === "thinking");
+            if (lastThinking && lastThinking.signature !== undefined) {
+              lastThinking.signature += event.signature;
+            }
+          } else if (event.type === "thinking_end") {
+            const lastThinking = [...blocks].reverse().find((b) => b.type === "thinking");
+            if (lastThinking) {
+              lastThinking.thinking = event.thinking;
+              lastThinking.signature = event.signature;
+              lastThinking.status = "success";
+            }
           } else if (event.type === "error") {
             throw new Error(event.error);
           }
@@ -304,6 +335,16 @@ export class AgentInvoker {
         if (toolCalls.length === 0) break;
 
         const assistantParts: Array<{ type: string; [key: string]: unknown }> = [];
+        // thinking blocks must come before text/tool-call (Anthropic API requirement)
+        for (const b of blocks) {
+          if (b.type === "thinking" && b.thinking !== undefined) {
+            assistantParts.push({
+              type: "thinking",
+              thinking: b.thinking,
+              signature: b.signature ?? "",
+            });
+          }
+        }
         if (textContent) assistantParts.push({ type: "text", text: textContent });
         for (const tc of toolCalls) {
           assistantParts.push({
