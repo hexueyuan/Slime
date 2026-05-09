@@ -398,7 +398,7 @@ export class AgentInvoker {
       | undefined;
     const userName = profile?.name ?? undefined;
 
-    const llmMessages = this.buildLLMMessages(
+    let llmMessages = this.buildLLMMessages(
       this.agentId,
       params.messages,
       {
@@ -587,6 +587,19 @@ export class AgentInvoker {
           }
         }
         llmMessages.push({ role: "tool", content: toolResultParts });
+        // Layer 1: micro-compact old tool results when approaching context limit (API-accurate token count)
+        if (lastInputTokens >= CONTEXT_WINDOW * MICRO_COMPACT_THRESHOLD) {
+          llmMessages = microCompact(llmMessages, KEEP_RECENT_STEPS);
+        }
+        // Layer 2: force-truncate oldest loop pairs if still over limit after micro-compact (local estimate)
+        if (estimateMessagesTokens(llmMessages) >= CONTEXT_WINDOW * TRUNCATE_THRESHOLD) {
+          llmMessages = forceTruncate(
+            llmMessages,
+            KEEP_RECENT_STEPS,
+            TRUNCATE_THRESHOLD,
+            CONTEXT_WINDOW,
+          );
+        }
       }
 
       for (const b of blocks) if (b.status === "loading") b.status = "success";
