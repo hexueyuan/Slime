@@ -104,6 +104,68 @@ export function microCompact(messages: CoreMessage[], keepRecentSteps: number): 
   });
 }
 
+export function forceTruncate(
+  messages: CoreMessage[],
+  keepRecentSteps: number,
+  thresholdRatio: number,
+  contextWindow: number,
+): CoreMessage[] {
+  // locate loop area (same logic as microCompact)
+  let loopStartIndex = 3;
+  while (loopStartIndex < messages.length) {
+    const m = messages[loopStartIndex];
+    if (
+      m.role === "assistant" &&
+      Array.isArray(m.content) &&
+      (m.content as Array<{ type: string }>).some((b) => b.type === "tool-call")
+    ) {
+      break;
+    }
+    loopStartIndex++;
+  }
+
+  // collect assistant+tool pairs in the loop area
+  const pairs: Array<[number, number]> = [];
+  let i = loopStartIndex;
+  while (i < messages.length - 1) {
+    const curr = messages[i];
+    const next = messages[i + 1];
+    if (
+      curr.role === "assistant" &&
+      Array.isArray(curr.content) &&
+      (curr.content as Array<{ type: string }>).some((b) => b.type === "tool-call") &&
+      next.role === "tool"
+    ) {
+      pairs.push([i, i + 1]);
+      i += 2;
+    } else {
+      i++;
+    }
+  }
+
+  const threshold = contextWindow * thresholdRatio;
+  // only the oldest (pairs.length - keepRecentSteps) pairs are removable
+  const removable = pairs.slice(0, pairs.length - keepRecentSteps);
+  if (removable.length === 0) return messages;
+
+  // check if already below threshold
+  if (estimateMessagesTokens(messages) < threshold) return messages;
+
+  // remove pairs oldest-first until below threshold
+  const removeSet = new Set<number>();
+  for (const [aIdx, tIdx] of removable) {
+    removeSet.add(aIdx);
+    removeSet.add(tIdx);
+    const trimmed = messages.filter((_, idx) => !removeSet.has(idx));
+    if (estimateMessagesTokens(trimmed) < threshold) {
+      return trimmed;
+    }
+  }
+
+  // all removable pairs exhausted, return best effort
+  return messages.filter((_, idx) => !removeSet.has(idx));
+}
+
 interface InvokeParams {
   messages: GroupChatMessageRecord[];
   outputChannel: { type: "group_chat"; sessionId: string };

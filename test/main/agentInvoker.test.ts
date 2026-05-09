@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   estimateMessagesTokens,
   microCompact,
+  forceTruncate,
   COMPACTABLE_TOOLS,
 } from "../../src/main/presenter/agentChat/agentInvoker";
 import type { CoreMessage } from "../../src/main/presenter/agentChat/contextBuilder";
@@ -139,5 +140,74 @@ describe("microCompact", () => {
     expect(COMPACTABLE_TOOLS.has("browser_get_text")).toBe(true);
     expect(COMPACTABLE_TOOLS.has("browser_screenshot")).toBe(true);
     expect(COMPACTABLE_TOOLS.has("browser_evaluate")).toBe(true);
+  });
+});
+
+describe("forceTruncate", () => {
+  function makeLoopMsgs(steps: number): CoreMessage[] {
+    const fixed: CoreMessage[] = [
+      { role: "system", content: "sys" },
+      { role: "user", content: "user" },
+      { role: "assistant", content: "好的，我已了解当前环境和设定。" },
+    ];
+    const loop: CoreMessage[] = [];
+    for (let i = 0; i < steps; i++) {
+      loop.push({
+        role: "assistant",
+        content: [{ type: "tool-call", toolCallId: `tc${i}`, toolName: "read", input: {} }],
+      });
+      loop.push({
+        role: "tool",
+        content: [
+          {
+            type: "tool-result",
+            toolCallId: `tc${i}`,
+            toolName: "read",
+            output: { type: "text", value: "x".repeat(50000) },
+          },
+        ],
+      });
+    }
+    return [...fixed, ...loop];
+  }
+
+  it("removes oldest loop pairs until below threshold", () => {
+    const msgs = makeLoopMsgs(10);
+    const result = forceTruncate(msgs, 4, 0.9, 200_000);
+    expect(estimateMessagesTokens(result)).toBeLessThan(200_000 * 0.9);
+  });
+
+  it("always keeps at least keepRecentSteps pairs", () => {
+    const msgs = makeLoopMsgs(6);
+    // threshold=0 → 强制裁剪到极限
+    const result = forceTruncate(msgs, 4, 0.0, 200_000);
+    // 固定 3 条 + 至少 4 对（8 条）= 至少 11 条
+    expect(result.length).toBeGreaterThanOrEqual(3 + 4 * 2);
+  });
+
+  it("does not touch fixed messages", () => {
+    const msgs = makeLoopMsgs(5);
+    const result = forceTruncate(msgs, 4, 0.9, 200_000);
+    expect(result[0].role).toBe("system");
+    expect(result[1].role).toBe("user");
+    expect(result[2]).toEqual(msgs[2]);
+  });
+
+  it("returns messages unchanged when below threshold", () => {
+    // 2 步，内容很小，不会超阈值
+    const msgs = makeLoopMsgs(2);
+    const result = forceTruncate(msgs, 4, 0.9, 200_000);
+    expect(result).toEqual(msgs);
+  });
+
+  it("removes pairs in order oldest-first", () => {
+    const msgs = makeLoopMsgs(6);
+    const result = forceTruncate(msgs, 4, 0.0, 200_000);
+    // 应该保留最后 4 对（step 2..5），即 tc2 到 tc5
+    const toolMsgs = result.filter((m) => m.role === "tool") as Array<{
+      content: Array<{ toolCallId: string }>;
+    }>;
+    expect(toolMsgs[0].content[0].toolCallId).toBe("tc2");
+    expect(toolMsgs[toolMsgs.length - 1].content[0].toolCallId).toBe("tc5");
   });
 });
