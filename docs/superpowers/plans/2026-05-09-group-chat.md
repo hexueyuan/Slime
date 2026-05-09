@@ -13,6 +13,7 @@
 ## 文件清单
 
 ### 新增
+
 - `src/shared/types/groupChat.d.ts` — GroupChatSession / GroupChatMessageRecord 类型
 - `src/shared/types/presenters/groupChat.presenter.d.ts` — IPC 接口类型
 - `src/main/db/models/groupChatSessionDao.ts` — 群聊会话 DAO
@@ -32,6 +33,7 @@
 - `src/renderer/src/views/GroupChatPanel.vue`
 
 ### 修改
+
 - `src/main/db/database.ts` — 新增两张表的 DDL + migrate()
 - `src/shared/events.ts` — 追加 GROUP_CHAT_EVENTS
 - `src/main/presenter/index.ts` — 注册 groupChatPresenter
@@ -44,12 +46,13 @@
 ## Task 1: 数据层 — 建表 + DDL + DAO
 
 **Files:**
+
 - Modify: `src/main/db/database.ts`
 - Create: `src/main/db/models/groupChatSessionDao.ts`
 - Create: `src/main/db/models/groupChatMessageDao.ts`
 - Create: `src/shared/types/groupChat.d.ts`
 
-- [ ] **Step 1: 在 DDL 字符串末尾添加两张新表**
+- [x] **Step 1: 在 DDL 字符串末尾添加两张新表**
 
 在 `database.ts` 的 `DDL` 字符串（第 256 行 `\`;\`` 之前）追加：
 
@@ -78,7 +81,7 @@ CREATE TABLE IF NOT EXISTS group_chat_messages (
 CREATE INDEX IF NOT EXISTS idx_group_chat_messages_session ON group_chat_messages(session_id, order_seq);
 ```
 
-- [ ] **Step 2: 在 migrate() 中添加升级迁移**
+- [x] **Step 2: 在 migrate() 中添加升级迁移**
 
 在 `migrate()` 函数末尾（`}` 之前）追加：
 
@@ -108,51 +111,53 @@ if (!groupChatTable) {
       created_at       INTEGER NOT NULL
     );
   `);
-  instance.exec(`CREATE INDEX IF NOT EXISTS idx_group_chat_messages_session ON group_chat_messages(session_id, order_seq);`);
+  instance.exec(
+    `CREATE INDEX IF NOT EXISTS idx_group_chat_messages_session ON group_chat_messages(session_id, order_seq);`,
+  );
 }
 ```
 
-- [ ] **Step 3: 创建类型定义文件**
+- [x] **Step 3: 创建类型定义文件**
 
 创建 `src/shared/types/groupChat.d.ts`：
 
 ```typescript
 export interface GroupChatSession {
-  id: string
-  title: string
-  participantAgentIds: string[]
-  moderatorEnabled: boolean
-  createdAt: number
-  updatedAt: number
+  id: string;
+  title: string;
+  participantAgentIds: string[];
+  moderatorEnabled: boolean;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface GroupChatMessageRecord {
-  id: string
-  sessionId: string
-  orderSeq: number          // Date.now() 时间戳
-  senderAgentId: string | null  // null = 用户
-  role: 'user' | 'assistant'
-  content: string           // 用户消息为纯文本；Agent 消息为 AssistantMessageBlock[] JSON
-  hidden: boolean
-  createdAt: number
+  id: string;
+  sessionId: string;
+  orderSeq: number; // Date.now() 时间戳
+  senderAgentId: string | null; // null = 用户
+  role: "user" | "assistant";
+  content: string; // 用户消息为纯文本；Agent 消息为 AssistantMessageBlock[] JSON
+  hidden: boolean;
+  createdAt: number;
 }
 ```
 
-- [ ] **Step 4: 创建 groupChatSessionDao.ts**
+- [x] **Step 4: 创建 groupChatSessionDao.ts**
 
 创建 `src/main/db/models/groupChatSessionDao.ts`：
 
 ```typescript
-import type BetterSqlite3 from 'better-sqlite3'
-import type { GroupChatSession } from '@shared/types/groupChat'
+import type BetterSqlite3 from "better-sqlite3";
+import type { GroupChatSession } from "@shared/types/groupChat";
 
 interface SessionRow {
-  id: string
-  title: string
-  participant_agent_ids: string
-  moderator_enabled: number
-  created_at: number
-  updated_at: number
+  id: string;
+  title: string;
+  participant_agent_ids: string;
+  moderator_enabled: number;
+  created_at: number;
+  updated_at: number;
 }
 
 function rowToSession(row: SessionRow): GroupChatSession {
@@ -163,19 +168,19 @@ function rowToSession(row: SessionRow): GroupChatSession {
     moderatorEnabled: !!row.moderator_enabled,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-  }
+  };
 }
 
 export function createSession(
   db: BetterSqlite3.Database,
   data: {
-    id: string
-    title: string
-    participantAgentIds: string[]
-    moderatorEnabled?: boolean
+    id: string;
+    title: string;
+    participantAgentIds: string[];
+    moderatorEnabled?: boolean;
   },
 ): GroupChatSession {
-  const now = Date.now()
+  const now = Date.now();
   db.prepare(
     `INSERT INTO group_chat_sessions (id, title, participant_agent_ids, moderator_enabled, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
@@ -186,61 +191,61 @@ export function createSession(
     data.moderatorEnabled ? 1 : 0,
     now,
     now,
-  )
-  return getSessionById(db, data.id)!
+  );
+  return getSessionById(db, data.id)!;
 }
 
 export function listSessions(db: BetterSqlite3.Database): GroupChatSession[] {
   const rows = db
-    .prepare('SELECT * FROM group_chat_sessions ORDER BY updated_at DESC')
-    .all() as SessionRow[]
-  return rows.map(rowToSession)
+    .prepare("SELECT * FROM group_chat_sessions ORDER BY updated_at DESC")
+    .all() as SessionRow[];
+  return rows.map(rowToSession);
 }
 
 export function getSessionById(
   db: BetterSqlite3.Database,
   id: string,
 ): GroupChatSession | undefined {
-  const row = db
-    .prepare('SELECT * FROM group_chat_sessions WHERE id = ?')
-    .get(id) as SessionRow | undefined
-  return row ? rowToSession(row) : undefined
+  const row = db.prepare("SELECT * FROM group_chat_sessions WHERE id = ?").get(id) as
+    | SessionRow
+    | undefined;
+  return row ? rowToSession(row) : undefined;
 }
 
 export function updateTitle(db: BetterSqlite3.Database, id: string, title: string): void {
-  db.prepare('UPDATE group_chat_sessions SET title = ?, updated_at = ? WHERE id = ?').run(
+  db.prepare("UPDATE group_chat_sessions SET title = ?, updated_at = ? WHERE id = ?").run(
     title,
     Date.now(),
     id,
-  )
+  );
 }
 
 export function touchUpdatedAt(db: BetterSqlite3.Database, id: string): void {
-  db.prepare('UPDATE group_chat_sessions SET updated_at = ? WHERE id = ?').run(Date.now(), id)
+  db.prepare("UPDATE group_chat_sessions SET updated_at = ? WHERE id = ?").run(Date.now(), id);
 }
 
 export function deleteSession(db: BetterSqlite3.Database, id: string): void {
-  db.prepare('DELETE FROM group_chat_sessions WHERE id = ?').run(id)
+  db.prepare("DELETE FROM group_chat_sessions WHERE id = ?").run(id);
 }
 ```
 
-- [ ] **Step 5: 创建 groupChatMessageDao.ts**
+- [x] **Step 5: 创建 groupChatMessageDao.ts**
 
 创建 `src/main/db/models/groupChatMessageDao.ts`：
 
 ```typescript
-import type BetterSqlite3 from 'better-sqlite3'
-import type { GroupChatMessageRecord } from '@shared/types/groupChat'
+import type BetterSqlite3 from "better-sqlite3";
+import type { GroupChatMessageRecord } from "@shared/types/groupChat";
 
 interface MessageRow {
-  id: string
-  session_id: string
-  order_seq: number
-  sender_agent_id: string | null
-  role: string
-  content: string
-  hidden: number
-  created_at: number
+  id: string;
+  session_id: string;
+  order_seq: number;
+  sender_agent_id: string | null;
+  role: string;
+  content: string;
+  hidden: number;
+  created_at: number;
 }
 
 function rowToMessage(row: MessageRow): GroupChatMessageRecord {
@@ -249,39 +254,39 @@ function rowToMessage(row: MessageRow): GroupChatMessageRecord {
     sessionId: row.session_id,
     orderSeq: row.order_seq,
     senderAgentId: row.sender_agent_id,
-    role: row.role as 'user' | 'assistant',
+    role: row.role as "user" | "assistant",
     content: row.content,
     hidden: !!row.hidden,
     createdAt: row.created_at,
-  }
+  };
 }
 
 export function createMessage(
   db: BetterSqlite3.Database,
   data: {
-    id: string
-    sessionId: string
-    senderAgentId?: string | null
-    role: 'user' | 'assistant'
-    content: string
-    hidden?: boolean
+    id: string;
+    sessionId: string;
+    senderAgentId?: string | null;
+    role: "user" | "assistant";
+    content: string;
+    hidden?: boolean;
   },
 ): GroupChatMessageRecord {
-  const now = Date.now()
+  const now = Date.now();
   db.prepare(
     `INSERT INTO group_chat_messages (id, session_id, order_seq, sender_agent_id, role, content, hidden, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     data.id,
     data.sessionId,
-    now,                            // order_seq = Date.now() 时间戳
+    now, // order_seq = Date.now() 时间戳
     data.senderAgentId ?? null,
     data.role,
     data.content,
     data.hidden ? 1 : 0,
     now,
-  )
-  return getMessageById(db, data.id)!
+  );
+  return getMessageById(db, data.id)!;
 }
 
 export function listBySession(
@@ -289,21 +294,19 @@ export function listBySession(
   sessionId: string,
 ): GroupChatMessageRecord[] {
   const rows = db
-    .prepare(
-      'SELECT * FROM group_chat_messages WHERE session_id = ? ORDER BY order_seq ASC',
-    )
-    .all(sessionId) as MessageRow[]
-  return rows.map(rowToMessage)
+    .prepare("SELECT * FROM group_chat_messages WHERE session_id = ? ORDER BY order_seq ASC")
+    .all(sessionId) as MessageRow[];
+  return rows.map(rowToMessage);
 }
 
 export function getMessageById(
   db: BetterSqlite3.Database,
   id: string,
 ): GroupChatMessageRecord | undefined {
-  const row = db
-    .prepare('SELECT * FROM group_chat_messages WHERE id = ?')
-    .get(id) as MessageRow | undefined
-  return row ? rowToMessage(row) : undefined
+  const row = db.prepare("SELECT * FROM group_chat_messages WHERE id = ?").get(id) as
+    | MessageRow
+    | undefined;
+  return row ? rowToMessage(row) : undefined;
 }
 
 export function listVisibleBySession(
@@ -312,21 +315,22 @@ export function listVisibleBySession(
 ): GroupChatMessageRecord[] {
   const rows = db
     .prepare(
-      'SELECT * FROM group_chat_messages WHERE session_id = ? AND hidden = 0 ORDER BY order_seq ASC',
+      "SELECT * FROM group_chat_messages WHERE session_id = ? AND hidden = 0 ORDER BY order_seq ASC",
     )
-    .all(sessionId) as MessageRow[]
-  return rows.map(rowToMessage)
+    .all(sessionId) as MessageRow[];
+  return rows.map(rowToMessage);
 }
 ```
 
-- [ ] **Step 6: 验证类型检查通过**
+- [x] **Step 6: 验证类型检查通过**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
+
 Expected: 无新增错误
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/db/database.ts src/main/db/models/groupChatSessionDao.ts src/main/db/models/groupChatMessageDao.ts src/shared/types/groupChat.d.ts
@@ -338,54 +342,55 @@ git commit -m "feat(group-chat): add db tables and DAOs"
 ## Task 2: 事件 + AgentInvoker + AgentInvokerRegistry
 
 **Files:**
+
 - Modify: `src/shared/events.ts`
 - Create: `src/main/presenter/agentChat/agentInvoker.ts`
 - Create: `src/main/presenter/agentChat/agentInvokerRegistry.ts`
 
-- [ ] **Step 1: 在 events.ts 追加 GROUP_CHAT_EVENTS**
+- [x] **Step 1: 在 events.ts 追加 GROUP_CHAT_EVENTS**
 
 在 `src/shared/events.ts` 末尾追加：
 
 ```typescript
 export const GROUP_CHAT_EVENTS = {
-  MESSAGE_ADDED: 'group_chat:message_added',  // { sessionId, message: GroupChatMessageRecord }
-  AGENT_TYPING:  'group_chat:agent_typing',   // { sessionId, agentId, isTyping: boolean }
-} as const
+  MESSAGE_ADDED: "group_chat:message_added", // { sessionId, message: GroupChatMessageRecord }
+  AGENT_TYPING: "group_chat:agent_typing", // { sessionId, agentId, isTyping: boolean }
+} as const;
 ```
 
-- [ ] **Step 2: 创建 agentInvoker.ts**
+- [x] **Step 2: 创建 agentInvoker.ts**
 
 创建 `src/main/presenter/agentChat/agentInvoker.ts`：
 
 ```typescript
-import { z } from 'zod'
-import { getDb } from '@/db'
-import * as groupMsgDao from '@/db/models/groupChatMessageDao'
-import * as groupSessionDao from '@/db/models/groupChatSessionDao'
-import { agentRegistry } from '@/agents/agentRegistry'
-import { eventBus } from '@/eventbus'
-import { GROUP_CHAT_EVENTS } from '@shared/events'
-import { logger } from '@/utils'
-import { buildSystemBlocks } from './contextBuilder'
-import { createLLMClient } from '@/llm'
-import type { LLMClient, Tool } from '@/llm'
-import type { GroupChatMessageRecord } from '@shared/types/groupChat'
-import type { AssistantMessageBlock } from '@shared/types/agent'
-import type { CoreMessage } from './contextBuilder'
-import type { GatewayPresenter } from '../gatewayPresenter'
-import type { ToolPresenter } from '../toolPresenter'
+import { z } from "zod";
+import { getDb } from "@/db";
+import * as groupMsgDao from "@/db/models/groupChatMessageDao";
+import * as groupSessionDao from "@/db/models/groupChatSessionDao";
+import { agentRegistry } from "@/agents/agentRegistry";
+import { eventBus } from "@/eventbus";
+import { GROUP_CHAT_EVENTS } from "@shared/events";
+import { logger } from "@/utils";
+import { buildSystemBlocks } from "./contextBuilder";
+import { createLLMClient } from "@/llm";
+import type { LLMClient, Tool } from "@/llm";
+import type { GroupChatMessageRecord } from "@shared/types/groupChat";
+import type { AssistantMessageBlock } from "@shared/types/agent";
+import type { CoreMessage } from "./contextBuilder";
+import type { GatewayPresenter } from "../gatewayPresenter";
+import type { ToolPresenter } from "../toolPresenter";
 
-const MAX_STEPS = 128
+const MAX_STEPS = 128;
 
 interface InvokeParams {
-  messages: GroupChatMessageRecord[]
-  outputChannel: { type: 'group_chat'; sessionId: string }
-  hidden?: boolean
+  messages: GroupChatMessageRecord[];
+  outputChannel: { type: "group_chat"; sessionId: string };
+  hidden?: boolean;
 }
 
 export class AgentInvoker {
   // per-sessionId abort controllers
-  private abortControllers = new Map<string, AbortController>()
+  private abortControllers = new Map<string, AbortController>();
 
   constructor(
     private agentId: string,
@@ -394,22 +399,22 @@ export class AgentInvoker {
   ) {}
 
   isRunning(sessionId: string): boolean {
-    return this.abortControllers.has(sessionId)
+    return this.abortControllers.has(sessionId);
   }
 
   stop(sessionId: string): void {
-    const ctrl = this.abortControllers.get(sessionId)
+    const ctrl = this.abortControllers.get(sessionId);
     if (ctrl) {
-      ctrl.abort()
-      this.abortControllers.delete(sessionId)
+      ctrl.abort();
+      this.abortControllers.delete(sessionId);
     }
   }
 
   invoke(params: InvokeParams): void {
     // fire-and-forget
     this._run(params).catch((err) => {
-      logger.error('[AgentInvoker] invoke error', { agentId: this.agentId, err: String(err) })
-    })
+      logger.error("[AgentInvoker] invoke error", { agentId: this.agentId, err: String(err) });
+    });
   }
 
   private buildLLMMessages(
@@ -419,100 +424,102 @@ export class AgentInvoker {
     participantAgentIds: string[],
   ): CoreMessage[] {
     // System blocks: identity + constraints + group chat context
-    const systemBlocks = buildSystemBlocks(agent)
-    const otherIds = participantAgentIds.filter((id) => id !== agentId)
-    const groupContext = otherIds.length > 0
-      ? `\n你正在参与一个群聊。群聊中的其他参与者 ID 为：[${otherIds.join(', ')}]。消息中以 [agentId]: 开头的内容来自其他参与者。`
-      : ''
+    const systemBlocks = buildSystemBlocks(agent);
+    const otherIds = participantAgentIds.filter((id) => id !== agentId);
+    const groupContext =
+      otherIds.length > 0
+        ? `\n你正在参与一个群聊。群聊中的其他参与者 ID 为：[${otherIds.join(", ")}]。消息中以 [agentId]: 开头的内容来自其他参与者。`
+        : "";
     if (groupContext) {
       systemBlocks[systemBlocks.length - 1] = {
         ...systemBlocks[systemBlocks.length - 1],
         text: systemBlocks[systemBlocks.length - 1].text + groupContext,
-      }
+      };
     }
 
-    const messages: CoreMessage[] = [{ role: 'system', content: systemBlocks }]
+    const messages: CoreMessage[] = [{ role: "system", content: systemBlocks }];
 
     // Convert group chat messages to LLM messages
     for (const msg of groupMessages) {
       if (msg.hidden) {
         // 主持人注入的隐藏指令：直接作为 user 消息，不加前缀
-        messages.push({ role: 'user', content: msg.content })
+        messages.push({ role: "user", content: msg.content });
       } else if (msg.senderAgentId === null) {
         // 用户消息
-        messages.push({ role: 'user', content: msg.content })
+        messages.push({ role: "user", content: msg.content });
       } else if (msg.senderAgentId === agentId) {
         // 本 Agent 之前的回复
-        messages.push({ role: 'assistant', content: msg.content })
+        messages.push({ role: "assistant", content: msg.content });
       } else {
         // 其他 Agent 的消息
-        messages.push({ role: 'user', content: `[${msg.senderAgentId}]: ${msg.content}` })
+        messages.push({ role: "user", content: `[${msg.senderAgentId}]: ${msg.content}` });
       }
     }
 
-    return messages
+    return messages;
   }
 
   private async _run(params: InvokeParams): Promise<void> {
-    const { outputChannel, hidden } = params
-    const { sessionId } = outputChannel
+    const { outputChannel, hidden } = params;
+    const { sessionId } = outputChannel;
 
-    if (this.abortControllers.has(sessionId)) return  // already running
+    if (this.abortControllers.has(sessionId)) return; // already running
 
-    const db = getDb()
-    const session = groupSessionDao.getSessionById(db, sessionId)
-    if (!session) return
+    const db = getDb();
+    const session = groupSessionDao.getSessionById(db, sessionId);
+    if (!session) return;
 
-    const agent = agentRegistry.getById(this.agentId)
-    if (!agent) return
+    const agent = agentRegistry.getById(this.agentId);
+    if (!agent) return;
 
-    const abortController = new AbortController()
-    this.abortControllers.set(sessionId, abortController)
+    const abortController = new AbortController();
+    this.abortControllers.set(sessionId, abortController);
 
     // Notify typing start
     eventBus.sendToRenderer(GROUP_CHAT_EVENTS.AGENT_TYPING, {
       sessionId,
       agentId: this.agentId,
       isTyping: true,
-    })
+    });
 
     const selectResult = this.gatewayPresenter.select(
-      (agent.config?.capabilityRequirements ?? ['reasoning']) as any,
-    )
-    const capReqs = agent.config?.capabilityRequirements ?? ['reasoning']
-    const firstCap = capReqs[0]
-    const capKey = Array.isArray(firstCap) ? firstCap[0] : (firstCap ?? 'reasoning')
-    const groupName = selectResult.matched[capKey]?.groupName
+      (agent.config?.capabilityRequirements ?? ["reasoning"]) as any,
+    );
+    const capReqs = agent.config?.capabilityRequirements ?? ["reasoning"];
+    const firstCap = capReqs[0];
+    const capKey = Array.isArray(firstCap) ? firstCap[0] : (firstCap ?? "reasoning");
+    const groupName = selectResult.matched[capKey]?.groupName;
     if (!groupName) {
-      this.abortControllers.delete(sessionId)
+      this.abortControllers.delete(sessionId);
       eventBus.sendToRenderer(GROUP_CHAT_EVENTS.AGENT_TYPING, {
         sessionId,
         agentId: this.agentId,
         isTyping: false,
-      })
-      return
+      });
+      return;
     }
 
-    const client = createLLMClient('anthropic', {
+    const client = createLLMClient("anthropic", {
       baseURL: `http://127.0.0.1:${this.gatewayPresenter.getPort()}`,
       apiKey: this.gatewayPresenter.getInternalKey(),
-    })
+    });
 
     // Get tools (use enabledTools whitelist)
-    const enabledTools = agent.config?.enabledTools ?? []
-    const allTools = await this.toolPresenter.getToolSet(sessionId)
-    const filteredTools = enabledTools.length > 0
-      ? Object.fromEntries(Object.entries(allTools).filter(([k]) => enabledTools.includes(k)))
-      : {}
-    const tools: Record<string, Tool> = {}
+    const enabledTools = agent.config?.enabledTools ?? [];
+    const allTools = await this.toolPresenter.getToolSet(sessionId);
+    const filteredTools =
+      enabledTools.length > 0
+        ? Object.fromEntries(Object.entries(allTools).filter(([k]) => enabledTools.includes(k)))
+        : {};
+    const tools: Record<string, Tool> = {};
     for (const [name, t] of Object.entries(filteredTools)) {
       const jsonSchema = (t as any).inputSchema
         ? z.toJSONSchema((t as any).inputSchema)
-        : { type: 'object', properties: {} }
+        : { type: "object", properties: {} };
       tools[name] = {
         description: (t as any).description,
         parameters: jsonSchema as Record<string, unknown>,
-      }
+      };
     }
 
     const llmMessages = this.buildLLMMessages(
@@ -526,190 +533,209 @@ export class AgentInvoker {
         birthday: agent.birthday,
       },
       session.participantAgentIds,
-    )
+    );
 
-    const blocks: AssistantMessageBlock[] = []
-    let stepCount = 0
+    const blocks: AssistantMessageBlock[] = [];
+    let stepCount = 0;
 
     try {
       while (stepCount < MAX_STEPS) {
-        if (abortController.signal.aborted) break
-        stepCount++
+        if (abortController.signal.aborted) break;
+        stepCount++;
 
         const stream = client.chat(
           llmMessages,
           tools,
           { model: groupName },
           abortController.signal,
-        )
+        );
 
-        let textContent = ''
-        const toolCalls: Array<{ id: string; name: string; args: string }> = []
-        const pendingTCs = new Map<string, { id: string; name: string; inputJson: string }>()
+        let textContent = "";
+        const toolCalls: Array<{ id: string; name: string; args: string }> = [];
+        const pendingTCs = new Map<string, { id: string; name: string; inputJson: string }>();
 
         for await (const event of stream) {
-          if (abortController.signal.aborted) break
-          if (event.type === 'text') {
-            textContent += event.text
-            const lastContent = blocks.findLast((b) => b.type === 'content')
+          if (abortController.signal.aborted) break;
+          if (event.type === "text") {
+            textContent += event.text;
+            const lastContent = blocks.findLast((b) => b.type === "content");
             if (lastContent) {
-              lastContent.content = (lastContent.content ?? '') + event.text
+              lastContent.content = (lastContent.content ?? "") + event.text;
             } else {
-              blocks.push({ type: 'content', content: event.text, status: 'loading', timestamp: Date.now() })
-            }
-          } else if (event.type === 'tool_call_start') {
-            pendingTCs.set(event.id, { id: event.id, name: event.name, inputJson: '' })
-          } else if (event.type === 'tool_call_delta') {
-            const tc = pendingTCs.get(event.id)
-            if (tc) tc.inputJson += event.delta
-          } else if (event.type === 'tool_call_end') {
-            const tc = pendingTCs.get(event.id)
-            if (tc) {
-              let argsObj: unknown
-              try { argsObj = event.input ?? JSON.parse(tc.inputJson || '{}') } catch { argsObj = {} }
-              toolCalls.push({ id: tc.id, name: tc.name, args: JSON.stringify(argsObj) })
               blocks.push({
-                type: 'tool_call',
+                type: "content",
+                content: event.text,
+                status: "loading",
+                timestamp: Date.now(),
+              });
+            }
+          } else if (event.type === "tool_call_start") {
+            pendingTCs.set(event.id, { id: event.id, name: event.name, inputJson: "" });
+          } else if (event.type === "tool_call_delta") {
+            const tc = pendingTCs.get(event.id);
+            if (tc) tc.inputJson += event.delta;
+          } else if (event.type === "tool_call_end") {
+            const tc = pendingTCs.get(event.id);
+            if (tc) {
+              let argsObj: unknown;
+              try {
+                argsObj = event.input ?? JSON.parse(tc.inputJson || "{}");
+              } catch {
+                argsObj = {};
+              }
+              toolCalls.push({ id: tc.id, name: tc.name, args: JSON.stringify(argsObj) });
+              blocks.push({
+                type: "tool_call",
                 id: tc.id,
-                content: '',
-                status: 'loading',
+                content: "",
+                status: "loading",
                 timestamp: Date.now(),
                 tool_call: { id: tc.id, name: tc.name, input: argsObj },
-              })
-              pendingTCs.delete(event.id)
+              });
+              pendingTCs.delete(event.id);
             }
-          } else if (event.type === 'error') {
-            throw new Error(event.error)
+          } else if (event.type === "error") {
+            throw new Error(event.error);
           }
         }
 
-        if (toolCalls.length === 0) break
+        if (toolCalls.length === 0) break;
 
         // Append assistant turn to llmMessages for next iteration
-        const assistantParts: any[] = []
-        if (textContent) assistantParts.push({ type: 'text', text: textContent })
+        const assistantParts: any[] = [];
+        if (textContent) assistantParts.push({ type: "text", text: textContent });
         for (const tc of toolCalls) {
           assistantParts.push({
-            type: 'tool-call',
+            type: "tool-call",
             toolCallId: tc.id,
             toolName: tc.name,
             input: JSON.parse(tc.args),
-          })
+          });
         }
-        llmMessages.push({ role: 'assistant', content: assistantParts })
+        llmMessages.push({ role: "assistant", content: assistantParts });
 
         // Execute tools
-        const toolResultParts: any[] = []
+        const toolResultParts: any[] = [];
         for (const tc of toolCalls) {
-          if (abortController.signal.aborted) break
+          if (abortController.signal.aborted) break;
           try {
-            const result = await this.toolPresenter.callTool(sessionId, tc.name, JSON.parse(tc.args))
-            const block = blocks.find((b) => b.type === 'tool_call' && b.id === tc.id)
+            const result = await this.toolPresenter.callTool(
+              sessionId,
+              tc.name,
+              JSON.parse(tc.args),
+            );
+            const block = blocks.find((b) => b.type === "tool_call" && b.id === tc.id);
             if (block && block.tool_call) {
-              block.status = 'success'
-              block.tool_call.output = result
+              block.status = "success";
+              block.tool_call.output = result;
             }
             toolResultParts.push({
-              type: 'tool-result',
+              type: "tool-result",
               toolCallId: tc.id,
               toolName: tc.name,
-              output: { type: 'text', value: typeof result === 'string' ? result : JSON.stringify(result) },
-            })
+              output: {
+                type: "text",
+                value: typeof result === "string" ? result : JSON.stringify(result),
+              },
+            });
           } catch (err) {
-            const errMsg = err instanceof Error ? err.message : String(err)
-            const block = blocks.find((b) => b.type === 'tool_call' && b.id === tc.id)
+            const errMsg = err instanceof Error ? err.message : String(err);
+            const block = blocks.find((b) => b.type === "tool_call" && b.id === tc.id);
             if (block && block.tool_call) {
-              block.status = 'error'
-              block.tool_call.output = `Error: ${errMsg}`
+              block.status = "error";
+              block.tool_call.output = `Error: ${errMsg}`;
             }
             toolResultParts.push({
-              type: 'tool-result',
+              type: "tool-result",
               toolCallId: tc.id,
               toolName: tc.name,
-              output: { type: 'text', value: `Error: ${errMsg}` },
-            })
+              output: { type: "text", value: `Error: ${errMsg}` },
+            });
           }
         }
-        llmMessages.push({ role: 'tool', content: toolResultParts })
+        llmMessages.push({ role: "tool", content: toolResultParts });
       }
 
       // Finalize blocks
-      for (const b of blocks) if (b.status === 'loading') b.status = 'success'
+      for (const b of blocks) if (b.status === "loading") b.status = "success";
 
       // Write message to DB
-      const msgId = crypto.randomUUID()
+      const msgId = crypto.randomUUID();
       const msg = groupMsgDao.createMessage(db, {
         id: msgId,
         sessionId,
         senderAgentId: this.agentId,
-        role: 'assistant',
+        role: "assistant",
         content: JSON.stringify(blocks),
         hidden: hidden ?? false,
-      })
+      });
 
-      groupSessionDao.touchUpdatedAt(db, sessionId)
+      groupSessionDao.touchUpdatedAt(db, sessionId);
 
       // Push events
       if (!hidden) {
-        eventBus.sendToRenderer(GROUP_CHAT_EVENTS.MESSAGE_ADDED, { sessionId, message: msg })
+        eventBus.sendToRenderer(GROUP_CHAT_EVENTS.MESSAGE_ADDED, { sessionId, message: msg });
       }
     } catch (err) {
-      logger.error('[AgentInvoker] run error', { agentId: this.agentId, err: String(err) })
+      logger.error("[AgentInvoker] run error", { agentId: this.agentId, err: String(err) });
     } finally {
-      this.abortControllers.delete(sessionId)
+      this.abortControllers.delete(sessionId);
       eventBus.sendToRenderer(GROUP_CHAT_EVENTS.AGENT_TYPING, {
         sessionId,
         agentId: this.agentId,
         isTyping: false,
-      })
+      });
     }
   }
 }
 ```
 
-- [ ] **Step 3: 创建 agentInvokerRegistry.ts**
+- [x] **Step 3: 创建 agentInvokerRegistry.ts**
 
 创建 `src/main/presenter/agentChat/agentInvokerRegistry.ts`：
 
 ```typescript
-import { AgentInvoker } from './agentInvoker'
-import type { GatewayPresenter } from '../gatewayPresenter'
-import type { ToolPresenter } from '../toolPresenter'
+import { AgentInvoker } from "./agentInvoker";
+import type { GatewayPresenter } from "../gatewayPresenter";
+import type { ToolPresenter } from "../toolPresenter";
 
 export class AgentInvokerRegistry {
-  private invokers = new Map<string, AgentInvoker>()
-  private gatewayPresenter!: GatewayPresenter
-  private toolPresenter!: ToolPresenter
+  private invokers = new Map<string, AgentInvoker>();
+  private gatewayPresenter!: GatewayPresenter;
+  private toolPresenter!: ToolPresenter;
 
   init(gatewayPresenter: GatewayPresenter, toolPresenter: ToolPresenter): void {
-    this.gatewayPresenter = gatewayPresenter
-    this.toolPresenter = toolPresenter
+    this.gatewayPresenter = gatewayPresenter;
+    this.toolPresenter = toolPresenter;
   }
 
   get(agentId: string): AgentInvoker {
     if (!this.invokers.has(agentId)) {
-      this.invokers.set(agentId, new AgentInvoker(agentId, this.gatewayPresenter, this.toolPresenter))
+      this.invokers.set(
+        agentId,
+        new AgentInvoker(agentId, this.gatewayPresenter, this.toolPresenter),
+      );
     }
-    return this.invokers.get(agentId)!
+    return this.invokers.get(agentId)!;
   }
 
   stopAll(sessionId: string): void {
     for (const invoker of this.invokers.values()) {
-      invoker.stop(sessionId)
+      invoker.stop(sessionId);
     }
   }
 }
 
-export const agentInvokerRegistry = new AgentInvokerRegistry()
+export const agentInvokerRegistry = new AgentInvokerRegistry();
 ```
 
-- [ ] **Step 4: 验证类型检查**
+- [x] **Step 4: 验证类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/events.ts src/main/presenter/agentChat/agentInvoker.ts src/main/presenter/agentChat/agentInvokerRegistry.ts
@@ -721,25 +747,26 @@ git commit -m "feat(group-chat): add AgentInvoker and events"
 ## Task 3: GroupChatPresenter
 
 **Files:**
+
 - Create: `src/main/presenter/groupChatPresenter.ts`
 - Modify: `src/main/presenter/index.ts`
 
-- [ ] **Step 1: 创建 GroupChatPresenter**
+- [x] **Step 1: 创建 GroupChatPresenter**
 
 创建 `src/main/presenter/groupChatPresenter.ts`：
 
 ```typescript
-import { getDb } from '@/db'
-import * as sessionDao from '@/db/models/groupChatSessionDao'
-import * as messageDao from '@/db/models/groupChatMessageDao'
-import { agentRegistry } from '@/agents/agentRegistry'
-import { agentInvokerRegistry } from './agentChat/agentInvokerRegistry'
-import { eventBus } from '@/eventbus'
-import { GROUP_CHAT_EVENTS } from '@shared/events'
-import { logger } from '@/utils'
-import type { GroupChatSession, GroupChatMessageRecord } from '@shared/types/groupChat'
-import type { GatewayPresenter } from './gatewayPresenter'
-import type { ToolPresenter } from './toolPresenter'
+import { getDb } from "@/db";
+import * as sessionDao from "@/db/models/groupChatSessionDao";
+import * as messageDao from "@/db/models/groupChatMessageDao";
+import { agentRegistry } from "@/agents/agentRegistry";
+import { agentInvokerRegistry } from "./agentChat/agentInvokerRegistry";
+import { eventBus } from "@/eventbus";
+import { GROUP_CHAT_EVENTS } from "@shared/events";
+import { logger } from "@/utils";
+import type { GroupChatSession, GroupChatMessageRecord } from "@shared/types/groupChat";
+import type { GatewayPresenter } from "./gatewayPresenter";
+import type { ToolPresenter } from "./toolPresenter";
 
 export class GroupChatPresenter {
   constructor(
@@ -751,39 +778,38 @@ export class GroupChatPresenter {
     participantAgentIds: string[],
     moderatorEnabled?: boolean,
   ): Promise<GroupChatSession> {
-    const db = getDb()
-    const id = crypto.randomUUID()
+    const db = getDb();
+    const id = crypto.randomUUID();
     // Default title: 用户、AgentName1、AgentName2
-    const agentNames = participantAgentIds
-      .map((aid) => agentRegistry.getById(aid)?.name ?? aid)
-    const title = ['用户', ...agentNames].join('、')
+    const agentNames = participantAgentIds.map((aid) => agentRegistry.getById(aid)?.name ?? aid);
+    const title = ["用户", ...agentNames].join("、");
     const session = sessionDao.createSession(db, {
       id,
       title,
       participantAgentIds,
       moderatorEnabled: moderatorEnabled ?? false,
-    })
-    return session
+    });
+    return session;
   }
 
   async getSessions(): Promise<GroupChatSession[]> {
-    const db = getDb()
-    return sessionDao.listSessions(db)
+    const db = getDb();
+    return sessionDao.listSessions(db);
   }
 
   async deleteSession(sessionId: string): Promise<void> {
-    const db = getDb()
-    sessionDao.deleteSession(db, sessionId)
+    const db = getDb();
+    sessionDao.deleteSession(db, sessionId);
   }
 
   async updateSessionTitle(sessionId: string, title: string): Promise<void> {
-    const db = getDb()
-    sessionDao.updateTitle(db, sessionId, title)
+    const db = getDb();
+    sessionDao.updateTitle(db, sessionId, title);
   }
 
   async getMessages(sessionId: string): Promise<GroupChatMessageRecord[]> {
-    const db = getDb()
-    return messageDao.listVisibleBySession(db, sessionId)
+    const db = getDb();
+    return messageDao.listVisibleBySession(db, sessionId);
   }
 
   async sendMessage(
@@ -791,31 +817,31 @@ export class GroupChatPresenter {
     content: string,
     mentionedAgentIds: string[],
   ): Promise<void> {
-    const db = getDb()
-    const session = sessionDao.getSessionById(db, sessionId)
-    if (!session) return
+    const db = getDb();
+    const session = sessionDao.getSessionById(db, sessionId);
+    if (!session) return;
 
     // Write user message
-    const userMsgId = crypto.randomUUID()
+    const userMsgId = crypto.randomUUID();
     const userMsg = messageDao.createMessage(db, {
       id: userMsgId,
       sessionId,
       senderAgentId: null,
-      role: 'user',
+      role: "user",
       content,
-    })
-    sessionDao.touchUpdatedAt(db, sessionId)
-    eventBus.sendToRenderer(GROUP_CHAT_EVENTS.MESSAGE_ADDED, { sessionId, message: userMsg })
+    });
+    sessionDao.touchUpdatedAt(db, sessionId);
+    eventBus.sendToRenderer(GROUP_CHAT_EVENTS.MESSAGE_ADDED, { sessionId, message: userMsg });
 
     // Load all messages (including just-created user message) for context
-    const allMessages = messageDao.listBySession(db, sessionId)
+    const allMessages = messageDao.listBySession(db, sessionId);
 
     // Determine target agents
-    let targetAgentIds: string[] = mentionedAgentIds
+    let targetAgentIds: string[] = mentionedAgentIds;
 
     if (targetAgentIds.length === 0 && session.moderatorEnabled) {
       // Use moderator to route
-      targetAgentIds = await this.routeWithModerator(session, allMessages, content)
+      targetAgentIds = await this.routeWithModerator(session, allMessages, content);
     }
 
     // Notify typing + invoke each agent
@@ -824,18 +850,18 @@ export class GroupChatPresenter {
         sessionId,
         agentId,
         isTyping: true,
-      })
-      const invoker = agentInvokerRegistry.get(agentId)
+      });
+      const invoker = agentInvokerRegistry.get(agentId);
       invoker.invoke({
         messages: allMessages,
-        outputChannel: { type: 'group_chat', sessionId },
-      })
+        outputChannel: { type: "group_chat", sessionId },
+      });
     }
   }
 
   async stopAgent(sessionId: string, agentId: string): Promise<void> {
-    const invoker = agentInvokerRegistry.get(agentId)
-    invoker.stop(sessionId)
+    const invoker = agentInvokerRegistry.get(agentId);
+    invoker.stop(sessionId);
   }
 
   private async routeWithModerator(
@@ -843,28 +869,28 @@ export class GroupChatPresenter {
     recentMessages: GroupChatMessageRecord[],
     newContent: string,
   ): Promise<string[]> {
-    let selectResult = this.gatewayPresenter.select(['chat'] as any)
-    let groupName = selectResult.matched['chat']?.groupName
+    let selectResult = this.gatewayPresenter.select(["chat"] as any);
+    let groupName = selectResult.matched["chat"]?.groupName;
     if (!groupName) {
       // fallback to first agent's capability
-      return []
+      return [];
     }
 
     const agentDescriptions = session.participantAgentIds
       .map((id) => {
-        const agent = agentRegistry.getById(id)
-        return `- ${id}: ${agent?.name ?? id}${agent?.description ? ' — ' + agent.description : ''}`
+        const agent = agentRegistry.getById(id);
+        return `- ${id}: ${agent?.name ?? id}${agent?.description ? " — " + agent.description : ""}`;
       })
-      .join('\n')
+      .join("\n");
 
     const recentContext = recentMessages
       .filter((m) => !m.hidden)
       .slice(-20)
       .map((m) => {
-        const sender = m.senderAgentId ?? '用户'
-        return `${sender}: ${m.content.slice(0, 200)}`
+        const sender = m.senderAgentId ?? "用户";
+        return `${sender}: ${m.content.slice(0, 200)}`;
       })
-      .join('\n')
+      .join("\n");
 
     const prompt = `你是群聊路由助手。根据用户最新消息，判断应该由哪些 Agent 回复。
 
@@ -877,76 +903,75 @@ ${recentContext}
 用户最新消息：${newContent}
 
 请以 JSON 格式输出：{"targetAgentIds": ["agent-id-1"]}
-只输出 JSON，不要其他内容。`
+只输出 JSON，不要其他内容。`;
 
     try {
-      const port = this.gatewayPresenter.getPort()
-      const apiKey = this.gatewayPresenter.getInternalKey()
+      const port = this.gatewayPresenter.getPort();
+      const apiKey = this.gatewayPresenter.getInternalKey();
       const resp = await fetch(`http://127.0.0.1:${port}/v1/messages`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
           model: groupName,
           max_tokens: 100,
           temperature: 0,
-          messages: [{ role: 'user', content: prompt }],
+          messages: [{ role: "user", content: prompt }],
         }),
-      })
-      if (!resp.ok) return []
-      const data = (await resp.json()) as any
-      const textBlock = (data?.content as any[])?.find((b: any) => b.type === 'text')
-      const json = JSON.parse((textBlock?.text ?? '{}').trim()) as { targetAgentIds?: string[] }
-      return (json.targetAgentIds ?? []).filter((id) =>
-        session.participantAgentIds.includes(id),
-      )
+      });
+      if (!resp.ok) return [];
+      const data = (await resp.json()) as any;
+      const textBlock = (data?.content as any[])?.find((b: any) => b.type === "text");
+      const json = JSON.parse((textBlock?.text ?? "{}").trim()) as { targetAgentIds?: string[] };
+      return (json.targetAgentIds ?? []).filter((id) => session.participantAgentIds.includes(id));
     } catch (err) {
-      logger.warn('[GroupChatPresenter] moderator routing failed', { err: String(err) })
-      return []
+      logger.warn("[GroupChatPresenter] moderator routing failed", { err: String(err) });
+      return [];
     }
   }
 }
 ```
 
-- [ ] **Step 2: 在 presenter/index.ts 注册 GroupChatPresenter**
+- [x] **Step 2: 在 presenter/index.ts 注册 GroupChatPresenter**
 
 在 `src/main/presenter/index.ts` 中：
 
 1. 在 import 区块末尾添加：
+
 ```typescript
-import { GroupChatPresenter } from './groupChatPresenter'
-import { agentInvokerRegistry } from './agentChat/agentInvokerRegistry'
+import { GroupChatPresenter } from "./groupChatPresenter";
+import { agentInvokerRegistry } from "./agentChat/agentInvokerRegistry";
 ```
 
 2. 在 `Presenter` class 中添加字段（在 `devPresenter` 后）：
+
 ```typescript
-groupChatPresenter: GroupChatPresenter
+groupChatPresenter: GroupChatPresenter;
 ```
 
 3. 在 `private constructor()` 末尾添加（在 `agentPresenter` 构造之后）：
+
 ```typescript
-agentInvokerRegistry.init(this.gatewayPresenter, this.toolPresenter)
-this.groupChatPresenter = new GroupChatPresenter(
-  this.gatewayPresenter,
-  this.toolPresenter,
-)
+agentInvokerRegistry.init(this.gatewayPresenter, this.toolPresenter);
+this.groupChatPresenter = new GroupChatPresenter(this.gatewayPresenter, this.toolPresenter);
 ```
 
 4. 在 `DISPATCHABLE` Set 中添加：
+
 ```typescript
 "groupChatPresenter",
 ```
 
-- [ ] **Step 3: 验证类型检查**
+- [x] **Step 3: 验证类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main/presenter/groupChatPresenter.ts src/main/presenter/index.ts
@@ -958,25 +983,26 @@ git commit -m "feat(group-chat): add GroupChatPresenter and register"
 ## Task 4: 独立窗口 IPC
 
 **Files:**
+
 - Modify: `src/main/window.ts`
 - Modify: `src/main/index.ts` (检查 index.ts 位置)
 
-- [ ] **Step 1: 修改 window.ts 新增 createDetachedWindow**
+- [x] **Step 1: 修改 window.ts 新增 createDetachedWindow**
 
 在 `src/main/window.ts` 中追加：
 
 ```typescript
-import { ipcMain } from 'electron'
+import { ipcMain } from "electron";
 
 // Map: sessionId -> BrowserWindow
-const detachedWindows = new Map<string, BrowserWindow>()
+const detachedWindows = new Map<string, BrowserWindow>();
 
 export function createDetachedWindow(sessionId: string): BrowserWindow {
   // 如果已存在，focus 它
-  const existing = detachedWindows.get(sessionId)
+  const existing = detachedWindows.get(sessionId);
   if (existing && !existing.isDestroyed()) {
-    existing.focus()
-    return existing
+    existing.focus();
+    return existing;
   }
 
   const win = new BrowserWindow({
@@ -985,53 +1011,55 @@ export function createDetachedWindow(sessionId: string): BrowserWindow {
     minWidth: 600,
     minHeight: 400,
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, "../preload/index.js"),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
     },
-    titleBarStyle: 'hiddenInset',
-    title: '群聊',
-  })
+    titleBarStyle: "hiddenInset",
+    title: "群聊",
+  });
 
-  const query = `detached=1&sessionId=${encodeURIComponent(sessionId)}`
+  const query = `detached=1&sessionId=${encodeURIComponent(sessionId)}`;
   if (process.env.ELECTRON_RENDERER_URL) {
-    void win.loadURL(`${process.env.ELECTRON_RENDERER_URL}?${query}`)
+    void win.loadURL(`${process.env.ELECTRON_RENDERER_URL}?${query}`);
   } else {
-    void win.loadFile(join(__dirname, '../renderer/index.html'), { query: { detached: '1', sessionId } })
+    void win.loadFile(join(__dirname, "../renderer/index.html"), {
+      query: { detached: "1", sessionId },
+    });
   }
 
-  detachedWindows.set(sessionId, win)
+  detachedWindows.set(sessionId, win);
 
-  win.on('closed', () => {
-    detachedWindows.delete(sessionId)
+  win.on("closed", () => {
+    detachedWindows.delete(sessionId);
     // Notify main window
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('detached_window_closed', { sessionId })
+      mainWindow.webContents.send("detached_window_closed", { sessionId });
     }
-  })
+  });
 
-  return win
+  return win;
 }
 
 // IPC handler: open detached window
-ipcMain.handle('group_chat:open_detached', (_event, sessionId: string) => {
-  createDetachedWindow(sessionId)
-})
+ipcMain.handle("group_chat:open_detached", (_event, sessionId: string) => {
+  createDetachedWindow(sessionId);
+});
 
 // IPC handler: focus detached window
-ipcMain.handle('group_chat:focus_detached', (_event, sessionId: string) => {
-  const win = detachedWindows.get(sessionId)
-  if (win && !win.isDestroyed()) win.focus()
-})
+ipcMain.handle("group_chat:focus_detached", (_event, sessionId: string) => {
+  const win = detachedWindows.get(sessionId);
+  if (win && !win.isDestroyed()) win.focus();
+});
 
 export function isSessionDetached(sessionId: string): boolean {
-  const win = detachedWindows.get(sessionId)
-  return !!win && !win.isDestroyed()
+  const win = detachedWindows.get(sessionId);
+  return !!win && !win.isDestroyed();
 }
 ```
 
-- [ ] **Step 2: 在 src/main/index.ts 导入 window.ts 的 IPC handlers**
+- [x] **Step 2: 在 src/main/index.ts 导入 window.ts 的 IPC handlers**
 
 检查 `src/main/index.ts` 是否已导入 `window.ts`：
 
@@ -1041,13 +1069,13 @@ grep -n "window" /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime/src/ma
 
 确保 `createMainWindow` 被导入。IPC handlers 在 `createDetachedWindow` 函数调用时自动注册。
 
-- [ ] **Step 3: 验证类型检查**
+- [x] **Step 3: 验证类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main/window.ts
@@ -1059,34 +1087,35 @@ git commit -m "feat(group-chat): add detached window IPC"
 ## Task 5: 前端 Stores
 
 **Files:**
+
 - Create: `src/renderer/src/stores/groupChatSession.ts`
 - Create: `src/renderer/src/stores/groupChat.ts`
 - Create: `src/renderer/src/stores/groupChatIpc.ts`
 
-- [ ] **Step 1: 创建 groupChatSession.ts**
+- [x] **Step 1: 创建 groupChatSession.ts**
 
 创建 `src/renderer/src/stores/groupChatSession.ts`：
 
 ```typescript
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-import { usePresenter } from '@/composables/usePresenter'
-import type { GroupChatSession } from '@shared/types/groupChat'
+import { ref } from "vue";
+import { defineStore } from "pinia";
+import { usePresenter } from "@/composables/usePresenter";
+import type { GroupChatSession } from "@shared/types/groupChat";
 
-export const useGroupChatSessionStore = defineStore('groupChatSession', () => {
-  const groupChatPresenter = usePresenter('groupChatPresenter')
+export const useGroupChatSessionStore = defineStore("groupChatSession", () => {
+  const groupChatPresenter = usePresenter("groupChatPresenter");
 
-  const sessions = ref<GroupChatSession[]>([])
-  const activeSessionId = ref<string | null>(null)
-  const detachedSessionIds = ref<Set<string>>(new Set())
+  const sessions = ref<GroupChatSession[]>([]);
+  const activeSessionId = ref<string | null>(null);
+  const detachedSessionIds = ref<Set<string>>(new Set());
 
   async function fetchSessions() {
-    const result = await groupChatPresenter.getSessions()
-    sessions.value = (Array.isArray(result) ? result : []) as GroupChatSession[]
+    const result = await groupChatPresenter.getSessions();
+    sessions.value = (Array.isArray(result) ? result : []) as GroupChatSession[];
   }
 
   function setActiveSession(id: string | null) {
-    activeSessionId.value = id
+    activeSessionId.value = id;
   }
 
   async function createSession(
@@ -1096,35 +1125,35 @@ export const useGroupChatSessionStore = defineStore('groupChatSession', () => {
     const session = (await groupChatPresenter.createSession(
       participantAgentIds,
       moderatorEnabled,
-    )) as GroupChatSession
-    await fetchSessions()
-    activeSessionId.value = session.id
-    return session
+    )) as GroupChatSession;
+    await fetchSessions();
+    activeSessionId.value = session.id;
+    return session;
   }
 
   async function deleteSession(id: string) {
-    await groupChatPresenter.deleteSession(id)
-    if (activeSessionId.value === id) activeSessionId.value = null
-    await fetchSessions()
+    await groupChatPresenter.deleteSession(id);
+    if (activeSessionId.value === id) activeSessionId.value = null;
+    await fetchSessions();
   }
 
   async function updateTitle(id: string, title: string) {
-    await groupChatPresenter.updateSessionTitle(id, title)
-    await fetchSessions()
+    await groupChatPresenter.updateSessionTitle(id, title);
+    await fetchSessions();
   }
 
   function markDetached(sessionId: string) {
-    detachedSessionIds.value = new Set([...detachedSessionIds.value, sessionId])
+    detachedSessionIds.value = new Set([...detachedSessionIds.value, sessionId]);
   }
 
   function unmarkDetached(sessionId: string) {
-    const next = new Set(detachedSessionIds.value)
-    next.delete(sessionId)
-    detachedSessionIds.value = next
+    const next = new Set(detachedSessionIds.value);
+    next.delete(sessionId);
+    detachedSessionIds.value = next;
   }
 
   function isDetached(sessionId: string): boolean {
-    return detachedSessionIds.value.has(sessionId)
+    return detachedSessionIds.value.has(sessionId);
   }
 
   return {
@@ -1139,61 +1168,61 @@ export const useGroupChatSessionStore = defineStore('groupChatSession', () => {
     markDetached,
     unmarkDetached,
     isDetached,
-  }
-})
+  };
+});
 ```
 
-- [ ] **Step 2: 创建 groupChat.ts**
+- [x] **Step 2: 创建 groupChat.ts**
 
 创建 `src/renderer/src/stores/groupChat.ts`：
 
 ```typescript
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-import { usePresenter } from '@/composables/usePresenter'
-import type { GroupChatMessageRecord } from '@shared/types/groupChat'
+import { ref } from "vue";
+import { defineStore } from "pinia";
+import { usePresenter } from "@/composables/usePresenter";
+import type { GroupChatMessageRecord } from "@shared/types/groupChat";
 
-export const useGroupChatStore = defineStore('groupChat', () => {
-  const groupChatPresenter = usePresenter('groupChatPresenter')
+export const useGroupChatStore = defineStore("groupChat", () => {
+  const groupChatPresenter = usePresenter("groupChatPresenter");
 
-  const messages = ref<GroupChatMessageRecord[]>([])
-  const typingAgentIds = ref<Set<string>>(new Set())
-  const error = ref<string | null>(null)
+  const messages = ref<GroupChatMessageRecord[]>([]);
+  const typingAgentIds = ref<Set<string>>(new Set());
+  const error = ref<string | null>(null);
 
   async function fetchMessages(sessionId: string) {
-    const result = await groupChatPresenter.getMessages(sessionId)
-    messages.value = (Array.isArray(result) ? result : []) as GroupChatMessageRecord[]
-    error.value = null
+    const result = await groupChatPresenter.getMessages(sessionId);
+    messages.value = (Array.isArray(result) ? result : []) as GroupChatMessageRecord[];
+    error.value = null;
   }
 
   async function sendMessage(sessionId: string, content: string, mentionedAgentIds: string[]) {
-    error.value = null
+    error.value = null;
     try {
-      await groupChatPresenter.sendMessage(sessionId, content, mentionedAgentIds)
+      await groupChatPresenter.sendMessage(sessionId, content, mentionedAgentIds);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = err instanceof Error ? err.message : String(err);
     }
   }
 
   async function stopAgent(sessionId: string, agentId: string) {
-    await groupChatPresenter.stopAgent(sessionId, agentId)
+    await groupChatPresenter.stopAgent(sessionId, agentId);
   }
 
   function addMessage(msg: GroupChatMessageRecord) {
-    messages.value = [...messages.value, msg]
+    messages.value = [...messages.value, msg];
   }
 
   function setTyping(agentId: string, isTyping: boolean) {
-    const next = new Set(typingAgentIds.value)
-    if (isTyping) next.add(agentId)
-    else next.delete(agentId)
-    typingAgentIds.value = next
+    const next = new Set(typingAgentIds.value);
+    if (isTyping) next.add(agentId);
+    else next.delete(agentId);
+    typingAgentIds.value = next;
   }
 
   function clearMessages() {
-    messages.value = []
-    typingAgentIds.value = new Set()
-    error.value = null
+    messages.value = [];
+    typingAgentIds.value = new Set();
+    error.value = null;
   }
 
   return {
@@ -1206,29 +1235,29 @@ export const useGroupChatStore = defineStore('groupChat', () => {
     addMessage,
     setTyping,
     clearMessages,
-  }
-})
+  };
+});
 ```
 
-- [ ] **Step 3: 创建 groupChatIpc.ts**
+- [x] **Step 3: 创建 groupChatIpc.ts**
 
 创建 `src/renderer/src/stores/groupChatIpc.ts`：
 
 ```typescript
-import { GROUP_CHAT_EVENTS } from '@shared/events'
-import type { GroupChatMessageRecord } from '@shared/types/groupChat'
-import type { useGroupChatStore } from './groupChat'
-import type { useGroupChatSessionStore } from './groupChatSession'
+import { GROUP_CHAT_EVENTS } from "@shared/events";
+import type { GroupChatMessageRecord } from "@shared/types/groupChat";
+import type { useGroupChatStore } from "./groupChat";
+import type { useGroupChatSessionStore } from "./groupChatSession";
 
 interface MessageAddedData {
-  sessionId: string
-  message: GroupChatMessageRecord
+  sessionId: string;
+  message: GroupChatMessageRecord;
 }
 
 interface AgentTypingData {
-  sessionId: string
-  agentId: string
-  isTyping: boolean
+  sessionId: string;
+  agentId: string;
+  isTyping: boolean;
 }
 
 export function setupGroupChatIpc(
@@ -1236,54 +1265,54 @@ export function setupGroupChatIpc(
   sessionStore: ReturnType<typeof useGroupChatSessionStore>,
   activeSessionId: () => string | null,
 ): () => void {
-  const unsubs: Array<() => void> = []
+  const unsubs: Array<() => void> = [];
 
   const unsubMessage = window.electron.ipcRenderer.on(
     GROUP_CHAT_EVENTS.MESSAGE_ADDED,
     (data: unknown) => {
-      const d = data as MessageAddedData
+      const d = data as MessageAddedData;
       if (d.sessionId === activeSessionId()) {
-        chatStore.addMessage(d.message)
+        chatStore.addMessage(d.message);
       }
     },
-  )
-  unsubs.push(unsubMessage)
+  );
+  unsubs.push(unsubMessage);
 
   const unsubTyping = window.electron.ipcRenderer.on(
     GROUP_CHAT_EVENTS.AGENT_TYPING,
     (data: unknown) => {
-      const d = data as AgentTypingData
+      const d = data as AgentTypingData;
       if (d.sessionId === activeSessionId()) {
-        chatStore.setTyping(d.agentId, d.isTyping)
+        chatStore.setTyping(d.agentId, d.isTyping);
       }
     },
-  )
-  unsubs.push(unsubTyping)
+  );
+  unsubs.push(unsubTyping);
 
   const unsubDetachedClosed = window.electron.ipcRenderer.on(
-    'detached_window_closed',
+    "detached_window_closed",
     (data: unknown) => {
-      const d = data as { sessionId: string }
-      sessionStore.unmarkDetached(d.sessionId)
+      const d = data as { sessionId: string };
+      sessionStore.unmarkDetached(d.sessionId);
       // Refresh messages if this session is now active
       if (d.sessionId === activeSessionId()) {
-        chatStore.fetchMessages(d.sessionId)
+        chatStore.fetchMessages(d.sessionId);
       }
     },
-  )
-  unsubs.push(unsubDetachedClosed)
+  );
+  unsubs.push(unsubDetachedClosed);
 
-  return () => unsubs.forEach((fn) => fn())
+  return () => unsubs.forEach((fn) => fn());
 }
 ```
 
-- [ ] **Step 4: 验证类型检查**
+- [x] **Step 4: 验证类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/stores/groupChatSession.ts src/renderer/src/stores/groupChat.ts src/renderer/src/stores/groupChatIpc.ts
@@ -1295,60 +1324,61 @@ git commit -m "feat(group-chat): add frontend stores and IPC"
 ## Task 6: 前端组件 — GroupMessageItem + GroupMessageList
 
 **Files:**
+
 - Create: `src/renderer/src/components/groupchat/GroupMessageItem.vue`
 - Create: `src/renderer/src/components/groupchat/GroupMessageList.vue`
 
-- [ ] **Step 1: 创建 GroupMessageItem.vue**
+- [x] **Step 1: 创建 GroupMessageItem.vue**
 
 创建 `src/renderer/src/components/groupchat/GroupMessageItem.vue`：
 
 ```vue
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useAgentStore } from '@/stores/agent'
-import AgentAvatar from '../chat/AgentAvatar.vue'
-import type { GroupChatMessageRecord } from '@shared/types/groupChat'
-import type { AssistantMessageBlock } from '@shared/types/agent'
+import { computed } from "vue";
+import { useAgentStore } from "@/stores/agent";
+import AgentAvatar from "../chat/AgentAvatar.vue";
+import type { GroupChatMessageRecord } from "@shared/types/groupChat";
+import type { AssistantMessageBlock } from "@shared/types/agent";
 
 const props = defineProps<{
-  message: GroupChatMessageRecord
-  typingAgentIds?: Set<string>
-}>()
+  message: GroupChatMessageRecord;
+  typingAgentIds?: Set<string>;
+}>();
 
-const agentStore = useAgentStore()
+const agentStore = useAgentStore();
 
 const senderAgent = computed(() => {
-  if (!props.message.senderAgentId) return null
-  return agentStore.agents.find((a) => a.id === props.message.senderAgentId) ?? null
-})
+  if (!props.message.senderAgentId) return null;
+  return agentStore.agents.find((a) => a.id === props.message.senderAgentId) ?? null;
+});
 
-const isUser = computed(() => props.message.senderAgentId === null)
+const isUser = computed(() => props.message.senderAgentId === null);
 
 // Parse assistant blocks and extract text content for display
 const displayContent = computed(() => {
-  if (isUser.value) return props.message.content
+  if (isUser.value) return props.message.content;
   try {
-    const blocks = JSON.parse(props.message.content) as AssistantMessageBlock[]
+    const blocks = JSON.parse(props.message.content) as AssistantMessageBlock[];
     return blocks
-      .filter((b) => b.type === 'content' && b.content)
-      .map((b) => b.content ?? '')
-      .join('')
+      .filter((b) => b.type === "content" && b.content)
+      .map((b) => b.content ?? "")
+      .join("");
   } catch {
-    return props.message.content
+    return props.message.content;
   }
-})
+});
 
 // Typing agents that belong to the participant list, shown under user messages
 const typingAgentNames = computed(() => {
-  if (!isUser.value || !props.typingAgentIds || props.typingAgentIds.size === 0) return []
+  if (!isUser.value || !props.typingAgentIds || props.typingAgentIds.size === 0) return [];
   return [...props.typingAgentIds].map((id) => {
-    const agent = agentStore.agents.find((a) => a.id === id)
-    return agent?.name ?? id
-  })
-})
+    const agent = agentStore.agents.find((a) => a.id === id);
+    return agent?.name ?? id;
+  });
+});
 
 function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 </script>
 
@@ -1356,16 +1386,14 @@ function formatTime(ts: number): string {
   <!-- User message -->
   <div v-if="isUser" class="flex flex-col items-end gap-1 px-4 py-2">
     <div class="flex items-end gap-2">
-      <div
-        class="max-w-[70%] rounded-2xl rounded-br-sm bg-violet-600 px-3 py-2 text-sm text-white"
-      >
+      <div class="max-w-[70%] rounded-2xl rounded-br-sm bg-violet-600 px-3 py-2 text-sm text-white">
         {{ displayContent }}
       </div>
     </div>
     <div class="text-[10px] text-muted-foreground">{{ formatTime(message.createdAt) }}</div>
     <!-- Typing indicator under user message -->
     <div v-if="typingAgentNames.length > 0" class="text-[11px] text-muted-foreground">
-      {{ typingAgentNames.join(' · ') }} 正在思考...
+      {{ typingAgentNames.join(" · ") }} 正在思考...
     </div>
   </div>
 
@@ -1385,33 +1413,33 @@ function formatTime(ts: number): string {
 </template>
 ```
 
-- [ ] **Step 2: 创建 GroupMessageList.vue**
+- [x] **Step 2: 创建 GroupMessageList.vue**
 
 创建 `src/renderer/src/components/groupchat/GroupMessageList.vue`：
 
 ```vue
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import GroupMessageItem from './GroupMessageItem.vue'
-import type { GroupChatMessageRecord } from '@shared/types/groupChat'
+import { ref, watch, nextTick } from "vue";
+import GroupMessageItem from "./GroupMessageItem.vue";
+import type { GroupChatMessageRecord } from "@shared/types/groupChat";
 
 const props = defineProps<{
-  messages: GroupChatMessageRecord[]
-  typingAgentIds: Set<string>
-}>()
+  messages: GroupChatMessageRecord[];
+  typingAgentIds: Set<string>;
+}>();
 
-const listRef = ref<HTMLElement | null>(null)
+const listRef = ref<HTMLElement | null>(null);
 
 function scrollToBottom() {
   nextTick(() => {
     if (listRef.value) {
-      listRef.value.scrollTop = listRef.value.scrollHeight
+      listRef.value.scrollTop = listRef.value.scrollHeight;
     }
-  })
+  });
 }
 
-watch(() => props.messages.length, scrollToBottom)
-watch(() => props.typingAgentIds.size, scrollToBottom)
+watch(() => props.messages.length, scrollToBottom);
+watch(() => props.typingAgentIds.size, scrollToBottom);
 </script>
 
 <template>
@@ -1422,20 +1450,23 @@ watch(() => props.typingAgentIds.size, scrollToBottom)
       :message="msg"
       :typing-agent-ids="msg === messages[messages.length - 1] ? typingAgentIds : undefined"
     />
-    <div v-if="messages.length === 0" class="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+    <div
+      v-if="messages.length === 0"
+      class="flex flex-1 items-center justify-center text-sm text-muted-foreground"
+    >
       发送消息开始群聊
     </div>
   </div>
 </template>
 ```
 
-- [ ] **Step 3: 验证类型检查**
+- [x] **Step 3: 验证类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/renderer/src/components/groupchat/GroupMessageItem.vue src/renderer/src/components/groupchat/GroupMessageList.vue
@@ -1447,41 +1478,43 @@ git commit -m "feat(group-chat): add GroupMessageItem and GroupMessageList"
 ## Task 7: 前端组件 — GroupChatInput
 
 **Files:**
+
 - Create: `src/renderer/src/components/groupchat/GroupChatInput.vue`
 
-- [ ] **Step 1: 创建 GroupChatInput.vue**
+- [x] **Step 1: 创建 GroupChatInput.vue**
 
 创建 `src/renderer/src/components/groupchat/GroupChatInput.vue`：
 
 ```vue
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Icon } from '@iconify/vue'
-import { useAgentStore } from '@/stores/agent'
-import type { Agent } from '@shared/types/agent'
+import { ref, computed } from "vue";
+import { Icon } from "@iconify/vue";
+import { useAgentStore } from "@/stores/agent";
+import type { Agent } from "@shared/types/agent";
 
 const props = defineProps<{
-  participantAgentIds: string[]
-  disabled?: boolean
-}>()
+  participantAgentIds: string[];
+  disabled?: boolean;
+}>();
 
 const emit = defineEmits<{
-  send: [content: string, mentionedAgentIds: string[]]
-}>()
+  send: [content: string, mentionedAgentIds: string[]];
+}>();
 
-const agentStore = useAgentStore()
-const inputRef = ref<HTMLTextAreaElement | null>(null)
-const inputValue = ref('')
-const showMentionDropdown = ref(false)
-const mentionQuery = ref('')
-const mentionStartIndex = ref(-1)
+const agentStore = useAgentStore();
+const inputRef = ref<HTMLTextAreaElement | null>(null);
+const inputValue = ref("");
+const showMentionDropdown = ref(false);
+const mentionQuery = ref("");
+const mentionStartIndex = ref(-1);
 
 // Agents available for @mention
-const participantAgents = computed(() =>
-  props.participantAgentIds
-    .map((id) => agentStore.agents.find((a) => a.id === id))
-    .filter(Boolean) as Agent[],
-)
+const participantAgents = computed(
+  () =>
+    props.participantAgentIds
+      .map((id) => agentStore.agents.find((a) => a.id === id))
+      .filter(Boolean) as Agent[],
+);
 
 const filteredMentionAgents = computed(() =>
   mentionQuery.value
@@ -1489,66 +1522,64 @@ const filteredMentionAgents = computed(() =>
         a.name.toLowerCase().includes(mentionQuery.value.toLowerCase()),
       )
     : participantAgents.value,
-)
+);
 
 function onInput(e: Event) {
-  const el = e.target as HTMLTextAreaElement
-  inputValue.value = el.value
-  const cursorPos = el.selectionStart ?? 0
-  const textBefore = el.value.slice(0, cursorPos)
-  const atIndex = textBefore.lastIndexOf('@')
+  const el = e.target as HTMLTextAreaElement;
+  inputValue.value = el.value;
+  const cursorPos = el.selectionStart ?? 0;
+  const textBefore = el.value.slice(0, cursorPos);
+  const atIndex = textBefore.lastIndexOf("@");
 
-  if (atIndex !== -1 && (atIndex === 0 || textBefore[atIndex - 1] === ' ')) {
-    const query = textBefore.slice(atIndex + 1)
-    if (!query.includes(' ')) {
-      mentionQuery.value = query
-      mentionStartIndex.value = atIndex
-      showMentionDropdown.value = true
-      return
+  if (atIndex !== -1 && (atIndex === 0 || textBefore[atIndex - 1] === " ")) {
+    const query = textBefore.slice(atIndex + 1);
+    if (!query.includes(" ")) {
+      mentionQuery.value = query;
+      mentionStartIndex.value = atIndex;
+      showMentionDropdown.value = true;
+      return;
     }
   }
-  showMentionDropdown.value = false
+  showMentionDropdown.value = false;
 }
 
 function selectMention(agent: Agent) {
-  if (mentionStartIndex.value === -1) return
-  const before = inputValue.value.slice(0, mentionStartIndex.value)
-  const after = inputValue.value.slice(
-    mentionStartIndex.value + 1 + mentionQuery.value.length,
-  )
-  inputValue.value = `${before}@${agent.name} ${after}`
-  showMentionDropdown.value = false
-  mentionStartIndex.value = -1
-  inputRef.value?.focus()
+  if (mentionStartIndex.value === -1) return;
+  const before = inputValue.value.slice(0, mentionStartIndex.value);
+  const after = inputValue.value.slice(mentionStartIndex.value + 1 + mentionQuery.value.length);
+  inputValue.value = `${before}@${agent.name} ${after}`;
+  showMentionDropdown.value = false;
+  mentionStartIndex.value = -1;
+  inputRef.value?.focus();
 }
 
 function parseMentions(text: string): string[] {
-  const regex = /@(\S+)/g
-  const agentIds: string[] = []
-  let match
+  const regex = /@(\S+)/g;
+  const agentIds: string[] = [];
+  let match;
   while ((match = regex.exec(text)) !== null) {
-    const name = match[1].replace(/,$/, '')
-    const agent = participantAgents.value.find((a) => a.name === name)
-    if (agent) agentIds.push(agent.id)
+    const name = match[1].replace(/,$/, "");
+    const agent = participantAgents.value.find((a) => a.name === name);
+    if (agent) agentIds.push(agent.id);
   }
-  return [...new Set(agentIds)]
+  return [...new Set(agentIds)];
 }
 
 function onSend() {
-  const content = inputValue.value.trim()
-  if (!content) return
-  const mentionedAgentIds = parseMentions(content)
-  emit('send', content, mentionedAgentIds)
-  inputValue.value = ''
-  showMentionDropdown.value = false
+  const content = inputValue.value.trim();
+  if (!content) return;
+  const mentionedAgentIds = parseMentions(content);
+  emit("send", content, mentionedAgentIds);
+  inputValue.value = "";
+  showMentionDropdown.value = false;
 }
 
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    onSend()
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    onSend();
   }
-  if (e.key === 'Escape') showMentionDropdown.value = false
+  if (e.key === "Escape") showMentionDropdown.value = false;
 }
 </script>
 
@@ -1596,13 +1627,13 @@ function onKeydown(e: KeyboardEvent) {
 </template>
 ```
 
-- [ ] **Step 2: 验证类型检查**
+- [x] **Step 2: 验证类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/renderer/src/components/groupchat/GroupChatInput.vue
@@ -1614,44 +1645,45 @@ git commit -m "feat(group-chat): add GroupChatInput with @ mention"
 ## Task 8: 前端组件 — GroupChatView + GroupSessionList + NewGroupThread
 
 **Files:**
+
 - Create: `src/renderer/src/components/groupchat/GroupChatView.vue`
 - Create: `src/renderer/src/components/groupchat/GroupSessionList.vue`
 - Create: `src/renderer/src/components/groupchat/NewGroupThread.vue`
 
-- [ ] **Step 1: 创建 GroupChatView.vue**
+- [x] **Step 1: 创建 GroupChatView.vue**
 
 创建 `src/renderer/src/components/groupchat/GroupChatView.vue`：
 
 ```vue
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import GroupMessageList from './GroupMessageList.vue'
-import GroupChatInput from './GroupChatInput.vue'
-import { useGroupChatStore } from '@/stores/groupChat'
-import { useGroupChatSessionStore } from '@/stores/groupChatSession'
+import { computed, onMounted } from "vue";
+import GroupMessageList from "./GroupMessageList.vue";
+import GroupChatInput from "./GroupChatInput.vue";
+import { useGroupChatStore } from "@/stores/groupChat";
+import { useGroupChatSessionStore } from "@/stores/groupChatSession";
 
-const chatStore = useGroupChatStore()
-const sessionStore = useGroupChatSessionStore()
+const chatStore = useGroupChatStore();
+const sessionStore = useGroupChatSessionStore();
 
-const session = computed(() =>
-  sessionStore.sessions.find((s) => s.id === sessionStore.activeSessionId) ?? null,
-)
+const session = computed(
+  () => sessionStore.sessions.find((s) => s.id === sessionStore.activeSessionId) ?? null,
+);
 
-const participantAgentIds = computed(() => session.value?.participantAgentIds ?? [])
+const participantAgentIds = computed(() => session.value?.participantAgentIds ?? []);
 
-const isEditingTitle = defineModel<boolean>('editingTitle', { default: false })
-const titleInput = defineModel<string>('titleInput', { default: '' })
+const isEditingTitle = defineModel<boolean>("editingTitle", { default: false });
+const titleInput = defineModel<string>("titleInput", { default: "" });
 
 async function onSend(content: string, mentionedAgentIds: string[]) {
-  if (!sessionStore.activeSessionId) return
-  await chatStore.sendMessage(sessionStore.activeSessionId, content, mentionedAgentIds)
+  if (!sessionStore.activeSessionId) return;
+  await chatStore.sendMessage(sessionStore.activeSessionId, content, mentionedAgentIds);
 }
 
 async function onTitleBlur() {
   if (session.value && titleInput.value.trim() && titleInput.value !== session.value.title) {
-    await sessionStore.updateTitle(session.value.id, titleInput.value.trim())
+    await sessionStore.updateTitle(session.value.id, titleInput.value.trim());
   }
-  isEditingTitle.value = false
+  isEditingTitle.value = false;
 }
 </script>
 
@@ -1671,121 +1703,120 @@ async function onTitleBlur() {
       <div
         v-else
         class="flex-1 cursor-pointer truncate text-sm font-medium text-foreground"
-        @dblclick="() => { titleInput = session?.title ?? ''; isEditingTitle = true }"
+        @dblclick="
+          () => {
+            titleInput = session?.title ?? '';
+            isEditingTitle = true;
+          }
+        "
       >
-        {{ session?.title ?? '群聊' }}
+        {{ session?.title ?? "群聊" }}
       </div>
     </div>
 
     <!-- Messages -->
-    <GroupMessageList
-      :messages="chatStore.messages"
-      :typing-agent-ids="chatStore.typingAgentIds"
-    />
+    <GroupMessageList :messages="chatStore.messages" :typing-agent-ids="chatStore.typingAgentIds" />
 
     <!-- Input -->
-    <GroupChatInput
-      :participant-agent-ids="participantAgentIds"
-      @send="onSend"
-    />
+    <GroupChatInput :participant-agent-ids="participantAgentIds" @send="onSend" />
   </div>
 </template>
 ```
 
-- [ ] **Step 2: 创建 GroupSessionList.vue**
+- [x] **Step 2: 创建 GroupSessionList.vue**
 
 创建 `src/renderer/src/components/groupchat/GroupSessionList.vue`：
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
-import { useGroupChatSessionStore } from '@/stores/groupChatSession'
-import { useGroupChatStore } from '@/stores/groupChat'
+import { ref } from "vue";
+import { Icon } from "@iconify/vue";
+import { useGroupChatSessionStore } from "@/stores/groupChatSession";
+import { useGroupChatStore } from "@/stores/groupChat";
 
-const sessionStore = useGroupChatSessionStore()
-const chatStore = useGroupChatStore()
+const sessionStore = useGroupChatSessionStore();
+const chatStore = useGroupChatStore();
 
 const emit = defineEmits<{
-  select: [id: string]
-  newSession: []
-  openDetached: [id: string]
-}>()
+  select: [id: string];
+  newSession: [];
+  openDetached: [id: string];
+}>();
 
 function formatTime(ts: number): string {
-  const diff = Date.now() - ts
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes} 分钟前`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} 小时前`
-  return `${Math.floor(hours / 24)} 天前`
+  const diff = Date.now() - ts;
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "刚刚";
+  if (minutes < 60) return `${minutes} 分钟前`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} 小时前`;
+  return `${Math.floor(hours / 24)} 天前`;
 }
 
 // Rename
-const renaming = ref<string | null>(null)
-const renameInput = ref('')
+const renaming = ref<string | null>(null);
+const renameInput = ref("");
 
 function onRenameStart(sessionId: string) {
-  const session = sessionStore.sessions.find((s) => s.id === sessionId)
-  renaming.value = sessionId
-  renameInput.value = session?.title ?? ''
+  const session = sessionStore.sessions.find((s) => s.id === sessionId);
+  renaming.value = sessionId;
+  renameInput.value = session?.title ?? "";
 }
 
 async function onRenameConfirm() {
   if (renaming.value && renameInput.value.trim()) {
-    await sessionStore.updateTitle(renaming.value, renameInput.value.trim())
+    await sessionStore.updateTitle(renaming.value, renameInput.value.trim());
   }
-  renaming.value = null
+  renaming.value = null;
 }
 
 // Context menu
-const contextMenuSessionId = ref<string | null>(null)
-const contextMenuPos = ref({ x: 0, y: 0 })
-const showContextMenu = ref(false)
+const contextMenuSessionId = ref<string | null>(null);
+const contextMenuPos = ref({ x: 0, y: 0 });
+const showContextMenu = ref(false);
 
 function onContextMenu(e: MouseEvent, sessionId: string) {
-  e.preventDefault()
-  contextMenuSessionId.value = sessionId
+  e.preventDefault();
+  contextMenuSessionId.value = sessionId;
   contextMenuPos.value = {
     x: Math.min(e.clientX, window.innerWidth - 160),
     y: Math.min(e.clientY, window.innerHeight - 100),
-  }
-  showContextMenu.value = true
+  };
+  showContextMenu.value = true;
 }
 
 function closeContextMenu() {
-  showContextMenu.value = false
-  contextMenuSessionId.value = null
+  showContextMenu.value = false;
+  contextMenuSessionId.value = null;
 }
 
 async function onDelete() {
   if (contextMenuSessionId.value) {
-    await sessionStore.deleteSession(contextMenuSessionId.value)
-    chatStore.clearMessages()
+    await sessionStore.deleteSession(contextMenuSessionId.value);
+    chatStore.clearMessages();
   }
-  closeContextMenu()
+  closeContextMenu();
 }
 
 function onNewSession() {
-  sessionStore.setActiveSession(null)
-  chatStore.clearMessages()
-  emit('newSession')
+  sessionStore.setActiveSession(null);
+  chatStore.clearMessages();
+  emit("newSession");
 }
 
 function onSessionClick(sessionId: string) {
   if (sessionStore.isDetached(sessionId)) {
-    window.electron.ipcRenderer.invoke('group_chat:focus_detached', sessionId)
-    return
+    window.electron.ipcRenderer.invoke("group_chat:focus_detached", sessionId);
+    return;
   }
-  sessionStore.setActiveSession(sessionId)
-  chatStore.fetchMessages(sessionId)
-  emit('select', sessionId)
+  sessionStore.setActiveSession(sessionId);
+  chatStore.fetchMessages(sessionId);
+  emit("select", sessionId);
 }
 
 function onSessionDblclick(sessionId: string) {
-  sessionStore.markDetached(sessionId)
-  window.electron.ipcRenderer.invoke('group_chat:open_detached', sessionId)
+  sessionStore.markDetached(sessionId);
+  window.electron.ipcRenderer.invoke("group_chat:open_detached", sessionId);
 }
 </script>
 
@@ -1827,7 +1858,11 @@ function onSessionDblclick(sessionId: string) {
         />
         <template v-else>
           <div class="flex items-center gap-1">
-            <Icon v-if="sessionStore.isDetached(session.id)" icon="lucide:external-link" class="h-3 w-3 text-violet-400" />
+            <Icon
+              v-if="sessionStore.isDetached(session.id)"
+              icon="lucide:external-link"
+              class="h-3 w-3 text-violet-400"
+            />
             <div class="truncate text-sm">{{ session.title }}</div>
           </div>
           <div class="mt-0.5 text-[10px] text-muted-foreground">
@@ -1854,7 +1889,12 @@ function onSessionDblclick(sessionId: string) {
       >
         <button
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
-          @click="() => { onRenameStart(contextMenuSessionId!); closeContextMenu() }"
+          @click="
+            () => {
+              onRenameStart(contextMenuSessionId!);
+              closeContextMenu();
+            }
+          "
         >
           <Icon icon="lucide:pencil" class="h-3 w-3" />
           重命名
@@ -1872,56 +1912,56 @@ function onSessionDblclick(sessionId: string) {
 </template>
 ```
 
-- [ ] **Step 3: 创建 NewGroupThread.vue**
+- [x] **Step 3: 创建 NewGroupThread.vue**
 
 创建 `src/renderer/src/components/groupchat/NewGroupThread.vue`：
 
 ```vue
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Icon } from '@iconify/vue'
-import AgentAvatar from '../chat/AgentAvatar.vue'
-import { useAgentStore } from '@/stores/agent'
-import { useGroupChatSessionStore } from '@/stores/groupChatSession'
-import { useGroupChatStore } from '@/stores/groupChat'
-import { getMBTIColor } from '@shared/constants/mbti'
-import type { Agent } from '@shared/types/agent'
+import { ref, computed } from "vue";
+import { Icon } from "@iconify/vue";
+import AgentAvatar from "../chat/AgentAvatar.vue";
+import { useAgentStore } from "@/stores/agent";
+import { useGroupChatSessionStore } from "@/stores/groupChatSession";
+import { useGroupChatStore } from "@/stores/groupChat";
+import { getMBTIColor } from "@shared/constants/mbti";
+import type { Agent } from "@shared/types/agent";
 
-const agentStore = useAgentStore()
-const sessionStore = useGroupChatSessionStore()
-const chatStore = useGroupChatStore()
+const agentStore = useAgentStore();
+const sessionStore = useGroupChatSessionStore();
+const chatStore = useGroupChatStore();
 
-const selectedAgentIds = ref<string[]>([])
-const moderatorEnabled = ref(false)
-const inputValue = ref('')
+const selectedAgentIds = ref<string[]>([]);
+const moderatorEnabled = ref(false);
+const inputValue = ref("");
 
-const canCreate = computed(() => selectedAgentIds.value.length >= 2 && inputValue.value.trim())
+const canCreate = computed(() => selectedAgentIds.value.length >= 2 && inputValue.value.trim());
 
 function toggleAgent(agentId: string) {
-  const idx = selectedAgentIds.value.indexOf(agentId)
+  const idx = selectedAgentIds.value.indexOf(agentId);
   if (idx === -1) {
-    selectedAgentIds.value = [...selectedAgentIds.value, agentId]
+    selectedAgentIds.value = [...selectedAgentIds.value, agentId];
   } else {
-    selectedAgentIds.value = selectedAgentIds.value.filter((id) => id !== agentId)
+    selectedAgentIds.value = selectedAgentIds.value.filter((id) => id !== agentId);
   }
 }
 
 function agentColor(agent: Agent): string {
-  return getMBTIColor(agent.mbti ?? 'INTJ')
+  return getMBTIColor(agent.mbti ?? "INTJ");
 }
 
 async function onSend() {
-  if (!canCreate.value) return
-  const content = inputValue.value.trim()
-  const session = await sessionStore.createSession(selectedAgentIds.value, moderatorEnabled.value)
-  await chatStore.sendMessage(session.id, content, [])
-  inputValue.value = ''
+  if (!canCreate.value) return;
+  const content = inputValue.value.trim();
+  const session = await sessionStore.createSession(selectedAgentIds.value, moderatorEnabled.value);
+  await chatStore.sendMessage(session.id, content, []);
+  inputValue.value = "";
 }
 
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    onSend()
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    onSend();
   }
 }
 </script>
@@ -1995,13 +2035,13 @@ function onKeydown(e: KeyboardEvent) {
 </template>
 ```
 
-- [ ] **Step 4: 验证类型检查**
+- [x] **Step 4: 验证类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/components/groupchat/
@@ -2013,48 +2053,49 @@ git commit -m "feat(group-chat): add GroupChatView, GroupSessionList, NewGroupTh
 ## Task 9: GroupChatPanel 视图 + 导航入口
 
 **Files:**
+
 - Create: `src/renderer/src/views/GroupChatPanel.vue`
 - Modify: `src/renderer/src/App.vue`
 - Modify: `src/renderer/src/components/AppSidebar.vue`
 
-- [ ] **Step 1: 创建 GroupChatPanel.vue**
+- [x] **Step 1: 创建 GroupChatPanel.vue**
 
 创建 `src/renderer/src/views/GroupChatPanel.vue`：
 
 ```vue
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
-import GroupSessionList from '../components/groupchat/GroupSessionList.vue'
-import NewGroupThread from '../components/groupchat/NewGroupThread.vue'
-import GroupChatView from '../components/groupchat/GroupChatView.vue'
-import { useGroupChatSessionStore } from '@/stores/groupChatSession'
-import { useGroupChatStore } from '@/stores/groupChat'
-import { useAgentStore } from '@/stores/agent'
-import { setupGroupChatIpc } from '@/stores/groupChatIpc'
-import { AGENT_EVENTS } from '@shared/events'
+import { onMounted, onUnmounted } from "vue";
+import GroupSessionList from "../components/groupchat/GroupSessionList.vue";
+import NewGroupThread from "../components/groupchat/NewGroupThread.vue";
+import GroupChatView from "../components/groupchat/GroupChatView.vue";
+import { useGroupChatSessionStore } from "@/stores/groupChatSession";
+import { useGroupChatStore } from "@/stores/groupChat";
+import { useAgentStore } from "@/stores/agent";
+import { setupGroupChatIpc } from "@/stores/groupChatIpc";
+import { AGENT_EVENTS } from "@shared/events";
 
-const sessionStore = useGroupChatSessionStore()
-const chatStore = useGroupChatStore()
-const agentStore = useAgentStore()
+const sessionStore = useGroupChatSessionStore();
+const chatStore = useGroupChatStore();
+const agentStore = useAgentStore();
 
 const cleanupGroupChatIpc = setupGroupChatIpc(
   chatStore,
   sessionStore,
   () => sessionStore.activeSessionId,
-)
+);
 
 const cleanupAgentChanged = window.electron.ipcRenderer.on(AGENT_EVENTS.CHANGED, () => {
-  agentStore.fetchAgents()
-})
+  agentStore.fetchAgents();
+});
 
 onMounted(async () => {
-  await Promise.all([agentStore.fetchAgents(), sessionStore.fetchSessions()])
-})
+  await Promise.all([agentStore.fetchAgents(), sessionStore.fetchSessions()]);
+});
 
 onUnmounted(() => {
-  cleanupGroupChatIpc()
-  cleanupAgentChanged()
-})
+  cleanupGroupChatIpc();
+  cleanupAgentChanged();
+});
 </script>
 
 <template>
@@ -2073,40 +2114,49 @@ onUnmounted(() => {
 </template>
 ```
 
-- [ ] **Step 2: 修改 App.vue 添加 groupchat 视图**
+- [x] **Step 2: 修改 App.vue 添加 groupchat 视图**
 
 在 `src/renderer/src/App.vue` 中：
 
 1. 添加 import：
+
 ```typescript
-import GroupChatPanel from './views/GroupChatPanel.vue'
+import GroupChatPanel from "./views/GroupChatPanel.vue";
 ```
 
 2. 在 `viewComponents` 对象中添加：
+
 ```typescript
 groupchat: markRaw(GroupChatPanel),
 ```
 
 3. 更新 `activeView` 类型：
+
 ```typescript
-const activeView = ref<'chatroom' | 'schedule' | 'gateway' | 'evolab' | 'agents' | 'groupchat'>('chatroom')
+const activeView = ref<"chatroom" | "schedule" | "gateway" | "evolab" | "agents" | "groupchat">(
+  "chatroom",
+);
 ```
 
-- [ ] **Step 3: 修改 AppSidebar.vue 添加群聊入口**
+- [x] **Step 3: 修改 AppSidebar.vue 添加群聊入口**
 
 在 `src/renderer/src/components/AppSidebar.vue` 中：
 
 1. 在 `defineProps` 类型中添加 `'groupchat'`：
+
 ```typescript
 defineProps<{
-  activeView: 'chatroom' | 'schedule' | 'gateway' | 'evolab' | 'agents' | 'groupchat'
-}>()
+  activeView: "chatroom" | "schedule" | "gateway" | "evolab" | "agents" | "groupchat";
+}>();
 defineEmits<{
-  'update:activeView': [view: 'chatroom' | 'schedule' | 'gateway' | 'evolab' | 'agents' | 'groupchat']
-}>()
+  "update:activeView": [
+    view: "chatroom" | "schedule" | "gateway" | "evolab" | "agents" | "groupchat",
+  ];
+}>();
 ```
 
 2. 在 chatroom 按钮后面添加群聊按钮：
+
 ```html
 <button
   data-testid="sidebar-groupchat"
@@ -2123,13 +2173,13 @@ defineEmits<{
 </button>
 ```
 
-- [ ] **Step 4: 验证类型检查**
+- [x] **Step 4: 验证类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer/src/views/GroupChatPanel.vue src/renderer/src/App.vue src/renderer/src/components/AppSidebar.vue
@@ -2141,28 +2191,29 @@ git commit -m "feat(group-chat): add GroupChatPanel view and sidebar entry"
 ## Task 10: 独立窗口渲染端 + Lint + Format
 
 **Files:**
+
 - Modify: `src/renderer/src/main.ts` 或 `src/renderer/src/App.vue`（读取 URL 参数检测 detached 模式）
 
-- [ ] **Step 1: 检查 renderer 入口**
+- [x] **Step 1: 检查 renderer 入口**
 
 ```bash
 cat /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime/src/renderer/src/main.ts
 ```
 
-- [ ] **Step 2: 在 App.vue 中处理 detached 模式**
+- [x] **Step 2: 在 App.vue 中处理 detached 模式**
 
 在 `App.vue` 的 `onMounted` 中读取 URL 参数：
 
 ```typescript
 // 在 onMounted 中
-const urlParams = new URLSearchParams(window.location.search)
-const isDetached = urlParams.get('detached') === '1'
-const detachedSessionId = urlParams.get('sessionId')
+const urlParams = new URLSearchParams(window.location.search);
+const isDetached = urlParams.get("detached") === "1";
+const detachedSessionId = urlParams.get("sessionId");
 
 if (isDetached && detachedSessionId) {
   // 独立窗口模式：直接切换到群聊视图并加载指定 session
-  activeView.value = 'groupchat'
-  needsOnboarding.value = false
+  activeView.value = "groupchat";
+  needsOnboarding.value = false;
   // 等待 groupchat store 初始化后设置 activeSessionId
   // 由 GroupChatPanel onMounted 处理 fetchSessions 后再 setActiveSession
   // 通过 provide/inject 或 URL 参数传递 sessionId
@@ -2175,11 +2226,11 @@ if (isDetached && detachedSessionId) {
 
 ```typescript
 // Check if this is a detached window
-const urlParams = new URLSearchParams(window.location.search)
-const detachedSessionId = urlParams.get('sessionId')
-if (urlParams.get('detached') === '1' && detachedSessionId) {
-  sessionStore.setActiveSession(detachedSessionId)
-  chatStore.fetchMessages(detachedSessionId)
+const urlParams = new URLSearchParams(window.location.search);
+const detachedSessionId = urlParams.get("sessionId");
+if (urlParams.get("detached") === "1" && detachedSessionId) {
+  sessionStore.setActiveSession(detachedSessionId);
+  chatStore.fetchMessages(detachedSessionId);
 }
 ```
 
@@ -2188,15 +2239,15 @@ if (urlParams.get('detached') === '1' && detachedSessionId) {
 在 `App.vue` 的 `onMounted` 中，在 `const onboarded = await configPresenter.get('app.onboarded')` 之前检查：
 
 ```typescript
-const urlParams = new URLSearchParams(window.location.search)
-if (urlParams.get('detached') === '1') {
-  activeView.value = 'groupchat'
-  needsOnboarding.value = false
-  return
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get("detached") === "1") {
+  activeView.value = "groupchat";
+  needsOnboarding.value = false;
+  return;
 }
 ```
 
-- [ ] **Step 3: 运行 format + lint**
+- [x] **Step 3: 运行 format + lint**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run format && pnpm run lint
@@ -2204,13 +2255,13 @@ cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run format &
 
 Expected: 无错误（可能有 warning，可以忽略）
 
-- [ ] **Step 4: 最终类型检查**
+- [x] **Step 4: 最终类型检查**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -2223,24 +2274,25 @@ git commit -m "feat(group-chat): detached window support + format/lint"
 
 ### Spec 覆盖检查
 
-| Spec 要求 | 对应 Task |
-|-----------|---------|
-| 独立两张表 group_chat_sessions / group_chat_messages | Task 1 |
-| AgentInvoker fire-and-forget | Task 2 |
-| 上下文转换规则（其他Agent→user role，[agentId]: 前缀） | Task 2 Step 2 |
-| GROUP_CHAT_EVENTS 事件 | Task 2 Step 1 |
-| GroupChatPresenter sendMessage 流程 | Task 3 |
-| 主持人开关 moderator_enabled 路由 | Task 3 Step 1 routeWithModerator |
-| 会话默认标题 用户、AgentName1... | Task 3 Step 1 createSession |
-| 独立窗口 createDetachedWindow | Task 4 |
-| detached_window_closed IPC | Task 4 + Task 5 |
-| typing 状态行挂在用户消息下方 | Task 6 GroupMessageItem |
-| @ 提及补全 | Task 7 GroupChatInput |
-| 双击开独立窗口 | Task 8 GroupSessionList |
-| 群聊导航入口 | Task 9 |
-| detached 模式自动加载 session | Task 10 |
+| Spec 要求                                              | 对应 Task                        |
+| ------------------------------------------------------ | -------------------------------- |
+| 独立两张表 group_chat_sessions / group_chat_messages   | Task 1                           |
+| AgentInvoker fire-and-forget                           | Task 2                           |
+| 上下文转换规则（其他Agent→user role，[agentId]: 前缀） | Task 2 Step 2                    |
+| GROUP_CHAT_EVENTS 事件                                 | Task 2 Step 1                    |
+| GroupChatPresenter sendMessage 流程                    | Task 3                           |
+| 主持人开关 moderator_enabled 路由                      | Task 3 Step 1 routeWithModerator |
+| 会话默认标题 用户、AgentName1...                       | Task 3 Step 1 createSession      |
+| 独立窗口 createDetachedWindow                          | Task 4                           |
+| detached_window_closed IPC                             | Task 4 + Task 5                  |
+| typing 状态行挂在用户消息下方                          | Task 6 GroupMessageItem          |
+| @ 提及补全                                             | Task 7 GroupChatInput            |
+| 双击开独立窗口                                         | Task 8 GroupSessionList          |
+| 群聊导航入口                                           | Task 9                           |
+| detached 模式自动加载 session                          | Task 10                          |
 
 ### 类型一致性确认
+
 - `GroupChatSession.participantAgentIds` 在 DAO、Presenter、Store 中均为 `string[]`
 - `GroupChatMessageRecord.senderAgentId` 在所有层均为 `string | null`
 - `GROUP_CHAT_EVENTS` 事件名在 IPC 发送端（主进程）和接收端（渲染进程）均引用同一常量

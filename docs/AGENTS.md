@@ -8,9 +8,9 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 
 - `src/main/`: Electron 主进程
   - `presenter/`: Presenter 单例 + 子 Presenter（通过 `presenter:call` IPC 分发）
-  - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state；schedule 表：tasks, notes, timeline_entries, attachments）
+  - `db/`: better-sqlite3 数据库（gateway 表：channels, channel*keys, groups*, group_items, api_keys, model_prices, models, relay_logs, stats_hourly, stats_daily；agent 表：agents, agent_sessions, agent_session_configs, agent_messages；mcp 表：mcp_servers, mcp_tools, session_mcp_state；schedule 表：tasks, notes, timeline_entries, attachments；group_chat 表：group_chat_sessions, group_chat_messages）
   - `gateway/`: LLM Gateway 核心（router, balancer, circuit, keypool, relay, server, outbound adapters, inbound handlers, stats, auth）
-  - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool）
+  - `presenter/agentChat/`: Agent 对话引擎（agentChatPresenter, contextBuilder, compaction, subagentPresenter, tools/subagentTool, agentInvoker, agentInvokerRegistry）
   - `agents/`: Agent 加载（agentLoader.ts 通用加载 + index.ts BUILTIN_AGENTS 注册表），定义文件在 `resources/agents/<id>/AGENT.json` + `PROMPT.md`
   - `skills/`: 全局 Skill 目录（`<name>/manifest.json` + 实现文件）
   - `mcp/`: MCP Client（types, transport/stdio+SSE, mcpClient, healthChecker）
@@ -31,6 +31,7 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
   - `commands/skill.ts`: skill 命令（list）
   - `commands/config.ts`: config 命令（list/get/set，白名单写保护）
   - `commands/task.ts`: task 命令（add/start/done/cancel/list/get）
+  - `commands/user.ts`: user 命令（get）
   - `utils/logReader.ts`: 日志读取/格式化工具
 - `src/preload/`: 安全 IPC 桥接（contextIsolation，暴露 `window.electron.ipcRenderer`）
 - `src/renderer/src/`: Vue 3 渲染进程（components/, composables/, stores/, views/）
@@ -93,24 +94,25 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 
 ### 已实现 Presenter
 
-| Presenter                 | 职责                                                                                                                                                                                                           |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AppPresenter              | 应用信息                                                                                                                                                                                                       |
-| ConfigPresenter           | 配置持久化                                                                                                                                                                                                     |
-| SessionPresenter          | 会话/消息管理                                                                                                                                                                                                  |
-| FilePresenter             | 文件读写+目录列表（resolveSafe 路径安全）                                                                                                                                                                      |
-| GitPresenter              | Git 操作（spawn，tag/commit/rollback/diff）                                                                                                                                                                    |
-| AgentPresenter            | AI 对话、工具调用、阶段感知 systemPrompt；通过 Gateway 本地代理调用 LLM                                                                                                                                        |
-| ToolPresenter             | 19 built-in tools（read/write/edit/exec/ask*user/open + 3 evolution + 9 browser*_ + web*fetch）+ MCP tools 动态合并；browser*_ 基于 playwright-core + 系统 Chrome（auto-detect）；web_fetch 基于 Node.js fetch |
-| EvolutionPresenter        | 进化状态机（idle→discuss→coding→applying）+ CHANGELOG + apply(打包+自替换) + archive CRUD + AI 语义回滚 + build verification                                                                                   |
-| ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                                                   |
-| WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                                               |
-| GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                                                           |
-| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup）                                                                                                                     |
-| AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                                                     |
-| MCPServerPresenter        | MCP Server 生命周期管理：连接/发现工具/健康检查/CRUD + 会话工具状态；客户端 Map 管理                                                                                                                           |
-| TaskPresenter             | Schedule 任务系统 IPC：task CRUD + 状态流转 + 附件 + timeline + notes；委托 taskDao/taskServer                                                                                                                 |
-| DevPresenter              | 开发模式专用：内置 Agent 源码读写（JSON+MD）、Skill 安装/卸载、可用工具/CLI 命令查询                                                                                                                           |
+| Presenter                 | 职责                                                                                                                                                                                                              |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AppPresenter              | 应用信息                                                                                                                                                                                                          |
+| ConfigPresenter           | 配置持久化                                                                                                                                                                                                        |
+| SessionPresenter          | 会话/消息管理                                                                                                                                                                                                     |
+| FilePresenter             | 文件读写+目录列表（resolveSafe 路径安全）                                                                                                                                                                         |
+| GitPresenter              | Git 操作（spawn，tag/commit/rollback/diff）                                                                                                                                                                       |
+| AgentPresenter            | AI 对话、工具调用、阶段感知 systemPrompt；通过 Gateway 本地代理调用 LLM                                                                                                                                           |
+| ToolPresenter             | 19 built-in tools（read/write/edit/exec/ask*user/preview + 3 evolution + 9 browser*_ + web*fetch）+ MCP tools 动态合并；browser*_ 基于 playwright-core + 系统 Chrome（auto-detect）；web_fetch 基于 Node.js fetch |
+| EvolutionPresenter        | 进化状态机（idle→discuss→coding→applying）+ CHANGELOG + apply(打包+自替换) + archive CRUD + AI 语义回滚 + build verification                                                                                      |
+| ContentPresenter          | 内容预览管理（Interaction/MD/Progress/HTML）                                                                                                                                                                      |
+| WorkspacePresenter        | 源码工作区初始化                                                                                                                                                                                                  |
+| GatewayPresenter          | LLM Gateway 生命周期管理：供应商/分组/API Key/价格/模型 CRUD、Router/Balancer/Circuit/Server init/destroy、Capability 选择、内部密钥                                                                              |
+| AgentConfigPresenter      | Agent CRUD（listAgents/create/update/delete）+ 头像管理（pickAvatar/getAvatarUrl/cleanup）                                                                                                                        |
+| AgentChatPresenterAdapter | Agent 会话 CRUD + 对话控制（委托 AgentChatPresenter 引擎）                                                                                                                                                        |
+| MCPServerPresenter        | MCP Server 生命周期管理：连接/发现工具/健康检查/CRUD + 会话工具状态；客户端 Map 管理                                                                                                                              |
+| TaskPresenter             | Schedule 任务系统 IPC：task CRUD + 状态流转 + 附件 + timeline + notes；委托 taskDao/taskServer                                                                                                                    |
+| DevPresenter              | 开发模式专用：内置 Agent 源码读写（JSON+MD）、Skill 安装/卸载、可用工具/CLI 命令查询                                                                                                                              |
+| GroupChatPresenter        | 群聊会话 CRUD + AgentInvoker 调度（@ 指定 / 主持人路由）+ 独立窗口 IPC；委托 groupChatSessionDao/groupChatMessageDao                                                                                              |
 
 ### 自研 LLM 客户端
 
@@ -239,12 +241,27 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - **AgentConfigPresenter**: Agent CRUD + 头像管理，委托 agentRegistry 管理 agent 列表
 - **AgentChatPresenterAdapter**: 封装 session CRUD + 委托 chat 控制给 AgentChatPresenter
 - **Context Builder**: token 估算(len/4)，summary 注入，turn history 裁剪，4096 reserve
-- **视图切换**: App.vue 四视图（chatroom/gateway/agents/evolab），默认 chatroom，EvoLab 隐藏(v-if="false")
+- **视图切换**: App.vue 五视图（chatroom/groupchat/gateway/agents/evolab），默认 chatroom，EvoLab 隐藏(v-if="false")
 - **Pinia Stores**: `useAgentStore` + `useAgentSessionStore` + `useAgentChatStore` + `setupAgentChatIpc`
 - **Chat UI**: ChatroomPanel(SessionList + split pane(ChatView + ChatFunctionPanel))、AgentAvatar、ChatInput、ChatMessageList/User/Assistant
 - **AgentPanel**: AgentManageTab（内置/用户 Agent 列表 + AgentEditForm 编辑）+ SkillManageTab（Skill 安装/卸载）
 - **ChatFunctionPanel**: 工具/预览两 Tab（无历史），与 evolab/FunctionPanel 完全独立；tool_call block 点击高亮，interaction submit 走 agentChatStore.answerQuestion；agent 类型 block 在 ChatroomPanel.toolCallBlocks computed 中转换为 chat 格式再传给 ToolPanel
 - **AGENT_EVENTS.CHANGED**: Agent 变更时推送，渲染进程监听刷新列表
+
+### 群聊系统 (brave)
+
+- **数据层**: 2 张独立表（group_chat_sessions, group_chat_messages），与单聊完全隔离
+- **AgentInvoker**: per-agent 独立执行单元，fire-and-forget，支持 groupContext（参与者列表 + 行为规则 + 轮次标记）
+- **AgentInvokerRegistry**: 注册表单例，管理活跃 invoker，支持 stop 单个/全部
+- **GroupChatPresenter**: 会话 CRUD + sendMessage（@ 路由 / 主持人路由）+ detached window IPC
+- **主持人路由**: 轻量模型（chat capability）分析用户意图，返回目标 agentId 列表；moderator_enabled 开关
+- **独立窗口**: detached BrowserWindow，session init IPC（`group-chat:detached:init`），主窗口 `DETACHED_CLOSED` 事件
+- **行为规则注入**: groupContext system-reminder 追加 3 条规则（只回答本轮、只回答自己部分、历史仅作背景）
+- **轮次标记**: 历史消息加 `[Round N]` 前缀，用户消息递增 roundIndex，agent 消息跟随当前轮次
+- **禁止越界 @**: 多 target 回复时，agent 不能 @mention 其他参与者
+- **Pinia Stores**: `useGroupChatSessionStore` + `useGroupChatStore` + `setupGroupChatIpc`
+- **Group UI**: GroupChatPanel（GroupSessionList + GroupChatView(GroupMessageList + GroupChatInput)），GroupMessageItem（markdown 渲染 + 头像）
+- **GROUP_CHAT_EVENTS**: `SESSION_CREATED/UPDATED/DELETED` + `MESSAGE_CREATED/UPDATED` + `AGENT_TYPING/DONE`
 
 ## 安全
 

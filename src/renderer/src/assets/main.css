@@ -124,6 +124,16 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* 群聊气泡：首尾段落无 margin */
+.prose-compact {
+  p:first-of-type {
+    margin-top: 0;
+  }
+  p:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
 /* 自定义 prose-xs 变体 - 更小的正文字体 */
 .prose-xs {
   font-size: 0.8125rem; /* 13px */

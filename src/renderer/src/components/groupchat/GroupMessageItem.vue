@@ -41,6 +41,22 @@ const displayContent = computed(() => {
   }
 });
 
+// Split user message into plain text and @mention segments
+const userMessageSegments = computed(() => {
+  const text = displayContent.value;
+  const segments: { type: "text" | "mention"; value: string }[] = [];
+  const regex = /@(\S+)/g;
+  let last = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) segments.push({ type: "text", value: text.slice(last, match.index) });
+    segments.push({ type: "mention", value: match[0] });
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) segments.push({ type: "text", value: text.slice(last) });
+  return segments;
+});
+
 // Typing agents shown under user messages
 const typingAgentNames = computed(() => {
   if (!isUser.value || !props.typingAgentIds || props.typingAgentIds.size === 0) return [];
@@ -59,12 +75,21 @@ function formatTime(ts: number): string {
   <!-- User message -->
   <div v-if="isUser" class="flex flex-col items-end gap-1 px-4 py-2">
     <div class="flex items-end gap-2">
-      <div class="max-w-[70%] rounded-2xl rounded-br-sm bg-violet-600 px-3 py-2 text-sm text-white">
-        {{ displayContent }}
+      <div class="flex flex-col items-end gap-1">
+        <div
+          class="max-w-[70%] rounded-2xl rounded-br-sm bg-violet-600 px-3 py-2 text-base leading-[1.75] text-white whitespace-pre-wrap"
+        >
+          <template v-for="(seg, i) in userMessageSegments" :key="i">
+            <span v-if="seg.type === 'mention'" class="text-blue-300 font-medium">{{
+              seg.value
+            }}</span>
+            <span v-else>{{ seg.value }}</span>
+          </template>
+        </div>
+        <div class="text-[10px] text-muted-foreground">{{ formatTime(message.createdAt) }}</div>
       </div>
       <AgentAvatar :avatar="userAvatar" size="lg" />
     </div>
-    <div class="text-[10px] text-muted-foreground">{{ formatTime(message.createdAt) }}</div>
     <!-- Typing indicator under user message -->
     <div v-if="typingAgentNames.length > 0" class="text-[11px] text-muted-foreground">
       {{ typingAgentNames.join(" · ") }} 正在思考...
@@ -79,7 +104,7 @@ function formatTime(ts: number): string {
         {{ senderAgent?.name ?? message.senderAgentId }}
       </div>
       <div class="rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-sm text-foreground">
-        <div class="prose prose-xs dark:prose-invert w-full max-w-none">
+        <div class="prose prose-xs prose-compact dark:prose-invert w-full max-w-none">
           <NodeRenderer :content="displayContent" :is-dark="true" />
         </div>
       </div>

@@ -13,9 +13,10 @@
 ### Task 1: 扩展 groupContext 注入群聊行为规则
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentInvoker.ts:95-104`
 
-- [ ] **Step 1: 读取当前 groupContext 构建代码**
+- [x] **Step 1: 读取当前 groupContext 构建代码**
 
 打开 `src/main/presenter/agentChat/agentInvoker.ts`，定位第 95-104 行：
 
@@ -32,7 +33,7 @@ reminderContentBlocks.push({
 });
 ```
 
-- [ ] **Step 2: 修改 groupContext，追加行为规则**
+- [x] **Step 2: 修改 groupContext，追加行为规则**
 
 将上述代码替换为：
 
@@ -54,7 +55,7 @@ reminderContentBlocks.push({
 });
 ```
 
-- [ ] **Step 3: 确认无语法错误**
+- [x] **Step 3: 确认无语法错误**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck 2>&1 | head -30
@@ -62,7 +63,7 @@ cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typechec
 
 Expected: 无新增错误（可能有原有的无关错误，忽略）
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main/presenter/agentChat/agentInvoker.ts
@@ -74,9 +75,10 @@ git commit -m "feat(group-chat): inject behavior rules into group context system
 ### Task 2: 历史消息加轮次标记
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentInvoker.ts:110-143`
 
-- [ ] **Step 1: 定位历史消息转换循环**
+- [x] **Step 1: 定位历史消息转换循环**
 
 在 `buildLLMMessages` 方法中，找到第 110-143 行的 `for (const msg of groupMessages)` 循环：
 
@@ -97,7 +99,7 @@ for (const msg of groupMessages) {
 }
 ```
 
-- [ ] **Step 2: 在循环前添加 roundIndex 计数器，循环内加轮次前缀**
+- [x] **Step 2: 在循环前添加 roundIndex 计数器，循环内加轮次前缀**
 
 将整个循环替换为：
 
@@ -135,12 +137,15 @@ for (const msg of groupMessages) {
     } catch {
       // not JSON, use as-is
     }
-    messages.push({ role: "user", content: `[Round ${roundIndex}] [${msg.senderAgentId}]: ${textContent}` });
+    messages.push({
+      role: "user",
+      content: `[Round ${roundIndex}] [${msg.senderAgentId}]: ${textContent}`,
+    });
   }
 }
 ```
 
-- [ ] **Step 3: 确认无语法错误**
+- [x] **Step 3: 确认无语法错误**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typecheck 2>&1 | head -30
@@ -148,7 +153,7 @@ cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run typechec
 
 Expected: 无新增错误
 
-- [ ] **Step 4: 运行 lint 和 format**
+- [x] **Step 4: 运行 lint 和 format**
 
 ```bash
 cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run format && pnpm run lint 2>&1 | tail -20
@@ -156,7 +161,7 @@ cd /Users/hexueyuan/Workroot/src/github.com/hexueyuan/Slime && pnpm run format &
 
 Expected: 无新增 lint 错误
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/presenter/agentChat/agentInvoker.ts

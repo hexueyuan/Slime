@@ -1,23 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { Icon } from "@iconify/vue";
 import AgentAvatar from "../chat/AgentAvatar.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useGroupChatSessionStore } from "@/stores/groupChatSession";
-import { useGroupChatStore } from "@/stores/groupChat";
 import { getMBTIColor } from "@shared/constants/mbti";
 import type { Agent } from "@shared/types/agent";
 
 const agentStore = useAgentStore();
 const sessionStore = useGroupChatSessionStore();
-const chatStore = useGroupChatStore();
 
 const selectedAgentIds = ref<string[]>([]);
 const moderatorEnabled = ref(false);
-const inputValue = ref("");
-const isComposing = ref(false);
 
-const canCreate = computed(() => selectedAgentIds.value.length >= 2 && inputValue.value.trim());
+const canCreate = computed(() => selectedAgentIds.value.length >= 1);
 
 function toggleAgent(agentId: string) {
   const idx = selectedAgentIds.value.indexOf(agentId);
@@ -32,19 +27,9 @@ function agentColor(agent: Agent): string {
   return getMBTIColor(agent.mbti ?? "INTJ");
 }
 
-async function onSend() {
+async function onCreate() {
   if (!canCreate.value) return;
-  const content = inputValue.value.trim();
-  const session = await sessionStore.createSession(selectedAgentIds.value, moderatorEnabled.value);
-  await chatStore.sendMessage(session.id, content, []);
-  inputValue.value = "";
-}
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === "Enter" && !e.shiftKey && !isComposing.value) {
-    e.preventDefault();
-    onSend();
-  }
+  await sessionStore.createSession(selectedAgentIds.value, moderatorEnabled.value);
 }
 </script>
 
@@ -52,7 +37,7 @@ function onKeydown(e: KeyboardEvent) {
   <div class="flex h-full flex-col">
     <div class="flex flex-1 flex-col items-center justify-center px-8">
       <h2 class="mb-1 text-lg font-medium text-foreground">创建群聊</h2>
-      <p class="mb-6 text-sm text-muted-foreground">选择 2 个或更多 Agent</p>
+      <p class="mb-6 text-sm text-muted-foreground">选择 1 个或更多 Agent</p>
 
       <!-- Agent cards -->
       <div class="mb-6 flex flex-wrap justify-center gap-3">
@@ -86,32 +71,19 @@ function onKeydown(e: KeyboardEvent) {
         <span class="text-xs text-muted-foreground">— 无需 @ 时自动判断回复者</span>
       </label>
 
-      <p v-if="selectedAgentIds.length < 2" class="text-xs text-muted-foreground">
-        已选 {{ selectedAgentIds.length }} 个，至少选 2 个
+      <p v-if="selectedAgentIds.length < 1" class="text-xs text-muted-foreground">
+        请至少选择 1 个 Agent
       </p>
     </div>
 
-    <!-- Input -->
-    <div class="border-t border-border p-3">
-      <div class="flex items-end gap-2">
-        <textarea
-          v-model="inputValue"
-          :disabled="selectedAgentIds.length < 2"
-          placeholder="输入第一条消息，发送后创建群聊..."
-          rows="1"
-          class="max-h-32 min-h-[36px] flex-1 resize-none rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none disabled:opacity-50"
-          @keydown="onKeydown"
-          @compositionstart="isComposing = true"
-          @compositionend="isComposing = false"
-        />
-        <button
-          :disabled="!canCreate"
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40"
-          @click="onSend"
-        >
-          <Icon icon="lucide:send" class="h-4 w-4" />
-        </button>
-      </div>
+    <div class="border-t border-border p-4">
+      <button
+        :disabled="!canCreate"
+        class="w-full rounded-lg bg-violet-600 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-40"
+        @click="onCreate"
+      >
+        创建群聊
+      </button>
     </div>
   </div>
 </template>

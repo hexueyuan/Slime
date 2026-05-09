@@ -62,23 +62,23 @@ CREATE INDEX idx_group_chat_messages_session ON group_chat_messages(session_id, 
 // src/shared/types/groupChat.d.ts
 
 interface GroupChatSession {
-  id: string
-  title: string
-  participantAgentIds: string[]
-  moderatorEnabled: boolean
-  createdAt: number
-  updatedAt: number
+  id: string;
+  title: string;
+  participantAgentIds: string[];
+  moderatorEnabled: boolean;
+  createdAt: number;
+  updatedAt: number;
 }
 
 interface GroupChatMessageRecord {
-  id: string
-  sessionId: string
-  orderSeq: number          // Date.now() 时间戳
-  senderAgentId: string | null  // null = 用户
-  role: "user" | "assistant"
-  content: string           // 用户消息为纯文本，Agent 消息为 AssistantMessageBlock[] JSON
-  hidden: boolean
-  createdAt: number
+  id: string;
+  sessionId: string;
+  orderSeq: number; // Date.now() 时间戳
+  senderAgentId: string | null; // null = 用户
+  role: "user" | "assistant";
+  content: string; // 用户消息为纯文本，Agent 消息为 AssistantMessageBlock[] JSON
+  hidden: boolean;
+  createdAt: number;
 }
 ```
 
@@ -92,26 +92,26 @@ interface GroupChatMessageRecord {
 
 ```typescript
 type OutputChannel = {
-  type: "group_chat"
-  sessionId: string
-}
+  type: "group_chat";
+  sessionId: string;
+};
 
 interface InvokeParams {
-  messages: GroupChatMessageRecord[]  // 群聊原始消息，由 Invoker 内部转换为 LLM 格式
-  outputChannel: OutputChannel
-  hidden?: boolean                    // true = 写入消息时 hidden=1（主持人注入的指令）
+  messages: GroupChatMessageRecord[]; // 群聊原始消息，由 Invoker 内部转换为 LLM 格式
+  outputChannel: OutputChannel;
+  hidden?: boolean; // true = 写入消息时 hidden=1（主持人注入的指令）
 }
 
 class AgentInvoker {
   constructor(private agentId: string) {}
 
   // fire-and-forget，不返回 Promise
-  invoke(params: InvokeParams): void
+  invoke(params: InvokeParams): void;
 
   // 停止指定渠道上正在进行的生成
-  stop(sessionId: string): void
+  stop(sessionId: string): void;
 
-  isRunning(sessionId: string): boolean
+  isRunning(sessionId: string): boolean;
 }
 ```
 
@@ -119,12 +119,12 @@ class AgentInvoker {
 
 群聊消息 → LLM messages 格式：
 
-| 群聊消息来源 | LLM role | content 格式 |
-|------------|---------|-------------|
-| `senderAgentId = null`（用户） | `user` | 原始内容 |
-| `senderAgentId = 本 Agent` | `assistant` | 原始内容 |
-| `senderAgentId = 其他 Agent` | `user` | `[agentId]: 内容` |
-| `hidden = 1`（主持人指令） | `user` | 原始内容（不加前缀） |
+| 群聊消息来源                   | LLM role    | content 格式         |
+| ------------------------------ | ----------- | -------------------- |
+| `senderAgentId = null`（用户） | `user`      | 原始内容             |
+| `senderAgentId = 本 Agent`     | `assistant` | 原始内容             |
+| `senderAgentId = 其他 Agent`   | `user`      | `[agentId]: 内容`    |
+| `hidden = 1`（主持人指令）     | `user`      | 原始内容（不加前缀） |
 
 ### 2.3 System Prompt 群聊身份注入
 
@@ -149,13 +149,13 @@ Agent 生成完毕（agentic loop 结束）后：
 ```typescript
 // src/main/presenter/agentChat/agentInvokerRegistry.ts
 class AgentInvokerRegistry {
-  private invokers = new Map<string, AgentInvoker>()
+  private invokers = new Map<string, AgentInvoker>();
 
-  get(agentId: string): AgentInvoker   // 懒加载创建
-  stopAll(sessionId: string): void     // 停止某 session 所有 Agent 的生成
+  get(agentId: string): AgentInvoker; // 懒加载创建
+  stopAll(sessionId: string): void; // 停止某 session 所有 Agent 的生成
 }
 
-export const agentInvokerRegistry = new AgentInvokerRegistry()
+export const agentInvokerRegistry = new AgentInvokerRegistry();
 ```
 
 ---
@@ -169,6 +169,7 @@ export const agentInvokerRegistry = new AgentInvokerRegistry()
 ### 3.2 触发条件
 
 用户发送消息时：
+
 - **有 @** → 跳过主持人，直接触发被 @ 的 Agent
 - **无 @，且 `moderator_enabled = true`** → 触发主持人分析
 
@@ -203,16 +204,19 @@ Prompt 要求输出 JSON：
 ```typescript
 class GroupChatPresenter {
   // 会话管理
-  createSession(participantAgentIds: string[], moderatorEnabled?: boolean): Promise<GroupChatSession>
-  getSessions(): Promise<GroupChatSession[]>
-  deleteSession(sessionId: string): Promise<void>
-  updateSessionTitle(sessionId: string, title: string): Promise<void>
+  createSession(
+    participantAgentIds: string[],
+    moderatorEnabled?: boolean,
+  ): Promise<GroupChatSession>;
+  getSessions(): Promise<GroupChatSession[]>;
+  deleteSession(sessionId: string): Promise<void>;
+  updateSessionTitle(sessionId: string, title: string): Promise<void>;
 
   // 消息
-  getMessages(sessionId: string): Promise<GroupChatMessageRecord[]>
+  getMessages(sessionId: string): Promise<GroupChatMessageRecord[]>;
 
   // 用户发送消息入口
-  sendMessage(sessionId: string, content: string, mentionedAgentIds: string[]): Promise<void>
+  sendMessage(sessionId: string, content: string, mentionedAgentIds: string[]): Promise<void>;
   // 流程：
   // 1. 写入用户消息（sender_agent_id=null）
   // 2. 推送 MESSAGE_ADDED 事件
@@ -221,7 +225,7 @@ class GroupChatPresenter {
   // 4. 对每个将要生成的 Agent 推送 AGENT_TYPING { isTyping: true }
 
   // 停止指定 session 内某 Agent 的生成
-  stopAgent(sessionId: string, agentId: string): Promise<void>
+  stopAgent(sessionId: string, agentId: string): Promise<void>;
 }
 ```
 
@@ -234,9 +238,9 @@ class GroupChatPresenter {
 ```typescript
 // src/shared/events.ts 追加
 export const GROUP_CHAT_EVENTS = {
-  MESSAGE_ADDED: "group_chat:message_added",  // { sessionId, message: GroupChatMessageRecord }
-  AGENT_TYPING:  "group_chat:agent_typing",   // { sessionId, agentId, isTyping: boolean }
-} as const
+  MESSAGE_ADDED: "group_chat:message_added", // { sessionId, message: GroupChatMessageRecord }
+  AGENT_TYPING: "group_chat:agent_typing", // { sessionId, agentId, isTyping: boolean }
+} as const;
 ```
 
 ---
@@ -356,26 +360,26 @@ GroupChatPanel（flex h-full）
 
 ## 八、文件新增/变更清单
 
-| 文件 | 操作 |
-|------|------|
-| `src/main/db/database.ts` | 变更：新建 group_chat_sessions / group_chat_messages 两张表 |
-| `src/main/db/models/groupChatSessionDao.ts` | 新增：群聊会话 DAO |
-| `src/main/db/models/groupChatMessageDao.ts` | 新增：群聊消息 DAO |
-| `src/shared/types/groupChat.d.ts` | 新增：GroupChatSession / GroupChatMessageRecord 类型 |
-| `src/shared/events.ts` | 变更：追加 GROUP_CHAT_EVENTS |
-| `src/main/presenter/agentChat/agentInvoker.ts` | 新增：AgentInvoker 类 |
-| `src/main/presenter/agentChat/agentInvokerRegistry.ts` | 新增：AgentInvokerRegistry 单例 |
-| `src/main/presenter/groupChatPresenter.ts` | 新增：GroupChatPresenter |
-| `src/main/presenter/index.ts` | 变更：注册 GroupChatPresenter |
-| `src/main/window.ts` | 变更：createDetachedWindow + detached 生命周期 IPC |
-| `src/renderer/src/stores/groupChatSession.ts` | 新增：useGroupChatSessionStore |
-| `src/renderer/src/stores/groupChat.ts` | 新增：useGroupChatStore |
-| `src/renderer/src/stores/groupChatIpc.ts` | 新增：GROUP_CHAT_EVENTS IPC 监听 |
-| `src/renderer/src/components/groupchat/GroupSessionList.vue` | 新增 |
-| `src/renderer/src/components/groupchat/NewGroupThread.vue` | 新增 |
-| `src/renderer/src/components/groupchat/GroupChatView.vue` | 新增 |
-| `src/renderer/src/components/groupchat/GroupMessageList.vue` | 新增 |
-| `src/renderer/src/components/groupchat/GroupChatInput.vue` | 新增 |
-| `src/renderer/src/components/groupchat/GroupMessageItem.vue` | 新增 |
-| `src/renderer/src/views/GroupChatPanel.vue` | 新增 |
-| `src/renderer/src/App.vue` | 变更：新增群聊导航入口 |
+| 文件                                                         | 操作                                                        |
+| ------------------------------------------------------------ | ----------------------------------------------------------- |
+| `src/main/db/database.ts`                                    | 变更：新建 group_chat_sessions / group_chat_messages 两张表 |
+| `src/main/db/models/groupChatSessionDao.ts`                  | 新增：群聊会话 DAO                                          |
+| `src/main/db/models/groupChatMessageDao.ts`                  | 新增：群聊消息 DAO                                          |
+| `src/shared/types/groupChat.d.ts`                            | 新增：GroupChatSession / GroupChatMessageRecord 类型        |
+| `src/shared/events.ts`                                       | 变更：追加 GROUP_CHAT_EVENTS                                |
+| `src/main/presenter/agentChat/agentInvoker.ts`               | 新增：AgentInvoker 类                                       |
+| `src/main/presenter/agentChat/agentInvokerRegistry.ts`       | 新增：AgentInvokerRegistry 单例                             |
+| `src/main/presenter/groupChatPresenter.ts`                   | 新增：GroupChatPresenter                                    |
+| `src/main/presenter/index.ts`                                | 变更：注册 GroupChatPresenter                               |
+| `src/main/window.ts`                                         | 变更：createDetachedWindow + detached 生命周期 IPC          |
+| `src/renderer/src/stores/groupChatSession.ts`                | 新增：useGroupChatSessionStore                              |
+| `src/renderer/src/stores/groupChat.ts`                       | 新增：useGroupChatStore                                     |
+| `src/renderer/src/stores/groupChatIpc.ts`                    | 新增：GROUP_CHAT_EVENTS IPC 监听                            |
+| `src/renderer/src/components/groupchat/GroupSessionList.vue` | 新增                                                        |
+| `src/renderer/src/components/groupchat/NewGroupThread.vue`   | 新增                                                        |
+| `src/renderer/src/components/groupchat/GroupChatView.vue`    | 新增                                                        |
+| `src/renderer/src/components/groupchat/GroupMessageList.vue` | 新增                                                        |
+| `src/renderer/src/components/groupchat/GroupChatInput.vue`   | 新增                                                        |
+| `src/renderer/src/components/groupchat/GroupMessageItem.vue` | 新增                                                        |
+| `src/renderer/src/views/GroupChatPanel.vue`                  | 新增                                                        |
+| `src/renderer/src/App.vue`                                   | 变更：新增群聊导航入口                                      |
