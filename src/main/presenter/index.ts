@@ -67,6 +67,7 @@ export class Presenter implements IPresenter {
     this.devPresenter = new DevPresenter();
     const mcpBridge = new MCPToolBridge(this.mcpServerPresenter);
     const skillPresenter = new SkillPresenter();
+    this.gatewayPresenter = new GatewayPresenter();
     this.toolPresenter = new ToolPresenter(
       this.filePresenter,
       this.contentPresenter,
@@ -74,8 +75,8 @@ export class Presenter implements IPresenter {
       browserSession,
       mcpBridge,
       skillPresenter,
+      this.gatewayPresenter,
     );
-    this.gatewayPresenter = new GatewayPresenter();
     this.agentConfigPresenter = new AgentConfigPresenter();
     this.agentConfigPresenter.setSkillPresenter(skillPresenter);
     this.agentConfigPresenter.setConfigPresenter(this.configPresenter);
