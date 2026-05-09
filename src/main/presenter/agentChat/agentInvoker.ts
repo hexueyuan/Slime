@@ -112,12 +112,14 @@ export class AgentInvoker {
     messages.push({ role: "user", content: reminderContentBlocks });
     messages.push({ role: "assistant", content: "好的，我已了解当前环境和设定。" });
 
-    // 转换群聊历史消息
+    // 转换群聊历史消息，维护轮次计数器
+    let roundIndex = 0;
     for (const msg of groupMessages) {
       if (msg.hidden) {
         messages.push({ role: "user", content: msg.content });
       } else if (msg.senderAgentId === null) {
-        messages.push({ role: "user", content: msg.content });
+        roundIndex++;
+        messages.push({ role: "user", content: `[Round ${roundIndex}] ${msg.content}` });
       } else if (msg.senderAgentId === agentId) {
         let textContent = msg.content;
         try {
@@ -130,7 +132,7 @@ export class AgentInvoker {
         } catch {
           // not JSON, use as-is
         }
-        messages.push({ role: "assistant", content: textContent });
+        messages.push({ role: "assistant", content: `[Round ${roundIndex}] ${textContent}` });
       } else {
         let textContent = msg.content;
         try {
@@ -143,7 +145,10 @@ export class AgentInvoker {
         } catch {
           // not JSON, use as-is
         }
-        messages.push({ role: "user", content: `[${msg.senderAgentId}]: ${textContent}` });
+        messages.push({
+          role: "user",
+          content: `[Round ${roundIndex}] [${msg.senderAgentId}]: ${textContent}`,
+        });
       }
     }
 
