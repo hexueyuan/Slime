@@ -70,6 +70,7 @@ export class AgentInvoker {
     additionalPrompt?: string,
     skillsXML?: string | null,
     userName?: string,
+    sessionId?: string,
   ): CoreMessage[] {
     // System blocks: identity + constraints (不含群聊上下文，群聊上下文放到 user 消息里)
     const systemBlocks: SystemBlock[] = buildSystemBlocks(
@@ -97,12 +98,13 @@ export class AgentInvoker {
     const otherParticipants =
       otherIds.length > 0 ? `群聊中的其他参与者 ID 为：[${otherIds.join(", ")}]。` : "";
     const userInfo = userName ? `当前用户名：${userName}。` : "";
+    const sessionLine = sessionId ? `\n当前群聊ID：${sessionId}` : "";
     const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}
 
 群聊行为规则：
 1. 本轮用户消息是历史中最后一条 [用户] 消息，你只需要回答这条消息，不要主动评论或引用之前轮次的内容，除非用户明确提到了历史内容。
 2. 如果用户问题涉及多个参与者（例如"你们几个的 X 是什么"），你只回答属于你自己的部分，不猜测、不评论其他参与者，也不要提及其他参与者会如何回答或需要他们自己来答——其他参与者会自行回复，无需你代为说明。
-3. 历史消息仅供理解对话背景，不是你需要逐一回应的内容。`;
+3. 历史消息仅供理解对话背景，不是你需要逐一回应的内容。${sessionLine}`;
     reminderContentBlocks.push({
       type: "text",
       text: `<system-reminder>\n${groupContext}\n</system-reminder>`,
@@ -251,6 +253,7 @@ export class AgentInvoker {
       additionalPrompt,
       skillsXML,
       userName,
+      sessionId,
     );
 
     const blocks: AssistantMessageBlock[] = [];
