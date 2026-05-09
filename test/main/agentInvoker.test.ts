@@ -26,7 +26,7 @@ describe("estimateMessagesTokens", () => {
       },
     ];
     // JSON.stringify({ type: 'text', value: 'abcd' }) = '{"type":"text","value":"abcd"}' = 30 chars → ceil(30/4)=8
-    expect(estimateMessagesTokens(msgs)).toBeGreaterThan(0);
+    expect(estimateMessagesTokens(msgs)).toBe(8);
   });
 
   it("returns 0 for empty array", () => {

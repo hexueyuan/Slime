@@ -27,6 +27,7 @@ export function estimateMessagesTokens(messages: CoreMessage[]): number {
       total += Math.ceil(c.length / 4);
     } else if (Array.isArray(c)) {
       for (const block of c as Array<{ type: string; [key: string]: unknown }>) {
+        // tool-result: only serialize output (the actual content); toolCallId/toolName are short metadata
         const str =
           block.type === "tool-result"
             ? JSON.stringify((block as { output?: unknown }).output ?? "")
@@ -289,6 +290,8 @@ export class AgentInvoker {
       sessionId,
     );
 
+    // updated each step with the precise input token count from the API response;
+    // used by Layer 1/2 compaction (wired in Task 5)
     let lastInputTokens = 0;
     const blocks: AssistantMessageBlock[] = [];
     let stepCount = 0;
