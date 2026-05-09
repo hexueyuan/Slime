@@ -79,14 +79,17 @@ export class AgentInvoker {
     const messages: CoreMessage[] = [{ role: "system", content: systemBlocks }];
 
     // 在历史消息之前注入 system-reminder blocks（additionalPrompt / skills / 群聊环境）
-    // 这些作为独立的 user 消息，位于所有历史消息之前
-    const reminderBlocks: string[] = [];
+    // 格式与单聊一致：每个 block 是独立的 { type: "text", text: "..." } 对象，组成 content 数组
+    const reminderContentBlocks: Array<{ type: "text"; text: string }> = [];
     if (additionalPrompt) {
-      reminderBlocks.push(`<system-reminder>\n${additionalPrompt}\n</system-reminder>`);
+      reminderContentBlocks.push({
+        type: "text",
+        text: `<system-reminder>\n${additionalPrompt}\n</system-reminder>`,
+      });
     }
     if (skillsXML) {
       // skillsXML 已由 buildSkillListXML 包含 <system-reminder> 标签
-      reminderBlocks.push(skillsXML);
+      reminderContentBlocks.push({ type: "text", text: skillsXML });
     }
 
     // 群聊环境信息：参与者列表 + 用户名
@@ -95,12 +98,14 @@ export class AgentInvoker {
       otherIds.length > 0 ? `群聊中的其他参与者 ID 为：[${otherIds.join(", ")}]。` : "";
     const userInfo = userName ? `当前用户名：${userName}。` : "";
     const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}`;
-    reminderBlocks.push(`<system-reminder>\n${groupContext}\n</system-reminder>`);
+    reminderContentBlocks.push({
+      type: "text",
+      text: `<system-reminder>\n${groupContext}\n</system-reminder>`,
+    });
 
-    if (reminderBlocks.length > 0) {
-      messages.push({ role: "user", content: reminderBlocks.join("\n") });
-      messages.push({ role: "assistant", content: "好的，我已了解当前环境和设定。" });
-    }
+    // 第一条 user 消息包含所有 reminder blocks（数组格式，与单聊一致）
+    messages.push({ role: "user", content: reminderContentBlocks });
+    messages.push({ role: "assistant", content: "好的，我已了解当前环境和设定。" });
 
     // 转换群聊历史消息
     for (const msg of groupMessages) {
