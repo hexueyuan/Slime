@@ -41,6 +41,11 @@ export function estimateMessagesTokens(messages: CoreMessage[]): number {
 
 const MAX_STEPS = 128;
 
+const CONTEXT_WINDOW = 200_000;
+const MICRO_COMPACT_THRESHOLD = 0.75;
+const TRUNCATE_THRESHOLD = 0.9;
+const KEEP_RECENT_STEPS = 4;
+
 export const COMPACTABLE_TOOLS = new Set([
   "web_fetch",
   "read",

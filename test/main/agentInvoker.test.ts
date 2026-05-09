@@ -110,7 +110,10 @@ describe("microCompact", () => {
       },
     ];
     const result = microCompact(msgs, 4);
-    const toolMsg = result.find((m) => m.role === "tool") as any;
+    const toolMsg = result.find((m) => m.role === "tool") as {
+      role: "tool";
+      content: Array<{ toolName: string; output: { type: string; value: string } }>;
+    };
     expect(toolMsg.content[0].output.value).toBe("user answered");
   });
 
@@ -133,5 +136,8 @@ describe("microCompact", () => {
     expect(COMPACTABLE_TOOLS.has("read")).toBe(true);
     expect(COMPACTABLE_TOOLS.has("exec")).toBe(true);
     expect(COMPACTABLE_TOOLS.has("ask_user")).toBe(false);
+    expect(COMPACTABLE_TOOLS.has("browser_get_text")).toBe(true);
+    expect(COMPACTABLE_TOOLS.has("browser_screenshot")).toBe(true);
+    expect(COMPACTABLE_TOOLS.has("browser_evaluate")).toBe(true);
   });
 });
