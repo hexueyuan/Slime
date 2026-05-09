@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from "vue";
-import { Icon } from "@iconify/vue";
 import { useAgentStore } from "@/stores/agent";
 import type { Agent } from "@shared/types/agent";
 
@@ -110,11 +109,11 @@ function autoResize() {
 </script>
 
 <template>
-  <div class="relative border-t border-border p-3">
+  <div class="absolute bottom-0 left-0 right-0 z-10 px-6 pb-3">
     <!-- @ mention dropdown -->
     <div
       v-if="showMentionDropdown && filteredMentionAgents.length > 0"
-      class="absolute bottom-full left-3 right-3 mb-1 rounded-md border border-border bg-neutral-900 py-1 shadow-lg"
+      class="mb-1 overflow-hidden rounded-xl border border-border bg-card/90 shadow-sm backdrop-blur-lg"
     >
       <button
         v-for="agent in filteredMentionAgents"
@@ -129,26 +128,47 @@ function autoResize() {
       </button>
     </div>
 
-    <div class="flex items-end gap-2">
-      <textarea
-        ref="inputRef"
-        v-model="inputValue"
-        :disabled="disabled"
-        placeholder="输入消息，@ 提及 Agent..."
-        rows="1"
-        class="max-h-32 min-h-[36px] flex-1 resize-none rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none disabled:opacity-50"
-        @input="onInput"
-        @keydown="onKeydown"
-        @compositionstart="isComposing = true"
-        @compositionend="isComposing = false"
-      />
-      <button
-        :disabled="disabled || !inputValue.trim()"
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40"
-        @click="onSend"
-      >
-        <Icon icon="lucide:send" class="h-4 w-4" />
-      </button>
+    <!-- 输入框容器 -->
+    <div
+      class="overflow-hidden rounded-xl border border-border bg-card/30 shadow-sm backdrop-blur-lg"
+    >
+      <!-- 编辑区域 -->
+      <div class="px-4 pt-4 pb-2">
+        <textarea
+          ref="inputRef"
+          v-model="inputValue"
+          :disabled="disabled"
+          class="w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none overflow-y-auto"
+          :style="{ minHeight: '60px', maxHeight: '240px' }"
+          placeholder="输入消息，@ 提及 Agent..."
+          @input="onInput"
+          @keydown="onKeydown"
+          @compositionstart="isComposing = true"
+          @compositionend="isComposing = false"
+        />
+      </div>
+      <!-- 工具栏 -->
+      <div class="flex items-center justify-end px-3 pb-2">
+        <button
+          :disabled="disabled || !inputValue.trim()"
+          :class="{ 'opacity-40': disabled || !inputValue.trim() }"
+          class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90"
+          title="发送"
+          @click="onSend"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="12" y1="19" x2="12" y2="5" />
+            <polyline points="5 12 12 5 19 12" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>

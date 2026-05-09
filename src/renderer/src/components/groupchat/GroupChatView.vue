@@ -62,10 +62,14 @@ async function startEditTitle() {
       </div>
     </div>
 
-    <!-- Messages -->
-    <GroupMessageList :messages="chatStore.messages" :typing-agent-ids="chatStore.typingAgentIds" />
-
-    <!-- Input -->
-    <GroupChatInput :participant-agent-ids="participantAgentIds" @send="onSend" />
+    <!-- Messages + Input -->
+    <div class="relative min-h-0 flex-1">
+      <GroupMessageList
+        :messages="chatStore.messages"
+        :typing-agent-ids="chatStore.typingAgentIds"
+        class="h-full"
+      />
+      <GroupChatInput :participant-agent-ids="participantAgentIds" @send="onSend" />
+    </div>
   </div>
 </template>

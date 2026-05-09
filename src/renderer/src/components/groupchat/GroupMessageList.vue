@@ -30,7 +30,7 @@ const lastUserMsgIndex = computed(() => {
 </script>
 
 <template>
-  <div ref="listRef" class="flex flex-1 flex-col overflow-y-auto py-2">
+  <div ref="listRef" class="flex flex-col overflow-y-auto py-2 pb-32" style="height: 100%">
     <GroupMessageItem
       v-for="(msg, index) in messages"
       :key="msg.id"
