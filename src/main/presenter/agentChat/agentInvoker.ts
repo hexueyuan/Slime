@@ -116,6 +116,7 @@ export class AgentInvoker {
     let roundIndex = 0;
     for (const msg of groupMessages) {
       if (msg.hidden) {
+        // hidden 消息（如主持人指令）不计入轮次，不加前缀
         messages.push({ role: "user", content: msg.content });
       } else if (msg.senderAgentId === null) {
         roundIndex++;
