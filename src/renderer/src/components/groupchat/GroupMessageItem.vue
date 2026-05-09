@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import NodeRenderer from "markstream-vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentChatStore } from "@/stores/agentChat";
 import AgentAvatar from "../chat/AgentAvatar.vue";
@@ -61,7 +62,7 @@ function formatTime(ts: number): string {
       <div class="max-w-[70%] rounded-2xl rounded-br-sm bg-violet-600 px-3 py-2 text-sm text-white">
         {{ displayContent }}
       </div>
-      <AgentAvatar :avatar="userAvatar" size="sm" />
+      <AgentAvatar :avatar="userAvatar" size="lg" />
     </div>
     <div class="text-[10px] text-muted-foreground">{{ formatTime(message.createdAt) }}</div>
     <!-- Typing indicator under user message -->
@@ -72,13 +73,15 @@ function formatTime(ts: number): string {
 
   <!-- Agent message -->
   <div v-else class="flex items-start gap-2 px-4 py-2">
-    <AgentAvatar :avatar="senderAgent?.avatar ?? undefined" size="sm" />
+    <AgentAvatar :avatar="senderAgent?.avatar ?? undefined" size="lg" />
     <div class="flex max-w-[70%] flex-col gap-1">
       <div class="text-xs text-muted-foreground">
         {{ senderAgent?.name ?? message.senderAgentId }}
       </div>
       <div class="rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-sm text-foreground">
-        {{ displayContent }}
+        <div class="prose prose-xs dark:prose-invert w-full max-w-none">
+          <NodeRenderer :content="displayContent" :is-dark="true" />
+        </div>
       </div>
       <div class="text-[10px] text-muted-foreground">{{ formatTime(message.createdAt) }}</div>
     </div>
