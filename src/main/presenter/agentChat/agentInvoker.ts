@@ -587,18 +587,40 @@ export class AgentInvoker {
           }
         }
         llmMessages.push({ role: "tool", content: toolResultParts });
+
+        logger.debug("[AgentInvoker] step done", {
+          agentId: this.agentId,
+          step: stepCount,
+          inputTokens: `${(lastInputTokens / 1000).toFixed(1)}k`,
+          messages: llmMessages.length,
+        });
+
         // Layer 1: micro-compact old tool results when approaching context limit (API-accurate token count)
         if (lastInputTokens >= CONTEXT_WINDOW * MICRO_COMPACT_THRESHOLD) {
+          const before = llmMessages.length;
           llmMessages = microCompact(llmMessages, KEEP_RECENT_STEPS);
+          logger.debug("[AgentInvoker] micro-compact", {
+            agentId: this.agentId,
+            step: stepCount,
+            messagesBefore: before,
+            messagesAfter: llmMessages.length,
+          });
         }
         // Layer 2: force-truncate oldest loop pairs if still over limit after micro-compact (local estimate)
         if (estimateMessagesTokens(llmMessages) >= CONTEXT_WINDOW * TRUNCATE_THRESHOLD) {
+          const before = llmMessages.length;
           llmMessages = forceTruncate(
             llmMessages,
             KEEP_RECENT_STEPS,
             TRUNCATE_THRESHOLD,
             CONTEXT_WINDOW,
           );
+          logger.debug("[AgentInvoker] force-truncate", {
+            agentId: this.agentId,
+            step: stepCount,
+            messagesBefore: before,
+            messagesAfter: llmMessages.length,
+          });
         }
       }
 
