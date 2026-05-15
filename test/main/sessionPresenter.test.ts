@@ -24,11 +24,6 @@ describe("SessionPresenter", () => {
     }
   });
 
-  it("should return empty sessions initially", async () => {
-    const sessions = await presenter.getSessions();
-    expect(sessions).toEqual([]);
-  });
-
   it("should create a session", async () => {
     const session = await presenter.createSession("test chat");
     expect(session.id).toBeDefined();
@@ -37,6 +32,8 @@ describe("SessionPresenter", () => {
   });
 
   it("should create session with default title", async () => {
+    expect(await presenter.getSessions()).toEqual([]);
+
     const session = await presenter.createSession();
     expect(session.title).toBe("新对话");
   });
@@ -58,7 +55,6 @@ describe("SessionPresenter", () => {
   });
 
   it("should return false when deleting non-existent session", async () => {
-    const result = await presenter.deleteSession("non-existent-id");
-    expect(result).toBe(false);
+    expect(await presenter.deleteSession("non-existent-id")).toBe(false);
   });
 });

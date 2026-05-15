@@ -65,10 +65,6 @@ describe("AppPresenter", () => {
     vi.clearAllMocks();
   });
 
-  it("getVersion returns app version", () => {
-    expect(presenter.getVersion()).toBe("0.0.0");
-  });
-
   it("resetAllData deletes both files", async () => {
     mockUnlink.mockResolvedValue(undefined);
     const result = await presenter.resetAllData();

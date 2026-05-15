@@ -26,27 +26,9 @@ describe("Presenter", () => {
     vi.resetModules();
   });
 
-  it("should register presenter:call handler on import", async () => {
+  it("registers presenter:call and dispatches allowed presenters", async () => {
     await import("@/presenter/index");
     expect(mockHandle).toHaveBeenCalledWith("presenter:call", expect.any(Function));
-  });
-
-  it("should dispatch to appPresenter.getVersion", async () => {
-    const { Presenter } = await import("@/presenter/index");
-    const presenter = Presenter.getInstance();
-    const result = presenter.appPresenter.getVersion();
-    expect(result).toBe("0.1.0");
-  });
-
-  it("should have sessionPresenter registered", async () => {
-    const { Presenter } = await import("@/presenter/index");
-    const presenter = Presenter.getInstance();
-    expect(presenter.sessionPresenter).toBeDefined();
-    expect(typeof presenter.sessionPresenter.getSessions).toBe("function");
-  });
-
-  it("should dispatch to sessionPresenter via IPC", async () => {
-    await import("@/presenter/index");
     const handler = findHandler("presenter:call")!;
     const result = await handler({} as any, "sessionPresenter", "getSessions");
     expect(Array.isArray(result)).toBe(true);

@@ -88,10 +88,12 @@ describe("TrayManager", () => {
     TrayManager.destroy();
   });
 
-  it("init creates a Tray with icon", () => {
+  it("initializes and destroys tray lifecycle", () => {
     TrayManager.init(mockBrowserWindow as any);
-
     expect(mockTrayConstructor).toHaveBeenCalled();
+    TrayManager.destroy();
+
+    expect(mockTrayDestroy).toHaveBeenCalled();
   });
 
   it("left-click shows window when hidden", () => {
@@ -111,12 +113,5 @@ describe("TrayManager", () => {
     getClickHandler()?.();
 
     expect(mockBrowserWindow.hide).toHaveBeenCalled();
-  });
-
-  it("destroy destroys the tray", () => {
-    TrayManager.init(mockBrowserWindow as any);
-    TrayManager.destroy();
-
-    expect(mockTrayDestroy).toHaveBeenCalled();
   });
 });

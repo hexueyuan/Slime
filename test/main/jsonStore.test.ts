@@ -21,32 +21,24 @@ describe("JsonStore", () => {
     }
   });
 
-  it("should return default value when file does not exist", async () => {
+  it("reads default values for missing or corrupt files", async () => {
     const store = new JsonStore<string[]>("test-missing.json", []);
-    const data = await store.read();
-    expect(data).toEqual([]);
-  });
+    expect(await store.read()).toEqual([]);
 
-  it("should write and read data", async () => {
-    const store = new JsonStore<{ name: string }>("test-rw.json", { name: "" });
-    await store.write({ name: "slime" });
-    const data = await store.read();
-    expect(data).toEqual({ name: "slime" });
-  });
-
-  it("should create directories if missing", async () => {
-    const store = new JsonStore<number[]>("sub/nested.json", []);
-    await store.write([1, 2, 3]);
-    const data = await store.read();
-    expect(data).toEqual([1, 2, 3]);
-  });
-
-  it("should return default on corrupt JSON", async () => {
     const filePath = join(testDir, "corrupt.json");
     writeFileSync(filePath, "{{{invalid");
-    const store = new JsonStore<string[]>("corrupt.json", ["fallback"]);
-    const data = await store.read();
-    expect(data).toEqual(["fallback"]);
+    const corruptStore = new JsonStore<string[]>("corrupt.json", ["fallback"]);
+    expect(await corruptStore.read()).toEqual(["fallback"]);
+  });
+
+  it("writes, reads, and creates nested directories", async () => {
+    const store = new JsonStore<{ name: string }>("test-rw.json", { name: "" });
+    await store.write({ name: "slime" });
+    expect(await store.read()).toEqual({ name: "slime" });
+
+    const nestedStore = new JsonStore<number[]>("sub/nested.json", []);
+    await nestedStore.write([1, 2, 3]);
+    expect(await nestedStore.read()).toEqual([1, 2, 3]);
   });
 
   it("should use custom baseDir when provided", async () => {

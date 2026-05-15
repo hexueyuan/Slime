@@ -52,12 +52,10 @@ describe("AgentConfigPresenter", () => {
     expect(result).toBe(agents);
   });
 
-  it("getAgent returns agent", async () => {
+  it("getAgent returns agent or null", async () => {
     mockRegistry.getById.mockReturnValue({ id: "a", name: "A" });
     expect(await p.getAgent("a")).toEqual({ id: "a", name: "A" });
-  });
 
-  it("getAgent returns null when not found", async () => {
     mockRegistry.getById.mockReturnValue(undefined);
     expect(await p.getAgent("missing")).toBeNull();
   });
@@ -104,15 +102,11 @@ describe("AgentConfigPresenter", () => {
     await expect(p.deleteAgent("prot")).rejects.toThrow("Cannot delete protected agent");
   });
 
-  it("getAgentDir returns null for protected agent", async () => {
+  it("getAgentDir returns null when directory should be hidden", async () => {
     mockRegistry.getById.mockReturnValue({ id: "hal-ai", name: "哈尔", protected: true });
-    const dir = await p.getAgentDir("hal-ai");
-    expect(dir).toBeNull();
-  });
+    expect(await p.getAgentDir("hal-ai")).toBeNull();
 
-  it("getAgentDir returns null when agent not found", async () => {
     mockRegistry.getById.mockReturnValue(undefined);
-    const dir = await p.getAgentDir("missing");
-    expect(dir).toBeNull();
+    expect(await p.getAgentDir("missing")).toBeNull();
   });
 });

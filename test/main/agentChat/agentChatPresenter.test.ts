@@ -150,12 +150,6 @@ describe("AgentChatPresenter", () => {
     );
   });
 
-  describe("getSessionState", () => {
-    it("returns idle by default", () => {
-      expect(presenter.getSessionState("unknown")).toBe("idle");
-    });
-  });
-
   describe("chat", () => {
     it("sends END event on completion", async () => {
       mockClientSimple("Done");

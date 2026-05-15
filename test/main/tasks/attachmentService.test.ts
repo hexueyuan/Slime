@@ -15,19 +15,13 @@ afterEach(() => {
 });
 
 describe("attachmentService", () => {
-  it("detects image type", () => {
+  it("detects supported file types", () => {
     expect(detectFileType("photo.png")).toBe("image");
     expect(detectFileType("photo.jpg")).toBe("image");
     expect(detectFileType("photo.webp")).toBe("image");
-  });
-
-  it("detects doc type", () => {
     expect(detectFileType("file.pdf")).toBe("doc");
     expect(detectFileType("file.docx")).toBe("doc");
     expect(detectFileType("file.txt")).toBe("doc");
-  });
-
-  it("detects video type", () => {
     expect(detectFileType("clip.mp4")).toBe("video");
     expect(detectFileType("clip.mov")).toBe("video");
   });

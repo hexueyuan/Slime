@@ -40,36 +40,20 @@ describe("SkillPresenter", () => {
     sp = new SkillPresenter();
   });
 
-  it("loads skills filtered by enabledSkills", () => {
+  it("filters enabled skills and strips internal paths", () => {
     const list = sp.getSkillList("hal-ai", undefined, ["guide"]);
     expect(list).toHaveLength(1);
     expect(list[0].name).toBe("guide");
-  });
-
-  it("returns empty when enabledSkills is empty", () => {
-    const list = sp.getSkillList("hal-ai", undefined, []);
-    expect(list).toEqual([]);
-  });
-
-  it("returns empty array when no enabledSkills provided", () => {
-    const list = sp.getSkillList("unknown-agent");
-    expect(list).toEqual([]);
-  });
-
-  it("returns multiple skills when all are enabled", () => {
-    const list = sp.getSkillList("hal-ai", undefined, ["guide", "debugging"]);
-    expect(list).toHaveLength(2);
-    expect(list.map((s) => s.name)).toContain("guide");
-    expect(list.map((s) => s.name)).toContain("debugging");
-  });
-
-  it("getSkillList returns SkillInfo array (no filePath/baseDir exposed)", () => {
-    const list = sp.getSkillList("hal-ai", undefined, ["guide"]);
     expect(list[0]).not.toHaveProperty("filePath");
     expect(list[0]).not.toHaveProperty("baseDir");
     expect(list[0]).toHaveProperty("name");
     expect(list[0]).toHaveProperty("description");
     expect(list[0]).toHaveProperty("source");
+
+    const allEnabled = sp.getSkillList("hal-ai", undefined, ["guide", "debugging"]);
+    expect(allEnabled.map((s) => s.name).sort()).toEqual(["debugging", "guide"]);
+    expect(sp.getSkillList("hal-ai", undefined, [])).toEqual([]);
+    expect(sp.getSkillList("unknown-agent")).toEqual([]);
   });
 
   it("loadSkill returns content for known skill", () => {

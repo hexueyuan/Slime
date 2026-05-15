@@ -171,22 +171,16 @@ describe("AgentChatPresenter integration", () => {
   });
 
   describe("engine delegation", () => {
-    it("chat delegates to engine", async () => {
-      await adapter.chat("sess-1", "hello");
-      expect(engine.chat).toHaveBeenCalledWith("sess-1", "hello");
-    });
-
-    it("stopGeneration delegates", () => {
-      adapter.stopGeneration("sess-1");
-      expect(engine.stopGeneration).toHaveBeenCalledWith("sess-1");
-    });
-    it("answerQuestion delegates", () => {
-      adapter.answerQuestion("sess-1", "tc-1", "yes");
-      expect(engine.answerQuestion).toHaveBeenCalledWith("sess-1", "tc-1", "yes");
-    });
-
-    it("getSessionState delegates", () => {
+    it("delegates chat controls to engine", async () => {
       engine.getSessionState.mockReturnValue("generating");
+
+      await adapter.chat("sess-1", "hello");
+      adapter.stopGeneration("sess-1");
+      adapter.answerQuestion("sess-1", "tc-1", "yes");
+
+      expect(engine.chat).toHaveBeenCalledWith("sess-1", "hello");
+      expect(engine.stopGeneration).toHaveBeenCalledWith("sess-1");
+      expect(engine.answerQuestion).toHaveBeenCalledWith("sess-1", "tc-1", "yes");
       expect(adapter.getSessionState("sess-1")).toBe("generating");
     });
   });

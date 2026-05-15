@@ -331,9 +331,16 @@ function explainCase(testCase) {
     return {
       explanation:
         "验证 AgentChatPresenter 的薄代理或状态查询行为，确认调用会转发到内部 engine 或返回默认状态。",
-      recommendation: "建议合并/精简",
+      recommendation: "建议保留",
       reason:
-        "这类 case 有一定回归价值，但多个代理方法可以合并为一个 presenter delegation smoke test。",
+        "当前已合并为代表性 delegation smoke test，可保留作为 presenter 到 engine 的边界覆盖。",
+    };
+  }
+  if (/AgentPresenter/i.test(haystack)) {
+    return {
+      explanation: "验证 AgentPresenter 的流式事件、错误事件、停止生成和无模型配置错误路径。",
+      recommendation: "建议保留",
+      reason: "这些 case 覆盖对话入口的关键副作用，不属于纯薄封装测试。",
     };
   }
   if (
@@ -383,6 +390,13 @@ function explainCase(testCase) {
       reason: "Evolution/Git 流程涉及文件与历史状态，回归风险高于普通展示逻辑。",
     };
   }
+  if (/AppPresenter/i.test(haystack)) {
+    return {
+      explanation: "验证应用数据重置、本地更新包选择和 packaged 更新替换流程。",
+      recommendation: "建议保留",
+      reason: "这些 case 涉及文件删除、zip 解包和进程替换副作用，已保留为关键路径覆盖。",
+    };
+  }
   if (
     /ToolPresenter|toolPresenter|filePresenter|workspacePresenter|contentPresenter/i.test(haystack)
   ) {
@@ -390,6 +404,27 @@ function explainCase(testCase) {
       explanation: "验证工具执行、文件读写编辑、工作区或内容面板 presenter 的副作用行为。",
       recommendation: "建议保留",
       reason: "这些 presenter 直接执行文件/工具副作用，错误会影响 Agent 执行安全和可用性。",
+    };
+  }
+  if (/ConfigPresenter|SessionPresenter|Presenter >|agentPaths|paths\.test/i.test(haystack)) {
+    return {
+      explanation: "验证主进程基础 presenter、会话 presenter 或路径解析的代表性 smoke 行为。",
+      recommendation: "建议保留",
+      reason: "这些 case 已压缩为少量代表性覆盖，继续删除会降低基础 wiring 的回归保护。",
+    };
+  }
+  if (/JsonStore|attachmentService|TrayManager|trimToRecentRounds/i.test(haystack)) {
+    return {
+      explanation: "验证本地工具函数或基础设施的代表性正常/边界路径。",
+      recommendation: "建议保留",
+      reason: "这些 case 已合并为更少的矩阵式测试，可作为轻量回归保护保留。",
+    };
+  }
+  if (/skills\/loader|skills\/skillPresenter|scanSkills|loadSkillContent/i.test(haystack)) {
+    return {
+      explanation: "验证 Skill 扫描、过滤、内容加载和对外 SkillInfo 输出契约。",
+      recommendation: "建议保留",
+      reason: "重复 SkillPresenter 覆盖已精简，剩余 case 是代表性契约测试。",
     };
   }
   if (

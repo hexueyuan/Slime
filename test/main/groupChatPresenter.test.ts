@@ -21,7 +21,9 @@ function makeMsg(
 }
 
 describe("trimToRecentRounds", () => {
-  it("keeps only the most recent maxRounds rounds", () => {
+  it("handles empty input and keeps only the most recent maxRounds rounds", () => {
+    expect(trimToRecentRounds([], 15)).toEqual([]);
+
     // 构造 16 轮，每轮 1 user + 1 agent
     const msgs: GroupChatMessageRecord[] = [];
     for (let i = 1; i <= 16; i++) {
@@ -32,8 +34,5 @@ describe("trimToRecentRounds", () => {
     // 应保留第 2~16 轮，共 30 条
     expect(result).toHaveLength(30);
     expect(result[0].id).toBe("u2");
-  });
-  it("returns empty array for empty input", () => {
-    expect(trimToRecentRounds([], 15)).toEqual([]);
   });
 });
