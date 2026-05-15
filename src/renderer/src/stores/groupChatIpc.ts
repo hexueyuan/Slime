@@ -41,7 +41,7 @@ export function setupGroupChatIpc(
     (data: unknown) => {
       const d = data as AgentTypingData;
       if (d.sessionId === activeSessionId()) {
-        chatStore.setTyping(d.agentId, d.isTyping);
+        chatStore.setTyping(d.sessionId, d.agentId, d.isTyping);
       }
     },
   );

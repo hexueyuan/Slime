@@ -1,15 +1,22 @@
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import { usePresenter } from "@/composables/usePresenter";
+import { useGroupChatSessionStore } from "./groupChatSession";
 import type { GroupChatMessageRecord } from "@shared/types/groupChat";
 
 export const useGroupChatStore = defineStore("groupChat", () => {
   const groupChatPresenter = usePresenter("groupChatPresenter");
+  const sessionStore = useGroupChatSessionStore();
 
   const messages = ref<GroupChatMessageRecord[]>([]);
-  /** 只读访问；修改请使用 setTyping/clearMessages */
-  const typingAgentIds = ref<Set<string>>(new Set());
+  /** per-session typing state: sessionId -> Set<agentId> */
+  const typingBySession = ref<Map<string, Set<string>>>(new Map());
   const error = ref<string | null>(null);
+
+  const typingAgentIds = computed<Set<string>>(() => {
+    const sid = sessionStore.activeSessionId;
+    return sid ? (typingBySession.value.get(sid) ?? new Set()) : new Set();
+  });
 
   async function fetchMessages(sessionId: string) {
     const result = await groupChatPresenter.getMessages(sessionId);
@@ -34,16 +41,17 @@ export const useGroupChatStore = defineStore("groupChat", () => {
     messages.value = [...messages.value, msg];
   }
 
-  function setTyping(agentId: string, isTyping: boolean) {
-    const next = new Set(typingAgentIds.value);
-    if (isTyping) next.add(agentId);
-    else next.delete(agentId);
-    typingAgentIds.value = next;
+  function setTyping(sessionId: string, agentId: string, isTyping: boolean) {
+    const map = new Map(typingBySession.value);
+    const set = new Set(map.get(sessionId) ?? []);
+    if (isTyping) set.add(agentId);
+    else set.delete(agentId);
+    map.set(sessionId, set);
+    typingBySession.value = map;
   }
 
   function clearMessages() {
     messages.value = [];
-    typingAgentIds.value = new Set();
     error.value = null;
   }
 

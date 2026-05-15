@@ -6,6 +6,7 @@ interface SessionRow {
   title: string;
   participant_agent_ids: string;
   moderator_enabled: number;
+  workspace_paths: string;
   created_at: number;
   updated_at: number;
 }
@@ -16,6 +17,7 @@ function rowToSession(row: SessionRow): GroupChatSession {
     title: row.title,
     participantAgentIds: JSON.parse(row.participant_agent_ids) as string[],
     moderatorEnabled: !!row.moderator_enabled,
+    workspacePaths: JSON.parse(row.workspace_paths) as string[],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -28,17 +30,19 @@ export function createSession(
     title: string;
     participantAgentIds: string[];
     moderatorEnabled?: boolean;
+    workspacePaths?: string[];
   },
 ): GroupChatSession {
   const now = Date.now();
   db.prepare(
-    `INSERT INTO group_chat_sessions (id, title, participant_agent_ids, moderator_enabled, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO group_chat_sessions (id, title, participant_agent_ids, moderator_enabled, workspace_paths, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     data.id,
     data.title,
     JSON.stringify(data.participantAgentIds),
     data.moderatorEnabled ? 1 : 0,
+    JSON.stringify(data.workspacePaths ?? []),
     now,
     now,
   );
@@ -65,6 +69,18 @@ export function getSessionById(
 export function updateTitle(db: BetterSqlite3.Database, id: string, title: string): void {
   db.prepare("UPDATE group_chat_sessions SET title = ?, updated_at = ? WHERE id = ?").run(
     title,
+    Date.now(),
+    id,
+  );
+}
+
+export function updateWorkspacePaths(
+  db: BetterSqlite3.Database,
+  id: string,
+  workspacePaths: string[],
+): void {
+  db.prepare("UPDATE group_chat_sessions SET workspace_paths = ?, updated_at = ? WHERE id = ?").run(
+    JSON.stringify(workspacePaths),
     Date.now(),
     id,
   );

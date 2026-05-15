@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { homedir } from "os";
 import { getDb } from "@/db";
 import * as messageDao from "@/db/models/agentMessageDao";
 import * as sessionDao from "@/db/models/agentSessionDao";
@@ -6,7 +7,7 @@ import * as configDao from "@/db/models/agentSessionConfigDao";
 import { agentRegistry } from "@/agents/agentRegistry";
 import { eventBus } from "@/eventbus";
 import { CHAT_STREAM_EVENTS } from "@shared/events";
-import { logger } from "@/utils";
+import { logger, paths } from "@/utils";
 import { buildContext, buildSkillListXML } from "./contextBuilder";
 import type { CoreMessage, UserContentBlock } from "./contextBuilder";
 import type { AssistantMessageBlock } from "@shared/types/agent";
@@ -267,11 +268,17 @@ export class AgentChatPresenter {
     const agent = agentRegistry.getById(session.agentId);
 
     // Inject session context for exec tool env injection
+    const sessionWorkDir = paths.sessionWorkDir(sessionId);
+    const agentTrustedPaths = (agent?.config?.trustedPaths ?? []).map((p) =>
+      p.startsWith("~") ? p.replace("~", homedir()) : p,
+    );
+    const trustedPaths = [sessionWorkDir, ...agentTrustedPaths];
     this.toolPresenter.setSessionContext(
       sessionId,
       session.agentId,
       agent?.type ?? "custom",
       agent?.config?.allowedCliCommands,
+      trustedPaths,
     );
 
     const capReqs: CapabilityRequirement = (config?.capabilityRequirements ??

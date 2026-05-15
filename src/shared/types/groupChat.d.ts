@@ -3,6 +3,7 @@ export interface GroupChatSession {
   title: string;
   participantAgentIds: string[];
   moderatorEnabled: boolean;
+  workspacePaths: string[];
   createdAt: number;
   updatedAt: number;
 }

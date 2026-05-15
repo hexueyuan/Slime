@@ -11,6 +11,8 @@ const sessionStore = useGroupChatSessionStore();
 
 const selectedAgentIds = ref<string[]>([]);
 const moderatorEnabled = ref(false);
+const workspacePaths = ref<string[]>([]);
+const newPathInput = ref("");
 
 const canCreate = computed(() => selectedAgentIds.value.length >= 1);
 
@@ -27,9 +29,25 @@ function agentColor(agent: Agent): string {
   return getMBTIColor(agent.mbti ?? "INTJ");
 }
 
+function addPath() {
+  const p = newPathInput.value.trim();
+  if (p && !workspacePaths.value.includes(p)) {
+    workspacePaths.value = [...workspacePaths.value, p];
+  }
+  newPathInput.value = "";
+}
+
+function removePath(p: string) {
+  workspacePaths.value = workspacePaths.value.filter((x) => x !== p);
+}
+
 async function onCreate() {
   if (!canCreate.value) return;
-  await sessionStore.createSession(selectedAgentIds.value, moderatorEnabled.value);
+  await sessionStore.createSession(
+    selectedAgentIds.value,
+    moderatorEnabled.value,
+    workspacePaths.value,
+  );
 }
 </script>
 
@@ -70,6 +88,38 @@ async function onCreate() {
         <span class="text-foreground">启用智能路由（主持人）</span>
         <span class="text-xs text-muted-foreground">— 无需 @ 时自动判断回复者</span>
       </label>
+
+      <!-- Workspace paths -->
+      <div class="mb-4 w-full max-w-sm">
+        <p class="mb-1 text-xs text-muted-foreground">工作目录（可选，支持 ~）</p>
+        <div class="flex gap-2">
+          <input
+            v-model="newPathInput"
+            type="text"
+            placeholder="例如 ~/workspace/project"
+            class="flex-1 rounded border border-border bg-background px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+            @keydown.enter="addPath"
+          />
+          <button
+            class="rounded bg-muted px-2 py-1 text-xs text-foreground hover:bg-muted/80"
+            @click="addPath"
+          >
+            添加
+          </button>
+        </div>
+        <ul v-if="workspacePaths.length > 0" class="mt-2 space-y-1">
+          <li
+            v-for="p in workspacePaths"
+            :key="p"
+            class="flex items-center justify-between rounded bg-muted px-2 py-1 text-xs"
+          >
+            <span class="text-foreground">{{ p }}</span>
+            <button class="text-muted-foreground hover:text-foreground" @click="removePath(p)">
+              ✕
+            </button>
+          </li>
+        </ul>
+      </div>
 
       <p v-if="selectedAgentIds.length < 1" class="text-xs text-muted-foreground">
         请至少选择 1 个 Agent

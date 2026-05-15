@@ -68,7 +68,7 @@ function createTool(config: {
 export class ToolPresenter {
   private sessionContexts = new Map<
     string,
-    { agentId: string; agentType: string; allowedCliCommands?: string[] }
+    { agentId: string; agentType: string; allowedCliCommands?: string[]; trustedPaths?: string[] }
   >();
 
   constructor(
@@ -86,8 +86,9 @@ export class ToolPresenter {
     agentId: string,
     agentType: string,
     allowedCliCommands?: string[],
+    trustedPaths?: string[],
   ): void {
-    this.sessionContexts.set(sessionId, { agentId, agentType, allowedCliCommands });
+    this.sessionContexts.set(sessionId, { agentId, agentType, allowedCliCommands, trustedPaths });
   }
 
   async getToolSet(sessionId: string) {
@@ -100,7 +101,10 @@ export class ToolPresenter {
           limit: z.number().int().positive().optional().describe("Number of lines to read"),
         }),
         execute: async ({ path, offset, limit }) => {
-          return this.filePresenter.read(path, offset, limit);
+          const ctx = this.sessionContexts.get(sessionId);
+          return this.filePresenter.read(path, offset, limit, {
+            extraTrustedPaths: ctx?.trustedPaths,
+          });
         },
       }),
       write: createTool({
@@ -110,7 +114,10 @@ export class ToolPresenter {
           content: z.string().describe("Complete file content"),
         }),
         execute: async ({ path, content }) => {
-          const ok = await this.filePresenter.write(path, content);
+          const ctx = this.sessionContexts.get(sessionId);
+          const ok = await this.filePresenter.write(path, content, {
+            extraTrustedPaths: ctx?.trustedPaths,
+          });
           return ok ? `Written to ${path}` : `Failed to write ${path}`;
         },
       }),
@@ -123,7 +130,10 @@ export class ToolPresenter {
           new_text: z.string().describe("Replacement text"),
         }),
         execute: async ({ path, old_text, new_text }) => {
-          const ok = await this.filePresenter.edit(path, old_text, new_text);
+          const ctx = this.sessionContexts.get(sessionId);
+          const ok = await this.filePresenter.edit(path, old_text, new_text, {
+            extraTrustedPaths: ctx?.trustedPaths,
+          });
           return ok ? `Edited ${path}` : `Failed to edit ${path}`;
         },
       }),

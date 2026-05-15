@@ -35,21 +35,33 @@ export class FilePresenter implements IFilePresenter {
     }
   }
 
-  private validateWritable(userPath: string): void {
+  private validateWritable(userPath: string, extraTrustedPaths?: string[]): void {
     const normalized = userPath.replace(/\\/g, "/");
     for (const pattern of FORBIDDEN_WRITE_PATTERNS) {
       if (pattern.test(normalized)) {
-        throw new Error(`Cannot modify protected path: "${userPath}"`);
+        // Allow writes to paths within extraTrustedPaths even if they match forbidden patterns
+        const abs = this.resolveSafe(userPath, extraTrustedPaths);
+        const inExtra = (extraTrustedPaths ?? []).some((tp) => {
+          const normalized = tp.endsWith("/") ? tp : tp + "/";
+          return abs.startsWith(normalized);
+        });
+        if (!inExtra) {
+          throw new Error(`Cannot modify protected path: "${userPath}"`);
+        }
+        return;
       }
     }
   }
 
-  private resolveSafe(userPath: string): string {
+  private resolveSafe(userPath: string, extraTrustedPaths?: string[]): string {
     const root = this.projectRoot || process.cwd();
     const resolved = resolve(root, userPath);
-    // Allow absolute paths that fall within a trusted path (e.g. obsidian vault)
     if (!resolved.startsWith(root)) {
-      const inTrusted = this.trustedPaths.some((tp) => resolved.startsWith(tp));
+      const allTrusted = [
+        ...this.trustedPaths,
+        ...(extraTrustedPaths ?? []).map((p) => (p.endsWith("/") ? p : p + "/")),
+      ];
+      const inTrusted = allTrusted.some((tp) => resolved.startsWith(tp));
       if (!inTrusted) {
         throw new Error(`Path "${userPath}" resolves outside project root`);
       }
@@ -57,8 +69,13 @@ export class FilePresenter implements IFilePresenter {
     return resolved;
   }
 
-  async read(path: string, offset?: number, limit?: number): Promise<string> {
-    const abs = this.resolveSafe(path);
+  async read(
+    path: string,
+    offset?: number,
+    limit?: number,
+    opts?: { extraTrustedPaths?: string[] },
+  ): Promise<string> {
+    const abs = this.resolveSafe(path, opts?.extraTrustedPaths);
     logger.debug("file:read", { path: abs });
     const content = await readFile(abs, "utf-8");
     if (offset === undefined && limit === undefined) return content;
@@ -68,18 +85,27 @@ export class FilePresenter implements IFilePresenter {
     return lines.slice(start, end).join("\n");
   }
 
-  async write(path: string, content: string): Promise<boolean> {
-    this.validateWritable(path);
-    const abs = this.resolveSafe(path);
+  async write(
+    path: string,
+    content: string,
+    opts?: { extraTrustedPaths?: string[] },
+  ): Promise<boolean> {
+    this.validateWritable(path, opts?.extraTrustedPaths);
+    const abs = this.resolveSafe(path, opts?.extraTrustedPaths);
     logger.debug("file:write", { path: abs, length: content.length });
     await mkdir(dirname(abs), { recursive: true });
     await writeFile(abs, content, "utf-8");
     return true;
   }
 
-  async edit(path: string, oldText: string, newText: string): Promise<boolean> {
-    this.validateWritable(path);
-    const abs = this.resolveSafe(path);
+  async edit(
+    path: string,
+    oldText: string,
+    newText: string,
+    opts?: { extraTrustedPaths?: string[] },
+  ): Promise<boolean> {
+    this.validateWritable(path, opts?.extraTrustedPaths);
+    const abs = this.resolveSafe(path, opts?.extraTrustedPaths);
     logger.debug("file:edit", { path: abs });
     const content = await readFile(abs, "utf-8");
     const idx = content.indexOf(oldText);
@@ -92,9 +118,9 @@ export class FilePresenter implements IFilePresenter {
     return true;
   }
 
-  async listDir(path?: string): Promise<DirEntry[]> {
+  async listDir(path?: string, opts?: { extraTrustedPaths?: string[] }): Promise<DirEntry[]> {
     const root = this.projectRoot || process.cwd();
-    const abs = path ? this.resolveSafe(path) : root;
+    const abs = path ? this.resolveSafe(path, opts?.extraTrustedPaths) : root;
     const entries = await readdir(abs, { withFileTypes: true });
     return entries
       .filter((e) => !HIDDEN_DIR_PATTERNS.includes(e.name))

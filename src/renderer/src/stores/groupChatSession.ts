@@ -23,10 +23,12 @@ export const useGroupChatSessionStore = defineStore("groupChatSession", () => {
   async function createSession(
     participantAgentIds: string[],
     moderatorEnabled?: boolean,
+    workspacePaths?: string[],
   ): Promise<GroupChatSession> {
     const session = (await groupChatPresenter.createSession(
       participantAgentIds,
       moderatorEnabled,
+      workspacePaths,
     )) as GroupChatSession;
     await fetchSessions();
     activeSessionId.value = session.id;
@@ -41,6 +43,11 @@ export const useGroupChatSessionStore = defineStore("groupChatSession", () => {
 
   async function updateTitle(id: string, title: string) {
     await groupChatPresenter.updateSessionTitle(id, title);
+    await fetchSessions();
+  }
+
+  async function updateWorkspacePaths(id: string, workspacePaths: string[]) {
+    await groupChatPresenter.updateWorkspacePaths(id, workspacePaths);
     await fetchSessions();
   }
 
@@ -66,6 +73,7 @@ export const useGroupChatSessionStore = defineStore("groupChatSession", () => {
     createSession,
     deleteSession,
     updateTitle,
+    updateWorkspacePaths,
     markDetached,
     unmarkDetached,
     isDetached,

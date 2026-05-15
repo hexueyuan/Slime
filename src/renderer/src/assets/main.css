@@ -132,6 +132,47 @@
   p:last-of-type {
     margin-bottom: 0;
   }
+  p {
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+  }
+  hr {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+  }
+}
+
+.prose.prose-compact p {
+  margin-top: 0.4em;
+  margin-bottom: 0.4em;
+}
+
+.prose.prose-compact p:first-of-type {
+  margin-top: 0;
+}
+
+.prose.prose-compact p:last-of-type {
+  margin-bottom: 0;
+}
+
+.prose.prose-compact hr {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose.prose-compact h1,
+.prose.prose-compact h2,
+.prose.prose-compact h3,
+.prose.prose-compact h4,
+.prose.prose-compact h5,
+.prose.prose-compact h6 {
+  margin-top: 0.6em;
+  margin-bottom: 0.3em;
+}
+
+.prose.prose-compact table {
+  margin-top: 0.4em;
+  margin-bottom: 0.4em;
 }
 
 /* 自定义 prose-xs 变体 - 更小的正文字体 */

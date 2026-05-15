@@ -12,15 +12,15 @@
 
 ## 文件清单
 
-| 操作 | 路径 | 说明 |
-|------|------|------|
-| 创建 | `~/.slime/slime-market/agents/hunter-ai/AGENT.json` | 猎手配置 |
-| 创建 | `~/.slime/slime-market/agents/hunter-ai/PROMPT.md` | 猎手行为规范 |
-| 创建 | `~/.slime/slime-market/agents/weaver-ai/AGENT.json` | 织者配置 |
-| 创建 | `~/.slime/slime-market/agents/weaver-ai/PROMPT.md` | 织者行为规范 |
-| 创建 | `~/.slime/slime-market/agents/narrator-ai/AGENT.json` | 演者配置 |
-| 创建 | `~/.slime/slime-market/agents/narrator-ai/PROMPT.md` | 演者行为规范 |
-| 创建 | `~/.slime/slime-market/skills/baidu-search/SKILL.md` | 百度搜索 skill |
+| 操作 | 路径                                                   | 说明                     |
+| ---- | ------------------------------------------------------ | ------------------------ |
+| 创建 | `~/.slime/slime-market/agents/hunter-ai/AGENT.json`    | 猎手配置                 |
+| 创建 | `~/.slime/slime-market/agents/hunter-ai/PROMPT.md`     | 猎手行为规范             |
+| 创建 | `~/.slime/slime-market/agents/weaver-ai/AGENT.json`    | 织者配置                 |
+| 创建 | `~/.slime/slime-market/agents/weaver-ai/PROMPT.md`     | 织者行为规范             |
+| 创建 | `~/.slime/slime-market/agents/narrator-ai/AGENT.json`  | 演者配置                 |
+| 创建 | `~/.slime/slime-market/agents/narrator-ai/PROMPT.md`   | 演者行为规范             |
+| 创建 | `~/.slime/slime-market/skills/baidu-search/SKILL.md`   | 百度搜索 skill           |
 | 修改 | `src/main/presenter/agentChat/agentInvoker.ts:100-105` | groupContext 追加群聊 ID |
 
 ---
@@ -28,6 +28,7 @@
 ## Task 1: 创建 baidu-search skill
 
 **Files:**
+
 - Create: `~/.slime/slime-market/skills/baidu-search/SKILL.md`
 
 - [ ] **Step 1: 创建目录并写入 SKILL.md**
@@ -51,6 +52,7 @@ description: 使用百度搜索引擎搜集信息，抓取前3页搜索结果并
 ## 使用方式
 
 调用此 skill 时，你需要：
+
 1. 明确要搜索的关键词
 2. 明确资料保存的目标目录（`sources/` 目录的绝对路径）
 
@@ -81,16 +83,18 @@ description: 使用百度搜索引擎搜集信息，抓取前3页搜索结果并
 - 如果某个页面访问超时或报错，跳过该链接，继续下一个
 - 如果遇到需要登录的页面，跳过
 - 每个文件开头加入元数据头：
-  ```
-  # <页面标题>
+```
 
-  > 来源：<原始URL>
-  > 抓取时间：<ISO格式时间>
+# <页面标题>
 
-  ---
+> 来源：<原始URL>
+> 抓取时间：<ISO格式时间>
 
-  <正文内容>
-  ```
+---
+
+<正文内容>
+
+```
 - 正文内容尽量保留原文的标题层级（h1→#, h2→##, h3→### 等）
 ```
 
@@ -114,6 +118,7 @@ echo "baidu-search skill 创建完成：$(wc -l < ~/.slime/slime-market/skills/b
 ## Task 2: 创建 hunter-ai agent
 
 **Files:**
+
 - Create: `~/.slime/slime-market/agents/hunter-ai/AGENT.json`
 - Create: `~/.slime/slime-market/agents/hunter-ai/PROMPT.md`
 
@@ -158,7 +163,7 @@ mkdir -p ~/.slime/slime-market/agents/hunter-ai
 
 - [ ] **Step 3: 写入 PROMPT.md**
 
-```markdown
+````markdown
 ## 信息搜集行为规范
 
 你是一个专业的信息猎手，擅长从互联网的各类可信来源搜集高质量资料。
@@ -186,6 +191,7 @@ mkdir -p ~/.slime/slime-market/agents/hunter-ai
 **第三步：搜集资料**
 
 调用对应 skill 时，传入：
+
 - 关键词
 - 目标目录：`<工作目录>/sources/`
 
@@ -204,15 +210,17 @@ mkdir -p ~/.slime/slime-market/agents/hunter-ai
 
 ## 资料列表
 
-| 序号 | 标题 | 文件 | 摘要 |
-|------|------|------|------|
-| 1 | <标题> | sources/01-xxx.md | <一句话摘要> |
-| ... | ... | ... | ... |
+| 序号 | 标题   | 文件              | 摘要         |
+| ---- | ------ | ----------------- | ------------ |
+| 1    | <标题> | sources/01-xxx.md | <一句话摘要> |
+| ...  | ...    | ...               | ...          |
 ```
+````
 
 **第五步：汇报完成**
 
 告知用户：
+
 - 共搜集了多少条资料
 - 工作目录路径
 - 索引文件路径
@@ -222,7 +230,8 @@ mkdir -p ~/.slime/slime-market/agents/hunter-ai
 - 不要搜索与关键词无关的来源（比如搜索编程问题不要去美食网站）
 - 每次搜集前先检查 `sources/` 目录是否已有相关资料，避免重复
 - 如果某个来源搜集失败，继续其他来源，最后在汇报中说明哪个来源失败
-```
+
+````
 
 写入路径：`~/.slime/slime-market/agents/hunter-ai/PROMPT.md`
 
@@ -231,7 +240,7 @@ mkdir -p ~/.slime/slime-market/agents/hunter-ai
 ```bash
 cat ~/.slime/slime-market/agents/hunter-ai/AGENT.json | python3 -m json.tool > /dev/null && echo "JSON 格式正确"
 ls ~/.slime/slime-market/agents/hunter-ai/
-```
+````
 
 预期：`AGENT.json  PROMPT.md`，且 JSON 格式验证通过
 
@@ -240,6 +249,7 @@ ls ~/.slime/slime-market/agents/hunter-ai/
 ## Task 3: 创建 weaver-ai agent
 
 **Files:**
+
 - Create: `~/.slime/slime-market/agents/weaver-ai/AGENT.json`
 - Create: `~/.slime/slime-market/agents/weaver-ai/PROMPT.md`
 
@@ -272,7 +282,7 @@ mkdir -p ~/.slime/slime-market/agents/weaver-ai
 
 - [ ] **Step 3: 写入 PROMPT.md**
 
-```markdown
+````markdown
 ## 信息整理行为规范
 
 你是一个专业的知识织者，擅长将零散的原始资料整理为结构清晰、逻辑严密的知识文档或调研报告。
@@ -289,6 +299,7 @@ mkdir -p ~/.slime/slime-market/agents/weaver-ai
 **第二步：了解整理需求**
 
 向用户确认（可以 `ask_user` 询问）：
+
 - 报告的**主题**是什么？（例如："LLM Prompt Caching 技术调研"）
 - 报告的**重点方向**有哪些？（例如："重点关注实现原理和性能数据，不需要商业分析"）
 - 报告的**目标读者**是谁？（例如："技术团队内部"）
@@ -327,10 +338,11 @@ mkdir -p ~/.slime/slime-market/agents/weaver-ai
 
 ## 参考资料
 
-| 序号 | 标题 | 来源文件 |
-|------|------|----------|
-| 1 | <标题> | sources/01-xxx.md |
+| 序号 | 标题   | 来源文件          |
+| ---- | ------ | ----------------- |
+| 1    | <标题> | sources/01-xxx.md |
 ```
+````
 
 **第五步：预览并汇报**
 
@@ -343,7 +355,8 @@ mkdir -p ~/.slime/slime-market/agents/weaver-ai
 - 对矛盾信息要标注"存在争议"而非武断取舍
 - 引用数据时注明来源文件
 - 报告语言与用户交流语言保持一致
-```
+
+````
 
 写入路径：`~/.slime/slime-market/agents/weaver-ai/PROMPT.md`
 
@@ -352,7 +365,7 @@ mkdir -p ~/.slime/slime-market/agents/weaver-ai
 ```bash
 cat ~/.slime/slime-market/agents/weaver-ai/AGENT.json | python3 -m json.tool > /dev/null && echo "JSON 格式正确"
 ls ~/.slime/slime-market/agents/weaver-ai/
-```
+````
 
 预期：`AGENT.json  PROMPT.md`
 
@@ -361,6 +374,7 @@ ls ~/.slime/slime-market/agents/weaver-ai/
 ## Task 4: 创建 narrator-ai agent
 
 **Files:**
+
 - Create: `~/.slime/slime-market/agents/narrator-ai/AGENT.json`
 - Create: `~/.slime/slime-market/agents/narrator-ai/PROMPT.md`
 
@@ -408,6 +422,7 @@ mkdir -p ~/.slime/slime-market/agents/narrator-ai
 **第二步：确认幻灯片需求**
 
 使用 `ask_user` 询问（可选，如果用户已在消息中说明则跳过）：
+
 - 幻灯片风格偏好（简约/商务/科技感等）
 - 是否需要封面页和结尾页
 - 是否有特别需要重点展示的章节
@@ -419,6 +434,7 @@ mkdir -p ~/.slime/slime-market/agents/narrator-ai
 **第四步：生成幻灯片**
 
 检查可用的幻灯片 skill（已注入到当前可用 skill 列表中）：
+
 - 若有幻灯片生成 skill（如 `slides-builder` 或类似名称），调用该 skill 生成 `slides.html`
 - 若没有任何幻灯片 skill，直接生成 HTML 幻灯片：
 
@@ -460,6 +476,7 @@ ls ~/.slime/slime-market/agents/narrator-ai/
 ## Task 5: 修改群聊 system-reminder 注入群聊 ID
 
 **Files:**
+
 - Modify: `src/main/presenter/agentChat/agentInvoker.ts:95-109`
 
 当前 `groupContext` 字符串（约第100行）：
@@ -482,6 +499,7 @@ const groupContext = `你正在参与一个群聊。${otherParticipants}消息�
 在 `src/main/presenter/agentChat/agentInvoker.ts` 中，找到 `buildLLMMessages` 方法定义，在参数列表末尾追加 `sessionId: string`：
 
 修改前：
+
 ```typescript
   private buildLLMMessages(
     agentId: string,
@@ -499,6 +517,7 @@ const groupContext = `你正在参与一个群聊。${otherParticipants}消息�
 ```
 
 修改后：
+
 ```typescript
   private buildLLMMessages(
     agentId: string,
@@ -521,8 +540,9 @@ const groupContext = `你正在参与一个群聊。${otherParticipants}消息�
 找到 `groupContext` 字符串末尾（`3. 历史消息仅供理解对话背景...` 之后），追加群聊 ID 一行：
 
 修改前：
+
 ```typescript
-    const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}
+const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}
 
 群聊行为规则：
 1. 本轮用户消息是历史中最后一条 [用户] 消息，你只需要回答这条消息，不要主动评论或引用之前轮次的内容，除非用户明确提到了历史内容。
@@ -531,9 +551,10 @@ const groupContext = `你正在参与一个群聊。${otherParticipants}消息�
 ```
 
 修改后：
+
 ```typescript
-    const sessionLine = sessionId ? `\n当前群聊ID：${sessionId}` : "";
-    const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}
+const sessionLine = sessionId ? `\n当前群聊ID：${sessionId}` : "";
+const groupContext = `你正在参与一个群聊。${otherParticipants}消息中以 [agentId]: 开头的内容来自其他参与者。${userInfo}
 
 群聊行为规则：
 1. 本轮用户消息是历史中最后一条 [用户] 消息，你只需要回答这条消息，不要主动评论或引用之前轮次的内容，除非用户明确提到了历史内容。
@@ -546,38 +567,40 @@ const groupContext = `你正在参与一个群聊。${otherParticipants}消息�
 找到 `_run` 中调用 `buildLLMMessages` 的位置（约第240-254行），追加 `sessionId` 参数：
 
 修改前：
+
 ```typescript
-    const llmMessages = this.buildLLMMessages(
-      this.agentId,
-      {
-        name: agent.name,
-        mbti: agent.mbti as string | undefined,
-        gender: agent.gender,
-        birthday: agent.birthday,
-      },
-      session.participantAgentIds,
-      additionalPrompt,
-      skillsXML,
-      userName,
-    );
+const llmMessages = this.buildLLMMessages(
+  this.agentId,
+  {
+    name: agent.name,
+    mbti: agent.mbti as string | undefined,
+    gender: agent.gender,
+    birthday: agent.birthday,
+  },
+  session.participantAgentIds,
+  additionalPrompt,
+  skillsXML,
+  userName,
+);
 ```
 
 修改后：
+
 ```typescript
-    const llmMessages = this.buildLLMMessages(
-      this.agentId,
-      {
-        name: agent.name,
-        mbti: agent.mbti as string | undefined,
-        gender: agent.gender,
-        birthday: agent.birthday,
-      },
-      session.participantAgentIds,
-      additionalPrompt,
-      skillsXML,
-      userName,
-      sessionId,
-    );
+const llmMessages = this.buildLLMMessages(
+  this.agentId,
+  {
+    name: agent.name,
+    mbti: agent.mbti as string | undefined,
+    gender: agent.gender,
+    birthday: agent.birthday,
+  },
+  session.participantAgentIds,
+  additionalPrompt,
+  skillsXML,
+  userName,
+  sessionId,
+);
 ```
 
 - [ ] **Step 5: 类型检查**
@@ -642,15 +665,15 @@ head -5 ~/.slime/slime-market/skills/baidu-search/SKILL.md
 
 **Spec coverage 检查：**
 
-| Spec 要求 | 对应 Task |
-|-----------|-----------|
-| hunter-ai AGENT.json + PROMPT.md | Task 2 |
-| weaver-ai AGENT.json + PROMPT.md | Task 3 |
-| narrator-ai AGENT.json + PROMPT.md | Task 4 |
-| baidu-search SKILL.md | Task 1 |
-| 群聊 system-reminder 注入 session_id | Task 5 |
-| 单聊时用户手动告知目录 | PROMPT.md 中已说明 |
-| 群聊时从 system-reminder 读取 ID | PROMPT.md + Task 5 |
+| Spec 要求                            | 对应 Task          |
+| ------------------------------------ | ------------------ |
+| hunter-ai AGENT.json + PROMPT.md     | Task 2             |
+| weaver-ai AGENT.json + PROMPT.md     | Task 3             |
+| narrator-ai AGENT.json + PROMPT.md   | Task 4             |
+| baidu-search SKILL.md                | Task 1             |
+| 群聊 system-reminder 注入 session_id | Task 5             |
+| 单聊时用户手动告知目录               | PROMPT.md 中已说明 |
+| 群聊时从 system-reminder 读取 ID     | PROMPT.md + Task 5 |
 
 全部覆盖，无遗漏。
 

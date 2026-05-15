@@ -45,6 +45,7 @@ GroupChatPresenter.sendMessage()
 **轮次定义**：`senderAgentId === null && hidden === false` 的消息为一个用户轮次的起点
 
 **裁剪规则**：
+
 - 统计用户轮次数，只保留最近 15 轮
 - 每轮包含：该轮用户消息 + 同轮所有 agent 回复 + 同轮 hidden 消息
 - 超出 15 轮的整轮丢弃（含该轮的全部消息）
@@ -58,6 +59,7 @@ GroupChatPresenter.sendMessage()
 **触发条件**：上一步 `usage.inputTokens >= CONTEXT_WINDOW * 0.75`（即 150,000 tokens）
 
 **操作**：
+
 - 从 `llmMessages` 中找所有 `role: "tool"` 消息
 - 跳过最近 `KEEP_RECENT_STEPS = 4` 步的轮次（不动）
 - 对更早的 tool 消息，把 `COMPACTABLE_TOOLS` 中工具的 output 替换为：
@@ -67,15 +69,16 @@ GroupChatPresenter.sendMessage()
 - 非 `COMPACTABLE_TOOLS` 的工具结果保留原样
 
 **可压缩工具白名单**：
+
 ```typescript
 const COMPACTABLE_TOOLS = new Set([
-  'web_fetch',
-  'read',
-  'exec',
-  'browser_get_text',
-  'browser_screenshot',
-  'browser_evaluate',
-])
+  "web_fetch",
+  "read",
+  "exec",
+  "browser_get_text",
+  "browser_screenshot",
+  "browser_evaluate",
+]);
 ```
 
 **特点**：纯字符串替换，<1ms，不破坏 tool-call/tool-result 配对。
@@ -89,6 +92,7 @@ const COMPACTABLE_TOOLS = new Set([
 微压缩后使用本地估算（`text.length / 4`）而非 API 精确值，因为此时还未发出新请求。
 
 **操作**：
+
 - 定位 `llmMessages` 中 loop 轮次区域（跳过不可压缩区域，见下）
 - 按 `assistant + tool` 配对分组
 - 保留最近 `KEEP_RECENT_STEPS = 4` 对，从最老的开始整对删除
@@ -102,27 +106,31 @@ const COMPACTABLE_TOOLS = new Set([
 
 两层压缩均跳过以下消息：
 
-| 消息 | 内容 | 原因 |
-|------|------|------|
-| `system`（第1条） | identity + constraints | 静态身份定义 |
-| `user`（第1条） | reminder blocks（additionalPrompt + skillsXML + groupContext） | 行为规则，缺失导致 agent 失去群聊感知 |
-| `assistant`（第1条） | "好的，我已了解当前环境和设定。" | 与第1条 user 配对 |
-| 历史群聊消息（`[Round N]` 轮次） | 群聊对话历史 | 已由 Layer 0 滑动窗口控制 |
-| 最近 `KEEP_RECENT_STEPS = 4` 步的 loop 轮次 | 正在执行的任务上下文 | 防止切断正在进行的推理链 |
+| 消息                                        | 内容                                                           | 原因                                  |
+| ------------------------------------------- | -------------------------------------------------------------- | ------------------------------------- |
+| `system`（第1条）                           | identity + constraints                                         | 静态身份定义                          |
+| `user`（第1条）                             | reminder blocks（additionalPrompt + skillsXML + groupContext） | 行为规则，缺失导致 agent 失去群聊感知 |
+| `assistant`（第1条）                        | "好的，我已了解当前环境和设定。"                               | 与第1条 user 配对                     |
+| 历史群聊消息（`[Round N]` 轮次）            | 群聊对话历史                                                   | 已由 Layer 0 滑动窗口控制             |
+| 最近 `KEEP_RECENT_STEPS = 4` 步的 loop 轮次 | 正在执行的任务上下文                                           | 防止切断正在进行的推理链              |
 
 ---
 
 ### 常量汇总
 
 ```typescript
-const CONTEXT_WINDOW = 200_000
-const MICRO_COMPACT_THRESHOLD = 0.75   // 150K tokens → 触发微压缩
-const TRUNCATE_THRESHOLD = 0.90        // 180K tokens → 触发强制裁剪
-const KEEP_RECENT_STEPS = 4            // 保护最近 N 步 loop 轮次
+const CONTEXT_WINDOW = 200_000;
+const MICRO_COMPACT_THRESHOLD = 0.75; // 150K tokens → 触发微压缩
+const TRUNCATE_THRESHOLD = 0.9; // 180K tokens → 触发强制裁剪
+const KEEP_RECENT_STEPS = 4; // 保护最近 N 步 loop 轮次
 const COMPACTABLE_TOOLS = new Set([
-  'web_fetch', 'read', 'exec',
-  'browser_get_text', 'browser_screenshot', 'browser_evaluate',
-])
+  "web_fetch",
+  "read",
+  "exec",
+  "browser_get_text",
+  "browser_screenshot",
+  "browser_evaluate",
+]);
 ```
 
 ---
@@ -137,9 +145,9 @@ const COMPACTABLE_TOOLS = new Set([
 
 ## 涉及文件
 
-| 文件 | 变更 |
-|------|------|
-| `src/main/presenter/groupChatPresenter.ts` | `sendMessage()` 中添加滑动窗口裁剪逻辑 |
+| 文件                                           | 变更                                                            |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| `src/main/presenter/groupChatPresenter.ts`     | `sendMessage()` 中添加滑动窗口裁剪逻辑                          |
 | `src/main/presenter/agentChat/agentInvoker.ts` | `_run()` 中添加 Layer 1/2 压缩；stream loop 中收集 `usage` 事件 |
 
 不新增文件，不改动 `buildLLMMessages()` 签名，不改动数据库 schema。

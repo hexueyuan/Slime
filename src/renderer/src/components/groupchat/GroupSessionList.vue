@@ -34,6 +34,37 @@ async function onRenameConfirm() {
   renaming.value = null;
 }
 
+// Edit workspace paths
+const editingPaths = ref<string | null>(null);
+const editPathsList = ref<string[]>([]);
+const newPathInput = ref("");
+
+function onEditPathsStart(sessionId: string) {
+  const session = sessionStore.sessions.find((s) => s.id === sessionId);
+  editingPaths.value = sessionId;
+  editPathsList.value = [...(session?.workspacePaths ?? [])];
+  newPathInput.value = "";
+}
+
+function addPath() {
+  const p = newPathInput.value.trim();
+  if (p && !editPathsList.value.includes(p)) {
+    editPathsList.value.push(p);
+  }
+  newPathInput.value = "";
+}
+
+function removePath(p: string) {
+  editPathsList.value = editPathsList.value.filter((x) => x !== p);
+}
+
+async function onEditPathsConfirm() {
+  if (editingPaths.value) {
+    await sessionStore.updateWorkspacePaths(editingPaths.value, editPathsList.value);
+  }
+  editingPaths.value = null;
+}
+
 // Context menu
 const contextMenuSessionId = ref<string | null>(null);
 const contextMenuPos = ref({ x: 0, y: 0 });
@@ -72,6 +103,7 @@ function onNewSession() {
 }
 
 function onSessionClick(sessionId: string) {
+  if (editingPaths.value === sessionId) return;
   if (sessionStore.isDetached(sessionId)) {
     window.electron.ipcRenderer.invoke("group_chat:focus_detached", sessionId);
     return;
@@ -113,6 +145,7 @@ function onSessionDblclick(sessionId: string) {
         @dblclick="onSessionDblclick(session.id)"
         @contextmenu="onContextMenu($event, session.id)"
       >
+        <!-- Rename mode -->
         <input
           v-if="renaming === session.id"
           v-model="renameInput"
@@ -122,6 +155,59 @@ function onSessionDblclick(sessionId: string) {
           @keydown.escape="renaming = null"
           @click.stop
         />
+
+        <!-- Edit workspace paths mode -->
+        <div v-else-if="editingPaths === session.id" @click.stop>
+          <div class="mb-1 text-xs font-medium text-foreground">工作目录</div>
+          <ul v-if="editPathsList.length > 0" class="mb-1.5 space-y-1">
+            <li
+              v-for="p in editPathsList"
+              :key="p"
+              class="flex items-center justify-between rounded bg-background px-2 py-0.5 text-xs"
+            >
+              <span class="truncate font-mono text-foreground">{{ p }}</span>
+              <button
+                class="ml-1 shrink-0 text-muted-foreground hover:text-foreground"
+                @click.stop="removePath(p)"
+              >
+                ✕
+              </button>
+            </li>
+          </ul>
+          <p v-else class="mb-1.5 text-xs text-muted-foreground">暂无</p>
+          <div class="flex gap-1">
+            <input
+              v-model="newPathInput"
+              type="text"
+              placeholder="添加路径（支持 ~）"
+              class="min-w-0 flex-1 rounded border border-border bg-background px-2 py-0.5 text-xs text-foreground focus:outline-none"
+              @keydown.enter.stop="addPath"
+              @click.stop
+            />
+            <button
+              class="shrink-0 rounded border border-border px-2 py-0.5 text-xs text-foreground hover:bg-muted"
+              @click.stop="addPath"
+            >
+              +
+            </button>
+          </div>
+          <div class="mt-1.5 flex gap-1.5">
+            <button
+              class="rounded bg-violet-600 px-2 py-0.5 text-xs text-white hover:bg-violet-700"
+              @click.stop="onEditPathsConfirm"
+            >
+              保存
+            </button>
+            <button
+              class="rounded border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+              @click.stop="editingPaths = null"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+
+        <!-- Normal mode -->
         <template v-else>
           <div class="flex items-center gap-1">
             <Icon
@@ -166,6 +252,20 @@ function onSessionDblclick(sessionId: string) {
         >
           <Icon icon="lucide:pencil" class="h-3 w-3" />
           重命名
+        </button>
+        <button
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+          @click="
+            () => {
+              if (contextMenuSessionId) {
+                onEditPathsStart(contextMenuSessionId);
+                closeContextMenu();
+              }
+            }
+          "
+        >
+          <Icon icon="lucide:folder" class="h-3 w-3" />
+          编辑工作目录
         </button>
         <button
           class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-muted"

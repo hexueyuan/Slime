@@ -7,6 +7,7 @@ import type {
 } from "../outbound/types";
 import type { Relay } from "../relay";
 import type { Router } from "../router";
+import { logger } from "../../utils/logger";
 
 interface OAIResponsesToolDef {
   type: string;
@@ -190,38 +191,72 @@ export function registerOpenAIResponsesInbound(
     let inputTokens = 0;
     const outputItems: unknown[] = [];
 
-    for await (const event of result.stream) {
-      switch (event.type) {
-        case "content_delta": {
-          if (event.delta.type === "text") {
-            if (outputIndex < 0) {
-              outputIndex = 0;
-              contentIndex = 0;
+    try {
+      for await (const event of result.stream) {
+        switch (event.type) {
+          case "content_delta": {
+            if (event.delta.type === "text") {
+              if (outputIndex < 0) {
+                outputIndex = 0;
+                contentIndex = 0;
+                write("response.output_item.added", {
+                  type: "response.output_item.added",
+                  output_index: outputIndex,
+                  item: { type: "message", role: "assistant" },
+                });
+                write("response.content_part.added", {
+                  type: "response.content_part.added",
+                  output_index: outputIndex,
+                  content_index: contentIndex,
+                  part: { type: "output_text", text: "" },
+                });
+              }
+              fullText += event.delta.text;
+              write("response.output_text.delta", {
+                type: "response.output_text.delta",
+                output_index: outputIndex,
+                content_index: contentIndex,
+                delta: event.delta.text,
+              });
+            } else if (event.delta.type === "tool_use") {
+              // flush text message
+              if (fullText) {
+                write("response.output_text.done", {
+                  type: "response.output_text.done",
+                  output_index: outputIndex,
+                  content_index: contentIndex,
+                  text: fullText,
+                });
+                outputItems.push({
+                  type: "message",
+                  role: "assistant",
+                  content: [{ type: "output_text", text: fullText }],
+                });
+                fullText = "";
+              }
+              outputIndex++;
               write("response.output_item.added", {
                 type: "response.output_item.added",
                 output_index: outputIndex,
-                item: { type: "message", role: "assistant" },
-              });
-              write("response.content_part.added", {
-                type: "response.content_part.added",
-                output_index: outputIndex,
-                content_index: contentIndex,
-                part: { type: "output_text", text: "" },
+                item: {
+                  type: "function_call",
+                  id: `fc_${Date.now()}`,
+                  call_id: event.delta.id,
+                  name: event.delta.name,
+                },
               });
             }
-            fullText += event.delta.text;
-            write("response.output_text.delta", {
-              type: "response.output_text.delta",
-              output_index: outputIndex,
-              content_index: contentIndex,
-              delta: event.delta.text,
-            });
-          } else if (event.delta.type === "tool_use") {
-            // flush text message
+            break;
+          }
+          case "usage":
+            inputTokens = event.usage.inputTokens;
+            outputTokens = event.usage.outputTokens;
+            break;
+          case "stop": {
             if (fullText) {
               write("response.output_text.done", {
                 type: "response.output_text.done",
-                output_index: outputIndex,
+                output_index: Math.max(outputIndex, 0),
                 content_index: contentIndex,
                 text: fullText,
               });
@@ -230,49 +265,23 @@ export function registerOpenAIResponsesInbound(
                 role: "assistant",
                 content: [{ type: "output_text", text: fullText }],
               });
-              fullText = "";
             }
-            outputIndex++;
-            write("response.output_item.added", {
-              type: "response.output_item.added",
-              output_index: outputIndex,
-              item: {
-                type: "function_call",
-                id: `fc_${Date.now()}`,
-                call_id: event.delta.id,
-                name: event.delta.name,
-              },
-            });
+            break;
           }
-          break;
-        }
-        case "usage":
-          inputTokens = event.usage.inputTokens;
-          outputTokens = event.usage.outputTokens;
-          break;
-        case "stop": {
-          if (fullText) {
-            write("response.output_text.done", {
-              type: "response.output_text.done",
-              output_index: Math.max(outputIndex, 0),
-              content_index: contentIndex,
-              text: fullText,
+          case "error":
+            write("response.failed", {
+              type: "response.failed",
+              error: { type: "server_error", message: event.error },
             });
-            outputItems.push({
-              type: "message",
-              role: "assistant",
-              content: [{ type: "output_text", text: fullText }],
-            });
-          }
-          break;
+            break;
         }
-        case "error":
-          write("response.failed", {
-            type: "response.failed",
-            error: { type: "server_error", message: event.error },
-          });
-          break;
       }
+    } catch (err) {
+      logger.debug("[gateway/openai-responses] stream error", { error: String(err) });
+      if (!reply.raw.writableEnded) {
+        reply.raw.end();
+      }
+      return;
     }
 
     write("response.completed", {

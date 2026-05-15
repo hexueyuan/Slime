@@ -8,6 +8,7 @@ import type {
 } from "../outbound/types";
 import type { Relay } from "../relay";
 import type { Router } from "../router";
+import { logger } from "../../utils/logger";
 
 interface AnthropicMessage {
   role: string;
@@ -243,6 +244,9 @@ export function registerAnthropicInbound(
 
     let blockIndex = -1;
     let outputTokens = 0;
+    let inputTokens = 0;
+    let cacheReadTokens: number | undefined;
+    let cacheWriteTokens: number | undefined;
     let activeBlockType: string | undefined;
     let currentToolUseId: string | undefined;
     let thinkingOpened = false;
@@ -255,95 +259,116 @@ export function registerAnthropicInbound(
       }
     }
 
-    for await (const event of result.stream) {
-      switch (event.type) {
-        case "content_delta": {
-          if (event.delta.type === "text") {
-            if (activeBlockType !== "text") {
-              closeCurrentBlock();
-              blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
-              activeBlockType = "text";
-              thinkingOpened = false;
-              write("content_block_start", {
-                type: "content_block_start",
-                index: blockIndex,
-                content_block: { type: "text", text: "" },
-              });
-            }
-            write("content_block_delta", {
-              type: "content_block_delta",
-              index: blockIndex,
-              delta: { type: "text_delta", text: event.delta.text },
-            });
-          } else if (event.delta.type === "tool_use") {
-            if (event.delta.id !== currentToolUseId) {
-              closeCurrentBlock();
-              blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
-              activeBlockType = "tool_use";
-              currentToolUseId = event.delta.id;
-              thinkingOpened = false;
-              write("content_block_start", {
-                type: "content_block_start",
-                index: blockIndex,
-                content_block: {
-                  type: "tool_use",
-                  id: event.delta.id,
-                  name: event.delta.name,
-                  input: {},
-                },
-              });
-            }
-            if (event.delta.input_json_delta) {
+    try {
+      for await (const event of result.stream) {
+        switch (event.type) {
+          case "content_delta": {
+            if (event.delta.type === "text") {
+              if (activeBlockType !== "text") {
+                closeCurrentBlock();
+                blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
+                activeBlockType = "text";
+                thinkingOpened = false;
+                write("content_block_start", {
+                  type: "content_block_start",
+                  index: blockIndex,
+                  content_block: { type: "text", text: "" },
+                });
+              }
               write("content_block_delta", {
                 type: "content_block_delta",
                 index: blockIndex,
-                delta: { type: "input_json_delta", partial_json: event.delta.input_json_delta },
+                delta: { type: "text_delta", text: event.delta.text },
               });
+            } else if (event.delta.type === "tool_use") {
+              if (event.delta.id !== currentToolUseId) {
+                closeCurrentBlock();
+                blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
+                activeBlockType = "tool_use";
+                currentToolUseId = event.delta.id;
+                thinkingOpened = false;
+                write("content_block_start", {
+                  type: "content_block_start",
+                  index: blockIndex,
+                  content_block: {
+                    type: "tool_use",
+                    id: event.delta.id,
+                    name: event.delta.name,
+                    input: {},
+                  },
+                });
+              }
+              if (event.delta.input_json_delta) {
+                write("content_block_delta", {
+                  type: "content_block_delta",
+                  index: blockIndex,
+                  delta: { type: "input_json_delta", partial_json: event.delta.input_json_delta },
+                });
+              }
+            } else if (event.delta.type === "thinking") {
+              if (!thinkingOpened) {
+                closeCurrentBlock();
+                blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
+                activeBlockType = "thinking";
+                thinkingOpened = true;
+                write("content_block_start", {
+                  type: "content_block_start",
+                  index: blockIndex,
+                  content_block: { type: "thinking", thinking: "", signature: "" },
+                });
+              }
+              if (event.delta.thinking) {
+                write("content_block_delta", {
+                  type: "content_block_delta",
+                  index: blockIndex,
+                  delta: { type: "thinking_delta", thinking: event.delta.thinking },
+                });
+              }
+              if (event.delta.signature) {
+                write("content_block_delta", {
+                  type: "content_block_delta",
+                  index: blockIndex,
+                  delta: { type: "signature_delta", signature: event.delta.signature },
+                });
+              }
             }
-          } else if (event.delta.type === "thinking") {
-            if (!thinkingOpened) {
-              closeCurrentBlock();
-              blockIndex = blockIndex < 0 ? 0 : blockIndex + 1;
-              activeBlockType = "thinking";
-              thinkingOpened = true;
-              write("content_block_start", {
-                type: "content_block_start",
-                index: blockIndex,
-                content_block: { type: "thinking", thinking: "", signature: "" },
-              });
-            }
-            if (event.delta.thinking) {
-              write("content_block_delta", {
-                type: "content_block_delta",
-                index: blockIndex,
-                delta: { type: "thinking_delta", thinking: event.delta.thinking },
-              });
-            }
-            if (event.delta.signature) {
-              write("content_block_delta", {
-                type: "content_block_delta",
-                index: blockIndex,
-                delta: { type: "signature_delta", signature: event.delta.signature },
-              });
-            }
+            break;
           }
-          break;
+          case "usage":
+            outputTokens = event.usage.outputTokens;
+            inputTokens = event.usage.inputTokens;
+            cacheReadTokens = event.usage.cacheReadTokens;
+            cacheWriteTokens = event.usage.cacheWriteTokens;
+            break;
+          case "stop":
+            closeCurrentBlock();
+            write("message_delta", {
+              type: "message_delta",
+              delta: { stop_reason: event.stopReason },
+              usage: {
+                input_tokens: inputTokens,
+                output_tokens: outputTokens,
+                ...(cacheReadTokens !== undefined && { cache_read_input_tokens: cacheReadTokens }),
+                ...(cacheWriteTokens !== undefined && {
+                  cache_creation_input_tokens: cacheWriteTokens,
+                }),
+              },
+            });
+            break;
+          case "error":
+            write("error", {
+              type: "error",
+              error: { type: "server_error", message: event.error },
+            });
+            break;
         }
-        case "usage":
-          outputTokens = event.usage.outputTokens;
-          break;
-        case "stop":
-          closeCurrentBlock();
-          write("message_delta", {
-            type: "message_delta",
-            delta: { stop_reason: event.stopReason },
-            usage: { output_tokens: outputTokens },
-          });
-          break;
-        case "error":
-          write("error", { type: "error", error: { type: "server_error", message: event.error } });
-          break;
       }
+    } catch (err) {
+      logger.debug("[gateway/anthropic] stream error", { error: String(err) });
+      if (!reply.raw.writableEnded) {
+        reply.raw.end();
+      }
+      return;
     }
 
     write("message_stop", { type: "message_stop" });

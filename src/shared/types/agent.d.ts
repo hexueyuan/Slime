@@ -34,6 +34,8 @@ export interface AgentConfig {
   allowedCliCommands?: string[];
   /** 启用 Anthropic extended thinking 模式 */
   enableThinking?: boolean;
+  /** Agent 可访问的额外可信路径（支持 ~ 展开） */
+  trustedPaths?: string[];
 }
 
 export interface Agent {

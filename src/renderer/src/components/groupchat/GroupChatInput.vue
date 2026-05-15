@@ -121,7 +121,7 @@ function autoResize() {
         class="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted"
         @mousedown.prevent="selectMention(agent)"
       >
-        <span class="font-medium">{{ agent.name }}</span>
+        <span class="shrink-0 font-medium">{{ agent.name }}</span>
         <span v-if="agent.description" class="truncate text-xs text-muted-foreground">
           {{ agent.description }}
         </span>

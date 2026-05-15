@@ -6,14 +6,14 @@
 
 ## Agent 基本信息
 
-| 字段 | 值 |
-|------|----|
-| 目录 | `~/.slime/slime-market/agents/smith-ai/` |
-| 中文名 | 史密斯 |
-| MBTI | INTJ |
-| gender | male |
-| capabilityRequirements | tool_call, reasoning |
-| enableThinking | true |
+| 字段                   | 值                                       |
+| ---------------------- | ---------------------------------------- |
+| 目录                   | `~/.slime/slime-market/agents/smith-ai/` |
+| 中文名                 | 史密斯                                   |
+| MBTI                   | INTJ                                     |
+| gender                 | male                                     |
+| capabilityRequirements | tool_call, reasoning                     |
+| enableThinking         | true                                     |
 
 ### 工具集（enabledTools）
 
@@ -185,15 +185,7 @@ eval 的目的是验证 SKILL.md 的指令是否能让 AI 正确执行。
   "gender": "male",
   "birthday": "2026-05-09",
   "capabilityRequirements": ["tool_call", "reasoning"],
-  "enabledTools": [
-    "read",
-    "write",
-    "edit",
-    "exec",
-    "ask_user",
-    "skill",
-    "web_fetch"
-  ],
+  "enabledTools": ["read", "write", "edit", "exec", "ask_user", "skill", "web_fetch"],
   "enabledSkills": [],
   "enableThinking": true,
   "subagentEnabled": false,

@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { homedir } from "os";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+import { app } from "electron";
 import { getDb } from "@/db";
 import * as groupMsgDao from "@/db/models/groupChatMessageDao";
 import * as groupSessionDao from "@/db/models/groupChatSessionDao";
@@ -148,8 +151,8 @@ export function forceTruncate(
   const removable = pairs.slice(0, pairs.length - keepRecentSteps);
   if (removable.length === 0) return messages;
 
-  // check if already below threshold
-  if (estimateMessagesTokens(messages) < threshold) return messages;
+  // check if already below threshold (conservative: multiply estimate by 2 to avoid under-counting)
+  if (estimateMessagesTokens(messages) * 2 < threshold) return messages;
 
   // remove pairs oldest-first until below threshold
   const removeSet = new Set<number>();
@@ -157,7 +160,7 @@ export function forceTruncate(
     removeSet.add(aIdx);
     removeSet.add(tIdx);
     const trimmed = messages.filter((_, idx) => !removeSet.has(idx));
-    if (estimateMessagesTokens(trimmed) < threshold) {
+    if (estimateMessagesTokens(trimmed) * 2 < threshold) {
       return trimmed;
     }
   }
@@ -302,6 +305,16 @@ export class AgentInvoker {
     }
 
     return messages;
+  }
+
+  private static async _dumpMessages(
+    dir: string,
+    filename: string,
+    messages: CoreMessage[],
+  ): Promise<void> {
+    if (app.isPackaged) return;
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, filename), JSON.stringify(messages, null, 2), "utf-8");
   }
 
   private async _run(params: InvokeParams): Promise<void> {
@@ -511,7 +524,11 @@ export class AgentInvoker {
           } else if (event.type === "error") {
             throw new Error(event.error);
           } else if (event.type === "usage") {
-            lastInputTokens = event.usage.inputTokens;
+            // total context tokens = uncached + cache_read + cache_write
+            lastInputTokens =
+              event.usage.inputTokens +
+              (event.usage.cacheReadTokens ?? 0) +
+              (event.usage.cacheWriteTokens ?? 0);
           }
         }
 
@@ -591,14 +608,17 @@ export class AgentInvoker {
         logger.debug("[AgentInvoker] step done", {
           agentId: this.agentId,
           step: stepCount,
-          inputTokens: `${(lastInputTokens / 1000).toFixed(1)}k`,
+          inputTokens: `${(lastInputTokens / 1000).toFixed(1)}k / ${(CONTEXT_WINDOW / 1000).toFixed(0)}k (${((lastInputTokens / CONTEXT_WINDOW) * 100).toFixed(0)}%)`,
           messages: llmMessages.length,
         });
 
         // Layer 1: micro-compact old tool results when approaching context limit (API-accurate token count)
         if (lastInputTokens >= CONTEXT_WINDOW * MICRO_COMPACT_THRESHOLD) {
           const before = llmMessages.length;
+          const snapshot = llmMessages;
           llmMessages = microCompact(llmMessages, KEEP_RECENT_STEPS);
+          AgentInvoker._dumpMessages(sessionWorkDir, "compact-before.json", snapshot);
+          AgentInvoker._dumpMessages(sessionWorkDir, "compact-after.json", llmMessages);
           logger.debug("[AgentInvoker] micro-compact", {
             agentId: this.agentId,
             step: stepCount,
@@ -606,15 +626,21 @@ export class AgentInvoker {
             messagesAfter: llmMessages.length,
           });
         }
-        // Layer 2: force-truncate oldest loop pairs if still over limit after micro-compact (local estimate)
-        if (estimateMessagesTokens(llmMessages) >= CONTEXT_WINDOW * TRUNCATE_THRESHOLD) {
+        // Layer 2: force-truncate oldest loop pairs if still over limit
+        // prefer API-accurate token count; fall back to local estimate (conservative: divide by 2)
+        const tokenCountForTruncate =
+          lastInputTokens > 0 ? lastInputTokens : estimateMessagesTokens(llmMessages) * 2;
+        if (tokenCountForTruncate >= CONTEXT_WINDOW * TRUNCATE_THRESHOLD) {
           const before = llmMessages.length;
+          const snapshot = llmMessages;
           llmMessages = forceTruncate(
             llmMessages,
             KEEP_RECENT_STEPS,
             TRUNCATE_THRESHOLD,
             CONTEXT_WINDOW,
           );
+          AgentInvoker._dumpMessages(sessionWorkDir, "truncate-before.json", snapshot);
+          AgentInvoker._dumpMessages(sessionWorkDir, "truncate-after.json", llmMessages);
           logger.debug("[AgentInvoker] force-truncate", {
             agentId: this.agentId,
             step: stepCount,

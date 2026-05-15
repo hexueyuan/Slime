@@ -81,6 +81,14 @@ export const paths = {
     return join(homedir(), app.isPackaged ? ".slime" : ".slime-dev");
   },
 
+  get sessionsDir() {
+    return join(this.slimeHomeDir, "sessions");
+  },
+
+  sessionWorkDir(sessionId: string) {
+    return join(this.sessionsDir, sessionId);
+  },
+
   /** 实际操作的项目根目录：打包后用 sourceDir，开发时用 cwd */
   get effectiveProjectRoot() {
     return app.isPackaged ? this.sourceDir : process.cwd();

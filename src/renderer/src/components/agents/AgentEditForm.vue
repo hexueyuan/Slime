@@ -200,6 +200,45 @@
       <!-- 参数 -->
       <!-- removed temperature and maxTokens -->
 
+      <!-- 可访问路径 -->
+      <div>
+        <label class="text-xs font-medium text-muted-foreground"
+          >可访问路径 <span class="text-muted-foreground">(支持 ~)</span></label
+        >
+        <div v-if="!readonly" class="mt-1 flex gap-2">
+          <input
+            v-model="newPathInput"
+            type="text"
+            placeholder="例如 ~/.slime/slime-market"
+            class="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none"
+            @keydown.enter="addTrustedPath"
+          />
+          <button
+            class="rounded-md border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+            @click="addTrustedPath"
+          >
+            添加
+          </button>
+        </div>
+        <ul v-if="form.trustedPaths.length > 0" class="mt-2 space-y-1">
+          <li
+            v-for="p in form.trustedPaths"
+            :key="p"
+            class="flex items-center justify-between rounded-md bg-muted px-3 py-1 text-sm"
+          >
+            <span class="font-mono text-foreground">{{ p }}</span>
+            <button
+              v-if="!readonly"
+              class="text-muted-foreground hover:text-foreground"
+              @click="removeTrustedPath(p)"
+            >
+              ✕
+            </button>
+          </li>
+        </ul>
+        <p v-else class="mt-1 text-xs text-muted-foreground">暂无配置，Agent 仅能访问项目根目录</p>
+      </div>
+
       <!-- 开关 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">开关</label>
@@ -292,6 +331,7 @@ const availableTools = ref<string[]>([]);
 const availableCliCommands = ref<string[]>([]);
 const availableSkills = ref<string[]>([]);
 const currentAvatar = ref<AgentAvatarType | null>(null);
+const newPathInput = ref("");
 
 async function changeAvatar() {
   const path = (await agentConfigPresenter.pickAvatar()) as string | null;
@@ -312,6 +352,7 @@ const form = reactive({
   enabledTools: [] as string[],
   allowedCliCommands: [] as string[],
   enabledSkills: [] as string[],
+  trustedPaths: [] as string[],
   subagentEnabled: false,
   enableThinking: false,
 });
@@ -340,6 +381,19 @@ function toggleSkill(name: string) {
   else form.enabledSkills.push(name);
 }
 
+function addTrustedPath() {
+  const p = newPathInput.value.trim();
+  if (p && !form.trustedPaths.includes(p)) {
+    form.trustedPaths.push(p);
+  }
+  newPathInput.value = "";
+}
+
+function removeTrustedPath(p: string) {
+  const idx = form.trustedPaths.indexOf(p);
+  if (idx >= 0) form.trustedPaths.splice(idx, 1);
+}
+
 function loadBuiltin(info: BuiltinAgentInfo) {
   const cfg = info.config as Record<string, unknown>;
   form.name = (cfg.name as string) || info.id;
@@ -352,6 +406,7 @@ function loadBuiltin(info: BuiltinAgentInfo) {
   form.enabledTools = ((cfg.enabledTools as string[]) || []).slice();
   form.allowedCliCommands = ((cfg.allowedCliCommands as string[]) || []).slice();
   form.enabledSkills = ((cfg.enabledSkills as string[]) || []).slice();
+  form.trustedPaths = ((cfg.trustedPaths as string[]) || []).slice();
   form.subagentEnabled = (cfg.subagentEnabled as boolean) || false;
   form.enableThinking = (cfg.enableThinking as boolean) || false;
   // Load avatar from DB agent record
@@ -370,6 +425,7 @@ async function loadCustom(agent: Agent) {
   form.enabledTools = (cfg.enabledTools || []).slice();
   form.allowedCliCommands = (cfg.allowedCliCommands || []).slice();
   form.enabledSkills = (cfg.enabledSkills || []).slice();
+  form.trustedPaths = (cfg.trustedPaths || []).slice();
   form.subagentEnabled = cfg.subagentEnabled || false;
   form.enableThinking = cfg.enableThinking || false;
   currentAvatar.value = agent.avatar ?? null;
@@ -408,6 +464,7 @@ async function save() {
         enabledTools: form.enabledTools,
         allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
         enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
+        trustedPaths: form.trustedPaths.length ? form.trustedPaths : undefined,
         subagentEnabled: form.subagentEnabled || undefined,
         enableThinking: form.enableThinking || undefined,
       };
@@ -424,6 +481,7 @@ async function save() {
         enabledTools: form.enabledTools,
         allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
         enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
+        trustedPaths: form.trustedPaths.length ? form.trustedPaths : undefined,
         subagentEnabled: form.subagentEnabled || undefined,
         enableThinking: form.enableThinking || undefined,
       };
@@ -441,6 +499,7 @@ async function save() {
           enabledTools: form.enabledTools,
           allowedCliCommands: form.allowedCliCommands.length ? form.allowedCliCommands : undefined,
           enabledSkills: form.enabledSkills.length ? form.enabledSkills : undefined,
+          trustedPaths: form.trustedPaths.length ? form.trustedPaths : undefined,
           subagentEnabled: form.subagentEnabled || undefined,
           enableThinking: form.enableThinking || undefined,
           additionalPrompt: form.additionalPrompt || undefined,

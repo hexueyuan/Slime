@@ -54,7 +54,7 @@ async function startEditTitle() {
       </div>
       <div
         v-else
-        class="flex-1 cursor-pointer truncate text-sm font-medium text-foreground"
+        class="flex-1 cursor-pointer truncate text-base font-semibold text-foreground"
         title="双击编辑标题"
         @dblclick="startEditTitle"
       >

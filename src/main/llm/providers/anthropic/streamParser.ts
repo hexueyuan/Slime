@@ -87,6 +87,21 @@ export async function* parseAnthropicStream(
         yield { type: "thinking_end", thinking: tb.thinking, signature: tb.signature };
         thinkingBlocks.delete(idx);
       }
+    } else if (type === "message_start" && payload.message?.usage) {
+      const u = payload.message.usage;
+      yield {
+        type: "usage",
+        usage: {
+          inputTokens: u.input_tokens ?? 0,
+          outputTokens: u.output_tokens ?? 0,
+          ...(u.cache_read_input_tokens !== undefined && {
+            cacheReadTokens: u.cache_read_input_tokens,
+          }),
+          ...(u.cache_creation_input_tokens !== undefined && {
+            cacheWriteTokens: u.cache_creation_input_tokens,
+          }),
+        },
+      };
     } else if (type === "message_delta" && payload.usage) {
       const u = payload.usage;
       yield {

@@ -259,6 +259,7 @@ CREATE TABLE IF NOT EXISTS group_chat_sessions (
   title                 TEXT NOT NULL,
   participant_agent_ids TEXT NOT NULL,
   moderator_enabled     INTEGER NOT NULL DEFAULT 0,
+  workspace_paths       TEXT NOT NULL DEFAULT '[]',
   created_at            INTEGER NOT NULL,
   updated_at            INTEGER NOT NULL
 );
@@ -353,6 +354,7 @@ function migrate(instance: BetterSqlite3.Database): void {
         title                 TEXT NOT NULL,
         participant_agent_ids TEXT NOT NULL,
         moderator_enabled     INTEGER NOT NULL DEFAULT 0,
+        workspace_paths       TEXT NOT NULL DEFAULT '[]',
         created_at            INTEGER NOT NULL,
         updated_at            INTEGER NOT NULL
       );
@@ -369,6 +371,15 @@ function migrate(instance: BetterSqlite3.Database): void {
     `);
     instance.exec(
       `CREATE INDEX IF NOT EXISTS idx_group_chat_messages_session ON group_chat_messages(session_id, order_seq);`,
+    );
+  }
+  // Add workspace_paths column to group_chat_sessions if missing
+  const gcCols = instance.prepare("PRAGMA table_info(group_chat_sessions)").all() as {
+    name: string;
+  }[];
+  if (!gcCols.some((c) => c.name === "workspace_paths")) {
+    instance.exec(
+      "ALTER TABLE group_chat_sessions ADD COLUMN workspace_paths TEXT NOT NULL DEFAULT '[]'",
     );
   }
   // Add log_date column to relay_logs for indexed date filtering

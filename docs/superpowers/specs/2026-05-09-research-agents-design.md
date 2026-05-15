@@ -6,12 +6,12 @@
 
 在 `~/.slime/slime-market/agents/` 下新增三个 market agent，配套一个 market skill：
 
-| 角色 | ID | 中文名 | 职责 |
-|------|----|--------|------|
-| 信息搜集 | `hunter-ai` | 猎手 | 根据关键词从可信源搜集资料，写入本地并维护索引 |
-| 信息整理 | `weaver-ai` | 织者 | 读取原始资料，整理为结构清晰的知识文档/调研报告 |
-| 幻灯片生成 | `narrator-ai` | 演者 | 基于报告生成 HTML 幻灯片并预览 |
-| 百度搜索 | `baidu-search` | — | 用浏览器工具抓取百度搜索前3页结果并下载正文 |
+| 角色       | ID             | 中文名 | 职责                                            |
+| ---------- | -------------- | ------ | ----------------------------------------------- |
+| 信息搜集   | `hunter-ai`    | 猎手   | 根据关键词从可信源搜集资料，写入本地并维护索引  |
+| 信息整理   | `weaver-ai`    | 织者   | 读取原始资料，整理为结构清晰的知识文档/调研报告 |
+| 幻灯片生成 | `narrator-ai`  | 演者   | 基于报告生成 HTML 幻灯片并预览                  |
+| 百度搜索   | `baidu-search` | —      | 用浏览器工具抓取百度搜索前3页结果并下载正文     |
 
 ## Session 目录约定
 
@@ -24,6 +24,7 @@
 ```
 
 **session_id 来源：**
+
 - 群聊时：由系统 system-reminder 注入（需修改群聊 system-reminder，追加"当前群聊ID：`<id>`"）
 - 单聊时：用户在对话中手动告知目录路径
 
@@ -39,9 +40,17 @@
   "gender": "male",
   "capabilityRequirements": ["tool_call", "reasoning"],
   "enabledTools": [
-    "read", "write", "exec", "ask_user", "skill", "web_fetch",
-    "browser_navigate", "browser_snapshot", "browser_get_text",
-    "browser_click", "browser_type"
+    "read",
+    "write",
+    "exec",
+    "ask_user",
+    "skill",
+    "web_fetch",
+    "browser_navigate",
+    "browser_snapshot",
+    "browser_get_text",
+    "browser_click",
+    "browser_type"
   ],
   "enabledSkills": ["baidu-search"],
   "enableThinking": true
@@ -128,13 +137,13 @@
 
 ## 文件清单
 
-| 文件 | 说明 |
-|------|------|
-| `~/.slime/slime-market/agents/hunter-ai/AGENT.json` | 猎手配置 |
-| `~/.slime/slime-market/agents/hunter-ai/PROMPT.md` | 猎手行为规范 |
-| `~/.slime/slime-market/agents/weaver-ai/AGENT.json` | 织者配置 |
-| `~/.slime/slime-market/agents/weaver-ai/PROMPT.md` | 织者行为规范 |
-| `~/.slime/slime-market/agents/narrator-ai/AGENT.json` | 演者配置 |
-| `~/.slime/slime-market/agents/narrator-ai/PROMPT.md` | 演者行为规范 |
-| `~/.slime/slime-market/skills/baidu-search/SKILL.md` | 百度搜索 skill |
-| `src/main/presenter/groupChatPresenter.ts` | 追加 group_chat_session_id 到 system-reminder |
+| 文件                                                  | 说明                                          |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `~/.slime/slime-market/agents/hunter-ai/AGENT.json`   | 猎手配置                                      |
+| `~/.slime/slime-market/agents/hunter-ai/PROMPT.md`    | 猎手行为规范                                  |
+| `~/.slime/slime-market/agents/weaver-ai/AGENT.json`   | 织者配置                                      |
+| `~/.slime/slime-market/agents/weaver-ai/PROMPT.md`    | 织者行为规范                                  |
+| `~/.slime/slime-market/agents/narrator-ai/AGENT.json` | 演者配置                                      |
+| `~/.slime/slime-market/agents/narrator-ai/PROMPT.md`  | 演者行为规范                                  |
+| `~/.slime/slime-market/skills/baidu-search/SKILL.md`  | 百度搜索 skill                                |
+| `src/main/presenter/groupChatPresenter.ts`            | 追加 group_chat_session_id 到 system-reminder |
