@@ -1,0 +1,1909 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slime Codex-style UI Preview</title>
+    <style>
+      :root {
+        --app: #101011;
+        --canvas: #151516;
+        --sidebar: rgba(38, 38, 39, 0.78);
+        --panel: #242425;
+        --panel-soft: #1d1d1e;
+        --control: #303031;
+        --control-hover: #3a3a3b;
+        --control-active: #444446;
+        --border: rgba(255, 255, 255, 0.105);
+        --border-soft: rgba(255, 255, 255, 0.065);
+        --text: #f2f2f2;
+        --text-secondary: #c9c9ca;
+        --text-muted: #909093;
+        --text-disabled: #646467;
+        --sidebar-text: #dedee0;
+        --sidebar-text-strong: #f0f0f1;
+        --sidebar-muted: #a4a4a7;
+        --sidebar-dim: #7d7d81;
+        --accent: #9b6cff;
+        --accent-hover: #ac83ff;
+        --accent-soft: rgba(155, 108, 255, 0.16);
+        --danger: #ff6b6b;
+        --warning: #ff9f43;
+        --success: #4cd987;
+        --shadow-floating: 0 22px 70px rgba(0, 0, 0, 0.42);
+        --shadow-panel: 0 12px 38px rgba(0, 0, 0, 0.24);
+        color-scheme: dark;
+        font-family:
+          Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 8% 6%, rgba(255, 255, 255, 0.045), transparent 34%),
+          linear-gradient(135deg, #252526 0%, #121213 36%, #0d0d0e 100%);
+        color: var(--text);
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .window {
+        display: grid;
+        grid-template-columns: 330px minmax(0, 1fr);
+        width: 100vw;
+        height: 100vh;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 18px;
+        overflow: hidden;
+        background: var(--app);
+      }
+
+      .sidebar {
+        position: relative;
+        padding: 22px 12px 22px;
+        background:
+          radial-gradient(circle at 55% 8%, rgba(255, 255, 255, 0.055), transparent 28%),
+          radial-gradient(circle at 14% 52%, rgba(255, 255, 255, 0.028), transparent 34%),
+          var(--sidebar);
+        backdrop-filter: blur(24px);
+      }
+
+      .traffic {
+        display: flex;
+        gap: 10px;
+        height: 22px;
+        align-items: center;
+        margin-right: 8px;
+      }
+
+      .traffic span {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: #8f8f90;
+      }
+
+      .chrome-button {
+        display: inline-grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: transparent;
+        color: #8e8e91;
+      }
+
+      .chrome-button:hover {
+        border-color: rgba(255, 255, 255, 0.045);
+        background: rgba(255, 255, 255, 0.065);
+        color: var(--text-secondary);
+      }
+
+      .chrome-button svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .sidebar-top {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 24px;
+        margin-bottom: 28px;
+        padding-left: 3px;
+      }
+
+      .nav-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .nav-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 29px;
+        padding: 3px 8px;
+        border-radius: 7px;
+        border: 1px solid transparent;
+        color: var(--sidebar-text);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .nav-row:hover,
+      .nav-row.active {
+        border-color: transparent;
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--sidebar-text-strong);
+      }
+
+      .icon {
+        display: inline-grid;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        color: var(--sidebar-muted);
+      }
+
+      .icon svg {
+        width: 17px;
+        height: 17px;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        height: 29px;
+        margin: 0;
+        padding: 3px 8px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--sidebar-muted);
+        font-size: 14px;
+      }
+
+      .search:hover {
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--sidebar-text);
+      }
+
+      .kbd {
+        margin-left: auto;
+        padding: 1px 7px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: var(--text-secondary);
+        font-size: 12px;
+      }
+
+      .section-label {
+        margin: 30px 0 12px;
+        padding: 0 8px;
+        color: var(--sidebar-dim);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .project-row,
+      .conversation-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 31px;
+        padding: 4px 8px;
+        border-radius: 7px;
+        color: var(--sidebar-text);
+        font-size: 14px;
+      }
+
+      .conversation-row {
+        padding-left: 33px;
+      }
+
+      .conversation-row strong {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 520;
+      }
+
+      .conversation-row time {
+        min-width: 30px;
+        text-align: center;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.055);
+        color: var(--sidebar-muted);
+        font-size: 12px;
+      }
+
+      .conversation-row.active {
+        color: var(--sidebar-text-strong);
+      }
+
+      .sidebar-footer {
+        position: absolute;
+        right: 18px;
+        bottom: 22px;
+        left: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .status-button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 34px;
+        padding: 7px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.045);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.035);
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 520;
+      }
+
+      .status-button:hover {
+        background: rgba(255, 255, 255, 0.065);
+        color: var(--text);
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--success);
+        box-shadow: 0 0 0 4px rgba(76, 217, 135, 0.11);
+      }
+
+      .main {
+        position: relative;
+        display: grid;
+        grid-template-rows: minmax(0, 1fr);
+        min-width: 0;
+        overflow: hidden;
+        border-left: 1px solid var(--border-soft);
+        border-top: 1px solid var(--border-soft);
+        border-top-left-radius: 15px;
+        background:
+          radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.026), transparent 26%),
+          var(--canvas);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 32px;
+        padding: 0 10px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+
+      .icon-button {
+        display: inline-grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.035);
+        color: var(--text-secondary);
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: minmax(420px, 1fr) 420px;
+        gap: 32px;
+        min-height: 0;
+        padding: 48px 56px 46px;
+        overflow: auto;
+      }
+
+      .hero {
+        display: flex;
+        min-height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 96px;
+      }
+
+      h1 {
+        margin: 0 0 58px;
+        font-size: 31px;
+        font-weight: 450;
+        letter-spacing: 0;
+      }
+
+      .composer {
+        width: min(860px, 100%);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.055);
+        border-radius: 19px;
+        background: linear-gradient(180deg, #303031 0%, #282829 100%);
+        box-shadow: var(--shadow-floating);
+      }
+
+      .composer textarea {
+        display: block;
+        width: 100%;
+        min-height: 115px;
+        resize: none;
+        border: 0;
+        outline: 0;
+        padding: 26px 26px 10px;
+        background: transparent;
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.65;
+      }
+
+      .composer textarea::placeholder {
+        color: var(--text-muted);
+      }
+
+      .composer-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 18px 16px;
+      }
+
+      .toolbar-meta {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        align-items: center;
+        gap: 11px;
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+
+      .send {
+        display: inline-grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border: 0;
+        border-radius: 999px;
+        background: #ededee;
+        color: #111;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1;
+      }
+
+      .ghost-button,
+      .primary-button,
+      .secondary-button,
+      .danger-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 32px;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 13px;
+        font-weight: 560;
+      }
+
+      .primary-button {
+        border: 1px solid rgba(255, 255, 255, 0.075);
+        background: linear-gradient(180deg, #7e5af5 0%, #6f48df 100%);
+        color: white;
+      }
+
+      .ghost-button[disabled],
+      .primary-button[disabled],
+      .secondary-button[disabled],
+      .danger-button[disabled],
+      .icon-button[disabled],
+      .send[disabled] {
+        cursor: not-allowed;
+        opacity: 1;
+        box-shadow: none;
+      }
+
+      .primary-button[disabled] {
+        border-color: rgba(255, 255, 255, 0.045);
+        background: rgba(255, 255, 255, 0.065);
+        color: var(--text-disabled);
+      }
+
+      .secondary-button[disabled],
+      .icon-button[disabled] {
+        border-color: rgba(255, 255, 255, 0.045);
+        background: rgba(255, 255, 255, 0.035);
+        color: var(--text-disabled);
+      }
+
+      .ghost-button[disabled] {
+        color: var(--text-disabled);
+      }
+
+      .danger-button[disabled] {
+        border-color: rgba(255, 255, 255, 0.045);
+        background: rgba(255, 255, 255, 0.035);
+        color: var(--text-disabled);
+      }
+
+      .send[disabled] {
+        background: rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.32);
+      }
+
+      .secondary-button {
+        border: 1px solid var(--border-soft);
+        background: var(--control);
+        color: var(--text);
+      }
+
+      .ghost-button {
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-secondary);
+      }
+
+      .danger-button {
+        border: 1px solid rgba(255, 107, 107, 0.22);
+        background: rgba(255, 107, 107, 0.1);
+        color: #ff8a8a;
+      }
+
+      .component-board {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .panel {
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.035);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px 10px;
+      }
+
+      .panel-title {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 620;
+      }
+
+      .panel-body {
+        padding: 0 16px 16px;
+      }
+
+      .button-row,
+      .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+
+      .input {
+        width: 100%;
+        height: 38px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        outline: 0;
+        padding: 0 12px;
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .input:focus {
+        border-color: rgba(155, 108, 255, 0.65);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 24px;
+        padding: 0 9px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-secondary);
+        font-size: 12px;
+      }
+
+      .badge.accent {
+        background: var(--accent-soft);
+        color: #d7c6ff;
+      }
+
+      .badge.success {
+        background: rgba(76, 217, 135, 0.12);
+        color: #91efba;
+      }
+
+      .badge.warning {
+        background: rgba(255, 159, 67, 0.14);
+        color: #ffc27d;
+      }
+
+      .list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .list-item {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 7px 9px;
+        border-radius: 10px;
+        color: var(--text-secondary);
+      }
+
+      .list-item.active,
+      .list-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+      }
+
+      .avatar {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(155, 108, 255, 0.75), rgba(76, 217, 135, 0.32));
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .list-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 560;
+      }
+
+      .list-subtitle {
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+
+      .tabs {
+        display: inline-flex;
+        gap: 3px;
+        padding: 3px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .tab {
+        min-height: 28px;
+        border-radius: 7px;
+        padding: 0 11px;
+        border: 0;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+
+      .tab.active {
+        background: rgba(255, 255, 255, 0.09);
+        color: var(--text);
+      }
+
+      .mini-page {
+        display: grid;
+        gap: 10px;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .metric {
+        min-height: 66px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .metric-label {
+        color: var(--text-muted);
+        font-size: 11px;
+      }
+
+      .metric-value {
+        margin-top: 9px;
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 620;
+      }
+
+      .chart-card {
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.028);
+      }
+
+      .chart-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 12px 8px;
+      }
+
+      .chart-title {
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 620;
+      }
+
+      .chart-value {
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 620;
+      }
+
+      .chart-window {
+        position: relative;
+        height: 118px;
+        margin: 0 12px 12px;
+        border-radius: 9px;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
+        background-size:
+          100% 29px,
+          44px 100%;
+      }
+
+      .chart-window svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .chart-area {
+        fill: url("#chartGradient");
+        opacity: 0.85;
+      }
+
+      .chart-line {
+        fill: none;
+        stroke: #9b86ff;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .chart-bars {
+        position: absolute;
+        right: 13px;
+        bottom: 12px;
+        left: 13px;
+        display: grid;
+        grid-template-columns: repeat(22, 1fr);
+        align-items: end;
+        gap: 4px;
+        height: 44px;
+      }
+
+      .chart-bars span {
+        display: block;
+        min-height: 3px;
+        border-radius: 999px 999px 0 0;
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .agent-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .agent-card {
+        position: relative;
+        min-height: 88px;
+        border: 1px solid var(--border-soft);
+        border-radius: 11px;
+        padding: 11px;
+        background: rgba(255, 255, 255, 0.032);
+        overflow: hidden;
+      }
+
+      .agent-card.active {
+        border-color: rgba(155, 134, 255, 0.34);
+        background:
+          radial-gradient(circle at 82% 8%, rgba(155, 134, 255, 0.16), transparent 38%),
+          rgba(255, 255, 255, 0.04);
+      }
+
+      .agent-card-head {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .agent-avatar,
+      .profile-avatar {
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        color: white;
+        font-weight: 700;
+      }
+
+      .agent-avatar {
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, rgba(155, 134, 255, 0.9), rgba(85, 199, 255, 0.35));
+        font-size: 13px;
+      }
+
+      .agent-name {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 620;
+      }
+
+      .agent-role {
+        margin-top: 2px;
+        color: var(--text-muted);
+        font-size: 11px;
+      }
+
+      .agent-card p {
+        margin: 10px 0 0;
+        color: var(--text-muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .profile-pair {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .profile-card {
+        border: 1px solid var(--border-soft);
+        border-radius: 11px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.032);
+      }
+
+      .profile-card.agent {
+        background:
+          linear-gradient(135deg, rgba(155, 134, 255, 0.095), rgba(255, 255, 255, 0.026)),
+          rgba(255, 255, 255, 0.028);
+      }
+
+      .profile-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .profile-avatar {
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      .profile-card.agent .profile-avatar {
+        background: linear-gradient(135deg, #7e5af5, rgba(76, 217, 135, 0.38));
+      }
+
+      .profile-name {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .profile-meta {
+        margin-top: 2px;
+        color: var(--text-muted);
+        font-size: 11px;
+      }
+
+      .profile-card p {
+        margin: 11px 0 0;
+        color: var(--text-secondary);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .log-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .log-row {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        min-height: 38px;
+        padding: 7px 9px;
+        border: 1px solid var(--border-soft);
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.026);
+      }
+
+      .log-code {
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .log-code.ok {
+        color: var(--success);
+      }
+
+      .log-code.warn {
+        color: var(--warning);
+      }
+
+      .log-code.err {
+        color: var(--danger);
+      }
+
+      .log-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 560;
+      }
+
+      .log-meta {
+        color: var(--text-muted);
+        font-size: 11px;
+      }
+
+      .rank-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .rank-row {
+        display: grid;
+        grid-template-columns: 26px minmax(0, 1fr) 68px;
+        align-items: center;
+        gap: 10px;
+        min-height: 42px;
+        padding: 7px 9px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.026);
+      }
+
+      .rank-index {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.055);
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .rank-row:first-child .rank-index {
+        background: rgba(155, 134, 255, 0.18);
+        color: #d9ceff;
+      }
+
+      .rank-main {
+        min-width: 0;
+      }
+
+      .rank-title {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 7px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 620;
+      }
+
+      .rank-title span:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .rank-bar {
+        height: 4px;
+        margin-top: 7px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.055);
+      }
+
+      .rank-bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, rgba(155, 134, 255, 0.72), rgba(85, 199, 255, 0.5));
+      }
+
+      .rank-value {
+        text-align: right;
+      }
+
+      .rank-number {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .rank-caption {
+        margin-top: 2px;
+        color: var(--text-muted);
+        font-size: 10px;
+      }
+
+      .check-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .check-row {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        min-height: 40px;
+        padding: 8px 9px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.026);
+      }
+
+      .check-row.active {
+        border-color: rgba(155, 134, 255, 0.32);
+        background: rgba(155, 134, 255, 0.08);
+      }
+
+      .checkbox {
+        display: grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.035);
+        color: transparent;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .check-row.active .checkbox {
+        border-color: rgba(155, 134, 255, 0.68);
+        background: #8d6bff;
+        color: white;
+      }
+
+      .check-title {
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 620;
+      }
+
+      .check-desc {
+        margin-top: 2px;
+        color: var(--text-muted);
+        font-size: 11px;
+      }
+
+      .switch {
+        position: relative;
+        width: 34px;
+        height: 20px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.13);
+      }
+
+      .switch::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        transition: transform 140ms ease;
+      }
+
+      .switch.on {
+        background: rgba(155, 134, 255, 0.58);
+      }
+
+      .switch.on::after {
+        transform: translateX(14px);
+        background: white;
+      }
+
+      .schedule-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 150px;
+        gap: 10px;
+      }
+
+      .week-strip {
+        display: grid;
+        grid-template-columns: 28px repeat(7, minmax(0, 1fr)) 28px;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .week-nav {
+        display: grid;
+        place-items: center;
+        height: 34px;
+        border: 1px solid var(--border-soft);
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        font-size: 17px;
+      }
+
+      .day-cell {
+        min-height: 56px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        padding: 7px 8px;
+        background: rgba(255, 255, 255, 0.026);
+      }
+
+      .day-cell.active {
+        border-color: rgba(155, 134, 255, 0.38);
+        background: rgba(155, 134, 255, 0.095);
+      }
+
+      .day-label {
+        color: var(--text-muted);
+        font-size: 10px;
+      }
+
+      .day-number {
+        margin-top: 7px;
+        color: var(--text);
+        font-size: 17px;
+        font-weight: 650;
+      }
+
+      .day-dots {
+        display: flex;
+        gap: 3px;
+        margin-top: 7px;
+      }
+
+      .day-dots span {
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.22);
+      }
+
+      .day-cell.active .day-dots span:first-child {
+        background: #9b86ff;
+      }
+
+      .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .task-row {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 9px;
+        padding: 9px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.026);
+      }
+
+      .task-check {
+        width: 16px;
+        height: 16px;
+        margin-top: 1px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+      }
+
+      .task-row.done .task-check {
+        display: grid;
+        place-items: center;
+        border-color: rgba(76, 217, 135, 0.5);
+        background: rgba(76, 217, 135, 0.16);
+        color: #91efba;
+        font-size: 11px;
+      }
+
+      .task-title {
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 620;
+      }
+
+      .task-row.done .task-title {
+        color: var(--text-muted);
+        text-decoration: line-through;
+      }
+
+      .task-meta {
+        margin-top: 3px;
+        color: var(--text-muted);
+        font-size: 11px;
+      }
+
+      .timeline {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-left: 13px;
+      }
+
+      .timeline::before {
+        content: "";
+        position: absolute;
+        top: 9px;
+        bottom: 9px;
+        left: 4px;
+        width: 1px;
+        background: rgba(255, 255, 255, 0.11);
+      }
+
+      .timeline-entry {
+        position: relative;
+        padding: 8px 9px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.026);
+      }
+
+      .timeline-entry::before {
+        content: "";
+        position: absolute;
+        top: 13px;
+        left: -13px;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--timeline-color, #9b86ff);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--timeline-color, #9b86ff) 16%, transparent);
+      }
+
+      .timeline-time {
+        color: var(--text-muted);
+        font-size: 10px;
+      }
+
+      .timeline-title {
+        margin-top: 3px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 620;
+      }
+
+      .metric-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 7px;
+        padding: 0 12px 10px;
+      }
+
+      .metric-pill {
+        position: relative;
+        min-width: 0;
+        border: 1px solid var(--border-soft);
+        border-radius: 9px;
+        padding: 7px 8px;
+        background: rgba(255, 255, 255, 0.032);
+        overflow: hidden;
+      }
+
+      .metric-pill::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        bottom: 8px;
+        left: 0;
+        width: 2px;
+        border-radius: 999px;
+        background: var(--metric-color, rgba(255, 255, 255, 0.22));
+        opacity: 0.75;
+      }
+
+      .metric-pill.active {
+        border-color: color-mix(in srgb, var(--metric-color, #9b86ff) 48%, transparent);
+        background:
+          linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--metric-color, #9b86ff) 18%, transparent),
+            rgba(255, 255, 255, 0.035)
+          );
+      }
+
+      .metric-pill-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-muted);
+        font-size: 10px;
+      }
+
+      .metric-pill-value {
+        margin-top: 5px;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 620;
+      }
+
+      .metric-pill-trend {
+        margin-left: 4px;
+        color: var(--metric-color, var(--success));
+        font-size: 10px;
+        font-weight: 560;
+      }
+
+      @media (max-width: 1180px) {
+        .window {
+          grid-template-columns: 286px minmax(0, 1fr);
+        }
+
+        .content {
+          grid-template-columns: 1fr;
+          padding: 42px 34px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="window">
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <div class="traffic" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <button class="chrome-button" title="收拢侧边栏">
+            <svg viewBox="0 0 24 24">
+              <rect x="4" y="5" width="16" height="14" rx="2" />
+              <path d="M9 5v14" />
+            </svg>
+          </button>
+          <button class="chrome-button" title="返回">
+            <svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6" /></svg>
+          </button>
+          <button class="chrome-button" title="前进">
+            <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-row active">
+            <span class="icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+              </svg>
+            </span>
+            新对话
+          </div>
+          <div class="search">
+            <span class="icon">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            </span>
+            <strong>搜索</strong>
+            <span class="kbd">⌘G</span>
+          </div>
+          <div class="nav-row">
+            <span class="icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="7" cy="7" r="2.5" />
+                <circle cx="17" cy="7" r="2.5" />
+                <circle cx="7" cy="17" r="2.5" />
+                <circle cx="17" cy="17" r="2.5" />
+              </svg>
+            </span>
+            插件
+          </div>
+          <div class="nav-row">
+            <span class="icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 8v5l3 2" /></svg>
+            </span>
+            自动化
+          </div>
+          <div class="nav-row">
+            <span class="icon">
+              <svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2" /><path d="M11 18h2" /></svg>
+            </span>
+            设置 Slime 移动版
+          </div>
+        </div>
+
+        <div class="section-label">项目</div>
+        <div class="project-row">
+          <span class="icon">
+            <svg viewBox="0 0 24 24"><path d="M4 9.5h16l-2.2 7H6.2L4 9.5Z" /></svg>
+          </span>
+          Slime
+        </div>
+        <div class="conversation-row active"><strong>对齐第二张图 UI</strong><time>⌘1</time></div>
+        <div class="conversation-row"><strong>实现 runtime profile 数据锁</strong><time>⌘2</time></div>
+        <div class="conversation-row"><strong>优化 gateway 卡顿</strong><time>⌘3</time></div>
+        <div class="conversation-row"><strong>Task 1</strong><time>⌘4</time></div>
+        <div class="conversation-row"><strong>展开显示</strong><time></time></div>
+
+        <div class="section-label">对话</div>
+        <div class="conversation-row"><strong>了解红灯测试</strong><time>⌘8</time></div>
+
+        <div class="sidebar-footer">
+          <button class="status-button" title="测试连接">
+            <span>测试</span>
+            <span class="status-dot"></span>
+          </button>
+          <div class="nav-row">
+            <span class="icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <path
+                  d="M19 12a7.8 7.8 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.2 3h-4.4l-.4 2.7a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.5A7.8 7.8 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.7h4.4l.4-2.7a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"
+                />
+              </svg>
+            </span>
+            设置
+          </div>
+        </div>
+      </aside>
+
+      <section class="main">
+        <div class="content">
+          <section class="hero">
+            <h1>要在 Slime 中构建什么？</h1>
+            <div class="composer">
+              <textarea readonly>建立一套统一的 Slime UI 设计系统，并先预览基础组件的效果。</textarea>
+              <div class="composer-toolbar">
+                <button class="icon-button">＋</button>
+                <div class="toolbar-meta">
+                  <span class="badge warning">完全访问权限</span>
+                  <span>Slime ▾</span>
+                  <span>本地模式 ▾</span>
+                  <span>brave ▾</span>
+                </div>
+                <button class="send">↑</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="component-board">
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">通用按钮</div>
+                <span class="badge accent">SlimeButton</span>
+              </div>
+              <div class="panel-body">
+                <div class="button-row">
+                  <button class="primary-button">创建</button>
+                  <button class="secondary-button">保存草稿</button>
+                  <button class="ghost-button">取消</button>
+                  <button class="danger-button">删除</button>
+                  <button class="icon-button">↻</button>
+                </div>
+                <div style="height: 12px"></div>
+                <div class="button-row">
+                  <button class="primary-button" disabled>创建</button>
+                  <button class="secondary-button" disabled>保存草稿</button>
+                  <button class="ghost-button" disabled>取消</button>
+                  <button class="danger-button" disabled>删除</button>
+                  <button class="icon-button" disabled>↻</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">输入与标签</div>
+                <span class="badge">SlimeInput</span>
+              </div>
+              <div class="panel-body">
+                <input class="input" value="例如 ~/workspace/project" />
+                <div style="height: 12px"></div>
+                <div class="badge-row">
+                  <span class="badge accent">reasoning</span>
+                  <span class="badge success">healthy</span>
+                  <span class="badge warning">retrying</span>
+                  <span class="badge">tool_call</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">列表项</div>
+                <div class="tabs">
+                  <button class="tab active">会话</button>
+                  <button class="tab">Agent</button>
+                  <button class="tab">任务</button>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="list">
+                  <div class="list-item active">
+                    <div class="avatar">H</div>
+                    <div>
+                      <div class="list-title">优化 Slime UI 风格</div>
+                      <div class="list-subtitle">Codex-like shell, composer, tokens</div>
+                    </div>
+                    <span class="badge accent">active</span>
+                  </div>
+                  <div class="list-item">
+                    <div class="avatar">M</div>
+                    <div>
+                      <div class="list-title">Gateway 状态面板</div>
+                      <div class="list-subtitle">低对比表格和指标卡</div>
+                    </div>
+                    <span class="badge">3h</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">业务页面模板</div>
+                <button class="secondary-button">刷新</button>
+              </div>
+              <div class="panel-body mini-page">
+                <div class="metric-grid">
+                  <div class="metric">
+                    <div class="metric-label">请求</div>
+                    <div class="metric-value">2.4k</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-label">成功率</div>
+                    <div class="metric-value">99.2%</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-label">延迟</div>
+                    <div class="metric-value">812ms</div>
+                  </div>
+                </div>
+                <div class="chart-card">
+                  <div class="chart-toolbar">
+                    <div>
+                      <div class="chart-title">实时指标</div>
+                      <div class="chart-value">128 req/min</div>
+                    </div>
+                    <span class="badge accent">SlimeRealtimeChart</span>
+                  </div>
+                  <div class="metric-strip">
+                    <div class="metric-pill active" style="--metric-color: #9b86ff">
+                      <div class="metric-pill-label">吞吐</div>
+                      <div class="metric-pill-value">128<span class="metric-pill-trend">+12%</span></div>
+                    </div>
+                    <div class="metric-pill" style="--metric-color: #55c7ff">
+                      <div class="metric-pill-label">延迟 p95</div>
+                      <div class="metric-pill-value">812ms<span class="metric-pill-trend">-4%</span></div>
+                    </div>
+                    <div class="metric-pill" style="--metric-color: #ff7b7b">
+                      <div class="metric-pill-label">错误率</div>
+                      <div class="metric-pill-value">0.8%<span class="metric-pill-trend">+0.2</span></div>
+                    </div>
+                    <div class="metric-pill" style="--metric-color: #f2b35d">
+                      <div class="metric-pill-label">成本</div>
+                      <div class="metric-pill-value">$0.42<span class="metric-pill-trend">+6%</span></div>
+                    </div>
+                  </div>
+                  <div class="chart-window">
+                    <svg viewBox="0 0 360 118" preserveAspectRatio="none" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#9b86ff" stop-opacity="0.28" />
+                          <stop offset="100%" stop-color="#9b86ff" stop-opacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        class="chart-area"
+                        d="M0 88 C25 82 32 52 57 57 C82 62 91 91 119 82 C148 73 153 37 183 42 C213 47 217 75 245 70 C274 65 285 28 312 34 C333 39 344 55 360 48 L360 118 L0 118 Z"
+                      />
+                      <path
+                        class="chart-line"
+                        d="M0 88 C25 82 32 52 57 57 C82 62 91 91 119 82 C148 73 153 37 183 42 C213 47 217 75 245 70 C274 65 285 28 312 34 C333 39 344 55 360 48"
+                      />
+                    </svg>
+                    <div class="chart-bars" aria-hidden="true">
+                      <span style="height: 18%"></span>
+                      <span style="height: 34%"></span>
+                      <span style="height: 28%"></span>
+                      <span style="height: 48%"></span>
+                      <span style="height: 63%"></span>
+                      <span style="height: 42%"></span>
+                      <span style="height: 29%"></span>
+                      <span style="height: 36%"></span>
+                      <span style="height: 58%"></span>
+                      <span style="height: 72%"></span>
+                      <span style="height: 46%"></span>
+                      <span style="height: 39%"></span>
+                      <span style="height: 66%"></span>
+                      <span style="height: 81%"></span>
+                      <span style="height: 54%"></span>
+                      <span style="height: 43%"></span>
+                      <span style="height: 61%"></span>
+                      <span style="height: 77%"></span>
+                      <span style="height: 68%"></span>
+                      <span style="height: 52%"></span>
+                      <span style="height: 74%"></span>
+                      <span style="height: 57%"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="list-item">
+                  <div class="avatar">G</div>
+                  <div>
+                    <div class="list-title">Anthropic 主渠道</div>
+                    <div class="list-subtitle">round_robin · 2 keys · circuit closed</div>
+                  </div>
+                  <span class="badge success">online</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Agent 卡片</div>
+                <span class="badge accent">SlimeAgentCard</span>
+              </div>
+              <div class="panel-body">
+                <div class="agent-grid">
+                  <div class="agent-card active">
+                    <div class="agent-card-head">
+                      <div class="agent-avatar">H</div>
+                      <div>
+                        <div class="agent-name">哈尔</div>
+                        <div class="agent-role">reasoning · tool_call</div>
+                      </div>
+                    </div>
+                    <p>负责拆解任务、规划实现路径，并在执行时保持上下文。</p>
+                  </div>
+                  <div class="agent-card">
+                    <div class="agent-card-head">
+                      <div class="agent-avatar">M</div>
+                      <div>
+                        <div class="agent-name">莫斯</div>
+                        <div class="agent-role">research · review</div>
+                      </div>
+                    </div>
+                    <p>适合检索资料、审查方案和补足实现前的风险判断。</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">资料卡</div>
+                <span class="badge">SlimeProfileCard</span>
+              </div>
+              <div class="panel-body">
+                <div class="profile-pair">
+                  <div class="profile-card">
+                    <div class="profile-head">
+                      <div class="profile-avatar">你</div>
+                      <div>
+                        <div class="profile-name">用户资料</div>
+                        <div class="profile-meta">本地身份 · 偏好设置</div>
+                      </div>
+                    </div>
+                    <p>用于展示头像、名称、常用工作区和交互偏好。</p>
+                  </div>
+                  <div class="profile-card agent">
+                    <div class="profile-head">
+                      <div class="profile-avatar">A</div>
+                      <div>
+                        <div class="profile-name">Agent 资料</div>
+                        <div class="profile-meta">INTJ · brave · MCP enabled</div>
+                      </div>
+                    </div>
+                    <p>用于 Agent 详情、能力标签、人格设定和工具权限。</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Gateway 日志</div>
+                <span class="badge warning">SlimeLogCard</span>
+              </div>
+              <div class="panel-body">
+                <div class="log-list">
+                  <div class="log-row">
+                    <div class="log-code ok">200</div>
+                    <div>
+                      <div class="log-title">anthropic/messages · claude-sonnet</div>
+                      <div class="log-meta">92 tokens · 812ms · key pool A</div>
+                    </div>
+                    <span class="badge success">ok</span>
+                  </div>
+                  <div class="log-row">
+                    <div class="log-code warn">429</div>
+                    <div>
+                      <div class="log-title">openai/responses · rate limited</div>
+                      <div class="log-meta">retry in 2.4s · circuit half-open</div>
+                    </div>
+                    <span class="badge warning">retry</span>
+                  </div>
+                  <div class="log-row">
+                    <div class="log-code err">502</div>
+                    <div>
+                      <div class="log-title">custom gateway · upstream failed</div>
+                      <div class="log-meta">failover to backup · 1.2s</div>
+                    </div>
+                    <span class="badge">failover</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Gateway 排名</div>
+                <span class="badge accent">SlimeRankBoard</span>
+              </div>
+              <div class="panel-body">
+                <div class="rank-list">
+                  <div class="rank-row">
+                    <div class="rank-index">1</div>
+                    <div class="rank-main">
+                      <div class="rank-title">
+                        <span>anthropic / claude-sonnet</span>
+                        <span class="badge success">stable</span>
+                      </div>
+                      <div class="rank-bar"><span style="width: 92%"></span></div>
+                    </div>
+                    <div class="rank-value">
+                      <div class="rank-number">2.4k</div>
+                      <div class="rank-caption">requests</div>
+                    </div>
+                  </div>
+                  <div class="rank-row">
+                    <div class="rank-index">2</div>
+                    <div class="rank-main">
+                      <div class="rank-title">
+                        <span>openai / gpt-5.4</span>
+                        <span class="badge">fast</span>
+                      </div>
+                      <div class="rank-bar"><span style="width: 71%"></span></div>
+                    </div>
+                    <div class="rank-value">
+                      <div class="rank-number">1.8k</div>
+                      <div class="rank-caption">requests</div>
+                    </div>
+                  </div>
+                  <div class="rank-row">
+                    <div class="rank-index">3</div>
+                    <div class="rank-main">
+                      <div class="rank-title">
+                        <span>deepseek / reasoner</span>
+                        <span class="badge warning">retry</span>
+                      </div>
+                      <div class="rank-bar"><span style="width: 48%"></span></div>
+                    </div>
+                    <div class="rank-value">
+                      <div class="rank-number">932</div>
+                      <div class="rank-caption">requests</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">勾选组件</div>
+                <span class="badge">SlimeChecklist</span>
+              </div>
+              <div class="panel-body">
+                <div class="check-list">
+                  <div class="check-row active">
+                    <div class="checkbox">✓</div>
+                    <div>
+                      <div class="check-title">启用 MCP 工具</div>
+                      <div class="check-desc">允许当前 Agent 调用已授权的外部工具</div>
+                    </div>
+                    <span class="badge accent">selected</span>
+                  </div>
+                  <div class="check-row">
+                    <div class="checkbox">✓</div>
+                    <div>
+                      <div class="check-title">Vision 能力</div>
+                      <div class="check-desc">模型可处理图片输入和截图分析</div>
+                    </div>
+                    <span class="badge">optional</span>
+                  </div>
+                  <div class="check-row active">
+                    <div class="checkbox">✓</div>
+                    <div>
+                      <div class="check-title">智能路由</div>
+                      <div class="check-desc">根据能力、健康度和成本自动选择渠道</div>
+                    </div>
+                    <span class="switch on" aria-hidden="true"></span>
+                  </div>
+                  <div class="check-row">
+                    <div class="checkbox">✓</div>
+                    <div>
+                      <div class="check-title">调试日志</div>
+                      <div class="check-desc">记录详细请求上下文，仅用于开发排查</div>
+                    </div>
+                    <span class="switch" aria-hidden="true"></span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">任务管理</div>
+                <span class="badge accent">Schedule Kit</span>
+              </div>
+              <div class="panel-body">
+                <div class="week-strip">
+                  <button class="week-nav">‹</button>
+                  <div class="day-cell">
+                    <div class="day-label">周一</div>
+                    <div class="day-number">11</div>
+                    <div class="day-dots"><span></span></div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周二</div>
+                    <div class="day-number">12</div>
+                    <div class="day-dots"><span></span><span></span></div>
+                  </div>
+                  <div class="day-cell active">
+                    <div class="day-label">今天</div>
+                    <div class="day-number">15</div>
+                    <div class="day-dots"><span></span><span></span><span></span></div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周四</div>
+                    <div class="day-number">16</div>
+                    <div class="day-dots"><span></span></div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周五</div>
+                    <div class="day-number">17</div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周六</div>
+                    <div class="day-number">18</div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周日</div>
+                    <div class="day-number">19</div>
+                  </div>
+                  <button class="week-nav">›</button>
+                </div>
+                <div class="schedule-shell">
+                  <div class="task-list">
+                    <div class="task-row">
+                      <div class="task-check"></div>
+                      <div>
+                        <div class="task-title">完成 UI primitives 首轮实现</div>
+                        <div class="task-meta">高优先级 · Chatroom / GroupChat</div>
+                      </div>
+                      <span class="badge warning">今天</span>
+                    </div>
+                    <div class="task-row done">
+                      <div class="task-check">✓</div>
+                      <div>
+                        <div class="task-title">确认 Codex-like 视觉样张</div>
+                        <div class="task-meta">设计基准 · 已完成</div>
+                      </div>
+                      <span class="badge success">done</span>
+                    </div>
+                    <div class="task-row">
+                      <div class="task-check"></div>
+                      <div>
+                        <div class="task-title">补齐 Gateway 图表组件</div>
+                        <div class="task-meta">实时指标 · 排名 · 日志</div>
+                      </div>
+                      <span class="badge">排期</span>
+                    </div>
+                  </div>
+                  <div class="timeline">
+                    <div class="timeline-entry" style="--timeline-color: #9b86ff">
+                      <div class="timeline-time">09:40</div>
+                      <div class="timeline-title">创建设计 spec</div>
+                    </div>
+                    <div class="timeline-entry" style="--timeline-color: #55c7ff">
+                      <div class="timeline-time">14:20</div>
+                      <div class="timeline-title">预览组件样张</div>
+                    </div>
+                    <div class="timeline-entry" style="--timeline-color: #f2b35d">
+                      <div class="timeline-time">16:00</div>
+                      <div class="timeline-title">计划实现任务</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
