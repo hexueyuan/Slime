@@ -7,41 +7,88 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --color-background: oklch(1 0 0);
-  --color-foreground: oklch(0.145 0 0);
-  --color-muted: oklch(0.97 0 0);
-  --color-muted-foreground: oklch(0.556 0 0);
-  --color-border: oklch(0.922 0 0);
-  --color-primary: oklch(0.205 0 0);
-  --color-primary-foreground: oklch(0.985 0 0);
-  --color-accent: oklch(0.97 0 0);
-  --color-accent-foreground: oklch(0.205 0 0);
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.145 0 0);
-  --color-destructive: oklch(0.577 0.245 27.325);
-  --color-destructive-foreground: oklch(0.985 0 0);
-  --color-sidebar: oklch(0.97 0 0);
-  --color-input: oklch(0.93 0 0);
-  --color-input-border: oklch(0.87 0 0);
+  --color-app: #f7f7f8;
+  --color-app-canvas: #ffffff;
+  --color-app-sidebar: rgba(246, 246, 247, 0.82);
+  --color-app-elevated: #ffffff;
+  --color-text-primary: #1f1f21;
+  --color-text-secondary: #4f4f55;
+  --color-text-muted: #76767d;
+  --color-text-disabled: #a0a0a8;
+  --color-border-subtle: rgba(0, 0, 0, 0.08);
+  --color-border-strong: rgba(0, 0, 0, 0.14);
+  --color-control: rgba(0, 0, 0, 0.045);
+  --color-control-hover: rgba(0, 0, 0, 0.075);
+  --color-control-active: rgba(0, 0, 0, 0.105);
+  --color-accent-brand: #7e5af5;
+  --color-accent-brand-hover: #8d6bff;
+  --color-accent-brand-soft: rgba(126, 90, 245, 0.14);
+  --color-success: #35b979;
+  --color-warning: #d89035;
+  --color-danger: #e45d5d;
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --shadow-panel: 0 12px 38px rgba(0, 0, 0, 0.12);
+  --shadow-floating: 0 22px 70px rgba(0, 0, 0, 0.22);
+  --color-background: var(--color-app-canvas);
+  --color-foreground: var(--color-text-primary);
+  --color-muted: var(--color-control);
+  --color-muted-foreground: var(--color-text-muted);
+  --color-border: var(--color-border-strong);
+  --color-primary: var(--color-text-primary);
+  --color-primary-foreground: #ffffff;
+  --color-accent: var(--color-control-hover);
+  --color-accent-foreground: var(--color-text-primary);
+  --color-card: var(--color-app-elevated);
+  --color-card-foreground: var(--color-text-primary);
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: #ffffff;
+  --color-sidebar: var(--color-app-sidebar);
+  --color-input: var(--color-control);
+  --color-input-border: var(--color-border-strong);
 }
 
 .dark {
-  --color-background: oklch(0.145 0 0);
-  --color-foreground: oklch(0.985 0 0);
-  --color-muted: oklch(0.269 0 0);
-  --color-muted-foreground: oklch(0.708 0 0);
-  --color-border: oklch(0.269 0 0);
-  --color-input: oklch(0.205 0 0);
-  --color-primary: oklch(0.985 0 0);
-  --color-primary-foreground: oklch(0.205 0 0);
-  --color-accent: oklch(0.269 0 0);
-  --color-accent-foreground: oklch(0.985 0 0);
-  --color-card: oklch(0.269 0 0);
-  --color-card-foreground: oklch(0.985 0 0);
-  --color-destructive: oklch(0.577 0.245 27.325);
-  --color-destructive-foreground: oklch(0.985 0 0);
-  --color-sidebar: oklch(0.2 0 0);
-  --color-input-border: oklch(0.35 0 0);
+  --color-app: #101011;
+  --color-app-canvas: #151516;
+  --color-app-sidebar: rgba(38, 38, 39, 0.78);
+  --color-app-elevated: #242425;
+  --color-text-primary: #f2f2f2;
+  --color-text-secondary: #c9c9ca;
+  --color-text-muted: #909093;
+  --color-text-disabled: #646467;
+  --color-border-subtle: rgba(255, 255, 255, 0.065);
+  --color-border-strong: rgba(255, 255, 255, 0.105);
+  --color-control: rgba(255, 255, 255, 0.035);
+  --color-control-hover: rgba(255, 255, 255, 0.065);
+  --color-control-active: rgba(255, 255, 255, 0.095);
+  --color-accent-brand: #7e5af5;
+  --color-accent-brand-hover: #9b86ff;
+  --color-accent-brand-soft: rgba(155, 134, 255, 0.16);
+  --color-success: #4cd987;
+  --color-warning: #f2b35d;
+  --color-danger: #ff7b7b;
+  --shadow-panel: 0 12px 38px rgba(0, 0, 0, 0.24);
+  --shadow-floating: 0 22px 70px rgba(0, 0, 0, 0.42);
+  --color-background: var(--color-app-canvas);
+  --color-foreground: var(--color-text-primary);
+  --color-muted: var(--color-control);
+  --color-muted-foreground: var(--color-text-muted);
+  --color-border: var(--color-border-strong);
+  --color-input: var(--color-control);
+  --color-primary: var(--color-text-primary);
+  --color-primary-foreground: #111111;
+  --color-accent: var(--color-control-hover);
+  --color-accent-foreground: var(--color-text-primary);
+  --color-card: var(--color-app-elevated);
+  --color-card-foreground: var(--color-text-primary);
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: #111111;
+  --color-sidebar: var(--color-app-sidebar);
+  --color-input-border: var(--color-border-strong);
 }
 
 @theme inline {
@@ -61,6 +108,11 @@
   --color-sidebar: var(--color-sidebar);
   --color-input: var(--color-input);
   --color-input-border: var(--color-input-border);
+}
+
+body {
+  font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  letter-spacing: 0;
 }
 
 .prose {
