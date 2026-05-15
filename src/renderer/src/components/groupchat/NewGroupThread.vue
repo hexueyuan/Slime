@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import AgentAvatar from "../chat/AgentAvatar.vue";
+import SlimeAgentCard from "@/components/slime/SlimeAgentCard.vue";
+import SlimeButton from "@/components/ui/SlimeButton.vue";
+import SlimeChecklist from "@/components/ui/SlimeChecklist.vue";
+import SlimeInput from "@/components/ui/SlimeInput.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useGroupChatSessionStore } from "@/stores/groupChatSession";
 import { getMBTIColor } from "@shared/constants/mbti";
@@ -52,88 +56,87 @@ async function onCreate() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
-    <div class="flex flex-1 flex-col items-center justify-center px-8">
-      <h2 class="mb-1 text-lg font-medium text-foreground">创建群聊</h2>
-      <p class="mb-6 text-sm text-muted-foreground">选择 1 个或更多 Agent</p>
+  <div class="flex h-full flex-col bg-[var(--color-app-canvas)]">
+    <div class="flex flex-1 flex-col items-center justify-center px-8 py-8">
+      <h2 class="mb-2 text-[28px] font-semibold text-[var(--color-text-primary)]">创建群聊</h2>
+      <p class="mb-7 text-sm text-[var(--color-text-secondary)]">选择 1 个或更多 Agent</p>
 
       <!-- Agent cards -->
-      <div class="mb-6 flex flex-wrap justify-center gap-3">
-        <button
+      <div class="mb-6 flex max-w-[760px] flex-wrap justify-center gap-3">
+        <SlimeAgentCard
           v-for="agent in agentStore.enabledAgents"
           :key="agent.id"
-          :style="{
-            '--agent-color': agentColor(agent),
-            borderColor: selectedAgentIds.includes(agent.id) ? agentColor(agent) : undefined,
-            backgroundColor: selectedAgentIds.includes(agent.id)
-              ? agentColor(agent) + '1a'
-              : undefined,
-          }"
-          :class="[
-            'flex w-36 flex-col items-center gap-2 rounded-xl border px-3 py-3 text-sm transition-colors',
-            selectedAgentIds.includes(agent.id)
-              ? 'text-foreground'
-              : 'border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground',
-          ]"
-          @click="toggleAgent(agent.id)"
+          :name="agent.name"
+          :selected="selectedAgentIds.includes(agent.id)"
+          :tone-color="agentColor(agent)"
+          @select="toggleAgent(agent.id)"
         >
-          <AgentAvatar :avatar="agent.avatar" size="md" />
-          <span class="font-medium text-foreground">{{ agent.name }}</span>
-        </button>
+          <template #avatar>
+            <AgentAvatar :avatar="agent.avatar" size="md" />
+          </template>
+        </SlimeAgentCard>
       </div>
 
       <!-- Moderator toggle -->
-      <label class="mb-4 flex cursor-pointer items-center gap-2 text-sm">
-        <input v-model="moderatorEnabled" type="checkbox" class="rounded" />
-        <span class="text-foreground">启用智能路由（主持人）</span>
-        <span class="text-xs text-muted-foreground">— 无需 @ 时自动判断回复者</span>
-      </label>
+      <div class="mb-4 w-full max-w-[520px]">
+        <SlimeChecklist
+          :items="[
+            {
+              id: 'moderator',
+              title: '启用智能路由（主持人）',
+              description: '无需 @ 时自动判断回复者',
+              checked: moderatorEnabled,
+              control: 'switch',
+            },
+          ]"
+          @toggle="(_, checked) => (moderatorEnabled = checked)"
+        />
+      </div>
 
       <!-- Workspace paths -->
-      <div class="mb-4 w-full max-w-sm">
-        <p class="mb-1 text-xs text-muted-foreground">工作目录（可选，支持 ~）</p>
+      <div class="mb-4 w-full max-w-[520px]">
+        <p class="mb-2 text-xs text-[var(--color-text-muted)]">工作目录（可选，支持 ~）</p>
         <div class="flex gap-2">
-          <input
+          <SlimeInput
             v-model="newPathInput"
-            type="text"
             placeholder="例如 ~/workspace/project"
-            class="flex-1 rounded border border-border bg-background px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+            density="compact"
             @keydown.enter="addPath"
           />
-          <button
-            class="rounded bg-muted px-2 py-1 text-xs text-foreground hover:bg-muted/80"
-            @click="addPath"
-          >
-            添加
-          </button>
+          <SlimeButton size="sm" @click="addPath"> 添加 </SlimeButton>
         </div>
         <ul v-if="workspacePaths.length > 0" class="mt-2 space-y-1">
           <li
             v-for="p in workspacePaths"
             :key="p"
-            class="flex items-center justify-between rounded bg-muted px-2 py-1 text-xs"
+            class="flex items-center justify-between rounded-[var(--radius-sm)] bg-[var(--color-control)] px-2 py-1 text-xs"
           >
-            <span class="text-foreground">{{ p }}</span>
-            <button class="text-muted-foreground hover:text-foreground" @click="removePath(p)">
+            <span class="text-[var(--color-text-primary)]">{{ p }}</span>
+            <button
+              class="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+              @click="removePath(p)"
+            >
               ✕
             </button>
           </li>
         </ul>
       </div>
 
-      <p v-if="selectedAgentIds.length < 1" class="text-xs text-muted-foreground">
+      <p v-if="selectedAgentIds.length < 1" class="text-xs text-[var(--color-text-muted)]">
         请至少选择 1 个 Agent
       </p>
     </div>
 
-    <div class="border-t border-border p-4">
-      <button
+    <div class="border-t border-[var(--color-border-subtle)] p-4">
+      <SlimeButton
         :disabled="!canCreate"
-        class="w-full rounded-lg bg-violet-600 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-40"
+        class="w-full"
+        variant="primary"
+        size="lg"
         @click="onCreate"
       >
         创建群聊
-      </button>
+      </SlimeButton>
     </div>
   </div>
 </template>

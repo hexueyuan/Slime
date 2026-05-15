@@ -3,6 +3,7 @@ import { onMounted, onUnmounted } from "vue";
 import GroupSessionList from "../components/groupchat/GroupSessionList.vue";
 import NewGroupThread from "../components/groupchat/NewGroupThread.vue";
 import GroupChatView from "../components/groupchat/GroupChatView.vue";
+import SplitWorkspace from "@/components/layout/SplitWorkspace.vue";
 import { useGroupChatSessionStore } from "@/stores/groupChatSession";
 import { useGroupChatStore } from "@/stores/groupChat";
 import { useAgentStore } from "@/stores/agent";
@@ -47,16 +48,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-full">
-    <!-- Left: Session list -->
-    <div class="w-[220px] shrink-0 border-r border-border">
+  <SplitWorkspace>
+    <template #sidebar>
       <GroupSessionList />
-    </div>
+    </template>
 
-    <!-- Right: Content -->
-    <div class="min-w-0 flex-1 overflow-hidden">
+    <div class="h-full min-w-0 flex-1 overflow-hidden">
       <NewGroupThread v-if="!sessionStore.activeSessionId" />
       <GroupChatView v-else />
     </div>
-  </div>
+  </SplitWorkspace>
 </template>

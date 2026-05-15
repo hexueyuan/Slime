@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { Icon } from "@iconify/vue";
+import SlimeIconButton from "@/components/ui/SlimeIconButton.vue";
+import SlimeInput from "@/components/ui/SlimeInput.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
@@ -136,28 +138,22 @@ async function onRenameConfirm() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
+  <div class="flex h-full flex-col text-[var(--color-text-secondary)]">
     <!-- Header -->
-    <div class="flex items-center justify-between border-b border-border px-3 py-2">
-      <span class="text-sm font-medium text-foreground">会话</span>
-      <button
+    <div class="flex items-center justify-between px-3 pb-2 pt-3">
+      <span class="text-sm font-semibold text-[var(--color-text-primary)]">会话</span>
+      <SlimeIconButton
         data-testid="new-session-btn"
-        class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+        icon="lucide:plus"
         title="新建对话"
+        size="sm"
         @click="onNewSession"
-      >
-        <Icon icon="lucide:plus" class="h-4 w-4" />
-      </button>
+      />
     </div>
 
     <!-- Search -->
-    <div class="px-3 py-2">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="搜索会话..."
-        class="w-full rounded-md border border-border bg-muted/50 px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:outline-none"
-      />
+    <div class="px-3 pb-3">
+      <SlimeInput v-model="searchQuery" placeholder="搜索会话..." density="compact" />
     </div>
 
     <!-- Session list -->
@@ -169,10 +165,10 @@ async function onRenameConfirm() {
           :key="session.id"
           data-testid="session-item"
           :class="[
-            'mb-0.5 cursor-pointer rounded-md px-2.5 py-2 transition-colors',
+            'mb-1 cursor-pointer rounded-[var(--radius-sm)] px-2.5 py-2 transition-colors',
             session.id === sessionStore.activeSessionId
-              ? 'bg-muted text-foreground'
-              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+              ? 'bg-[var(--color-control-active)] text-[var(--color-text-primary)]'
+              : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]',
           ]"
           @click="emit('select', session.id)"
           @contextmenu="onContextMenu($event, session.id, false)"
@@ -180,7 +176,7 @@ async function onRenameConfirm() {
           <input
             v-if="renaming === session.id"
             v-model="renameInput"
-            class="w-full rounded border border-violet-500 bg-transparent px-1 text-sm text-foreground focus:outline-none"
+            class="w-full rounded-[var(--radius-sm)] border border-[var(--color-accent-brand)] bg-transparent px-1 text-sm text-[var(--color-text-primary)] focus:outline-none"
             @blur="onRenameConfirm"
             @keydown.enter="onRenameConfirm"
             @keydown.escape="renaming = null"
@@ -196,11 +192,11 @@ async function onRenameConfirm() {
               <Icon
                 v-if="session.isPinned"
                 icon="lucide:pin"
-                class="h-3 w-3 text-muted-foreground"
+                class="h-3 w-3 text-[var(--color-text-muted)]"
               />
             </div>
             <div class="mt-0.5 truncate text-sm">{{ session.title }}</div>
-            <div class="mt-0.5 text-[10px] text-muted-foreground">
+            <div class="mt-0.5 text-[10px] text-[var(--color-text-muted)]">
               {{ formatTime(session.updatedAt) }}
             </div>
           </template>
@@ -208,7 +204,7 @@ async function onRenameConfirm() {
 
         <div
           v-if="filteredActive.length === 0 && filteredArchived.length === 0"
-          class="px-2 py-4 text-center text-xs text-muted-foreground"
+          class="px-2 py-4 text-center text-xs text-[var(--color-text-muted)]"
         >
           暂无会话
         </div>
@@ -217,12 +213,12 @@ async function onRenameConfirm() {
       <!-- Archive section: pinned to bottom, only when archived sessions exist -->
       <div
         v-if="sessionStore.archivedSessions.length > 0"
-        class="shrink-0 border-t border-border px-2 pb-1"
+        class="shrink-0 border-t border-[var(--color-border-subtle)] px-2 pb-1"
       >
         <!-- Archive header -->
         <button
           data-testid="archive-header"
-          class="flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          class="flex w-full items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-2 text-sm font-semibold text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]"
           @click="toggleArchive"
         >
           <Icon
@@ -245,8 +241,8 @@ async function onRenameConfirm() {
             :class="[
               'mb-0.5 cursor-pointer rounded-md px-2.5 py-2 transition-colors',
               session.id === sessionStore.activeSessionId
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                ? 'bg-[var(--color-control-active)] text-[var(--color-text-primary)]'
+                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]',
             ]"
             @click="emit('select', session.id)"
             @contextmenu="onContextMenu($event, session.id, true)"
@@ -254,7 +250,7 @@ async function onRenameConfirm() {
             <input
               v-if="renaming === session.id"
               v-model="renameInput"
-              class="w-full rounded border border-violet-500 bg-transparent px-1 text-sm text-foreground focus:outline-none"
+              class="w-full rounded-[var(--radius-sm)] border border-[var(--color-accent-brand)] bg-transparent px-1 text-sm text-[var(--color-text-primary)] focus:outline-none"
               @blur="onRenameConfirm"
               @keydown.enter="onRenameConfirm"
               @keydown.escape="renaming = null"
@@ -269,7 +265,7 @@ async function onRenameConfirm() {
                 </span>
               </div>
               <div class="mt-0.5 truncate text-sm">{{ session.title }}</div>
-              <div class="mt-0.5 text-[10px] text-muted-foreground">
+              <div class="mt-0.5 text-[10px] text-[var(--color-text-muted)]">
                 {{ formatTime(session.updatedAt) }}
               </div>
             </template>
@@ -277,7 +273,7 @@ async function onRenameConfirm() {
 
           <div
             v-if="filteredArchived.length === 0 && searchQuery.trim()"
-            class="px-2 py-2 text-center text-xs text-muted-foreground"
+            class="px-2 py-2 text-center text-xs text-[var(--color-text-muted)]"
           >
             无匹配归档会话
           </div>
@@ -289,28 +285,28 @@ async function onRenameConfirm() {
     <Teleport to="body">
       <div
         v-if="showContextMenu"
-        class="fixed z-50 min-w-[140px] rounded-md border border-border bg-neutral-900 py-1 shadow-lg"
+        class="fixed z-50 min-w-[140px] rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] py-1 shadow-[var(--shadow-floating)]"
         :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
         @click.stop
       >
         <button
           v-if="!isContextMenuArchived"
           data-testid="pin-menu-item"
-          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-control-hover)]"
           @click="onPin"
         >
           <Icon icon="lucide:pin" class="h-3 w-3" />
           置顶 / 取消置顶
         </button>
         <button
-          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-control-hover)]"
           @click="onRename"
         >
           <Icon icon="lucide:pencil" class="h-3 w-3" />
           重命名
         </button>
         <button
-          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-muted"
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-danger)] hover:bg-[var(--color-control-hover)]"
           @click="onDelete"
         >
           <Icon icon="lucide:trash-2" class="h-3 w-3" />

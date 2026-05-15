@@ -9,70 +9,42 @@
       />
       <!-- Dialog -->
       <div
-        class="relative flex h-[560px] w-[640px] overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+        class="relative flex h-[560px] w-[680px] overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] shadow-[var(--shadow-floating)]"
       >
         <!-- Left nav -->
-        <div class="flex w-48 shrink-0 flex-col border-r border-border bg-sidebar p-3">
-          <h2
-            class="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-          >
+        <div
+          class="flex w-48 shrink-0 flex-col border-r border-[var(--color-border-subtle)] bg-[var(--color-app-sidebar)] p-3"
+        >
+          <h2 class="mb-3 px-2 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
             设置
           </h2>
-          <button
-            :class="[
-              'rounded-md px-3 py-1.5 text-left text-sm',
-              activeTab === 'profile'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50',
-            ]"
-            @click="activeTab = 'profile'"
+          <SlimeListItem
+            :selected="activeTab === 'profile'"
+            compact
+            @select="activeTab = 'profile'"
           >
             个人资料
-          </button>
-          <button
-            :class="[
-              'rounded-md px-3 py-1.5 text-left text-sm',
-              activeTab === 'gateway'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50',
-            ]"
-            @click="activeTab = 'gateway'"
+          </SlimeListItem>
+          <SlimeListItem
+            :selected="activeTab === 'gateway'"
+            compact
+            @select="activeTab = 'gateway'"
           >
             网关
-          </button>
-          <button
-            :class="[
-              'rounded-md px-3 py-1.5 text-left text-sm',
-              activeTab === 'general'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50',
-            ]"
-            @click="activeTab = 'general'"
+          </SlimeListItem>
+          <SlimeListItem
+            :selected="activeTab === 'general'"
+            compact
+            @select="activeTab = 'general'"
           >
             通用
-          </button>
-          <button
-            :class="[
-              'rounded-md px-3 py-1.5 text-left text-sm',
-              activeTab === 'mcp'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50',
-            ]"
-            @click="activeTab = 'mcp'"
-          >
+          </SlimeListItem>
+          <SlimeListItem :selected="activeTab === 'mcp'" compact @select="activeTab = 'mcp'">
             MCP
-          </button>
-          <button
-            :class="[
-              'rounded-md px-3 py-1.5 text-left text-sm',
-              activeTab === 'update'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50',
-            ]"
-            @click="activeTab = 'update'"
-          >
+          </SlimeListItem>
+          <SlimeListItem :selected="activeTab === 'update'" compact @select="activeTab = 'update'">
             更新
-          </button>
+          </SlimeListItem>
         </div>
         <!-- Right content -->
         <div class="flex flex-1 flex-col overflow-y-auto p-5">
@@ -94,6 +66,7 @@ import ProfileSettings from "./ProfileSettings.vue";
 import GeneralSettings from "./GeneralSettings.vue";
 import UpdateSettings from "./UpdateSettings.vue";
 import MCPSettings from "./MCPSettings.vue";
+import SlimeListItem from "@/components/ui/SlimeListItem.vue";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();

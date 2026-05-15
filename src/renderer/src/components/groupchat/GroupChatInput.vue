@@ -109,20 +109,20 @@ function autoResize() {
 </script>
 
 <template>
-  <div class="absolute bottom-0 left-0 right-0 z-10 px-6 pb-3">
+  <div class="absolute bottom-0 left-0 right-0 z-10 px-6 pb-4">
     <!-- @ mention dropdown -->
     <div
       v-if="showMentionDropdown && filteredMentionAgents.length > 0"
-      class="mb-1 overflow-hidden rounded-xl border border-border bg-card/90 shadow-sm backdrop-blur-lg"
+      class="mb-1 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] shadow-[var(--shadow-floating)]"
     >
       <button
         v-for="agent in filteredMentionAgents"
         :key="agent.id"
-        class="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted"
+        class="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-control-hover)]"
         @mousedown.prevent="selectMention(agent)"
       >
         <span class="shrink-0 font-medium">{{ agent.name }}</span>
-        <span v-if="agent.description" class="truncate text-xs text-muted-foreground">
+        <span v-if="agent.description" class="truncate text-xs text-[var(--color-text-muted)]">
           {{ agent.description }}
         </span>
       </button>
@@ -130,7 +130,7 @@ function autoResize() {
 
     <!-- 输入框容器 -->
     <div
-      class="overflow-hidden rounded-xl border border-border bg-card/30 shadow-sm backdrop-blur-lg"
+      class="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] shadow-[var(--shadow-floating)]"
     >
       <!-- 编辑区域 -->
       <div class="px-4 pt-4 pb-2">
@@ -138,7 +138,7 @@ function autoResize() {
           ref="inputRef"
           v-model="inputValue"
           :disabled="disabled"
-          class="w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none overflow-y-auto"
+          class="w-full resize-none overflow-y-auto bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]"
           :style="{ minHeight: '60px', maxHeight: '240px' }"
           placeholder="输入消息，@ 提及 Agent..."
           @input="onInput"
@@ -151,8 +151,7 @@ function autoResize() {
       <div class="flex items-center justify-end px-3 pb-2">
         <button
           :disabled="disabled || !inputValue.trim()"
-          :class="{ 'opacity-40': disabled || !inputValue.trim() }"
-          class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90"
+          class="grid h-[30px] w-[30px] place-items-center rounded-full bg-[var(--color-text-primary)] text-[var(--color-primary-foreground)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-control-active)] disabled:text-[var(--color-text-disabled)]"
           title="发送"
           @click="onSend"
         >

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import { Icon } from "@iconify/vue";
+import SlimeButton from "@/components/ui/SlimeButton.vue";
+import SlimeIconButton from "@/components/ui/SlimeIconButton.vue";
+import SlimeInput from "@/components/ui/SlimeInput.vue";
 import { useGroupChatSessionStore } from "@/stores/groupChatSession";
 import { useGroupChatStore } from "@/stores/groupChat";
 
@@ -119,16 +122,10 @@ function onSessionDblclick(sessionId: string) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
-    <div class="flex items-center justify-between border-b border-border px-3 py-2">
-      <span class="text-sm font-medium text-foreground">群聊</span>
-      <button
-        class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-        title="新建群聊"
-        @click.stop="onNewSession"
-      >
-        <Icon icon="lucide:plus" class="h-4 w-4" />
-      </button>
+  <div class="flex h-full flex-col text-[var(--color-text-secondary)]">
+    <div class="flex items-center justify-between px-3 pb-2 pt-3">
+      <span class="text-sm font-semibold text-[var(--color-text-primary)]">群聊</span>
+      <SlimeIconButton icon="lucide:plus" title="新建群聊" size="sm" @click.stop="onNewSession" />
     </div>
 
     <div class="flex-1 overflow-y-auto px-2 py-1">
@@ -136,10 +133,10 @@ function onSessionDblclick(sessionId: string) {
         v-for="session in sessionStore.sessions"
         :key="session.id"
         :class="[
-          'mb-0.5 cursor-pointer rounded-md px-2.5 py-2 transition-colors',
+          'mb-1 cursor-pointer rounded-[var(--radius-sm)] px-2.5 py-2 transition-colors',
           session.id === sessionStore.activeSessionId && !sessionStore.isDetached(session.id)
-            ? 'bg-muted text-foreground'
-            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+            ? 'bg-[var(--color-control-active)] text-[var(--color-text-primary)]'
+            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]',
         ]"
         @click="onSessionClick(session.id)"
         @dblclick="onSessionDblclick(session.id)"
@@ -149,7 +146,7 @@ function onSessionDblclick(sessionId: string) {
         <input
           v-if="renaming === session.id"
           v-model="renameInput"
-          class="w-full rounded border border-violet-500 bg-transparent px-1 text-sm text-foreground focus:outline-none"
+          class="w-full rounded-[var(--radius-sm)] border border-[var(--color-accent-brand)] bg-transparent px-1 text-sm text-[var(--color-text-primary)] focus:outline-none"
           @blur="onRenameConfirm"
           @keydown.enter="onRenameConfirm"
           @keydown.escape="renaming = null"
@@ -158,52 +155,40 @@ function onSessionDblclick(sessionId: string) {
 
         <!-- Edit workspace paths mode -->
         <div v-else-if="editingPaths === session.id" @click.stop>
-          <div class="mb-1 text-xs font-medium text-foreground">工作目录</div>
+          <div class="mb-1 text-xs font-medium text-[var(--color-text-primary)]">工作目录</div>
           <ul v-if="editPathsList.length > 0" class="mb-1.5 space-y-1">
             <li
               v-for="p in editPathsList"
               :key="p"
-              class="flex items-center justify-between rounded bg-background px-2 py-0.5 text-xs"
+              class="flex items-center justify-between rounded-[var(--radius-sm)] bg-[var(--color-control)] px-2 py-0.5 text-xs"
             >
-              <span class="truncate font-mono text-foreground">{{ p }}</span>
+              <span class="truncate font-mono text-[var(--color-text-primary)]">{{ p }}</span>
               <button
-                class="ml-1 shrink-0 text-muted-foreground hover:text-foreground"
+                class="ml-1 shrink-0 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                 @click.stop="removePath(p)"
               >
                 ✕
               </button>
             </li>
           </ul>
-          <p v-else class="mb-1.5 text-xs text-muted-foreground">暂无</p>
+          <p v-else class="mb-1.5 text-xs text-[var(--color-text-muted)]">暂无</p>
           <div class="flex gap-1">
-            <input
+            <SlimeInput
               v-model="newPathInput"
-              type="text"
               placeholder="添加路径（支持 ~）"
-              class="min-w-0 flex-1 rounded border border-border bg-background px-2 py-0.5 text-xs text-foreground focus:outline-none"
+              density="compact"
               @keydown.enter.stop="addPath"
               @click.stop
             />
-            <button
-              class="shrink-0 rounded border border-border px-2 py-0.5 text-xs text-foreground hover:bg-muted"
-              @click.stop="addPath"
-            >
-              +
-            </button>
+            <SlimeButton size="sm" @click.stop="addPath"> + </SlimeButton>
           </div>
           <div class="mt-1.5 flex gap-1.5">
-            <button
-              class="rounded bg-violet-600 px-2 py-0.5 text-xs text-white hover:bg-violet-700"
-              @click.stop="onEditPathsConfirm"
-            >
+            <SlimeButton variant="primary" size="sm" @click.stop="onEditPathsConfirm">
               保存
-            </button>
-            <button
-              class="rounded border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
-              @click.stop="editingPaths = null"
-            >
+            </SlimeButton>
+            <SlimeButton variant="ghost" size="sm" @click.stop="editingPaths = null">
               取消
-            </button>
+            </SlimeButton>
           </div>
         </div>
 
@@ -213,11 +198,11 @@ function onSessionDblclick(sessionId: string) {
             <Icon
               v-if="sessionStore.isDetached(session.id)"
               icon="lucide:external-link"
-              class="h-3 w-3 shrink-0 text-violet-400"
+              class="h-3 w-3 shrink-0 text-[var(--color-accent-brand-hover)]"
             />
             <div class="truncate text-sm">{{ session.title }}</div>
           </div>
-          <div class="mt-0.5 text-[10px] text-muted-foreground">
+          <div class="mt-0.5 text-[10px] text-[var(--color-text-muted)]">
             {{ formatTime(session.updatedAt) }}
           </div>
         </template>
@@ -225,7 +210,7 @@ function onSessionDblclick(sessionId: string) {
 
       <div
         v-if="sessionStore.sessions.length === 0"
-        class="py-4 text-center text-xs text-muted-foreground"
+        class="py-4 text-center text-xs text-[var(--color-text-muted)]"
       >
         暂无群聊
       </div>
@@ -235,12 +220,12 @@ function onSessionDblclick(sessionId: string) {
     <Teleport to="body">
       <div
         v-if="showContextMenu"
-        class="fixed z-50 min-w-[140px] rounded-md border border-border bg-neutral-900 py-1 shadow-lg"
+        class="fixed z-50 min-w-[140px] rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] py-1 shadow-[var(--shadow-floating)]"
         :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
         @click.stop
       >
         <button
-          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-control-hover)]"
           @click="
             () => {
               if (contextMenuSessionId) {
@@ -254,7 +239,7 @@ function onSessionDblclick(sessionId: string) {
           重命名
         </button>
         <button
-          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-control-hover)]"
           @click="
             () => {
               if (contextMenuSessionId) {
@@ -268,7 +253,7 @@ function onSessionDblclick(sessionId: string) {
           编辑工作目录
         </button>
         <button
-          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-muted"
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-danger)] hover:bg-[var(--color-control-hover)]"
           @click="onDelete"
         >
           <Icon icon="lucide:trash-2" class="h-3 w-3" />

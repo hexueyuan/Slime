@@ -1,50 +1,62 @@
 <template>
-  <div class="flex h-full flex-col">
+  <div class="flex h-full flex-col gap-3">
     <!-- 上半：今日待办 -->
-    <div class="flex-1 overflow-y-auto border-b border-border pb-2">
-      <div class="mb-2 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-foreground">今日待办</h2>
-        <button
-          class="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted"
+    <div
+      class="flex-1 overflow-y-auto rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
+    >
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-[var(--color-text-primary)]">今日待办</h2>
+        <SlimeIconButton
+          icon="lucide:plus"
           title="新建任务"
+          size="sm"
           @click="$emit('createTask')"
-        >
-          <Icon icon="lucide:plus" class="h-3.5 w-3.5" />
-        </button>
+        />
       </div>
-      <div v-if="activeTasks.length === 0" class="py-4 text-center text-xs text-muted-foreground">
+      <div
+        v-if="activeTasks.length === 0"
+        class="py-4 text-center text-xs text-[var(--color-text-muted)]"
+      >
         暂无任务
       </div>
       <div v-else class="space-y-1">
         <button
           v-for="task in activeTasks"
           :key="task.id"
-          class="flex w-full flex-col gap-0.5 rounded px-2 py-1.5 text-left hover:bg-muted/50"
+          class="flex w-full flex-col gap-1 rounded-[var(--radius-sm)] px-3 py-2 text-left transition-colors hover:bg-[var(--color-control-hover)]"
           @click="$emit('selectTask', task.id)"
         >
           <div class="flex items-center gap-2 text-xs">
             <span
               class="w-[28px] shrink-0 font-mono text-[10px]"
-              :class="task.status === 'in_progress' ? 'text-amber-400' : 'text-foreground'"
+              :class="
+                task.status === 'in_progress'
+                  ? 'text-[var(--color-warning)]'
+                  : 'text-[var(--color-text-primary)]'
+              "
               >#{{ taskSeqMap[task.id] }}</span
             >
             <span
               class="flex-1 truncate"
-              :class="task.status === 'in_progress' ? 'text-amber-400' : 'text-foreground'"
+              :class="
+                task.status === 'in_progress'
+                  ? 'text-[var(--color-warning)]'
+                  : 'text-[var(--color-text-primary)]'
+              "
               >{{ task.title }}</span
             >
             <span
               v-if="task.scheduledAt"
-              class="flex shrink-0 items-center gap-0.5 text-[10px] text-blue-400"
+              class="flex shrink-0 items-center gap-0.5 text-[10px] text-sky-400"
             >
               <Icon icon="lucide:clock" class="h-2.5 w-2.5" />
               <Icon v-if="task.repeatInterval" icon="lucide:repeat" class="h-2.5 w-2.5" />
             </span>
-            <span class="shrink-0 text-[10px] text-muted-foreground">{{
+            <span class="shrink-0 text-[10px] text-[var(--color-text-muted)]">{{
               formatDate(task.createdAt)
             }}</span>
           </div>
-          <div class="flex items-center gap-3 pl-[36px] text-[10px] text-muted-foreground">
+          <div class="flex items-center gap-3 pl-[36px] text-[10px] text-[var(--color-text-muted)]">
             <span class="flex items-center gap-1">
               <AgentAvatar :avatar="getActorAvatar(task.creatorType, task.creatorId)" size="sm" />
               <span>{{ getActorName(task.creatorType, task.creatorId) }} 创建</span>
@@ -60,43 +72,50 @@
     </div>
 
     <!-- 下半：今日已完成 / 已取消 -->
-    <div class="flex-1 overflow-y-auto pt-2">
-      <h2 class="mb-2 text-sm font-semibold text-muted-foreground">今日已完成 / 已取消</h2>
-      <div v-if="finishedTasks.length === 0" class="py-4 text-center text-xs text-muted-foreground">
+    <div
+      class="flex-1 overflow-y-auto rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
+    >
+      <h2 class="mb-3 text-sm font-semibold text-[var(--color-text-secondary)]">
+        今日已完成 / 已取消
+      </h2>
+      <div
+        v-if="finishedTasks.length === 0"
+        class="py-4 text-center text-xs text-[var(--color-text-muted)]"
+      >
         暂无记录
       </div>
       <div v-else class="space-y-1">
         <button
           v-for="task in finishedTasks"
           :key="task.id"
-          class="flex w-full flex-col gap-0.5 rounded px-2 py-1.5 text-left hover:bg-muted/50"
+          class="flex w-full flex-col gap-1 rounded-[var(--radius-sm)] px-3 py-2 text-left transition-colors hover:bg-[var(--color-control-hover)]"
           @click="$emit('selectTask', task.id)"
         >
           <div class="flex items-center gap-2 text-xs">
-            <span class="w-[28px] shrink-0 font-mono text-[10px] text-muted-foreground"
+            <span class="w-[28px] shrink-0 font-mono text-[10px] text-[var(--color-text-muted)]"
               >#{{ taskSeqMap[task.id] }}</span
             >
             <span
               class="flex-1 truncate"
               :class="
                 task.status === 'cancelled'
-                  ? 'text-muted-foreground line-through'
-                  : 'text-emerald-400/80'
+                  ? 'text-[var(--color-text-muted)] line-through'
+                  : 'text-[var(--color-success)]'
               "
               >{{ task.title }}</span
             >
             <span
               v-if="task.scheduledAt"
-              class="flex shrink-0 items-center gap-0.5 text-[10px] text-blue-400"
+              class="flex shrink-0 items-center gap-0.5 text-[10px] text-sky-400"
             >
               <Icon icon="lucide:clock" class="h-2.5 w-2.5" />
               <Icon v-if="task.repeatInterval" icon="lucide:repeat" class="h-2.5 w-2.5" />
             </span>
-            <span class="shrink-0 text-[10px] text-muted-foreground">{{
+            <span class="shrink-0 text-[10px] text-[var(--color-text-muted)]">{{
               formatTimeRange(task.startedAt, task.finishedAt)
             }}</span>
           </div>
-          <div class="flex items-center gap-3 pl-[36px] text-[10px] text-muted-foreground">
+          <div class="flex items-center gap-3 pl-[36px] text-[10px] text-[var(--color-text-muted)]">
             <span class="flex items-center gap-1">
               <AgentAvatar :avatar="getActorAvatar(task.creatorType, task.creatorId)" size="sm" />
               <span>{{ getActorName(task.creatorType, task.creatorId) }} 创建</span>
@@ -116,6 +135,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
 import { Icon } from "@iconify/vue";
+import SlimeIconButton from "@/components/ui/SlimeIconButton.vue";
 import type { Task } from "@shared/types/schedule";
 import type { Agent, AgentAvatar as AgentAvatarType, UserProfile } from "@shared/types/agent";
 import AgentAvatar from "@/components/chat/AgentAvatar.vue";

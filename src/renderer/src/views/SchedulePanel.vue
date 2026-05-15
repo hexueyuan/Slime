@@ -1,11 +1,11 @@
 <template>
-  <div class="flex h-full">
+  <div class="flex h-full bg-[var(--color-app-canvas)]">
     <!-- 左列 -->
     <div class="flex min-w-[400px] flex-1 flex-col">
-      <div class="shrink-0 border-b border-border px-4 py-2">
+      <div class="shrink-0 border-b border-[var(--color-border-subtle)] px-5 py-4">
         <WeekCalendar v-model:selected-date="store.selectedDate" />
       </div>
-      <div class="min-h-0 flex-1 px-4 py-3">
+      <div class="min-h-0 flex-1 px-5 py-4">
         <TaskBoard
           :tasks="store.tasks"
           :selected-date="store.selectedDate"
@@ -13,14 +13,14 @@
           @create-task="createNewTask"
         />
       </div>
-      <div class="shrink-0 border-t border-border px-4 py-3">
+      <div class="shrink-0 border-t border-[var(--color-border-subtle)] px-5 py-4">
         <NoteInput @submit="store.addNote" />
       </div>
     </div>
     <!-- 分割线 -->
-    <div class="w-px bg-border" />
+    <div class="w-px bg-[var(--color-border-subtle)]" />
     <!-- 右列 -->
-    <div class="w-[280px] shrink-0 overflow-y-auto px-3 py-3">
+    <div class="w-[300px] shrink-0 overflow-y-auto px-4 py-4">
       <TimelinePanel
         :entries="store.timeline"
         :dates="store.timelineDates"

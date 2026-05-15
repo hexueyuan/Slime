@@ -2,37 +2,23 @@
 import { ref } from "vue";
 import AgentManageTab from "../components/agents/AgentManageTab.vue";
 import SkillManageTab from "../components/agents/SkillManageTab.vue";
+import PageHeader from "@/components/layout/PageHeader.vue";
+import SlimeTabs from "@/components/ui/SlimeTabs.vue";
 
 const activeTab = ref<"agents" | "skills">("agents");
+const tabs = [
+  { value: "agents" as const, label: "Agents" },
+  { value: "skills" as const, label: "Skills" },
+];
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
-    <!-- Tab Bar -->
-    <div class="flex shrink-0 border-b border-border px-4">
-      <button
-        :class="[
-          'px-4 py-2 text-sm font-medium border-b-2 -mb-px',
-          activeTab === 'agents'
-            ? 'border-violet-500 text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground',
-        ]"
-        @click="activeTab = 'agents'"
-      >
-        Agents
-      </button>
-      <button
-        :class="[
-          'px-4 py-2 text-sm font-medium border-b-2 -mb-px',
-          activeTab === 'skills'
-            ? 'border-violet-500 text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground',
-        ]"
-        @click="activeTab = 'skills'"
-      >
-        Skills
-      </button>
-    </div>
+  <div class="flex h-full flex-col bg-[var(--color-app-canvas)]">
+    <PageHeader title="Agent" subtitle="管理内置与自定义 Agent、Skill 能力">
+      <template #actions>
+        <SlimeTabs v-model="activeTab" :tabs="tabs" />
+      </template>
+    </PageHeader>
 
     <!-- Tab Content -->
     <div class="min-h-0 flex-1">

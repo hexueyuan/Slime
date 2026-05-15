@@ -4,6 +4,7 @@ import SessionList from "../components/chat/SessionList.vue";
 import NewThread from "../components/chat/NewThread.vue";
 import ChatView from "../components/chat/ChatView.vue";
 import ChatFunctionPanel from "../components/chat/ChatFunctionPanel.vue";
+import SplitWorkspace from "@/components/layout/SplitWorkspace.vue";
 import { useAgentStore } from "@/stores/agent";
 import { useAgentSessionStore } from "@/stores/agentSession";
 import { useAgentChatStore } from "@/stores/agentChat";
@@ -167,19 +168,25 @@ function onShowThoughtChain(messageId?: string) {
   }
   activeTab.value = "preview";
 }
+
+function setMainElement(element: HTMLElement | null) {
+  mainRef.value = element;
+}
 </script>
 
 <template>
-  <div class="flex h-full">
-    <!-- Left: Session list -->
-    <div class="w-[220px] shrink-0 border-r border-border">
+  <SplitWorkspace
+    :right-width="rightWidth ?? 320"
+    @main-element="setMainElement"
+    @divider-mousedown="onMouseDown"
+    @divider-doubleclick="resetToDefault"
+  >
+    <template #sidebar>
       <SessionList @select="onSessionSelect" />
-    </div>
+    </template>
 
-    <!-- Center + Right: Split pane area -->
-    <div ref="mainRef" class="flex min-w-0 flex-1 overflow-hidden">
-      <!-- Center: Chat area -->
-      <div class="min-w-[280px] flex-1 overflow-hidden">
+    <div class="h-full overflow-hidden">
+      <div class="h-full overflow-hidden">
         <NewThread v-if="!sessionStore.activeSessionId" />
         <ChatView
           v-else
@@ -188,27 +195,17 @@ function onShowThoughtChain(messageId?: string) {
           @show-thought-chain="onShowThoughtChain"
         />
       </div>
-
-      <!-- Divider -->
-      <div
-        class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-border"
-        @mousedown="onMouseDown"
-        @dblclick="resetToDefault"
-      >
-        <div class="absolute inset-y-0 -left-1 -right-1" />
-      </div>
-
-      <!-- Right: Function panel -->
-      <div class="shrink-0 overflow-hidden" :style="{ width: rightWidth + 'px' }">
-        <ChatFunctionPanel
-          :active-tab="activeTab"
-          :tool-call-blocks="toolCallBlocks"
-          :selected-tool-call-id="selectedToolCallId"
-          :thought-chain-blocks="thoughtChainBlocks"
-          @update:active-tab="activeTab = $event"
-          @select-tool-call="onSelectToolCall"
-        />
-      </div>
     </div>
-  </div>
+
+    <template #right>
+      <ChatFunctionPanel
+        :active-tab="activeTab"
+        :tool-call-blocks="toolCallBlocks"
+        :selected-tool-call-id="selectedToolCallId"
+        :thought-chain-blocks="thoughtChainBlocks"
+        @update:active-tab="activeTab = $event"
+        @select-tool-call="onSelectToolCall"
+      />
+    </template>
+  </SplitWorkspace>
 </template>

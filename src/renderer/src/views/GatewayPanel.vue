@@ -1,51 +1,80 @@
 <script setup lang="ts">
-import { computed, onMounted, onActivated, onUnmounted, watch } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  onActivated,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue";
 import { useGatewayStore } from "@/stores/gateway";
 import { GATEWAY_EVENTS } from "@shared/events";
-import ChannelTab from "@/components/gateway/ChannelTab.vue";
-import GroupTab from "@/components/gateway/GroupTab.vue";
-import ApiKeyTab from "@/components/gateway/ApiKeyTab.vue";
-import LogTab from "@/components/gateway/LogTab.vue";
-import StatsChart from "@/components/gateway/StatsChart.vue";
-import RankBoard from "@/components/gateway/RankBoard.vue";
+import { createGatewayRefreshScheduler } from "@/composables/useGatewayRefreshScheduler";
+import PageHeader from "@/components/layout/PageHeader.vue";
+import SlimeTabs from "@/components/ui/SlimeTabs.vue";
 
 const store = useGatewayStore();
+const ChannelTab = defineAsyncComponent(() => import("@/components/gateway/ChannelTab.vue"));
+const GroupTab = defineAsyncComponent(() => import("@/components/gateway/GroupTab.vue"));
+const ApiKeyTab = defineAsyncComponent(() => import("@/components/gateway/ApiKeyTab.vue"));
+const LogTab = defineAsyncComponent(() => import("@/components/gateway/LogTab.vue"));
+const StatsChart = defineAsyncComponent(() => import("@/components/gateway/StatsChart.vue"));
+const RankBoard = defineAsyncComponent(() => import("@/components/gateway/RankBoard.vue"));
+const metricsLoaded = ref(false);
+const statsRefresh = createGatewayRefreshScheduler(() => store.loadStats(), {
+  debounceMs: 800,
+  minIntervalMs: 2_000,
+});
+let metricsTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleMetricsLoad(force = false) {
+  if (metricsTimer) clearTimeout(metricsTimer);
+  metricsTimer = setTimeout(async () => {
+    await Promise.all([
+      store.loadRanking(force),
+      store.loadLatencyPercentiles(force),
+      store.loadStatsTrend(force),
+    ]);
+    metricsLoaded.value = true;
+    metricsTimer = null;
+  }, 160);
+}
 
 onMounted(() => {
   store.loadAll();
-  store.loadRanking();
-  store.loadLatencyPercentiles();
-  store.loadStatsTrend();
+  scheduleMetricsLoad();
 });
 
 onActivated(() => {
   // KeepAlive re-activate: skip if cache still fresh
   store.loadAll();
-  store.loadRanking();
-  store.loadLatencyPercentiles();
-  store.loadStatsTrend();
+  scheduleMetricsLoad();
 });
 
 watch(
   () => store.statsRange,
   () => {
     store.loadStats();
-    store.loadRanking(true);
-    store.loadLatencyPercentiles(true);
-    store.loadStatsTrend(true);
+    metricsLoaded.value = false;
+    scheduleMetricsLoad(true);
   },
 );
 
 const cleanup = window.electron.ipcRenderer.on(GATEWAY_EVENTS.LOG_ADDED, () => {
-  store.loadStats();
+  statsRefresh.request();
 });
-onUnmounted(() => cleanup?.());
+onUnmounted(() => {
+  cleanup?.();
+  statsRefresh.dispose();
+  if (metricsTimer) clearTimeout(metricsTimer);
+});
 
 const tabs = [
-  { key: "channels" as const, label: "供应商" },
-  { key: "groups" as const, label: "分组" },
-  { key: "apikeys" as const, label: "密钥" },
-  { key: "logs" as const, label: "日志" },
+  { value: "channels" as const, label: "供应商" },
+  { value: "groups" as const, label: "分组" },
+  { value: "apikeys" as const, label: "密钥" },
+  { value: "logs" as const, label: "日志" },
 ];
 
 function formatNumber(n: number): string {
@@ -68,9 +97,9 @@ function formatLatency(ms: number | undefined): string {
 }
 
 const rangeOptions = [
-  { key: "today" as const, label: "今日" },
-  { key: "7d" as const, label: "7天" },
-  { key: "30d" as const, label: "30天" },
+  { value: "today" as const, label: "今日" },
+  { value: "7d" as const, label: "7天" },
+  { value: "30d" as const, label: "30天" },
 ];
 
 const trendGranularity = computed(() =>
@@ -79,67 +108,62 @@ const trendGranularity = computed(() =>
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
+  <div class="flex h-full flex-col bg-[var(--color-app-canvas)]">
+    <PageHeader title="Gateway" subtitle="路由、密钥、日志与运行指标">
+      <template #actions>
+        <SlimeTabs v-model="store.statsRange" :tabs="rangeOptions" />
+      </template>
+    </PageHeader>
+
     <!-- Stats cards -->
-    <div class="shrink-0 px-4 py-3">
-      <div class="mb-3 flex items-center gap-1">
-        <button
-          v-for="opt in rangeOptions"
-          :key="opt.key"
-          :class="[
-            'rounded px-2 py-0.5 text-xs transition-colors',
-            store.statsRange === opt.key
-              ? 'bg-violet-600 text-white'
-              : 'text-muted-foreground hover:bg-muted',
-          ]"
-          @click="store.statsRange = opt.key"
-        >
-          {{ opt.label }}
-        </button>
-      </div>
+    <div class="shrink-0 px-5 py-4">
       <div class="grid grid-cols-6 gap-2">
-        <div class="rounded-lg bg-muted/50 p-3">
-          <div class="text-xs text-muted-foreground">请求</div>
-          <div class="text-lg font-semibold text-violet-400">
+        <div
+          class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
+        >
+          <div class="text-xs text-[var(--color-text-muted)]">请求</div>
+          <div class="text-lg font-semibold text-[var(--color-accent-brand-hover)]">
             {{ formatNumber(store.stats.requests) }}
           </div>
         </div>
-        <div class="rounded-lg bg-muted/50 p-3">
-          <div class="text-xs text-muted-foreground">费用</div>
-          <div class="text-lg font-semibold text-amber-400">{{ formatCost(store.stats.cost) }}</div>
+        <div class="rounded-[var(--radius-lg)] border border-amber-400/15 bg-amber-500/10 p-3">
+          <div class="text-xs text-[var(--color-text-muted)]">费用</div>
+          <div class="text-lg font-semibold text-[var(--color-warning)]">
+            {{ formatCost(store.stats.cost) }}
+          </div>
         </div>
-        <div class="rounded-lg bg-muted/50 p-3">
-          <div class="text-xs text-muted-foreground">Input Token</div>
-          <div class="text-lg font-semibold text-blue-400">
+        <div class="rounded-[var(--radius-lg)] border border-sky-400/15 bg-sky-500/10 p-3">
+          <div class="text-xs text-[var(--color-text-muted)]">Input Token</div>
+          <div class="text-lg font-semibold text-sky-300">
             {{ formatNumber(store.stats.inputTokens) }}
           </div>
-          <div class="text-xs text-muted-foreground/60">
+          <div class="text-xs text-[var(--color-text-muted)]">
             缓存读 {{ formatNumber(store.stats.cacheReadTokens) }}
           </div>
         </div>
-        <div class="rounded-lg bg-muted/50 p-3">
-          <div class="text-xs text-muted-foreground">Output Token</div>
-          <div class="text-lg font-semibold text-emerald-400">
+        <div class="rounded-[var(--radius-lg)] border border-emerald-400/15 bg-emerald-500/10 p-3">
+          <div class="text-xs text-[var(--color-text-muted)]">Output Token</div>
+          <div class="text-lg font-semibold text-[var(--color-success)]">
             {{ formatNumber(store.stats.outputTokens) }}
           </div>
-          <div class="text-xs text-muted-foreground/60">
+          <div class="text-xs text-[var(--color-text-muted)]">
             缓存写 {{ formatNumber(store.stats.cacheWriteTokens) }}
           </div>
         </div>
-        <div class="rounded-lg bg-muted/50 p-3">
-          <div class="text-xs text-muted-foreground">缓存率</div>
-          <div class="text-lg font-semibold text-cyan-400">
+        <div class="rounded-[var(--radius-lg)] border border-cyan-400/15 bg-cyan-500/10 p-3">
+          <div class="text-xs text-[var(--color-text-muted)]">缓存率</div>
+          <div class="text-lg font-semibold text-cyan-300">
             {{ formatPercent(store.cacheRate) }}
           </div>
         </div>
-        <div class="rounded-lg bg-muted/50 p-3">
-          <div class="text-xs text-muted-foreground">平均延迟</div>
-          <div class="text-lg font-semibold text-rose-400">
+        <div class="rounded-[var(--radius-lg)] border border-red-400/15 bg-red-500/10 p-3">
+          <div class="text-xs text-[var(--color-text-muted)]">平均延迟</div>
+          <div class="text-lg font-semibold text-[var(--color-danger)]">
             {{ formatLatency(store.stats.avgLatencyMs) }}
           </div>
           <div
             v-if="store.latencyPercentiles.ttftP50 !== null"
-            class="text-xs text-muted-foreground/60"
+            class="text-xs text-[var(--color-text-muted)]"
           >
             TTFT P50 {{ formatLatency(store.latencyPercentiles.ttftP50 ?? 0) }}
           </div>
@@ -148,37 +172,38 @@ const trendGranularity = computed(() =>
 
       <!-- Trend chart + Rank board 同行 -->
       <div class="mb-2 mt-3 flex h-[175px] flex-row gap-3">
-        <div class="flex min-w-0 flex-1 flex-col">
-          <span class="mb-1 shrink-0 text-xs text-muted-foreground">趋势</span>
+        <div
+          class="flex min-w-0 flex-1 flex-col rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
+        >
+          <span class="mb-2 shrink-0 text-xs font-medium text-[var(--color-text-secondary)]"
+            >趋势</span
+          >
           <div class="min-h-0 flex-1">
             <StatsChart
+              v-if="metricsLoaded"
               :points="store.statsTrend"
               :granularity="trendGranularity"
               :range="store.statsRange"
             />
+            <div v-else class="h-full rounded-[var(--radius-md)] bg-[var(--color-control-hover)]" />
           </div>
         </div>
-        <div class="w-[40%] shrink-0 overflow-y-auto">
-          <RankBoard :channel-ranking="store.channelRanking" :model-ranking="store.modelRanking" />
+        <div
+          class="w-[40%] shrink-0 overflow-y-auto rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
+        >
+          <RankBoard
+            v-if="metricsLoaded"
+            :channel-ranking="store.channelRanking"
+            :model-ranking="store.modelRanking"
+          />
+          <div v-else class="h-full rounded-[var(--radius-md)] bg-[var(--color-control-hover)]" />
         </div>
       </div>
     </div>
 
     <!-- Tab bar -->
-    <div class="flex shrink-0 border-b border-border">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        :class="[
-          'px-4 py-2 text-sm transition-colors',
-          store.activeTab === tab.key
-            ? 'border-b-2 border-violet-500 text-violet-500'
-            : 'text-muted-foreground hover:text-foreground',
-        ]"
-        @click="store.activeTab = tab.key"
-      >
-        {{ tab.label }}
-      </button>
+    <div class="flex shrink-0 border-b border-[var(--color-border-subtle)] px-5 pb-3">
+      <SlimeTabs v-model="store.activeTab" :tabs="tabs" />
     </div>
 
     <!-- Tab content -->

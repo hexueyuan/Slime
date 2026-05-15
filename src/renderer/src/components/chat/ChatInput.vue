@@ -1,143 +1,91 @@
 <template>
-  <div class="absolute bottom-0 left-0 right-0 z-10 px-6 pb-3">
+  <div class="absolute bottom-0 left-0 right-0 z-10 px-6 pb-4">
     <!-- 错误提示 -->
     <div
       v-if="error"
-      class="mb-2 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive"
+      class="mb-2 flex items-center justify-between rounded-[var(--radius-md)] border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-[var(--color-danger)]"
     >
       <span>{{ error }}</span>
       <div class="ml-2 flex shrink-0 gap-2">
-        <button class="underline" @click="$emit('retry')">重试</button>
-        <button class="underline" @click="$emit('dismiss-error')">关闭</button>
+        <SlimeButton variant="ghost" size="sm" @click="$emit('retry')">重试</SlimeButton>
+        <SlimeButton variant="ghost" size="sm" @click="$emit('dismiss-error')">关闭</SlimeButton>
       </div>
     </div>
     <!-- 问答卡片 -->
     <div
       v-if="pendingQuestion"
-      class="mb-2 overflow-hidden rounded-xl border border-primary/30 bg-primary/5 shadow-sm backdrop-blur-lg"
+      class="mb-2 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-accent-brand-soft)] bg-[var(--color-control)] shadow-[var(--shadow-soft)]"
     >
       <div class="px-4 py-3">
-        <p class="mb-3 text-sm font-medium text-foreground">{{ pendingQuestion.question }}</p>
+        <p class="mb-3 text-sm font-medium text-[var(--color-text-primary)]">
+          {{ pendingQuestion.question }}
+        </p>
         <!-- 选项按钮 -->
         <div v-if="pendingQuestion.options?.length" class="mb-3 flex flex-wrap gap-2">
-          <button
+          <SlimeButton
             v-for="opt in pendingQuestion.options"
             :key="opt"
-            class="rounded-lg border border-border bg-card px-3 py-1.5 text-sm hover:bg-accent"
+            variant="secondary"
+            size="sm"
             @click="submitAnswer(opt)"
           >
             {{ opt }}
-          </button>
+          </SlimeButton>
         </div>
         <!-- 自定义输入 -->
         <div class="flex gap-2">
-          <input
+          <SlimeInput
             v-model="questionAnswer"
-            class="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-primary"
+            density="compact"
             placeholder="输入回答..."
             @keydown.enter="submitAnswer(questionAnswer)"
           />
-          <button
-            class="rounded-lg bg-primary px-4 py-1.5 text-sm text-primary-foreground hover:opacity-90"
+          <SlimeButton
+            variant="primary"
+            size="sm"
             :disabled="!questionAnswer.trim()"
             @click="submitAnswer(questionAnswer)"
           >
             回答
-          </button>
+          </SlimeButton>
         </div>
       </div>
     </div>
-    <!-- 输入框容器 -->
-    <div
-      class="overflow-hidden rounded-xl border border-border bg-card/30 shadow-sm backdrop-blur-lg"
+
+    <SlimeComposer
+      placeholder="输入消息..."
+      :disabled="!!pendingQuestion"
+      :is-streaming="isStreaming"
+      @submit="$emit('submit', $event)"
+      @stop="$emit('stop')"
+      @add-files="fileInputRef?.click()"
     >
-      <!-- 附件列表 -->
-      <div v-if="files?.length" class="flex flex-wrap gap-1.5 px-4 pt-3">
-        <ChatAttachmentItem
-          v-for="file in files"
-          :key="file.id"
-          :file="file"
-          @remove="$emit('remove-file', $event)"
-        />
-      </div>
-      <!-- 编辑区域 -->
-      <div class="px-4 pt-4 pb-2">
-        <textarea
-          ref="textareaRef"
-          v-model="inputText"
-          class="w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none overflow-y-auto"
-          :style="{ minHeight: '60px', maxHeight: '240px' }"
-          placeholder="输入消息..."
-          :disabled="!!pendingQuestion"
-          @keydown="onKeydown"
-          @input="autoResize"
-          @compositionstart="isComposing = true"
-          @compositionend="isComposing = false"
-        />
-      </div>
-      <!-- 工具栏 -->
-      <div class="flex items-center justify-between px-3 pb-2">
-        <!-- 左侧：附件按钮 -->
-        <button
-          class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
-          title="附件"
-          @click="fileInputRef?.click()"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
-        <!-- 右侧：发送/停止按钮 -->
-        <button
-          v-if="isStreaming"
-          data-testid="stop-btn"
-          class="flex h-7 w-7 items-center justify-center rounded-full border border-destructive text-destructive hover:bg-destructive/10"
-          title="停止生成"
-          @click="$emit('stop')"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="6" width="12" height="12" rx="1" />
-          </svg>
-        </button>
-        <button
-          v-else
-          data-testid="send-btn"
-          class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90"
-          :disabled="!inputText.trim() || !!pendingQuestion"
-          :class="{ 'opacity-40': !inputText.trim() || !!pendingQuestion }"
-          title="发送"
-          @click="submit"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <line x1="12" y1="19" x2="12" y2="5" />
-            <polyline points="5 12 12 5 19 12" />
-          </svg>
-        </button>
-      </div>
-    </div>
+      <template #attachments>
+        <div v-if="files?.length" class="flex flex-wrap gap-1.5 px-4 pt-3">
+          <ChatAttachmentItem
+            v-for="file in files"
+            :key="file.id"
+            :file="file"
+            @remove="$emit('remove-file', $event)"
+          />
+        </div>
+      </template>
+      <template #toolbar>
+        <span class="text-[var(--color-text-muted)]">Slime</span>
+      </template>
+    </SlimeComposer>
+
     <!-- 隐藏的文件选择器 -->
     <input ref="fileInputRef" type="file" multiple class="hidden" @change="onFileSelect" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from "vue";
+import { ref } from "vue";
 import ChatAttachmentItem from "./ChatAttachmentItem.vue";
+import SlimeButton from "@/components/ui/SlimeButton.vue";
+import SlimeComposer from "@/components/ui/SlimeComposer.vue";
+import SlimeInput from "@/components/ui/SlimeInput.vue";
 import type { MessageFile, PendingQuestion } from "@shared/types/chat";
 
 defineProps<{
@@ -157,9 +105,7 @@ const emit = defineEmits<{
   "answer-question": [answer: string];
 }>();
 
-const inputText = ref("");
 const questionAnswer = ref("");
-const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 function onFileSelect(e: Event) {
@@ -168,29 +114,6 @@ function onFileSelect(e: Event) {
     emit("add-files", Array.from(input.files));
     input.value = "";
   }
-}
-const isComposing = ref(false);
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === "Enter" && !e.shiftKey && !isComposing.value) {
-    e.preventDefault();
-    submit();
-  }
-}
-
-function submit() {
-  const text = inputText.value.trim();
-  if (!text) return;
-  emit("submit", text);
-  inputText.value = "";
-  nextTick(() => autoResize());
-}
-
-function autoResize() {
-  const el = textareaRef.value;
-  if (!el) return;
-  el.style.height = "auto";
-  el.style.height = Math.min(el.scrollHeight, 240) + "px";
 }
 
 function submitAnswer(answer: string) {

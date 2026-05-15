@@ -1,30 +1,22 @@
 <template>
-  <div class="flex h-full flex-col">
-    <div class="mb-2 flex items-center justify-between">
-      <h2 class="text-sm font-semibold text-foreground">时间线</h2>
+  <div
+    class="flex h-full flex-col rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]"
+  >
+    <div
+      class="flex items-center justify-between border-b border-[var(--color-border-subtle)] px-4 py-3"
+    >
+      <h2 class="text-sm font-semibold text-[var(--color-text-primary)]">时间线</h2>
       <div class="flex gap-1">
-        <button
-          class="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted"
-          title="回到今天"
-          @click="scrollToNow"
-        >
-          <Icon icon="lucide:locate" class="h-4 w-4" />
-        </button>
-        <button
-          class="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted"
-          title="添加条目"
-          @click="$emit('addEntry')"
-        >
-          <Icon icon="lucide:plus" class="h-4 w-4" />
-        </button>
+        <SlimeIconButton icon="lucide:locate" title="回到今天" size="sm" @click="scrollToNow" />
+        <SlimeIconButton icon="lucide:plus" title="添加条目" size="sm" @click="$emit('addEntry')" />
       </div>
     </div>
 
     <div v-if="groupedEntries.length === 0" class="flex flex-1 items-center justify-center">
-      <p class="text-xs text-muted-foreground">暂无记录</p>
+      <p class="text-xs text-[var(--color-text-muted)]">暂无记录</p>
     </div>
 
-    <div v-else ref="scrollContainer" class="flex-1 overflow-y-auto" @scroll="onScroll">
+    <div v-else ref="scrollContainer" class="flex-1 overflow-y-auto px-4 pb-4" @scroll="onScroll">
       <template v-for="group in groupedEntries" :key="group.date">
         <!-- 日期分隔 -->
         <div
@@ -33,11 +25,15 @@
               if (el) dateRefs[group.date] = el as HTMLElement;
             }
           "
-          class="sticky top-0 z-10 mb-1 bg-background/90 py-1 backdrop-blur-sm"
+          class="sticky top-0 z-10 mb-1 bg-[var(--color-control)] py-2 backdrop-blur-sm"
         >
           <span
             class="text-[10px] font-medium"
-            :class="group.isToday ? 'text-violet-400' : 'text-muted-foreground'"
+            :class="
+              group.isToday
+                ? 'text-[var(--color-accent-brand-hover)]'
+                : 'text-[var(--color-text-muted)]'
+            "
           >
             {{ group.label }}
           </span>
@@ -46,7 +42,9 @@
         <div v-if="group.entries.length > 0" class="mb-3">
           <TimelineEntry v-for="entry in group.entries" :key="entry.id" :entry="entry" />
         </div>
-        <div v-else class="mb-3 py-2 text-center text-[10px] text-muted-foreground/50">无记录</div>
+        <div v-else class="mb-3 py-2 text-center text-[10px] text-[var(--color-text-disabled)]">
+          无记录
+        </div>
       </template>
     </div>
   </div>
@@ -54,7 +52,7 @@
 
 <script setup lang="ts">
 import { computed, ref, nextTick, onMounted } from "vue";
-import { Icon } from "@iconify/vue";
+import SlimeIconButton from "@/components/ui/SlimeIconButton.vue";
 import TimelineEntry from "./TimelineEntry.vue";
 import type { TimelineEntry as TEntry } from "@shared/types/schedule";
 
