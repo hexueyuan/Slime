@@ -60,6 +60,84 @@ Slime 是一个自我进化的 Electron 桌面应用。v0.1 (egg) 验证核心�
 - oxLint 用于 JS/TS lint
 - 命名: Vue 组件 PascalCase；变量/函数 camelCase；类型/类 PascalCase；常量 SCREAMING_SNAKE_CASE
 
+## UI 设计系统规范（Codex-style）
+
+Slime 渲染层必须使用统一的 Codex-like 设计语言：深色、低噪声、桌面工具感、清晰层级、克制动效。视觉基准和实施计划已固化：
+
+- 设计规范: `docs/superpowers/specs/2026-05-15-codex-style-ui-system-design.md`
+- 视觉样张: `docs/superpowers/prototypes/codex-style-ui-preview.html`
+- 实现计划: `docs/superpowers/plans/2026-05-15-codex-style-ui-system.md`
+
+### 全局视觉原则
+
+- 整体风格参考 Codex，但不做像素级复制；优先保持 Slime 自己的 Agent / Gateway / Schedule 产品语义。
+- 背景使用近黑主画布 + 半透明左侧栏 + 低对比边框；不要使用大面积紫色、蓝色渐变或装饰性光斑。
+- 字体使用系统栈：`Inter`, `SF Pro Text`, `PingFang SC`, `Microsoft YaHei`, `system-ui`, `sans-serif`。
+- 中文常规正文保持 13-14px；密集元信息 11-12px；业务页标题按容器控制在 18-24px。
+- 紫色只作为焦点、选中、主操作和主指标的 accent，不作为页面底色。
+- 所有颜色、边框、半径、阴影优先来自 `src/renderer/src/assets/main.css` 的 semantic tokens；不要在业务组件里散落 raw hex。
+- 卡片只用于重复项、弹窗、真正需要框住的工具区；不要卡片套卡片。
+- App 内不要做营销式 hero；空状态可以居中，但必须服务实际工作流，例如 composer、创建入口、选择 Agent。
+- 图标按钮优先使用 lucide/iconify 图标，并提供 `title` 或 tooltip；不要用文本按钮表达明显有标准图标的工具动作。
+
+### 组件分层与目录
+
+后续新增 UI 必须优先复用共享组件，只有共享组件无法表达明确需求时才新增组件。
+
+- `src/renderer/src/components/ui/`: 基础 UI primitives，不允许导入业务 store。
+  - `SlimeButton`: 主按钮、次按钮、幽灵按钮、危险按钮；用于明确命令。
+  - `SlimeIconButton`: icon-only 工具按钮；用于刷新、返回、关闭、展开、复制、设置等高频小动作。
+  - `SlimeBadge`: 状态、能力标签、元信息胶囊；用于 `healthy`, `retry`, `reasoning`, `tool_call` 等。
+  - `SlimeInput`: 搜索、路径、表单输入；支持普通/紧凑密度。
+  - `SlimeTextarea`: 多行文本和配置输入；需要稳定尺寸和自动扩展时使用。
+  - `SlimePanel`: 业务页的低对比面板容器；用于非重复的大块内容区。
+  - `SlimeListItem`: 会话、任务、Agent、日志、导航等可选列表行。
+  - `SlimeTabs`: 低对比紧凑 tab；用于工具/预览、Gateway tab、Settings tab。
+  - `SlimeChecklist`: checkbox / switch 列表；用于 MCP 工具、能力标签、开关配置。
+  - `SlimeComposer`: Chat / GroupChat 的统一输入器；支持 toolbar slot、附件、发送/停止、禁用态。
+- `src/renderer/src/components/layout/`: 应用壳和页面布局。
+  - `AppShell`: 全窗口外壳，负责左侧栏与右侧圆角主画布。
+  - `AppSidebarNav`: Codex-like 展开侧栏，包含窗口控制、主导航、项目/会话区、底部设置。
+  - `WorkspaceCanvas`: 右侧主画布容器。
+  - `SplitWorkspace`: 左/中/右分栏布局，主要用于 Chatroom + FunctionPanel。
+  - `PageHeader`: Gateway / Agents / Schedule / Settings 等业务页的紧凑标题和操作区。
+- `src/renderer/src/components/slime/`: Slime 业务通用组件，不绑定具体 store。
+  - `SlimeAgentCard`: Agent 选择、Agent 管理列表、群聊成员选择。
+  - `SlimeProfileCard`: 用户资料、Agent 资料、身份摘要。
+  - `SlimeRealtimeChart`: Gateway 实时指标，多指标通过 chips 切换，主图只展示当前指标。
+  - `SlimeRankBoard`: Gateway 排名组件，请求量/成功率/延迟/成本排行。
+  - `SlimeLogCard`: Gateway 日志行，展示状态码、请求摘要、耗时、重试/熔断状态。
+  - `SlimeWeekCalendar`: Schedule 顶部周日历，支持左右滑动、日期选择和任务点。
+  - `SlimeTaskList`: Schedule 任务列表，支持完成态、优先级、时间和状态 badge。
+  - `SlimeTimeline`: Schedule 右侧时间线，展示笔记、任务事件、附件事件。
+
+### 组件使用规则
+
+- 业务组件负责取 store / 调 Presenter；共享 UI 组件只接收 props、slots，向上 emit 事件。
+- 表单组件统一使用 `modelValue` / `update:modelValue`；列表和卡片使用 `selected` / `active` 表示选中态。
+- 命令按钮使用 `variant` 和 `size` 控制视觉，不在业务组件里重新拼按钮样式。
+- 禁用态必须保留布局尺寸，但撤掉行动感：低对比文本、低对比边框、无 hover 强反馈、`disabled` 属性真实生效。
+- 危险操作使用 `danger` 语义，不在禁用态保留红色危险暗示；删除、清空、撤销等高风险动作需要明确上下文或确认。
+- 多指标图表不要把多条强色线堆在同一张图上；使用指标 chip 切换主图，其他指标显示当前值和趋势。
+- Gateway、Agents、Schedule 这类操作页优先使用 `PageHeader + SlimePanel + SlimeListItem/SlimeTabs`，避免独立视觉体系。
+- Chatroom / GroupChat 的空状态优先使用居中标题 + `SlimeComposer` + 必要上下文选择，不使用大面积说明文字。
+- 周日历、任务列表、Timeline 必须复用 Schedule Kit 组件，保持任务管理页面密度一致。
+- 新增业务卡片前先判断是否可由 `SlimePanel`、`SlimeListItem`、`SlimeAgentCard`、`SlimeProfileCard` 组合完成。
+
+### 页面迁移要求
+
+- `App.vue` 应保持薄壳：onboarding、detached window routing、active view selection、shell composition；不要把页面样式逻辑堆回 App。
+- `ChatroomPanel` / `GroupChatPanel` 保留现有 store 和 IPC 行为，只替换外观和共享组件。
+- Gateway 页面迁移时注意已有性能优化改动；不得 revert 非本任务改动。
+- Settings 和 FunctionPanel 只做视觉统一，不改变设置 key、MCP 工具状态、tool call 选择和 preview 渲染契约。
+
+### 验证要求
+
+- 视觉系统相关变更完成后必须运行 `pnpm run format` 和 `pnpm run lint`。
+- 触及共享组件、Chatroom、GroupChat、Schedule、Gateway 时，至少运行相关 renderer 测试和 `pnpm run typecheck:web`。
+- 前端测试优先覆盖行为契约，例如 composer Enter 提交、Shift+Enter 换行、禁用态不提交、checklist toggle、周日历切换事件；不要只断言 class 名。
+- 有明显视觉改动时，启动应用或本地预览并截图检查桌面宽屏下的 Chatroom、Gateway、Agents、Schedule、Settings。
+
 ## 测试要求
 
 - 框架: Vitest + jsdom + Vue Test Utils
