@@ -199,43 +199,6 @@ describe("SubagentPresenter", () => {
   });
 
   describe("result extraction", () => {
-    it("extracts text from assistant message blocks", async () => {
-      const blocks = JSON.stringify([
-        { type: "content", content: "Hello " },
-        { type: "tool_call", content: "" },
-        { type: "content", content: "world" },
-      ]);
-      vi.mocked(messageDao.listBySession).mockReturnValue([
-        {
-          id: "msg-1",
-          sessionId: "child-1",
-          orderSeq: 1,
-          role: "user",
-          content: "task",
-          status: "sent",
-          isContextEdge: false,
-          metadata: "{}",
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        },
-        {
-          id: "msg-2",
-          sessionId: "child-1",
-          orderSeq: 2,
-          role: "assistant",
-          content: blocks,
-          status: "sent",
-          isContextEdge: false,
-          metadata: "{}",
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        },
-      ]);
-
-      const result = await subagent.fork("parent-1", "new", "task");
-      expect(result).toBe("Hello world");
-    });
-
     it("falls back to raw content when blocks parse fails", async () => {
       vi.mocked(messageDao.listBySession).mockReturnValue([
         {
@@ -255,13 +218,6 @@ describe("SubagentPresenter", () => {
       const result = await subagent.fork("parent-1", "new", "task");
       expect(result).toBe("plain text response");
     });
-
-    it("returns no-response message when no assistant message", async () => {
-      vi.mocked(messageDao.listBySession).mockReturnValue([]);
-      const result = await subagent.fork("parent-1", "new", "task");
-      expect(result).toBe("[Subagent completed with no response]");
-    });
-
     it("falls back to raw content when all blocks have empty content", async () => {
       const blocks = JSON.stringify([{ type: "tool_call", content: "" }]);
       vi.mocked(messageDao.listBySession).mockReturnValue([

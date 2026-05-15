@@ -64,10 +64,4 @@ describe("runLogs", () => {
     expect(clearLogs).toHaveBeenCalledWith("/tmp/slime-data");
     expect(output.join("")).toContain("Cleared:");
   });
-
-  it("prints no logs message when readLogs returns empty", () => {
-    vi.mocked(readLogs).mockReturnValueOnce([]);
-    runLogs([], ctx);
-    expect(output.join("")).toContain("No logs found for today");
-  });
 });

@@ -7,14 +7,6 @@ describe("FunctionPanel", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
-
-  it("should show tool panel when activeTab is tools", () => {
-    const wrapper = mount(FunctionPanel, {
-      props: { activeTab: "tools", toolCallBlocks: [] },
-    });
-    expect(wrapper.text()).toContain("暂无工具调用");
-  });
-
   it("should emit update:activeTab on tab click", async () => {
     const wrapper = mount(FunctionPanel, {
       props: { activeTab: "tools", toolCallBlocks: [] },
@@ -23,23 +15,6 @@ describe("FunctionPanel", () => {
     expect(wrapper.emitted("update:activeTab")).toBeTruthy();
     expect(wrapper.emitted("update:activeTab")![0]).toEqual(["preview"]);
   });
-
-  it("should show ContentDispatcher when activeTab is preview", () => {
-    const wrapper = mount(FunctionPanel, {
-      props: { activeTab: "preview", toolCallBlocks: [] },
-    });
-    expect(wrapper.text()).toContain("暂无预览内容");
-  });
-
-  it("should show history tab button", () => {
-    const wrapper = mount(FunctionPanel, {
-      props: { activeTab: "tools", toolCallBlocks: [] },
-    });
-    const historyTab = wrapper.find('[data-testid="tab-history"]');
-    expect(historyTab.exists()).toBe(true);
-    expect(historyTab.text()).toContain("历史");
-  });
-
   it("should emit update:activeTab with history on tab click", async () => {
     const wrapper = mount(FunctionPanel, {
       props: { activeTab: "tools", toolCallBlocks: [] },

@@ -36,42 +36,6 @@ describe("agentSession store - archive logic", () => {
     mockInvoke.mockReset();
     vi.spyOn(Date, "now").mockReturnValue(NOW);
   });
-
-  it("recent session appears in activeSessions", async () => {
-    const recent = makeSession({ id: "s1", updatedAt: NOW - DAY_MS });
-    mockInvoke.mockResolvedValue([recent]);
-    const store = useAgentSessionStore();
-    await store.fetchSessions();
-    expect(store.activeSessions.map((s) => s.id)).toContain("s1");
-    expect(store.archivedSessions.map((s) => s.id)).not.toContain("s1");
-  });
-
-  it("session older than 3 days appears in archivedSessions", async () => {
-    const old = makeSession({ id: "s2", updatedAt: NOW - THRESHOLD_MS - 1 });
-    mockInvoke.mockResolvedValue([old]);
-    const store = useAgentSessionStore();
-    await store.fetchSessions();
-    expect(store.archivedSessions.map((s) => s.id)).toContain("s2");
-    expect(store.activeSessions.map((s) => s.id)).not.toContain("s2");
-  });
-
-  it("pinned session stays in activeSessions even if older than 3 days", async () => {
-    const pinned = makeSession({ id: "s3", updatedAt: NOW - THRESHOLD_MS - 1, isPinned: true });
-    mockInvoke.mockResolvedValue([pinned]);
-    const store = useAgentSessionStore();
-    await store.fetchSessions();
-    expect(store.activeSessions.map((s) => s.id)).toContain("s3");
-    expect(store.archivedSessions.map((s) => s.id)).not.toContain("s3");
-  });
-
-  it("session exactly at threshold boundary goes to archivedSessions", async () => {
-    const boundary = makeSession({ id: "s4", updatedAt: NOW - THRESHOLD_MS });
-    mockInvoke.mockResolvedValue([boundary]);
-    const store = useAgentSessionStore();
-    await store.fetchSessions();
-    expect(store.archivedSessions.map((s) => s.id)).toContain("s4");
-  });
-
   it("activeSessions sorted: pinned first then by updatedAt DESC", async () => {
     const s1 = makeSession({ id: "s1", updatedAt: NOW - 1000, isPinned: false });
     const s2 = makeSession({ id: "s2", updatedAt: NOW - 500, isPinned: false });

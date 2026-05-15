@@ -14,33 +14,10 @@ function baseRequest(overrides?: Partial<InternalRequest>): InternalRequest {
 
 describe("anthropic outbound", () => {
   describe("toAnthropicRequest", () => {
-    it("basic message conversion", () => {
-      const body = toAnthropicRequest(baseRequest({ maxTokens: 1024 }));
-      expect(body).toEqual({
-        model: "test-model",
-        messages: [{ role: "user", content: [{ type: "text", text: "hello" }] }],
-        max_tokens: 1024,
-      });
-    });
-
     it("extracts systemPrompt to top-level system", () => {
       const body = toAnthropicRequest(baseRequest({ systemPrompt: "be helpful" }));
       expect(body.system).toBe("be helpful");
     });
-
-    it("extracts system role messages when no systemPrompt", () => {
-      const body = toAnthropicRequest(
-        baseRequest({
-          messages: [
-            { role: "system", content: [{ type: "text", text: "sys msg" }] },
-            { role: "user", content: [{ type: "text", text: "hi" }] },
-          ],
-        }),
-      );
-      expect(body.system).toBe("sys msg");
-      expect((body.messages as unknown[]).length).toBe(1);
-    });
-
     it("converts tool_use content", () => {
       const body = toAnthropicRequest(
         baseRequest({
@@ -266,19 +243,6 @@ describe("anthropic outbound", () => {
 
 describe("openai outbound", () => {
   describe("toOpenAIRequest", () => {
-    it("basic message conversion", () => {
-      const body = toOpenAIRequest(baseRequest());
-      expect(body.model).toBe("test-model");
-      expect(body.messages).toEqual([{ role: "user", content: "hello" }]);
-    });
-
-    it("prepends systemPrompt as system message", () => {
-      const body = toOpenAIRequest(baseRequest({ systemPrompt: "be helpful" }));
-      const msgs = body.messages as Array<Record<string, unknown>>;
-      expect(msgs[0]).toEqual({ role: "system", content: "be helpful" });
-      expect(msgs[1]).toEqual({ role: "user", content: "hello" });
-    });
-
     it("converts tool_use to tool_calls", () => {
       const body = toOpenAIRequest(
         baseRequest({

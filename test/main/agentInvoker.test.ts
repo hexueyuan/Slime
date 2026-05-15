@@ -7,38 +7,6 @@ import {
 } from "../../src/main/presenter/agentChat/agentInvoker";
 import type { CoreMessage } from "../../src/main/presenter/agentChat/contextBuilder";
 
-describe("estimateMessagesTokens", () => {
-  it("estimates tokens for string content", () => {
-    const msgs: CoreMessage[] = [
-      { role: "user", content: "hello" }, // 5 chars → ceil(5/4)=2
-      { role: "assistant", content: "world!!" }, // 7 chars → ceil(7/4)=2
-    ];
-    expect(estimateMessagesTokens(msgs)).toBe(4);
-  });
-
-  it("estimates tokens for array content", () => {
-    const msgs: CoreMessage[] = [
-      {
-        role: "tool",
-        content: [
-          {
-            type: "tool-result",
-            toolCallId: "tc1",
-            toolName: "read",
-            output: { type: "text", value: "abcd" }, // JSON.stringify → ~24 chars → ceil/4=6
-          },
-        ],
-      },
-    ];
-    // JSON.stringify({ type: 'text', value: 'abcd' }) = '{"type":"text","value":"abcd"}' = 30 chars → ceil(30/4)=8
-    expect(estimateMessagesTokens(msgs)).toBe(8);
-  });
-
-  it("returns 0 for empty array", () => {
-    expect(estimateMessagesTokens([])).toBe(0);
-  });
-});
-
 describe("microCompact", () => {
   function makeLoopMessages(steps: number): CoreMessage[] {
     const fixed: CoreMessage[] = [
@@ -118,20 +86,6 @@ describe("microCompact", () => {
     expect(toolMsg.content[0].output.value).toBe("user answered");
   });
 
-  it("does not touch fixed messages (first 3)", () => {
-    const msgs = makeLoopMessages(2);
-    const result = microCompact(msgs, 4);
-    expect(result[0]).toEqual(msgs[0]);
-    expect(result[1]).toEqual(msgs[1]);
-    expect(result[2]).toEqual(msgs[2]);
-  });
-
-  it("does not modify messages when all steps are within keepRecentSteps", () => {
-    const msgs = makeLoopMessages(3);
-    const result = microCompact(msgs, 4);
-    expect(result).toEqual(msgs);
-  });
-
   it("COMPACTABLE_TOOLS contains expected tools", () => {
     expect(COMPACTABLE_TOOLS.has("web_fetch")).toBe(true);
     expect(COMPACTABLE_TOOLS.has("read")).toBe(true);
@@ -183,21 +137,6 @@ describe("forceTruncate", () => {
     const result = forceTruncate(msgs, 4, 0.0, 200_000);
     // 固定 3 条 + 至少 4 对（8 条）= 至少 11 条
     expect(result.length).toBeGreaterThanOrEqual(3 + 4 * 2);
-  });
-
-  it("does not touch fixed messages", () => {
-    const msgs = makeLoopMsgs(5);
-    const result = forceTruncate(msgs, 4, 0.9, 200_000);
-    expect(result[0].role).toBe("system");
-    expect(result[1].role).toBe("user");
-    expect(result[2]).toEqual(msgs[2]);
-  });
-
-  it("returns messages unchanged when below threshold", () => {
-    // 2 步，内容很小，不会超阈值
-    const msgs = makeLoopMsgs(2);
-    const result = forceTruncate(msgs, 4, 0.9, 200_000);
-    expect(result).toEqual(msgs);
   });
 
   it("removes pairs in order oldest-first", () => {

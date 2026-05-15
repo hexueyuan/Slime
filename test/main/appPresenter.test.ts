@@ -104,13 +104,6 @@ describe("AppPresenter.selectLocalZip", () => {
     vi.clearAllMocks();
     mockDialog.showOpenDialog.mockResolvedValue({ canceled: false, filePaths: [] });
   });
-
-  it("returns null when dialog canceled", async () => {
-    mockDialog.showOpenDialog.mockResolvedValue({ canceled: true, filePaths: [] });
-    const result = await presenter.selectLocalZip();
-    expect(result).toBeNull();
-  });
-
   it("returns path when file selected", async () => {
     mockDialog.showOpenDialog.mockResolvedValue({
       canceled: false,

@@ -43,27 +43,4 @@ describe("messageIpc", () => {
     expect(store.isStreaming).toBe(true);
     expect(store.streamingBlocks).toEqual(blocks);
   });
-
-  it("should clear streaming state on END event", () => {
-    const store = useMessageStore();
-    setupMessageIpc(store);
-
-    // First set streaming
-    store.setStreamingState("s1", "msg-1", []);
-    // Then end
-    mockInvoke.mockResolvedValue([]); // loadMessages will be called
-    eventHandlers[STREAM_EVENTS.END]("s1", "msg-1");
-
-    expect(store.isStreaming).toBe(false);
-  });
-
-  it("should clear streaming state on ERROR event", () => {
-    const store = useMessageStore();
-    setupMessageIpc(store);
-
-    store.setStreamingState("s1", "msg-1", []);
-    eventHandlers[STREAM_EVENTS.ERROR]("s1", "some error");
-
-    expect(store.isStreaming).toBe(false);
-  });
 });

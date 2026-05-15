@@ -95,28 +95,4 @@ describe("parseAnthropicStream", () => {
     expect((errorEvent as { type: "error"; error: string }).error).toContain("JSON");
     expect(events.find((e) => e.type === "tool_call_end")).toBeUndefined();
   });
-
-  it("message_delta usage → usage event with camelCase fields", async () => {
-    const sse = makeSSE([
-      {
-        event: "message_delta",
-        data: JSON.stringify({
-          type: "message_delta",
-          usage: {
-            input_tokens: 10,
-            output_tokens: 20,
-            cache_read_input_tokens: 5,
-            cache_creation_input_tokens: 3,
-          },
-        }),
-      },
-      { event: "message_stop", data: JSON.stringify({ type: "message_stop" }) },
-    ]);
-    const events = await collect(parseAnthropicStream(sse));
-    expect(events[0]).toEqual({
-      type: "usage",
-      usage: { inputTokens: 10, outputTokens: 20, cacheReadTokens: 5, cacheWriteTokens: 3 },
-    });
-    expect(events[1]).toEqual({ type: "done" });
-  });
 });

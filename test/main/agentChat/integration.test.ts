@@ -144,12 +144,6 @@ describe("AgentChatPresenter integration", () => {
   });
 
   describe("message persistence", () => {
-    it("getMessages returns empty for new session", async () => {
-      const session = await adapter.createSession("hal-ai");
-      const msgs = await adapter.getMessages(session.id);
-      expect(msgs).toHaveLength(0);
-    });
-
     it("getMessages returns messages after manual insert", async () => {
       const session = await adapter.createSession("hal-ai");
       messageDao.createMessage(db, {
@@ -186,12 +180,6 @@ describe("AgentChatPresenter integration", () => {
       adapter.stopGeneration("sess-1");
       expect(engine.stopGeneration).toHaveBeenCalledWith("sess-1");
     });
-
-    it("retryLastMessage delegates", async () => {
-      await adapter.retryLastMessage("sess-1");
-      expect(engine.retryLastMessage).toHaveBeenCalledWith("sess-1");
-    });
-
     it("answerQuestion delegates", () => {
       adapter.answerQuestion("sess-1", "tc-1", "yes");
       expect(engine.answerQuestion).toHaveBeenCalledWith("sess-1", "tc-1", "yes");

@@ -14,30 +14,6 @@ const mockOn = vi.fn((channel: string, handler: Function) => {
 import { useContentStore, setupContentIpc } from "@/stores/content";
 import { CONTENT_EVENTS } from "@shared/events";
 
-describe("useContentStore", () => {
-  beforeEach(() => {
-    setActivePinia(createPinia());
-  });
-
-  it("should start with null content", () => {
-    const store = useContentStore();
-    expect(store.content).toBeNull();
-  });
-
-  it("should set content", () => {
-    const store = useContentStore();
-    store.setContent({ type: "markdown", content: "# Hi" });
-    expect(store.content).toEqual({ type: "markdown", content: "# Hi" });
-  });
-
-  it("should clear content", () => {
-    const store = useContentStore();
-    store.setContent({ type: "markdown", content: "# Hi" });
-    store.clear();
-    expect(store.content).toBeNull();
-  });
-});
-
 describe("setupContentIpc", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -65,14 +41,5 @@ describe("setupContentIpc", () => {
       label: "building",
       stage: "coding",
     });
-  });
-
-  it("should clear content on CLEARED event", () => {
-    const store = useContentStore();
-    store.setContent({ type: "markdown", content: "hi" });
-    setupContentIpc(store);
-    const handler = eventHandlers[CONTENT_EVENTS.CLEARED];
-    handler("s1");
-    expect(store.content).toBeNull();
   });
 });

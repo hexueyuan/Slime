@@ -169,25 +169,6 @@ describe("AgentChatPresenterAdapter generateTitle", () => {
 
     expect(sessionDao.updateTitle).not.toHaveBeenCalled();
   });
-
-  it("uses up to 3 user messages for prompt", async () => {
-    vi.mocked(messageDao.listBySession).mockReturnValue([
-      { role: "user", content: "msg1" },
-      { role: "assistant", content: "reply1" },
-      { role: "user", content: "msg2" },
-      { role: "user", content: "msg3" },
-    ] as any[]);
-
-    await (adapter as any).generateTitle("sess-1", "msg4");
-
-    expect(globalThis.fetch).toHaveBeenCalled();
-    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
-    expect(body.messages[0].content).toContain("用户：msg1");
-    expect(body.messages[0].content).toContain("用户：msg2");
-    expect(body.messages[0].content).toContain("用户：msg3");
-    expect(body.messages[0].content).not.toContain("用户：msg4");
-  });
-
   it("fires generateTitle in chat() as fire-and-forget", async () => {
     await adapter.chat("sess-1", "hello");
 

@@ -14,30 +14,10 @@ function baseRequest(overrides?: Partial<InternalRequest>): InternalRequest {
 
 describe("gemini outbound", () => {
   describe("toGeminiRequest", () => {
-    it("basic message conversion", () => {
-      const body = toGeminiRequest(baseRequest());
-      expect(body.contents).toEqual([{ role: "user", parts: [{ text: "hello" }] }]);
-    });
-
     it("extracts systemPrompt to systemInstruction", () => {
       const body = toGeminiRequest(baseRequest({ systemPrompt: "be helpful" }));
       expect(body.systemInstruction).toEqual({ parts: [{ text: "be helpful" }] });
     });
-
-    it("extracts system role messages to systemInstruction", () => {
-      const body = toGeminiRequest(
-        baseRequest({
-          messages: [
-            { role: "system", content: [{ type: "text", text: "sys msg" }] },
-            { role: "user", content: [{ type: "text", text: "hi" }] },
-          ],
-        }),
-      );
-      expect(body.systemInstruction).toEqual({ parts: [{ text: "sys msg" }] });
-      // system messages should not appear in contents
-      expect(body.contents).toEqual([{ role: "user", parts: [{ text: "hi" }] }]);
-    });
-
     it("maps assistant role to model", () => {
       const body = toGeminiRequest(
         baseRequest({

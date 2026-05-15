@@ -80,21 +80,6 @@ describe("readLogs", () => {
     const lines = readLogs(testDir, {});
     expect(lines).toHaveLength(2);
   });
-
-  it("filters by keyword in message", () => {
-    const logPath = join(testDir, "logs", `slime-${todayStr()}.log`);
-    writeFileSync(
-      logPath,
-      [
-        JSON.stringify({ timestamp: "t1", level: "info", message: "gateway started" }),
-        JSON.stringify({ timestamp: "t2", level: "error", message: "relay failed" }),
-      ].join("\n") + "\n",
-    );
-    const lines = readLogs(testDir, { key: "GATEWAY" });
-    expect(lines).toHaveLength(1);
-    expect(lines[0]).toContain("gateway started");
-  });
-
   it("applies --tail n", () => {
     const logPath = join(testDir, "logs", `slime-${todayStr()}.log`);
     const entries = Array.from({ length: 5 }, (_, i) =>

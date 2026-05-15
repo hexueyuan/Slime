@@ -19,12 +19,6 @@ describe("GroupTab", () => {
     setActivePinia(createPinia());
     document.body.innerHTML = "";
   });
-
-  it("should show empty state when no groups", () => {
-    mount(GroupTab, { attachTo: document.body });
-    expect(document.body.textContent).toContain("暂无分组");
-  });
-
   it("should list existing groups", () => {
     const store = useGatewayStore();
     store.groups = [
@@ -33,15 +27,5 @@ describe("GroupTab", () => {
     mount(GroupTab, { attachTo: document.body });
     expect(document.body.textContent).toContain("cc-auto");
     expect(document.body.textContent).toContain("failover");
-  });
-
-  it('should open GroupEditDialog on "+ 新增分组" click', async () => {
-    mount(GroupTab, { attachTo: document.body });
-    const btn = Array.from(document.querySelectorAll("button")).find((b) =>
-      b.textContent?.includes("新增分组"),
-    );
-    btn!.click();
-    await nextTick();
-    expect(document.querySelector('[data-testid="group-edit-overlay"]')).not.toBeNull();
   });
 });

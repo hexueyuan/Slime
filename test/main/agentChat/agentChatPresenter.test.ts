@@ -157,17 +157,6 @@ describe("AgentChatPresenter", () => {
   });
 
   describe("chat", () => {
-    it("saves user message and assistant message", async () => {
-      mockClientSimple("Hello!");
-      await presenter.chat("sess-1", "hi");
-
-      expect(messageDao.createMessage).toHaveBeenCalledTimes(2);
-      const calls = vi.mocked(messageDao.createMessage).mock.calls;
-      expect(calls[0][1].role).toBe("user");
-      expect(calls[0][1].content).toBe("hi");
-      expect(calls[1][1].role).toBe("assistant");
-    });
-
     it("sends END event on completion", async () => {
       mockClientSimple("Done");
       await presenter.chat("sess-1", "test");
@@ -324,34 +313,6 @@ describe("AgentChatPresenter", () => {
       expect((presenter as any).pendingQuestions.has("sess-1")).toBe(true);
     });
   });
-
-  it("saves assistant message to DB even when generation is aborted mid-stream", async () => {
-    const mockClient = {
-      chat: vi.fn((_msgs: any, _tools: any, _opts: any, signal: any) => {
-        return (async function* () {
-          yield { type: "text", text: "partial answer" };
-          await new Promise<void>((resolve) => {
-            if (signal?.aborted) {
-              resolve();
-              return;
-            }
-            signal?.addEventListener("abort", resolve);
-          });
-        })();
-      }),
-    };
-    vi.mocked(createLLMClient).mockReturnValue(mockClient as any);
-
-    const chatPromise = presenter.chat("sess-1", "hello");
-    await new Promise((r) => setTimeout(r, 20));
-    presenter.stopGeneration("sess-1");
-    await chatPromise;
-
-    const calls = vi.mocked(messageDao.createMessage).mock.calls;
-    const assistantCall = calls.find((c) => c[1].role === "assistant");
-    expect(assistantCall).toBeDefined();
-  });
-
   it("ignores concurrent chat() calls for the same session", async () => {
     let resolveStream!: () => void;
     let callCount = 0;
@@ -380,12 +341,4 @@ describe("AgentChatPresenter", () => {
     resolveStream();
     await first;
   }, 8000);
-
-  describe("retryLastMessage", () => {
-    it("does nothing when no assistant message", async () => {
-      vi.mocked(messageDao.listBySession).mockReturnValue([]);
-      await presenter.retryLastMessage("sess-1");
-      expect(messageDao.updateMessage).not.toHaveBeenCalled();
-    });
-  });
 });

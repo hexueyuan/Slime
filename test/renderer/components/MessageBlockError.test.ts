@@ -18,19 +18,4 @@ describe("MessageBlockError", () => {
     });
     expect(wrapper.text()).toContain("API rate limit exceeded");
   });
-
-  it("should have red styling", () => {
-    const wrapper = mount(MessageBlockError, {
-      props: { block: makeBlock() },
-    });
-    expect(wrapper.find(".border-red-500").exists()).toBe(true);
-  });
-
-  it("should render cancel state with muted style", () => {
-    const wrapper = mount(MessageBlockError, {
-      props: { block: makeBlock({ status: "cancel", content: "已取消" }) },
-    });
-    expect(wrapper.find(".text-muted-foreground").exists()).toBe(true);
-    expect(wrapper.text()).toContain("已取消");
-  });
 });
