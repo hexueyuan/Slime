@@ -46,12 +46,8 @@ import { ref, computed, watch, nextTick, onMounted } from "vue";
 import type { ChatMessageRecord, AssistantMessageBlock } from "@shared/types/chat";
 import MessageItemUser from "@/components/message/MessageItemUser.vue";
 import MessageItemAssistant from "@/components/message/MessageItemAssistant.vue";
-import { useEvolutionStore } from "@/stores/evolution";
 
-const evolutionStore = useEvolutionStore();
-const streamingLabel = computed(() =>
-  evolutionStore.stage === "discuss" ? "思考中..." : "进化中...",
-);
+const streamingLabel = "思考中...";
 
 const props = defineProps<{
   messages: ChatMessageRecord[];

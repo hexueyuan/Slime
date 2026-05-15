@@ -73,42 +73,6 @@
       <Icon icon="lucide:bot" class="h-5 w-5" />
     </button>
 
-    <!-- EvoLab hidden in v0.3 -->
-    <button
-      v-if="false"
-      data-testid="sidebar-evolab"
-      :class="[
-        'mt-1 flex h-8 w-8 items-center justify-center rounded-md',
-        activeView === 'evolab' ? 'bg-muted' : 'hover:bg-muted/50',
-      ]"
-      title="进化实验室"
-      @click="$emit('update:activeView', 'evolab')"
-    >
-      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke-width="1.5">
-        <defs>
-          <linearGradient id="dna-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ff6ec7" />
-            <stop offset="100%" stop-color="#7c3aed" />
-          </linearGradient>
-          <linearGradient id="dna-grad-2" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#06b6d4" />
-            <stop offset="100%" stop-color="#a855f7" />
-          </linearGradient>
-        </defs>
-        <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993" stroke="url(#dna-grad-1)" />
-        <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993" stroke="url(#dna-grad-1)" />
-        <path d="M2 15c6.667-6 13.333 0 20-6" stroke="url(#dna-grad-2)" />
-        <path d="m17 6-2.5-2.5" stroke="#ff6ec7" />
-        <path d="m14 8-1-1" stroke="#c850c0" />
-        <path d="m7 18 2.5 2.5" stroke="#06b6d4" />
-        <path d="m3.5 14.5.5.5" stroke="#06b6d4" />
-        <path d="m20 9 .5.5" stroke="#a855f7" />
-        <path d="m6.5 12.5 1 1" stroke="#06b6d4" />
-        <path d="m16.5 10.5 1 1" stroke="#c850c0" />
-        <path d="m10 16 1.5 1.5" stroke="#a855f7" />
-      </svg>
-    </button>
-
     <div class="flex-1" />
 
     <button
@@ -135,13 +99,11 @@ import { Icon } from "@iconify/vue";
 import SettingsDialog from "./settings/SettingsDialog.vue";
 
 defineProps<{
-  activeView: "chatroom" | "schedule" | "gateway" | "evolab" | "agents" | "groupchat";
+  activeView: "chatroom" | "schedule" | "gateway" | "agents" | "groupchat";
 }>();
 
 defineEmits<{
-  "update:activeView": [
-    view: "chatroom" | "schedule" | "gateway" | "evolab" | "agents" | "groupchat",
-  ];
+  "update:activeView": [view: "chatroom" | "schedule" | "gateway" | "agents" | "groupchat"];
 }>();
 
 const showSettings = ref(false);

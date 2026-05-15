@@ -13,7 +13,7 @@ if (!commitRE.test(msg)) {
       "ERROR: invalid commit message format.",
       "",
       "Examples:",
-      "  feat(renderer): add evolution center page",
+      "  feat(renderer): add chat sidebar",
       "  fix(main): handle window close event",
       "",
       "Format: type(scope?): subject (max 50 chars)",

@@ -12,7 +12,6 @@ import { logger } from "@/utils";
 import type { SessionPresenter } from "./sessionPresenter";
 import type { ConfigPresenter } from "./configPresenter";
 import type { ToolPresenter } from "./toolPresenter";
-import type { EvolutionPresenter } from "./evolutionPresenter";
 import type { ContentPresenter } from "./contentPresenter";
 import type { GatewayPresenter } from "./gatewayPresenter";
 import { buildSystemPrompt } from "./systemPrompt";
@@ -38,7 +37,6 @@ export class AgentPresenter implements IAgentPresenter {
     private sessionPresenter: SessionPresenter,
     _configPresenter: ConfigPresenter,
     private toolPresenter: ToolPresenter,
-    private evolutionPresenter: EvolutionPresenter,
     private contentPresenter: ContentPresenter,
     private gatewayPresenter: GatewayPresenter,
   ) {}
@@ -352,7 +350,7 @@ export class AgentPresenter implements IAgentPresenter {
         if (abortController.signal.aborted) break;
         stepCount++;
 
-        const systemPrompt = await buildSystemPrompt(this.evolutionPresenter.getStatus().stage);
+        const systemPrompt = await buildSystemPrompt();
         const messagesWithSystem: any[] = [
           { role: "system", content: systemPrompt },
           ...messages.filter((m) => m.role !== "system"),
@@ -403,13 +401,6 @@ export class AgentPresenter implements IAgentPresenter {
           });
         }
         messages.push({ role: "tool", content: toolResultParts });
-      }
-
-      // evolution_complete 只做了 prepare，loop 结束后统一 commit
-      // 确保 AI 在 complete 之后的 format/lint 修改也被收进去
-      const finalized = await this.evolutionPresenter.finalizeEvolution();
-      if (finalized) {
-        await this.evolutionPresenter.applyEvolution();
       }
 
       for (const block of blocks) {

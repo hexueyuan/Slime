@@ -36,10 +36,6 @@ describe("AgentPresenter", () => {
   const mockToolPresenter = {
     getToolSet: vi.fn(() => ({})),
   };
-  const mockEvolutionPresenter = {
-    getStatus: vi.fn(() => ({ stage: "idle" })),
-    finalizeEvolution: vi.fn(async () => false),
-  };
   const mockContentPresenter = {
     setContent: vi.fn(),
     clearContent: vi.fn(),
@@ -69,7 +65,6 @@ describe("AgentPresenter", () => {
       sessionPresenter,
       mockConfigPresenter as any,
       mockToolPresenter as any,
-      mockEvolutionPresenter as any,
       mockContentPresenter as any,
       mockGatewayPresenter as any,
     );

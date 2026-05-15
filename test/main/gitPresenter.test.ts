@@ -68,13 +68,6 @@ describe("GitPresenter", () => {
     expect(result).toEqual(["src/a.ts", "src/b.ts"]);
   });
 
-  it("rollbackToRef checks out and commits", async () => {
-    mockSpawn(""); // git checkout
-    mockSpawn(""); // git commit
-    const result = await git.rollbackToRef("abc123");
-    expect(result).toBe(true);
-  });
-
   it("returns false on spawn failure", async () => {
     const proc = new EventEmitter() as any;
     proc.stdout = new EventEmitter();

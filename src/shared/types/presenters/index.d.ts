@@ -6,7 +6,6 @@ import type { IFilePresenter } from "./file.presenter";
 import type { IGitPresenter } from "./git.presenter";
 import type { IWorkspacePresenter } from "./workspace.presenter";
 import type { IContentPresenter } from "./content.presenter";
-import type { IEvolutionPresenter } from "./evolution.presenter";
 import type { IGatewayPresenter } from "./gateway.presenter";
 import type { IAgentConfigPresenter } from "./agentConfig.presenter";
 import type { IAgentChatPresenter } from "./agentChat.presenter";
@@ -22,13 +21,11 @@ export type { IFilePresenter, DirEntry } from "./file.presenter";
 export type { IGitPresenter } from "./git.presenter";
 export type { IWorkspacePresenter, WorkspaceStatus, InitProgress } from "./workspace.presenter";
 export type { IContentPresenter } from "./content.presenter";
-export type { IEvolutionPresenter } from "./evolution.presenter";
 export type { IGatewayPresenter } from "./gateway.presenter";
 export type { IAgentConfigPresenter } from "./agentConfig.presenter";
 export type { IAgentChatPresenter } from "./agentChat.presenter";
 export type { IDevPresenter, BuiltinAgentInfo, SkillManifest } from "./dev.presenter";
 export type { IGroupChatPresenter } from "./groupChat.presenter";
-export type { EvolutionStatus, EvolutionNode, EvolutionStage, EvolutionPlan } from "../evolution";
 
 export interface IPresenter {
   appPresenter: IAppPresenter;
@@ -39,7 +36,6 @@ export interface IPresenter {
   gitPresenter: IGitPresenter;
   workspacePresenter: IWorkspacePresenter;
   contentPresenter: IContentPresenter;
-  evolutionPresenter: IEvolutionPresenter;
   gatewayPresenter: IGatewayPresenter;
   agentConfigPresenter: IAgentConfigPresenter;
   agentChatPresenter: IAgentChatPresenter;

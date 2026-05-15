@@ -7,7 +7,6 @@ import { join, dirname } from "path";
 import { promisify } from "util";
 import type { FilePresenter } from "./filePresenter";
 import type { ContentPresenter } from "./contentPresenter";
-import type { EvolutionPresenter } from "./evolutionPresenter";
 import type { GatewayPresenter } from "./gatewayPresenter";
 import { logger, paths } from "@/utils";
 import { app } from "electron";
@@ -74,7 +73,6 @@ export class ToolPresenter {
   constructor(
     private filePresenter: FilePresenter,
     private contentPresenter: ContentPresenter,
-    private evolutionPresenter: EvolutionPresenter,
     private browserSession: BrowserSession,
     private mcpBridge?: MCPToolBridge,
     private skillPresenter?: SkillPresenter,
@@ -249,59 +247,6 @@ export class ToolPresenter {
         execute: async ({ path }) => {
           await this.contentPresenter.openFile(sessionId, path);
           return `Opened ${path} in preview panel`;
-        },
-      }),
-      evolution_start: createTool({
-        description: "Start an evolution. Transitions to discuss stage. Must be in idle stage.",
-        parameters: z.object({
-          description: z.string().describe("User's evolution request"),
-        }),
-        execute: async ({ description }) => {
-          const ok = await this.evolutionPresenter.startEvolution(description, sessionId);
-          return ok
-            ? "Evolution started. You are now in discuss stage. Clarify requirements with ask_user before calling evolution_plan."
-            : "Cannot start: another evolution is in progress.";
-        },
-      }),
-      evolution_plan: createTool({
-        description:
-          "Submit the evolution plan. Transitions from discuss to coding stage. Must be in discuss stage.",
-        parameters: z.object({
-          scope: z.array(z.string()).describe("Files/modules affected"),
-          changes: z.array(z.string()).describe("What will be changed"),
-          risks: z.array(z.string()).optional().describe("Potential risks"),
-        }),
-        execute: async ({ scope, changes, risks }) => {
-          const ok = this.evolutionPresenter.submitPlan({ scope, changes, risks });
-          return ok
-            ? "Plan submitted. You are now in coding stage. Implement the changes and call evolution_complete when done."
-            : "Cannot submit plan: not in discuss stage.";
-        },
-      }),
-      evolution_complete: createTool({
-        description:
-          "Complete the evolution. Triggers apply flow (CHANGELOG, commit, tag). Must be in coding stage.",
-        parameters: z.object({
-          summary: z.string().describe("One-line summary of what was evolved"),
-          rollback_description: z
-            .string()
-            .describe(
-              "Description of how to rollback: new files, modified modules, new dependencies, and how to safely revert",
-            ),
-        }),
-        execute: async ({ summary, rollback_description }) => {
-          const verification = await this.evolutionPresenter.runBuildVerification();
-          if (!verification.success) {
-            return `Build verification failed. Fix the issues and call evolution_complete again:\n${verification.error}`;
-          }
-          const result = await this.evolutionPresenter.completeEvolution(
-            summary,
-            rollback_description,
-          );
-          if (result.success) {
-            return `Evolution complete! Tagged as ${result.tag}. Restart to see changes.`;
-          }
-          return `Apply failed: ${result.error}. Fix the issue and try again.`;
         },
       }),
       browser_navigate: createTool(makeBrowserNavigateTool(this.browserSession)),

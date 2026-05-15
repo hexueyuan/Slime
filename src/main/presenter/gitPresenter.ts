@@ -32,13 +32,6 @@ export class GitPresenter implements IGitPresenter {
     return stdout.trim() || "main";
   }
 
-  async rollbackToRef(ref: string): Promise<boolean> {
-    const checkout = await this.run("git", ["checkout", ref, "--", "."]);
-    if (checkout.exitCode !== 0) return false;
-    const commit = await this.run("git", ["commit", "-m", `rollback to ${ref}`]);
-    return commit.exitCode === 0;
-  }
-
   async addAndCommit(message: string, files?: string[]): Promise<boolean> {
     const addArgs = files && files.length > 0 ? ["add", ...files] : ["add", "-A"];
     const add = await this.run("git", addArgs);

@@ -3,7 +3,6 @@ import { ref, onMounted, shallowRef, watch, markRaw } from "vue";
 import AppSidebar from "./components/AppSidebar.vue";
 import ChatroomPanel from "./views/ChatroomPanel.vue";
 import GatewayPanel from "./views/GatewayPanel.vue";
-import EvolabPanel from "./views/EvolabPanel.vue";
 import SchedulePanel from "./views/SchedulePanel.vue";
 import AgentPanel from "./views/AgentPanel.vue";
 import GroupChatPanel from "./views/GroupChatPanel.vue";
@@ -15,14 +14,11 @@ const viewComponents: Record<string, object> = {
   chatroom: markRaw(ChatroomPanel),
   schedule: markRaw(SchedulePanel),
   gateway: markRaw(GatewayPanel),
-  evolab: markRaw(EvolabPanel),
   agents: markRaw(AgentPanel),
   groupchat: markRaw(GroupChatPanel),
 };
 
-const activeView = ref<"chatroom" | "schedule" | "gateway" | "evolab" | "agents" | "groupchat">(
-  "chatroom",
-);
+const activeView = ref<"chatroom" | "schedule" | "gateway" | "agents" | "groupchat">("chatroom");
 const currentComponent = shallowRef<object>(viewComponents.chatroom);
 
 watch(activeView, (v) => {

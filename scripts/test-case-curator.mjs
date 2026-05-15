@@ -123,7 +123,6 @@ function moduleOf(file) {
   }
   if (file.includes("browser.test") || file.includes("/browser/")) return "浏览器工具";
   if (file.includes("/cli/")) return "CLI";
-  if (file.includes("evolution")) return "Evolution";
   if (file.includes("db.test") || file.includes("database") || file.includes("jsonStore")) {
     return "数据层";
   }
@@ -383,11 +382,11 @@ function explainCase(testCase) {
       reason: "CLI 是对外入口，参数和输出契约应保留覆盖。",
     };
   }
-  if (/evolution|recovery|rollback|GitPresenter|gitPresenter/i.test(haystack)) {
+  if (/GitPresenter|gitPresenter/i.test(haystack)) {
     return {
-      explanation: "验证 Evolution 历史、恢复、回滚依赖检查或 Git 操作封装行为。",
+      explanation: "验证 Git 操作封装行为，例如 tag、提交、当前分支/提交读取或变更文件列表。",
       recommendation: "建议保留",
-      reason: "Evolution/Git 流程涉及文件与历史状态，回归风险高于普通展示逻辑。",
+      reason: "Git 封装影响提交、标记和变更识别流程，失败会直接影响工程操作。",
     };
   }
   if (/AppPresenter/i.test(haystack)) {

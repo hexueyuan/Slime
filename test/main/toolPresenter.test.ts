@@ -25,12 +25,6 @@ describe("ToolPresenter", () => {
     mockPaths.effectiveProjectRoot = testRoot;
     const fp = new FilePresenter(testRoot);
     const cp = new ContentPresenter();
-    const evo = {
-      startEvolution: vi.fn().mockReturnValue(true),
-      submitPlan: vi.fn().mockReturnValue(true),
-      completeEvolution: vi.fn().mockResolvedValue({ success: true, tag: "egg-v0.1-dev.1" }),
-      getStatus: vi.fn().mockReturnValue({ stage: "idle" }),
-    } as any;
     const mockBrowserSession = {
       navigate: vi.fn().mockResolvedValue("https://example.com"),
       screenshot: vi
@@ -45,14 +39,14 @@ describe("ToolPresenter", () => {
       close: vi.fn().mockResolvedValue(undefined),
       isActive: vi.fn().mockReturnValue(false),
     } as any;
-    tp = new ToolPresenter(fp, cp, evo, mockBrowserSession);
+    tp = new ToolPresenter(fp, cp, mockBrowserSession);
   });
 
   afterEach(() => {
     rmSync(testRoot, { recursive: true, force: true });
   });
 
-  it("should return a ToolSet with all 21 tools", async () => {
+  it("should return a ToolSet with all 18 tools", async () => {
     const tools = await tp.getToolSet("s1");
     expect(Object.keys(tools)).toEqual(
       expect.arrayContaining([
@@ -62,9 +56,6 @@ describe("ToolPresenter", () => {
         "exec",
         "ask_user",
         "preview",
-        "evolution_start",
-        "evolution_plan",
-        "evolution_complete",
         "browser_navigate",
         "browser_screenshot",
         "browser_snapshot",
@@ -79,13 +70,13 @@ describe("ToolPresenter", () => {
         "skill",
       ]),
     );
-    expect(Object.keys(tools)).toHaveLength(21);
+    expect(Object.keys(tools)).toHaveLength(18);
   });
 
   it("should include ask_user tool in toolset", async () => {
     const tools = await tp.getToolSet("s1");
     expect(Object.keys(tools)).toContain("ask_user");
-    expect(Object.keys(tools)).toHaveLength(21);
+    expect(Object.keys(tools)).toHaveLength(18);
   });
 
   it("should execute read tool", async () => {

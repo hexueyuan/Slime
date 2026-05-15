@@ -23,12 +23,6 @@ describe("ToolPresenter exec env injection", () => {
     mockPaths.effectiveProjectRoot = testRoot;
     const fp = new FilePresenter(testRoot);
     const cp = new ContentPresenter();
-    const evo = {
-      startEvolution: vi.fn().mockReturnValue(true),
-      submitPlan: vi.fn().mockReturnValue(true),
-      completeEvolution: vi.fn().mockResolvedValue({ success: true, tag: "egg-test.1" }),
-      getStatus: vi.fn().mockReturnValue({ stage: "idle" }),
-    } as any;
     const mockBrowserSession = {
       navigate: vi.fn(),
       screenshot: vi.fn(),
@@ -41,7 +35,7 @@ describe("ToolPresenter exec env injection", () => {
       close: vi.fn(),
       isActive: vi.fn().mockReturnValue(false),
     } as any;
-    tp = new ToolPresenter(fp, cp, evo, mockBrowserSession);
+    tp = new ToolPresenter(fp, cp, mockBrowserSession);
   });
 
   afterEach(() => {

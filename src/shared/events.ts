@@ -2,17 +2,6 @@ export const CONFIG_EVENTS = {
   CHANGED: "config:changed",
 } as const;
 
-export const EVOLUTION_EVENTS = {
-  STAGE_CHANGED: "evolution:stage-changed",
-  PROGRESS: "evolution:progress",
-  COMPLETED: "evolution:completed",
-  APPLY_PROGRESS: "evolution:apply-progress",
-  ROLLBACK_STARTED: "evolution:rollback-started",
-  ROLLBACK_COMPLETED: "evolution:rollback-completed",
-  ROLLBACK_FAILED: "evolution:rollback-failed",
-  RECOVERY_PROMPT: "evolution:recovery-prompt",
-} as const;
-
 export const CHAT_EVENTS = {
   MESSAGE: "chat:message",
   STREAM_CHUNK: "chat:stream-chunk",
