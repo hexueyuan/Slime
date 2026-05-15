@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, shallowRef, watch, markRaw } from "vue";
-import AppSidebar from "./components/AppSidebar.vue";
+import AppShell from "./components/layout/AppShell.vue";
+import AppSidebarNav from "./components/layout/AppSidebarNav.vue";
+import WorkspaceCanvas from "./components/layout/WorkspaceCanvas.vue";
 import ChatroomPanel from "./views/ChatroomPanel.vue";
 import GatewayPanel from "./views/GatewayPanel.vue";
 import SchedulePanel from "./views/SchedulePanel.vue";
@@ -61,19 +63,16 @@ async function onOnboardingDone() {
     </div>
 
     <!-- Main layout -->
-    <div v-else class="flex h-full flex-col bg-sidebar">
-      <div class="h-9 shrink-0" style="-webkit-app-region: drag" />
-      <div class="flex min-h-0 flex-1">
-        <AppSidebar v-model:active-view="activeView" />
-        <div
-          class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-xl border-l border-t border-border bg-background"
-        >
-          <KeepAlive>
-            <component :is="currentComponent" :key="activeView" />
-          </KeepAlive>
-        </div>
-      </div>
-    </div>
+    <AppShell v-else>
+      <template #sidebar>
+        <AppSidebarNav v-model:active-view="activeView" />
+      </template>
+      <WorkspaceCanvas>
+        <KeepAlive>
+          <component :is="currentComponent" :key="activeView" />
+        </KeepAlive>
+      </WorkspaceCanvas>
+    </AppShell>
     <ProfileModal />
   </div>
 </template>
