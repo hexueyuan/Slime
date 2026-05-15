@@ -232,6 +232,11 @@ function humanizeScenario(fullName) {
   if (/slimeHomeDir|paths|路径/i.test(text)) return `Slime 路径解析（${text}）`;
   if (/web_fetch|makeWebFetchTool|fetch/i.test(text)) return `网页抓取工具（${text}）`;
   if (/browser_/i.test(text)) return `浏览器工具（${text}）`;
+  if (/POST \/v1\/responses|responses api/i.test(text)) {
+    return /非流式/i.test(text)
+      ? `OpenAI Responses API 非流式兼容（${text}）`
+      : `OpenAI Responses API 兼容（${text}）`;
+  }
   if (/relayStream|流式/i.test(text)) return `Gateway 流式转发（${text}）`;
   if (/relay|转发/i.test(text)) return `Gateway 转发（${text}）`;
   if (/Skill|skill|技能/i.test(text)) return `Skill 加载与过滤（${text}）`;
@@ -244,6 +249,7 @@ function explainCase(testCase) {
   const name = testCase.fullName;
   const file = testCase.file;
   const assertions = testCase.assertions.join(" ");
+  const haystack = `${file} ${name} ${assertions}`;
 
   if (/failover sorts by priority descending/i.test(name)) {
     return {
@@ -266,6 +272,21 @@ function explainCase(testCase) {
       explanation: "验证 Gateway API Key 认证，确保无效、过期或禁用 key 会被拒绝。",
       recommendation: "建议保留",
       reason: "认证测试属于安全边界，不建议删除。",
+    };
+  }
+  if (/openai-inbound|POST \/v1\/responses|responses/i.test(haystack)) {
+    return {
+      explanation:
+        "验证 OpenAI Responses API 入站兼容层：外部请求格式会被转换为内部 relay 消息，relay 返回也会被转换回 Responses API 响应。",
+      recommendation: "建议保留",
+      reason: "这是对外协议入口的 golden path 和格式转换契约，删掉后兼容性回归不容易被发现。",
+    };
+  }
+  if (/anthropic|requestBuilder|streamParser|sseParser|llm\/providers|llm\/core/i.test(haystack)) {
+    return {
+      explanation: "验证 LLM 客户端与供应商协议的请求构造、SSE/stream 解析或响应事件转换。",
+      recommendation: "建议保留",
+      reason: "供应商协议适配属于核心兼容层，格式回归会直接导致模型调用失败。",
     };
   }
   if (/runtime.*lock|runtimeLock|runtime\.lock|data directory lock/i.test(name + file)) {
@@ -291,12 +312,102 @@ function explainCase(testCase) {
       reason: "Gateway 是核心链路，这类单测能防止供应商路由和转发回归。",
     };
   }
+  if (/gateway|modelDao|stats|localtime|hourly|daily|latency|cost/i.test(haystack)) {
+    return {
+      explanation: "验证 Gateway 数据模型、统计聚合、成本计算、本地时间分组或对外 API 行为。",
+      recommendation: "建议保留",
+      reason: "这些 case 覆盖计费、统计和协议边界，属于线上可观测性和兼容性核心路径。",
+    };
+  }
   if (/recordToCoreMessages|buildContext|selectTurnHistory|contextBuilder/i.test(file + name)) {
     return {
       explanation:
         "验证 Agent 对话上下文构造、消息格式转换或历史截断规则，确保发给 LLM 的消息结构合法。",
       recommendation: "建议保留",
       reason: "上下文格式一旦回归会直接影响 Agent 对话和工具调用，建议保留。",
+    };
+  }
+  if (/AgentChatPresenter > getSessionState|engine delegation/i.test(name)) {
+    return {
+      explanation:
+        "验证 AgentChatPresenter 的薄代理或状态查询行为，确认调用会转发到内部 engine 或返回默认状态。",
+      recommendation: "建议合并/精简",
+      reason:
+        "这类 case 有一定回归价值，但多个代理方法可以合并为一个 presenter delegation smoke test。",
+    };
+  }
+  if (
+    /AgentChatPresenter|SubagentPresenter|generateTitle|microCompact|forceTruncate|agentInvoker/i.test(
+      haystack,
+    )
+  ) {
+    return {
+      explanation:
+        "验证 Agent 对话执行、工具调用循环、停止/问答控制、标题生成、子 Agent 或上下文裁剪行为。",
+      recommendation: "建议保留",
+      reason: "这些逻辑影响真实对话流程和 token 控制，回归后用户会直接感知。",
+    };
+  }
+  if (/agent session|agentSession|agentMessage|session lifecycle|session config/i.test(haystack)) {
+    return {
+      explanation: "验证 Agent 会话、消息、配置继承或会话过滤等数据流转行为。",
+      recommendation: "建议保留",
+      reason: "会话和消息持久化是对话可靠性的基础，建议保留关键路径覆盖。",
+    };
+  }
+  if (/browser\.test|browserTools|browser_/i.test(haystack)) {
+    return {
+      explanation: "验证浏览器工具的参数转换、页面操作、截图/文本抓取或错误处理行为。",
+      recommendation: "建议保留",
+      reason: "浏览器工具是 Agent 可执行能力的一部分，协议和错误处理需要稳定覆盖。",
+    };
+  }
+  if (/mcp\/|MCP|mcp/i.test(haystack)) {
+    return {
+      explanation: "验证 MCP client、transport 或 tool bridge 的连接、生命周期和工具转换行为。",
+      recommendation: "建议保留",
+      reason: "MCP 是外部工具接入边界，失败会直接影响插件/工具可用性。",
+    };
+  }
+  if (/cli\/|CLI|baseUrl|auth|registry|logs|help|toolPresenter\.exec/i.test(haystack)) {
+    return {
+      explanation: "验证 CLI 命令、认证、日志读取、base URL 解析或 exec 环境变量注入。",
+      recommendation: "建议保留",
+      reason: "CLI 是对外入口，参数和输出契约应保留覆盖。",
+    };
+  }
+  if (/evolution|recovery|rollback|GitPresenter|gitPresenter/i.test(haystack)) {
+    return {
+      explanation: "验证 Evolution 历史、恢复、回滚依赖检查或 Git 操作封装行为。",
+      recommendation: "建议保留",
+      reason: "Evolution/Git 流程涉及文件与历史状态，回归风险高于普通展示逻辑。",
+    };
+  }
+  if (
+    /ToolPresenter|toolPresenter|filePresenter|workspacePresenter|contentPresenter/i.test(haystack)
+  ) {
+    return {
+      explanation: "验证工具执行、文件读写编辑、工作区或内容面板 presenter 的副作用行为。",
+      recommendation: "建议保留",
+      reason: "这些 presenter 直接执行文件/工具副作用，错误会影响 Agent 执行安全和可用性。",
+    };
+  }
+  if (
+    /AgentConfigPresenter|getAgent returns|getAgentDir returns|scanSkills|loadSkillContent|SkillPresenter/i.test(
+      haystack,
+    )
+  ) {
+    return {
+      explanation: "验证 Agent/Skill 管理的查询、扫描、过滤或目录解析等薄封装行为。",
+      recommendation: "建议合并/精简",
+      reason: "单个 case 多为相近输入输出检查，建议保留代表性路径并合并成参数化测试。",
+    };
+  }
+  if (/AppPresenter|getVersion|Main Process|eventbus|JsonStore/i.test(haystack)) {
+    return {
+      explanation: "验证应用基础设施中的简单 getter、事件派发或 JSON store 基础行为。",
+      recommendation: "建议合并/精简",
+      reason: "属于基础 smoke coverage，可保留少量代表性 case，避免每个薄方法单独占一个测试。",
     };
   }
   if (/dao|database|db\.test|migration|insert|update|delete|list/i.test(file + name)) {
@@ -334,6 +445,13 @@ function explainCase(testCase) {
       explanation: "验证工具函数、解析器或格式化逻辑在典型输入下输出正确。",
       recommendation: "建议合并/精简",
       reason: "工具函数测试有价值，但相似输入的多个 case 可合并成参数化测试。",
+    };
+  }
+  if (!testCase.module.startsWith("Renderer ")) {
+    return {
+      explanation: `验证 ${humanizeScenario(name)} 这个后端或工具链行为是否符合预期。`,
+      recommendation: "建议合并/精简",
+      reason: "未命中更具体规则，但不是纯展示测试；建议先按模块抽样合并，而不是直接删除。",
     };
   }
 
