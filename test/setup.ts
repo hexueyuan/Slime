@@ -5,9 +5,11 @@ vi.mock("electron", () => ({
     getName: vi.fn(() => "Slime"),
     getVersion: vi.fn(() => "0.1.0"),
     getPath: vi.fn(() => "/mock/path"),
+    setPath: vi.fn(),
     on: vi.fn(),
     quit: vi.fn(),
     isReady: vi.fn(() => true),
+    isPackaged: false,
     requestSingleInstanceLock: vi.fn(() => true),
     whenReady: vi.fn(() => Promise.resolve()),
   },
@@ -42,6 +44,13 @@ vi.mock("electron", () => ({
 }));
 
 beforeEach(() => {
+  if (!globalThis.ResizeObserver) {
+    globalThis.ResizeObserver = class ResizeObserver {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    };
+  }
   vi.clearAllMocks();
 });
 

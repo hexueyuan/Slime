@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 
 const testDir = join(tmpdir(), `slime-config-test-${Date.now()}`);
 vi.mock("@/utils/paths", () => ({
-  paths: { configDir: testDir },
+  paths: { configDir: testDir, slimeHomeDir: testDir },
 }));
 
 const mockSendToRenderer = vi.fn();

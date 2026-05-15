@@ -34,7 +34,9 @@ describe("SkillPresenter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(loader.scanSkills).mockReturnValue([skillA, skillB]);
+    vi.mocked(loader.scanSkills).mockImplementation((dir: string) =>
+      dir === "/market" ? [skillA, skillB] : [],
+    );
     sp = new SkillPresenter();
   });
 

@@ -8,6 +8,7 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "dev": "electron-rebuild -f -w better-sqlite3 && electron-vite dev --watch",
+    "dev:staging": "SLIME_USER_DATA_DIR=$HOME/.slime-staging pnpm run dev",
     "build": "pnpm run typecheck && electron-vite build && pnpm run build:cli && pnpm run sync:agents",
     "build:cli": "vite build --config vite.cli.config.ts",
     "sync:agents": "rsync -a --include='*/' --include='config.json' --include='prompt.md' --exclude='*' src/main/agents/ resources/agents/",
@@ -24,6 +25,7 @@
     "typecheck:web": "vue-tsc --noEmit -p tsconfig.app.json",
     "typecheck": "pnpm run typecheck:node && pnpm run typecheck:web",
     "test": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest",
+    "test:e2e": "playwright test",
     "test:coverage": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest --coverage",
     "test:watch": "pnpm rebuild better-sqlite3 --reporter=silent 2>/dev/null && vitest --watch",
     "postinstall": "electron-builder install-app-deps && simple-git-hooks"

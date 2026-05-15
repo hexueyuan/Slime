@@ -49,10 +49,10 @@ describe("SettingsDialog", () => {
     expect(generalBtn).not.toBeUndefined();
   });
 
-  it("should render agent tab button", () => {
+  it("should render MCP tab button", () => {
     mount(SettingsDialog, { props: { open: true }, attachTo: document.body });
     const buttons = document.querySelectorAll("button");
-    const agentBtn = Array.from(buttons).find((b) => b.textContent?.trim() === "Agent");
-    expect(agentBtn).not.toBeUndefined();
+    const mcpBtn = Array.from(buttons).find((b) => b.textContent?.trim() === "MCP");
+    expect(mcpBtn).not.toBeUndefined();
   });
 });

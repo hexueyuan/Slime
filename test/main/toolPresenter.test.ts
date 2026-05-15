@@ -52,7 +52,7 @@ describe("ToolPresenter", () => {
     rmSync(testRoot, { recursive: true, force: true });
   });
 
-  it("should return a ToolSet with all 20 tools", async () => {
+  it("should return a ToolSet with all 21 tools", async () => {
     const tools = await tp.getToolSet("s1");
     expect(Object.keys(tools)).toEqual(
       expect.arrayContaining([
@@ -61,7 +61,7 @@ describe("ToolPresenter", () => {
         "edit",
         "exec",
         "ask_user",
-        "open",
+        "preview",
         "evolution_start",
         "evolution_plan",
         "evolution_complete",
@@ -74,17 +74,18 @@ describe("ToolPresenter", () => {
         "browser_evaluate",
         "browser_wait",
         "browser_close",
+        "browser_save_text",
         "web_fetch",
         "skill",
       ]),
     );
-    expect(Object.keys(tools)).toHaveLength(20);
+    expect(Object.keys(tools)).toHaveLength(21);
   });
 
   it("should include ask_user tool in toolset", async () => {
     const tools = await tp.getToolSet("s1");
     expect(Object.keys(tools)).toContain("ask_user");
-    expect(Object.keys(tools)).toHaveLength(20);
+    expect(Object.keys(tools)).toHaveLength(21);
   });
 
   it("should execute read tool", async () => {
@@ -118,9 +119,9 @@ describe("ToolPresenter", () => {
     await expect(tp.callTool("s1", "unknown", {})).rejects.toThrow("Unknown tool");
   });
 
-  it("should execute open tool for .md file", async () => {
+  it("should execute preview tool for .md file", async () => {
     writeFileSync(join(testRoot, "preview.md"), "# Preview");
-    const result = await tp.callTool("s1", "open", { path: "preview.md" });
+    const result = await tp.callTool("s1", "preview", { path: "preview.md" });
     expect(result).toContain("preview.md");
   });
 

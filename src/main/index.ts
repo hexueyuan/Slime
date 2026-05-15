@@ -1,7 +1,6 @@
 import { app, BrowserWindow } from "electron";
 import { electronApp } from "@electron-toolkit/utils";
 import { existsSync, mkdirSync } from "fs";
-import { join } from "path";
 import { createMainWindow, setIsQuitting, registerWindowIpc } from "./window";
 import { Presenter } from "./presenter";
 import { eventBus } from "./eventbus";
@@ -9,10 +8,11 @@ import { logger, paths } from "./utils";
 import { TrayManager } from "./tray";
 import { setupCliWrapper } from "./utils/cliWrapper";
 import { userInfo } from "os";
+import { resolveRuntimeProfile } from "./utils/runtimeProfile";
+import { acquireRuntimeLock, RuntimeLockError, type RuntimeLock } from "./utils/runtimeLock";
 
-if (!app.isPackaged) {
-  app.setPath("userData", join(app.getPath("appData"), "slime-dev"));
-}
+const runtimeProfile = resolveRuntimeProfile();
+let runtimeLock: RuntimeLock | null = null;
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
@@ -29,11 +29,25 @@ function ensureDirectories(): void {
 }
 
 async function bootstrap(): Promise<void> {
-  logger.info("Slime starting...", { version: app.getVersion() });
+  logger.info("Slime starting...", {
+    version: app.getVersion(),
+    profile: runtimeProfile.name,
+    userData: runtimeProfile.userData,
+  });
 
   electronApp.setAppUserModelId("com.slime.app");
 
   ensureDirectories();
+  try {
+    runtimeLock = acquireRuntimeLock(runtimeProfile);
+  } catch (error) {
+    if (error instanceof RuntimeLockError) {
+      logger.error(error.message, { lockFile: error.lockFile, userData: runtimeProfile.userData });
+      app.quit();
+      return;
+    }
+    throw error;
+  }
 
   const presenter = Presenter.getInstance();
   await presenter.init();
@@ -75,6 +89,8 @@ app.on("before-quit", () => {
 });
 
 app.on("will-quit", () => {
+  runtimeLock?.release();
+  runtimeLock = null;
   TrayManager.destroy();
 });
 

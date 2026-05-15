@@ -11,35 +11,34 @@ function createMockContainer(width: number) {
 describe("useSplitPane", () => {
   it("should initialize leftWidth based on defaultRatio", () => {
     const container = createMockContainer(1000);
-    const { leftWidth } = useSplitPane({ containerRef: container, defaultRatio: 0.35 });
-    expect(leftWidth.value).toBe(350);
+    const { rightWidth } = useSplitPane({ containerRef: container, defaultRatio: 0.35 });
+    expect(rightWidth.value).toBe(650);
   });
 
   it("should return 0 when container is null", () => {
     const container = ref(null);
-    const { leftWidth } = useSplitPane({ containerRef: container, defaultRatio: 0.35 });
-    expect(leftWidth.value).toBe(0);
+    const { rightWidth } = useSplitPane({ containerRef: container, defaultRatio: 0.35 });
+    expect(rightWidth.value).toBe(0);
   });
 
   it("should clamp to minLeftPx", () => {
     const container = createMockContainer(500);
-    const { leftWidth } = useSplitPane({
+    const { rightWidth } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.1,
       minLeftPx: 280,
     });
-    expect(leftWidth.value).toBe(280);
+    expect(rightWidth.value).toBe(220);
   });
 
   it("should clamp to respect minRightPx", () => {
     const container = createMockContainer(500);
-    const { leftWidth } = useSplitPane({
+    const { rightWidth } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.9,
       minRightPx: 320,
     });
-    // 500 - 320 = 180
-    expect(leftWidth.value).toBe(180);
+    expect(rightWidth.value).toBe(320);
   });
 
   it("should not be dragging initially", () => {
@@ -50,22 +49,22 @@ describe("useSplitPane", () => {
 
   it("should update leftWidth on mouse drag", async () => {
     const container = createMockContainer(1000);
-    const { leftWidth, isDragging, onMouseDown } = useSplitPane({
+    const { rightWidth, isDragging, onMouseDown } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.35,
       minLeftPx: 280,
       minRightPx: 320,
     });
-    expect(leftWidth.value).toBe(350);
+    expect(rightWidth.value).toBe(650);
 
     // Start drag
     onMouseDown(new MouseEvent("mousedown", { clientX: 350 }));
     expect(isDragging.value).toBe(true);
 
-    // Move mouse to x=400 (delta +50)
+    // Move mouse to x=400 (right pane shrinks by 50)
     document.dispatchEvent(new MouseEvent("mousemove", { clientX: 400 }));
     await nextTick();
-    expect(leftWidth.value).toBe(400);
+    expect(rightWidth.value).toBe(600);
 
     // Release
     document.dispatchEvent(new MouseEvent("mouseup"));
@@ -74,7 +73,7 @@ describe("useSplitPane", () => {
 
   it("should clamp during drag", async () => {
     const container = createMockContainer(1000);
-    const { leftWidth, onMouseDown } = useSplitPane({
+    const { rightWidth, onMouseDown } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.35,
       minLeftPx: 280,
@@ -83,22 +82,22 @@ describe("useSplitPane", () => {
 
     onMouseDown(new MouseEvent("mousedown", { clientX: 350 }));
 
-    // Drag far left — should clamp to minLeftPx
+    // Drag far left — right pane grows until left pane keeps minLeftPx
     document.dispatchEvent(new MouseEvent("mousemove", { clientX: 100 }));
     await nextTick();
-    expect(leftWidth.value).toBe(280);
+    expect(rightWidth.value).toBe(720);
 
-    // Drag far right — should clamp to containerWidth - minRightPx
+    // Drag far right — right pane keeps minRightPx
     document.dispatchEvent(new MouseEvent("mousemove", { clientX: 900 }));
     await nextTick();
-    expect(leftWidth.value).toBe(680);
+    expect(rightWidth.value).toBe(320);
 
     document.dispatchEvent(new MouseEvent("mouseup"));
   });
 
   it("should reset to default ratio", () => {
     const container = createMockContainer(1000);
-    const { leftWidth, onMouseDown, resetToDefault } = useSplitPane({
+    const { rightWidth, onMouseDown, resetToDefault } = useSplitPane({
       containerRef: container,
       defaultRatio: 0.35,
       minLeftPx: 280,
@@ -109,10 +108,10 @@ describe("useSplitPane", () => {
     onMouseDown(new MouseEvent("mousedown", { clientX: 350 }));
     document.dispatchEvent(new MouseEvent("mousemove", { clientX: 500 }));
     document.dispatchEvent(new MouseEvent("mouseup"));
-    expect(leftWidth.value).toBe(500);
+    expect(rightWidth.value).toBe(500);
 
     // Reset
     resetToDefault();
-    expect(leftWidth.value).toBe(350);
+    expect(rightWidth.value).toBe(650);
   });
 });

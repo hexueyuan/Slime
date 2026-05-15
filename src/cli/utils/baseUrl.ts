@@ -2,9 +2,21 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
+function resolveConfigDir(): string {
+  const explicitDataDir =
+    process.env["SLIME_DATA_DIR"] ??
+    process.env["SLIME_USER_DATA_DIR"] ??
+    process.env["SLIME_E2E_USER_DATA"];
+
+  if (explicitDataDir) {
+    return join(explicitDataDir, ".slime-home");
+  }
+
+  return join(homedir(), ".slime");
+}
+
 function readConfPort(): number | null {
-  const isDev = process.env["SLIME_DEV_MODE"] === "1";
-  const confFile = join(homedir(), isDev ? ".slime-dev" : ".slime", "slime.config.json");
+  const confFile = join(resolveConfigDir(), "slime.config.json");
   if (!existsSync(confFile)) return null;
   try {
     const obj = JSON.parse(readFileSync(confFile, "utf-8")) as Record<string, unknown>;

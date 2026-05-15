@@ -1,6 +1,5 @@
 import { app } from "electron";
 import { join } from "path";
-import { homedir } from "os";
 
 export const paths = {
   get userData() {
@@ -78,7 +77,15 @@ export const paths = {
   },
 
   get slimeHomeDir() {
-    return join(homedir(), app.isPackaged ? ".slime" : ".slime-dev");
+    if (process.env.SLIME_HOME_DIR) {
+      return process.env.SLIME_HOME_DIR;
+    }
+
+    if (process.env.SLIME_E2E_USER_DATA || process.env.SLIME_USER_DATA_DIR) {
+      return join(this.userData, ".slime-home");
+    }
+
+    return join(app.getPath("home"), ".slime");
   },
 
   get sessionsDir() {

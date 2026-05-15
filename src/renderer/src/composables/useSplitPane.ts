@@ -1,4 +1,4 @@
-import { ref, watch, onUnmounted, type Ref } from "vue";
+import { ref, watch, onUnmounted, getCurrentInstance, type Ref } from "vue";
 
 interface UseSplitPaneOptions {
   containerRef: Ref<HTMLElement | null>;
@@ -107,11 +107,15 @@ export function useSplitPane(options: UseSplitPaneOptions) {
     rightWidth.value = clamp(rightWidth.value);
   }
 
-  onUnmounted(() => {
+  const cleanup = () => {
     resizeObserver?.disconnect();
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
-  });
+  };
+
+  if (getCurrentInstance()) {
+    onUnmounted(cleanup);
+  }
 
   return { rightWidth, isDragging, onMouseDown, resetToDefault };
 }

@@ -56,7 +56,13 @@ export interface Relay {
 }
 
 function filterForLog(request: InternalRequest): string {
-  if (!request.rawBody) return "{}";
+  if (!request.rawBody) {
+    return JSON.stringify({
+      model: request.model,
+      messages: request.messages,
+      stream: request.stream,
+    });
+  }
   const raw = JSON.parse(request.rawBody) as Record<string, unknown>;
   if (Array.isArray(raw.messages)) {
     raw.messages = (raw.messages as any[]).map((msg) => ({

@@ -25,6 +25,7 @@ vi.mock("@/eventbus", () => ({
 
 vi.mock("@/utils", () => ({
   logger: { error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  paths: { sessionWorkDir: vi.fn((sessionId: string) => `/tmp/slime-sessions/${sessionId}`) },
 }));
 
 vi.mock("@/presenter/agentChat/contextBuilder", () => ({
