@@ -1,0 +1,4 @@
+interface:
+  display_name: "Slime UI System"
+  short_description: "Apply Slime's Codex-style UI system workflow"
+  default_prompt: "Use the Slime UI System skill to design or implement UI components following the project style guide."
