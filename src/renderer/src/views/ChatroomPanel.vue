@@ -54,9 +54,9 @@ onMounted(async () => {
 const mainRef = ref<HTMLElement | null>(null);
 const { rightWidth, onMouseDown, resetToDefault } = useSplitPane({
   containerRef: mainRef,
-  defaultRightPx: 320,
+  defaultRightPx: 520,
   minLeftPx: 280,
-  minRightPx: 320,
+  minRightPx: 420,
 });
 
 // Function panel state
