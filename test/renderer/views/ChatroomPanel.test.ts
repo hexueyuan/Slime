@@ -13,13 +13,6 @@ const mockInvoke = vi.fn();
 };
 
 // --- Stub heavy child components ---
-vi.mock("@/components/chat/SessionList.vue", () => ({
-  default: {
-    name: "SessionList",
-    emits: ["select"],
-    template: '<div data-testid="session-list" />',
-  },
-}));
 vi.mock("@/components/chat/NewThread.vue", () => ({
   default: {
     name: "NewThread",
@@ -83,8 +76,7 @@ describe("ChatroomPanel", () => {
     mockInvoke.mockReset();
     mockInvoke.mockImplementation(makeInvokeMock());
   });
-  // BUG-#1 补充: SessionList 切换会话（经 onSessionSelect）也应清零
-  it("resets thought chain state when switching session via SessionList", async () => {
+  it("resets thought chain state when active session changes", async () => {
     const wrapper = mount(ChatroomPanel);
     await flushPromises();
 
@@ -106,9 +98,7 @@ describe("ChatroomPanel", () => {
     let panel = wrapper.findComponent({ name: "ChatFunctionPanel" });
     expect(panel.props("thoughtChainBlocks")).not.toBeNull();
 
-    // 通过 SessionList 切换会话
-    const sessionList = wrapper.findComponent({ name: "SessionList" });
-    await sessionList.vm.$emit("select", "other-session");
+    sessionStore.activeSessionId = "other-session";
     await flushPromises();
 
     panel = wrapper.findComponent({ name: "ChatFunctionPanel" });

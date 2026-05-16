@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
-import SessionList from "../components/chat/SessionList.vue";
 import NewThread from "../components/chat/NewThread.vue";
 import ChatView from "../components/chat/ChatView.vue";
 import ChatFunctionPanel from "../components/chat/ChatFunctionPanel.vue";
@@ -42,12 +41,6 @@ onMounted(async () => {
   await Promise.all([agentStore.fetchAgents(), sessionStore.fetchSessions()]);
 });
 
-// Session select
-function onSessionSelect(id: string) {
-  sessionStore.setActiveSession(id);
-  chatStore.fetchMessages(id);
-}
-
 // Split pane（mainRef 绑在 center+right 的包裹 div 上）
 const mainRef = ref<HTMLElement | null>(null);
 const { rightWidth, onMouseDown, resetToDefault } = useSplitPane({
@@ -63,7 +56,7 @@ const selectedToolCallId = ref<string | null>(null);
 const showStreamingThought = ref(false);
 const selectedThoughtMessageId = ref<string | null>(null);
 
-// Reset thought chain state on session change (covers NewThread + SessionList)
+// Reset thought chain state on session change.
 watch(
   () => sessionStore.activeSessionId,
   () => {
@@ -181,10 +174,6 @@ function setMainElement(element: HTMLElement | null) {
     @divider-mousedown="onMouseDown"
     @divider-doubleclick="resetToDefault"
   >
-    <template #sidebar>
-      <SessionList @select="onSessionSelect" />
-    </template>
-
     <div class="h-full overflow-hidden">
       <div class="h-full overflow-hidden">
         <NewThread v-if="!sessionStore.activeSessionId" />
