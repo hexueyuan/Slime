@@ -48,13 +48,14 @@ function agentColor(agent: Agent): string {
           v-for="agent in agentStore.enabledAgents"
           :key="agent.id"
           :name="agent.name"
+          :role="agent.config?.capabilityRequirements?.join(' · ') || agent.mbti"
           :description="agent.description"
           :selected="selectedAgentId === agent.id"
           :tone-color="agentColor(agent)"
           @select="selectedAgentId = agent.id"
         >
           <template #avatar>
-            <AgentAvatar :avatar="agent.avatar" size="lg" />
+            <AgentAvatar :avatar="agent.avatar" size="md" />
           </template>
         </SlimeAgentCard>
       </div>

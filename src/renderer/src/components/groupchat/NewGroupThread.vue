@@ -67,6 +67,8 @@ async function onCreate() {
           v-for="agent in agentStore.enabledAgents"
           :key="agent.id"
           :name="agent.name"
+          :role="agent.config?.capabilityRequirements?.join(' · ') || agent.mbti"
+          :description="agent.description"
           :selected="selectedAgentIds.includes(agent.id)"
           :tone-color="agentColor(agent)"
           @select="toggleAgent(agent.id)"
