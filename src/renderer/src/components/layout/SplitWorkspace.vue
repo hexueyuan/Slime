@@ -5,11 +5,13 @@ withDefaults(
   defineProps<{
     sidebarWidth?: string;
     rightWidth?: number;
+    rightOpen?: boolean;
     minCenterWidth?: number;
   }>(),
   {
     sidebarWidth: "220px",
     rightWidth: 320,
+    rightOpen: true,
     minCenterWidth: 280,
   },
 );
@@ -48,7 +50,10 @@ onBeforeUnmount(() => {
 
       <template v-if="$slots.right">
         <div
-          class="group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-[var(--color-border-subtle)] transition-colors hover:bg-[var(--color-border-strong)]"
+          :class="[
+            'group relative flex shrink-0 cursor-col-resize items-center justify-center bg-[var(--color-border-subtle)] transition-[width,opacity,background-color] duration-300 ease-out hover:bg-[var(--color-border-strong)]',
+            rightOpen ? 'w-px opacity-100' : 'w-0 opacity-0 pointer-events-none',
+          ]"
           @mousedown="$emit('dividerMousedown', $event)"
           @dblclick="$emit('dividerDoubleclick')"
         >
@@ -56,10 +61,24 @@ onBeforeUnmount(() => {
         </div>
 
         <aside
-          class="shrink-0 overflow-hidden border-l border-[var(--color-border-subtle)] bg-[var(--color-app-panel)]"
-          :style="{ width: `${rightWidth}px` }"
+          data-testid="split-right-pane"
+          :data-open="rightOpen ? 'true' : 'false'"
+          :class="[
+            'shrink-0 overflow-hidden bg-[var(--color-app-panel)] transition-[width,border-color] duration-300 ease-out',
+            rightOpen
+              ? 'border-l border-[var(--color-border-subtle)]'
+              : 'border-l border-transparent',
+          ]"
+          :style="{ width: rightOpen ? `${rightWidth}px` : '0px' }"
         >
-          <slot name="right" />
+          <div
+            :class="[
+              'h-full transition-[opacity,transform] duration-300 ease-out',
+              rightOpen ? 'translate-x-0 opacity-100' : 'translate-x-5 opacity-0',
+            ]"
+          >
+            <slot name="right" />
+          </div>
         </aside>
       </template>
     </div>

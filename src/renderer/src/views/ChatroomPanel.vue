@@ -179,6 +179,7 @@ function setMainElement(element: HTMLElement | null) {
 <template>
   <SplitWorkspace
     :right-width="rightWidth ?? 320"
+    :right-open="rightPanelOpen"
     @main-element="setMainElement"
     @divider-mousedown="onMouseDown"
     @divider-doubleclick="resetToDefault"
@@ -195,7 +196,7 @@ function setMainElement(element: HTMLElement | null) {
       </div>
     </div>
 
-    <template v-if="rightPanelOpen" #right>
+    <template #right>
       <ChatFunctionPanel
         :active-tab="activeTab"
         :tool-call-blocks="toolCallBlocks"
