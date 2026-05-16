@@ -1,5 +1,5 @@
 <template>
-  <div class="prose prose-xs dark:prose-invert w-full max-w-none">
+  <div class="prose dark:prose-invert w-full max-w-none text-[14px] leading-[1.65]">
     <NodeRenderer
       :content="debouncedContent"
       :custom-id="`slime-block-${blockId}`"

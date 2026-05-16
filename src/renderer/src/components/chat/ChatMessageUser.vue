@@ -60,7 +60,7 @@ async function copyMessage() {
       </div>
 
       <!-- Purple bubble -->
-      <div class="rounded-xl bg-violet-600 px-3 py-2 text-sm text-white">
+      <div class="rounded-xl bg-violet-600 px-3 py-2 text-[14px] leading-[1.55] text-white">
         <div class="whitespace-pre-wrap">{{ displayText }}</div>
       </div>
 

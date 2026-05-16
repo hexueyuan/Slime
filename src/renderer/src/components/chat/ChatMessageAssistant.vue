@@ -220,7 +220,7 @@ function regenerate() {
             <!-- Content block -->
             <div
               v-if="block.type === 'content'"
-              class="prose prose-xs dark:prose-invert w-full max-w-none"
+              class="prose dark:prose-invert w-full max-w-none text-[14px] leading-[1.65]"
             >
               <NodeRenderer
                 :content="getBlockContent(originalIdx, block)"
