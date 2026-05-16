@@ -1,13 +1,15 @@
 <template>
   <div class="flex h-full flex-col">
-    <div class="flex shrink-0 border-b border-border">
+    <div
+      class="flex h-11 shrink-0 border-b border-[var(--color-border-subtle)] bg-[var(--color-app-panel)]"
+    >
       <button
         data-testid="chat-tab-tools"
-        class="px-4 py-2 text-sm font-medium transition-colors"
+        class="px-5 text-sm font-semibold transition-colors"
         :class="
           activeTab === 'tools'
-            ? 'text-foreground border-b-2 border-primary'
-            : 'text-muted-foreground hover:text-foreground'
+            ? 'text-[var(--color-text-primary)] border-b-2 border-[var(--color-text-primary)]'
+            : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
         "
         @click="$emit('update:activeTab', 'tools')"
       >
@@ -15,11 +17,11 @@
       </button>
       <button
         data-testid="chat-tab-preview"
-        class="px-4 py-2 text-sm font-medium transition-colors"
+        class="px-5 text-sm font-semibold transition-colors"
         :class="
           activeTab === 'preview'
-            ? 'text-foreground border-b-2 border-primary'
-            : 'text-muted-foreground hover:text-foreground'
+            ? 'text-[var(--color-text-primary)] border-b-2 border-[var(--color-text-primary)]'
+            : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
         "
         @click="$emit('update:activeTab', 'preview')"
       >

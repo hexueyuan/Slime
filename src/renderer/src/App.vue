@@ -67,7 +67,7 @@ async function onOnboardingDone() {
       <template #sidebar>
         <AppSidebarNav v-model:active-view="activeView" />
       </template>
-      <WorkspaceCanvas>
+      <WorkspaceCanvas :active-view="activeView">
         <KeepAlive>
           <component :is="currentComponent" :key="activeView" />
         </KeepAlive>
