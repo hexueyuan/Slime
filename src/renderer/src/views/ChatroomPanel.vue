@@ -13,6 +13,15 @@ import { useSplitPane } from "@/composables/useSplitPane";
 import { AGENT_EVENTS, SESSION_EVENTS } from "@shared/events";
 import type { AssistantMessageBlock, BlockStatus } from "@shared/types/chat";
 
+withDefaults(
+  defineProps<{
+    rightPanelOpen?: boolean;
+  }>(),
+  {
+    rightPanelOpen: false,
+  },
+);
+
 const agentStore = useAgentStore();
 const sessionStore = useAgentSessionStore();
 const chatStore = useAgentChatStore();
@@ -186,7 +195,7 @@ function setMainElement(element: HTMLElement | null) {
       </div>
     </div>
 
-    <template #right>
+    <template v-if="rightPanelOpen" #right>
       <ChatFunctionPanel
         :active-tab="activeTab"
         :tool-call-blocks="toolCallBlocks"

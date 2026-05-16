@@ -7,6 +7,12 @@ type AppView = "chatroom" | "schedule" | "gateway" | "agents" | "groupchat";
 
 const props = defineProps<{
   activeView: AppView;
+  inspectorOpen?: boolean;
+  inspectorAvailable?: boolean;
+}>();
+
+defineEmits<{
+  toggleInspector: [];
 }>();
 
 const viewMeta = computed(() => {
@@ -54,7 +60,18 @@ const viewMeta = computed(() => {
         </button>
         <SlimeIconButton icon="lucide:terminal-square" title="终端" size="sm" />
         <div class="h-5 w-px bg-[var(--color-border-subtle)]" />
-        <SlimeIconButton icon="lucide:panel-right" title="工具面板" size="sm" />
+        <SlimeIconButton
+          icon="lucide:panel-right"
+          :title="inspectorOpen ? '隐藏工具面板' : '显示工具面板'"
+          size="sm"
+          :disabled="inspectorAvailable === false"
+          :class="
+            inspectorOpen
+              ? 'border-[var(--color-border-strong)] bg-[var(--color-control-active)] text-[var(--color-text-primary)]'
+              : ''
+          "
+          @click="$emit('toggleInspector')"
+        />
       </div>
     </header>
 

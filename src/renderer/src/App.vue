@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, shallowRef, watch, markRaw } from "vue";
+import { computed, ref, onMounted, shallowRef, watch, markRaw } from "vue";
 import AppShell from "./components/layout/AppShell.vue";
 import AppSidebarNav from "./components/layout/AppSidebarNav.vue";
 import WorkspaceCanvas from "./components/layout/WorkspaceCanvas.vue";
@@ -22,10 +22,16 @@ const viewComponents: Record<string, object> = {
 
 const activeView = ref<"chatroom" | "schedule" | "gateway" | "agents" | "groupchat">("chatroom");
 const currentComponent = shallowRef<object>(viewComponents.chatroom);
+const rightPanelOpen = ref(false);
 
 watch(activeView, (v) => {
   currentComponent.value = viewComponents[v];
+  rightPanelOpen.value = false;
 });
+
+const currentComponentProps = computed(() =>
+  activeView.value === "chatroom" ? { rightPanelOpen: rightPanelOpen.value } : {},
+);
 
 const configPresenter = usePresenter("configPresenter");
 const needsOnboarding = ref<boolean | null>(null);
@@ -67,9 +73,14 @@ async function onOnboardingDone() {
       <template #sidebar>
         <AppSidebarNav v-model:active-view="activeView" />
       </template>
-      <WorkspaceCanvas :active-view="activeView">
+      <WorkspaceCanvas
+        :active-view="activeView"
+        :inspector-open="rightPanelOpen"
+        :inspector-available="activeView === 'chatroom'"
+        @toggle-inspector="rightPanelOpen = !rightPanelOpen"
+      >
         <KeepAlive>
-          <component :is="currentComponent" :key="activeView" />
+          <component :is="currentComponent" :key="activeView" v-bind="currentComponentProps" />
         </KeepAlive>
       </WorkspaceCanvas>
     </AppShell>

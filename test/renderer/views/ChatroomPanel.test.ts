@@ -76,8 +76,18 @@ describe("ChatroomPanel", () => {
     mockInvoke.mockReset();
     mockInvoke.mockImplementation(makeInvokeMock());
   });
-  it("resets thought chain state when active session changes", async () => {
+
+  it("hides the function panel by default", async () => {
     const wrapper = mount(ChatroomPanel);
+    await flushPromises();
+
+    expect(wrapper.findComponent({ name: "ChatFunctionPanel" }).exists()).toBe(false);
+  });
+
+  it("resets thought chain state when active session changes", async () => {
+    const wrapper = mount(ChatroomPanel, {
+      props: { rightPanelOpen: true },
+    });
     await flushPromises();
 
     const sessionStore = useAgentSessionStore();
