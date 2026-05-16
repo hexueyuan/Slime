@@ -64,11 +64,7 @@ const primaryItems: Array<{
     />
     <div class="relative flex min-h-0 flex-1 flex-col">
       <div class="mb-7 flex h-6 items-center gap-3 pl-1" style="-webkit-app-region: drag">
-        <div class="mr-2 flex gap-2.5">
-          <span class="h-3 w-3 rounded-full bg-[#8f8f90]" />
-          <span class="h-3 w-3 rounded-full bg-[#8f8f90]" />
-          <span class="h-3 w-3 rounded-full bg-[#8f8f90]" />
-        </div>
+        <div class="mr-2 h-3 w-[82px] shrink-0" aria-hidden="true" />
         <button
           type="button"
           class="grid h-6 w-6 place-items-center rounded-md text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-secondary)]"
