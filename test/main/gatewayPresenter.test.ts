@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GatewayPresenter } from "@/presenter/gatewayPresenter";
 import { getDb } from "@/db";
+import { eventBus } from "@/eventbus";
+import { GATEWAY_EVENTS } from "@shared/events";
 
 let gw: GatewayPresenter;
 
@@ -149,6 +151,33 @@ describe("Stats", () => {
 
   it("getRecentLogs 返回空数组", () => {
     expect(gw.getRecentLogs(10, 0)).toHaveLength(0);
+  });
+
+  it("批量 flush 后才向渲染进程广播日志变更", () => {
+    const send = vi.fn();
+    eventBus.setWindow({ webContents: { send } } as any);
+
+    const log = {
+      groupName: "test-group",
+      channelId: 1,
+      channelName: "ch1",
+      modelName: "gpt-4o",
+      inputTokens: 100,
+      outputTokens: 50,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      cost: 0.001,
+      durationMs: 200,
+      status: "success" as const,
+      ttftMs: null,
+    };
+
+    (gw as any).statsCollector.record(log);
+    expect(send).not.toHaveBeenCalled();
+
+    (gw as any).statsCollector.flush();
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledWith(GATEWAY_EVENTS.LOG_ADDED, { count: 1 });
   });
 });
 

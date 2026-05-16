@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
 import type { Channel, ChannelType, Capability, Model } from "@shared/types/gateway";
 import { Icon } from "@iconify/vue";
 import ModelIcon from "@/components/ModelIcon.vue";
-import ChannelRealtimeChart from "@/components/gateway/ChannelRealtimeChart.vue";
 import { GATEWAY_EVENTS } from "@shared/events";
+import { createGatewayRefreshScheduler } from "@/composables/useGatewayRefreshScheduler";
 
 const gw = usePresenter("gatewayPresenter");
 const store = useGatewayStore();
+const ChannelRealtimeChart = defineAsyncComponent(
+  () => import("@/components/gateway/ChannelRealtimeChart.vue"),
+);
 
 const showEditor = ref(false);
 const editingChannel = ref<Channel | null>(null);
@@ -170,20 +173,27 @@ const CAP_COLORS: Record<Capability, { active: string; inactive: string }> = {
 const showAddModel = ref(false);
 
 const selectedChannelId = ref<number | null>(null);
+const minuteStabilityRefresh = createGatewayRefreshScheduler(
+  () => {
+    if (!selectedChannelId.value) return;
+    return store.loadChannelMinuteStability(selectedChannelId.value);
+  },
+  {
+    debounceMs: 1_000,
+    minIntervalMs: 2_000,
+  },
+);
 
 async function selectChannel(ch: Channel) {
   showAddModel.value = false;
   newCapModelName.value = "";
   selectedChannelId.value = ch.id;
   await store.loadModelsByChannel(ch.id);
-  store.loadChannelMinuteStability(ch.id);
+  minuteStabilityRefresh.request({ immediate: true });
 }
 
 function autoSelectFirst(channels: Channel[]) {
   if (!channels.length) return;
-  for (const ch of channels) {
-    if (!store.models.has(ch.id)) store.loadModelsByChannel(ch.id);
-  }
   if (!selectedChannelId.value || !channels.some((ch) => ch.id === selectedChannelId.value))
     selectChannel(channels[0]);
 }
@@ -193,19 +203,14 @@ watch(() => store.channels, autoSelectFirst);
 
 onMounted(() => autoSelectFirst(store.channels));
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
 const cleanupLogAdded = window.electron.ipcRenderer.on(GATEWAY_EVENTS.LOG_ADDED, () => {
   if (!selectedChannelId.value) return;
-  if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    store.loadChannelMinuteStability(selectedChannelId.value!);
-  }, 1000);
+  minuteStabilityRefresh.request();
 });
 
 onUnmounted(() => {
   cleanupLogAdded?.();
-  if (debounceTimer) clearTimeout(debounceTimer);
+  minuteStabilityRefresh.dispose();
 });
 
 const selectedChannel = computed(

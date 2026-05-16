@@ -56,6 +56,54 @@ describe("logDao ttft_ms", () => {
 });
 
 describe("StatsCollector", () => {
+  it("达到批量阈值时自动 flush，并只通知一次", () => {
+    const onFlush = vi.fn();
+    const collector = createStatsCollector(db, {
+      flushIntervalMs: 30_000,
+      batchSize: 2,
+      onFlush,
+    });
+
+    collector.record(makeLog());
+    expect(db.prepare("SELECT COUNT(*) AS c FROM relay_logs").get()).toEqual({ c: 0 });
+    expect(onFlush).not.toHaveBeenCalled();
+
+    collector.record(makeLog({ modelName: "gpt-4o-mini" }));
+
+    expect(db.prepare("SELECT COUNT(*) AS c FROM relay_logs").get()).toEqual({ c: 2 });
+    expect(onFlush).toHaveBeenCalledTimes(1);
+    expect(onFlush).toHaveBeenCalledWith({ count: 2 });
+
+    collector.destroy();
+  });
+
+  it("定时 flush 会把多条记录合并成一次通知", () => {
+    vi.useFakeTimers();
+    try {
+      const onFlush = vi.fn();
+      const collector = createStatsCollector(db, {
+        flushIntervalMs: 1000,
+        batchSize: 100,
+        onFlush,
+      });
+
+      collector.record(makeLog());
+      collector.record(makeLog({ modelName: "claude-sonnet" }));
+      vi.advanceTimersByTime(999);
+      expect(onFlush).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+
+      expect(db.prepare("SELECT COUNT(*) AS c FROM relay_logs").get()).toEqual({ c: 2 });
+      expect(onFlush).toHaveBeenCalledTimes(1);
+      expect(onFlush).toHaveBeenCalledWith({ count: 2 });
+
+      collector.destroy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("record 推入 buffer，flush 写入数据库", () => {
     const collector = createStatsCollector(db);
     collector.record(makeLog());
@@ -442,5 +490,27 @@ describe("DB Schema Migrations", () => {
     expect(cols).toContain("success_count");
     expect(cols).toContain("fail_count");
     expect(cols).toContain("avg_latency_ms");
+  });
+
+  it("relay_logs 包含 channel_id + created_at 复合索引以支持分钟稳定性查询", () => {
+    const indexes = db.prepare("PRAGMA index_list(relay_logs)").all() as Array<{ name: string }>;
+    expect(indexes.map((i) => i.name)).toContain("idx_relay_logs_channel_created");
+  });
+
+  it("getChannelStabilityMinute 使用 channel_id + created_at 复合索引", async () => {
+    const { getChannelStabilityMinute } = await import("@/db/models/statsDao");
+    const plan = db
+      .prepare(
+        `EXPLAIN QUERY PLAN
+         SELECT strftime('%Y-%m-%dT%H:%M', created_at) AS minute
+         FROM relay_logs
+         WHERE channel_id = ? AND created_at >= ?
+         GROUP BY minute
+         ORDER BY minute`,
+      )
+      .all(1, "2026-05-15 00:00:00") as Array<{ detail: string }>;
+
+    expect(plan.some((row) => row.detail.includes("idx_relay_logs_channel_created"))).toBe(true);
+    expect(() => getChannelStabilityMinute(db, 1)).not.toThrow();
   });
 });

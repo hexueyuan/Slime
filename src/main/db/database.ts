@@ -127,6 +127,11 @@ CREATE TABLE IF NOT EXISTS stats_daily (
   PRIMARY KEY (date, model_name, channel_id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_relay_logs_created ON relay_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_relay_logs_model ON relay_logs(model_name);
+CREATE INDEX IF NOT EXISTS idx_relay_logs_channel ON relay_logs(channel_id);
+CREATE INDEX IF NOT EXISTS idx_relay_logs_channel_created ON relay_logs(channel_id, created_at);
+
 CREATE TABLE IF NOT EXISTS models (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   channel_id INTEGER NOT NULL,
@@ -398,6 +403,7 @@ function migrate(instance: BetterSqlite3.Database): void {
       CREATE INDEX IF NOT EXISTS idx_relay_logs_created ON relay_logs(created_at);
       CREATE INDEX IF NOT EXISTS idx_relay_logs_model ON relay_logs(model_name);
       CREATE INDEX IF NOT EXISTS idx_relay_logs_channel ON relay_logs(channel_id);
+      CREATE INDEX IF NOT EXISTS idx_relay_logs_channel_created ON relay_logs(channel_id, created_at);
       CREATE INDEX IF NOT EXISTS idx_relay_logs_log_date ON relay_logs(log_date);
       CREATE INDEX IF NOT EXISTS idx_relay_logs_date_channel ON relay_logs(log_date, channel_id);
       CREATE INDEX IF NOT EXISTS idx_relay_logs_date_duration ON relay_logs(log_date, duration_ms);
@@ -416,6 +422,7 @@ function migrate(instance: BetterSqlite3.Database): void {
         CREATE INDEX IF NOT EXISTS idx_relay_logs_created ON relay_logs(created_at);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_model ON relay_logs(model_name);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_channel ON relay_logs(channel_id);
+        CREATE INDEX IF NOT EXISTS idx_relay_logs_channel_created ON relay_logs(channel_id, created_at);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_log_date ON relay_logs(log_date);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_date_channel ON relay_logs(log_date, channel_id);
         CREATE INDEX IF NOT EXISTS idx_relay_logs_date_duration ON relay_logs(log_date, duration_ms);

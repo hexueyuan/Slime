@@ -84,7 +84,11 @@ export class GatewayPresenter implements IGatewayPresenter {
 
     this.relay = createRelay({ db, router: this.router, balancer, circuitBreaker, keyPool });
 
-    this.statsCollector = createStatsCollector(db);
+    this.statsCollector = createStatsCollector(db, {
+      onFlush: ({ count }) => {
+        eventBus.sendToRenderer(GATEWAY_EVENTS.LOG_ADDED, { count });
+      },
+    });
     this.relay.onStats((data) => {
       const cost = calculateCost(db, data.modelName, data.usage);
       this.statsCollector.record({
@@ -106,8 +110,6 @@ export class GatewayPresenter implements IGatewayPresenter {
         responseBody: data.responseBody,
         ttftMs: data.ttftMs,
       });
-      this.statsCollector.flush();
-      eventBus.sendToRenderer(GATEWAY_EVENTS.LOG_ADDED);
     });
 
     this.scheduledTasks = createScheduledTasks(db);

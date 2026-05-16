@@ -6,13 +6,14 @@ import { GATEWAY_EVENTS } from "@shared/events";
 import { Icon } from "@iconify/vue";
 import ModelIcon from "@/components/ModelIcon.vue";
 import JsonViewer from "@/components/gateway/JsonViewer.vue";
+import { createGatewayRefreshScheduler } from "@/composables/useGatewayRefreshScheduler";
 
 const gw = usePresenter("gatewayPresenter");
 
 const logs = ref<RelayLog[]>([]);
 const loading = ref(false);
 const hasMore = ref(true);
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 
 // Drawer state
 const drawerOpen = ref(false);
@@ -20,13 +21,28 @@ const drawerLog = ref<RelayLog | null>(null);
 const drawerLoading = ref(false);
 const activeTab = ref<"request" | "response">("request");
 const copied = ref(false);
+const logRefresh = createGatewayRefreshScheduler(loadFirstPage, {
+  debounceMs: 800,
+  minIntervalMs: 2_000,
+});
 
-onMounted(() => loadMore());
+onMounted(() => logRefresh.request({ immediate: true }));
 
 const cleanup = window.electron.ipcRenderer.on(GATEWAY_EVENTS.LOG_ADDED, () => {
-  refresh();
+  logRefresh.request();
 });
-onUnmounted(() => cleanup?.());
+onUnmounted(() => {
+  cleanup?.();
+  logRefresh.dispose();
+});
+
+async function loadFirstPage() {
+  loading.value = true;
+  const batch = await gw.getRecentLogs(PAGE_SIZE, 0);
+  logs.value = batch;
+  hasMore.value = batch.length === PAGE_SIZE;
+  loading.value = false;
+}
 
 async function loadMore() {
   loading.value = true;
@@ -36,10 +52,8 @@ async function loadMore() {
   loading.value = false;
 }
 
-async function refresh() {
-  logs.value = [];
-  hasMore.value = true;
-  await loadMore();
+function refresh() {
+  logRefresh.request({ immediate: true });
 }
 
 async function openDetail(log: RelayLog) {
