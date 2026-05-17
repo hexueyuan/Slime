@@ -111,22 +111,13 @@
       <!-- 能力需求 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">能力需求</label>
-        <div class="mt-1 flex flex-wrap gap-3">
-          <label
-            v-for="cap in CAPABILITIES"
-            :key="cap"
-            class="flex items-center gap-1 text-sm text-foreground"
-          >
-            <input
-              type="checkbox"
-              :disabled="readonly"
-              :checked="form.capabilityRequirements.includes(cap)"
-              class="disabled:opacity-50"
-              @change="toggleCapability(cap)"
-            />
-            {{ cap }}
-          </label>
-        </div>
+        <SlimeChecklist
+          class="mt-2"
+          :items="capabilityItems"
+          layout="inline"
+          density="compact"
+          @toggle="toggleCapability"
+        />
       </div>
 
       <!-- 工具 -->
@@ -134,64 +125,41 @@
         <label class="text-xs font-medium text-muted-foreground"
           >工具 <span class="text-muted-foreground">(勾选=启用)</span></label
         >
-        <div class="mt-1 grid grid-cols-3 gap-x-4 gap-y-1">
-          <label
-            v-for="tool in availableTools"
-            :key="tool"
-            class="flex items-center gap-1 text-sm text-foreground truncate"
-          >
-            <input
-              type="checkbox"
-              :disabled="readonly"
-              :checked="form.enabledTools.includes(tool)"
-              class="disabled:opacity-50"
-              @change="toggleTool(tool)"
-            />
-            <span class="truncate">{{ tool }}</span>
-          </label>
-        </div>
+        <SlimeChecklist
+          class="mt-2"
+          :items="toolItems"
+          layout="grid"
+          :columns="3"
+          density="compact"
+          @toggle="toggleTool"
+        />
       </div>
 
       <!-- CLI 命令白名单 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">CLI 命令白名单</label>
-        <div class="mt-1 grid grid-cols-3 gap-x-4 gap-y-1">
-          <label
-            v-for="cmd in availableCliCommands"
-            :key="cmd"
-            class="flex items-center gap-1 text-sm text-foreground truncate"
-          >
-            <input
-              type="checkbox"
-              :disabled="readonly"
-              :checked="form.allowedCliCommands.includes(cmd)"
-              class="disabled:opacity-50"
-              @change="toggleCliCommand(cmd)"
-            />
-            <span class="truncate">{{ cmd }}</span>
-          </label>
-        </div>
+        <SlimeChecklist
+          class="mt-2"
+          :items="cliCommandItems"
+          layout="grid"
+          :columns="3"
+          density="compact"
+          @toggle="toggleCliCommand"
+        />
       </div>
 
       <!-- Skill 白名单 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">Skill 白名单</label>
-        <div class="mt-1 grid grid-cols-3 gap-x-4 gap-y-1">
-          <label
-            v-for="skill in availableSkills"
-            :key="skill"
-            class="flex items-center gap-1 text-sm text-foreground truncate"
-          >
-            <input
-              type="checkbox"
-              :disabled="readonly"
-              :checked="form.enabledSkills.includes(skill)"
-              class="disabled:opacity-50"
-              @change="toggleSkill(skill)"
-            />
-            <span class="truncate">{{ skill }}</span>
-          </label>
-        </div>
+        <SlimeChecklist
+          v-if="availableSkills.length > 0"
+          class="mt-2"
+          :items="skillItems"
+          layout="grid"
+          :columns="3"
+          density="compact"
+          @toggle="toggleSkill"
+        />
         <p v-if="availableSkills.length === 0" class="mt-1 text-xs text-muted-foreground">
           暂无可用 Skill
         </p>
@@ -242,26 +210,14 @@
       <!-- 开关 -->
       <div>
         <label class="text-xs font-medium text-muted-foreground">开关</label>
-        <div class="mt-1 flex flex-wrap gap-4">
-          <label class="flex items-center gap-1 text-sm text-foreground">
-            <input
-              type="checkbox"
-              v-model="form.subagentEnabled"
-              :disabled="readonly"
-              class="disabled:opacity-50"
-            />
-            subagentEnabled
-          </label>
-          <label class="flex items-center gap-1 text-sm text-foreground">
-            <input
-              type="checkbox"
-              v-model="form.enableThinking"
-              :disabled="readonly"
-              class="disabled:opacity-50"
-            />
-            enableThinking
-          </label>
-        </div>
+        <SlimeChecklist
+          class="mt-2"
+          :items="runtimeToggleItems"
+          layout="grid"
+          :columns="2"
+          density="compact"
+          @toggle="toggleRuntimeSetting"
+        />
       </div>
 
       <!-- 底部 -->
@@ -287,6 +243,7 @@ import { ref, reactive, watch, onMounted, computed } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useAgentStore } from "@/stores/agent";
 import AgentAvatar from "@/components/chat/AgentAvatar.vue";
+import SlimeChecklist, { type SlimeChecklistItem } from "@/components/ui/SlimeChecklist.vue";
 import type { Agent, AgentAvatar as AgentAvatarType, GenderType } from "@shared/types/agent";
 import type { BuiltinAgentInfo } from "@shared/types/presenters";
 import { type MBTIType, getMBTIColor } from "@shared/constants/mbti";
@@ -357,28 +314,84 @@ const form = reactive({
   enableThinking: false,
 });
 
-function toggleCapability(cap: string) {
-  const idx = form.capabilityRequirements.indexOf(cap);
-  if (idx >= 0) form.capabilityRequirements.splice(idx, 1);
-  else form.capabilityRequirements.push(cap);
+const capabilityItems = computed<SlimeChecklistItem[]>(() =>
+  CAPABILITIES.map((cap) => ({
+    id: cap,
+    title: cap,
+    checked: form.capabilityRequirements.includes(cap),
+    disabled: readonly.value,
+  })),
+);
+
+const toolItems = computed<SlimeChecklistItem[]>(() =>
+  availableTools.value.map((tool) => ({
+    id: tool,
+    title: tool,
+    checked: form.enabledTools.includes(tool),
+    disabled: readonly.value,
+  })),
+);
+
+const cliCommandItems = computed<SlimeChecklistItem[]>(() =>
+  availableCliCommands.value.map((cmd) => ({
+    id: cmd,
+    title: cmd,
+    checked: form.allowedCliCommands.includes(cmd),
+    disabled: readonly.value,
+  })),
+);
+
+const skillItems = computed<SlimeChecklistItem[]>(() =>
+  availableSkills.value.map((skill) => ({
+    id: skill,
+    title: skill,
+    checked: form.enabledSkills.includes(skill),
+    disabled: readonly.value,
+  })),
+);
+
+const runtimeToggleItems = computed<SlimeChecklistItem[]>(() => [
+  {
+    id: "subagentEnabled",
+    title: "subagentEnabled",
+    checked: form.subagentEnabled,
+    disabled: readonly.value,
+    control: "switch",
+  },
+  {
+    id: "enableThinking",
+    title: "enableThinking",
+    checked: form.enableThinking,
+    disabled: readonly.value,
+    control: "switch",
+  },
+]);
+
+function setSelected(list: string[], id: string, checked: boolean) {
+  const idx = list.indexOf(id);
+  if (checked && idx < 0) list.push(id);
+  if (!checked && idx >= 0) list.splice(idx, 1);
 }
 
-function toggleTool(tool: string) {
-  const idx = form.enabledTools.indexOf(tool);
-  if (idx >= 0) form.enabledTools.splice(idx, 1);
-  else form.enabledTools.push(tool);
+function toggleCapability(cap: string, checked: boolean) {
+  setSelected(form.capabilityRequirements, cap, checked);
 }
 
-function toggleCliCommand(cmd: string) {
-  const idx = form.allowedCliCommands.indexOf(cmd);
-  if (idx >= 0) form.allowedCliCommands.splice(idx, 1);
-  else form.allowedCliCommands.push(cmd);
+function toggleTool(tool: string, checked: boolean) {
+  setSelected(form.enabledTools, tool, checked);
 }
 
-function toggleSkill(name: string) {
-  const idx = form.enabledSkills.indexOf(name);
-  if (idx >= 0) form.enabledSkills.splice(idx, 1);
-  else form.enabledSkills.push(name);
+function toggleCliCommand(cmd: string, checked: boolean) {
+  setSelected(form.allowedCliCommands, cmd, checked);
+}
+
+function toggleSkill(name: string, checked: boolean) {
+  setSelected(form.enabledSkills, name, checked);
+}
+
+function toggleRuntimeSetting(id: string, checked: boolean) {
+  if (id === "subagentEnabled") form.subagentEnabled = checked;
+  if (id === "enableThinking") form.enableThinking = checked;
 }
 
 function addTrustedPath() {

@@ -1,9 +1,10 @@
 <template>
   <div class="space-y-3">
-    <label class="flex items-center gap-2 text-xs text-muted-foreground">
-      <input type="checkbox" :checked="enabled" class="accent-violet-500" @change="toggleEnabled" />
-      启用定时
-    </label>
+    <SlimeChecklist
+      :items="scheduleToggleItems"
+      density="compact"
+      @toggle="(_, checked) => toggleEnabled(checked)"
+    />
 
     <template v-if="enabled">
       <div>
@@ -16,15 +17,11 @@
         />
       </div>
 
-      <label class="flex items-center gap-2 text-xs text-muted-foreground">
-        <input
-          type="checkbox"
-          :checked="repeatEnabled"
-          class="accent-violet-500"
-          @change="toggleRepeat"
-        />
-        循环执行
-      </label>
+      <SlimeChecklist
+        :items="repeatToggleItems"
+        density="compact"
+        @toggle="(_, checked) => toggleRepeat(checked)"
+      />
 
       <template v-if="repeatEnabled">
         <div class="flex flex-wrap gap-1">
@@ -78,6 +75,7 @@
 import { ref, computed, watch } from "vue";
 import type { RepeatPreset } from "@shared/types/schedule";
 import { REPEAT_PRESETS, getNextExecutions, formatScheduleTime } from "@/utils/scheduleUtils";
+import SlimeChecklist, { type SlimeChecklistItem } from "@/components/ui/SlimeChecklist.vue";
 
 const props = defineProps<{
   scheduledAt?: number;
@@ -91,6 +89,22 @@ const emit = defineEmits<{
 
 const enabled = computed(() => props.scheduledAt != null);
 const repeatEnabled = computed(() => (props.repeatInterval ?? 0) > 0);
+
+const scheduleToggleItems = computed<SlimeChecklistItem[]>(() => [
+  {
+    id: "scheduled",
+    title: "启用定时",
+    checked: enabled.value,
+  },
+]);
+
+const repeatToggleItems = computed<SlimeChecklistItem[]>(() => [
+  {
+    id: "repeat",
+    title: "循环执行",
+    checked: repeatEnabled.value,
+  },
+]);
 
 const presets = REPEAT_PRESETS.filter((p) => p.value !== "none");
 
@@ -127,8 +141,7 @@ const nextTimes = computed(() => {
   return getNextExecutions(props.scheduledAt, props.repeatInterval, 3);
 });
 
-function toggleEnabled(e: Event): void {
-  const checked = (e.target as HTMLInputElement).checked;
+function toggleEnabled(checked: boolean): void {
   if (checked) {
     const next = new Date();
     next.setMinutes(0, 0, 0);
@@ -140,8 +153,7 @@ function toggleEnabled(e: Event): void {
   }
 }
 
-function toggleRepeat(e: Event): void {
-  const checked = (e.target as HTMLInputElement).checked;
+function toggleRepeat(checked: boolean): void {
   if (checked) {
     emit("update:repeatInterval", 1440);
   } else {

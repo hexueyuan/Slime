@@ -1,11 +1,15 @@
 <script setup lang="ts">
 defineProps<{
+  title?: string;
+  emptyText?: string;
+  showCreate?: boolean;
   tasks: Array<{
     id: string;
     title: string;
     status?: string;
     meta?: string;
     completed?: boolean;
+    tone?: "default" | "warning" | "success" | "muted";
   }>;
 }>();
 
@@ -19,11 +23,12 @@ defineEmits<{ selectTask: [id: string]; createTask: [] }>();
     <div
       class="flex items-center justify-between border-b border-[var(--color-border-subtle)] px-4 py-3"
     >
-      <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">任务</h3>
+      <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">{{ title ?? "任务" }}</h3>
       <button
         type="button"
         class="text-xs font-medium text-[var(--color-accent-brand-hover)]"
         @click="$emit('createTask')"
+        v-if="showCreate"
       >
         新建
       </button>
@@ -41,11 +46,25 @@ defineEmits<{ selectTask: [id: string]; createTask: [] }>();
             'h-4 w-4 shrink-0 rounded-full border',
             task.completed
               ? 'border-[var(--color-success)] bg-[var(--color-success)]'
-              : 'border-[var(--color-border-strong)]',
+              : task.tone === 'warning'
+                ? 'border-[var(--color-warning)] bg-[var(--color-warning)]/20'
+                : 'border-[var(--color-border-strong)]',
           ]"
         />
         <span class="min-w-0 flex-1">
-          <span class="block truncate text-[var(--color-text-primary)]">{{ task.title }}</span>
+          <span
+            :class="[
+              'block truncate',
+              task.tone === 'warning'
+                ? 'text-[var(--color-warning)]'
+                : task.tone === 'success'
+                  ? 'text-[var(--color-success)]'
+                  : task.tone === 'muted'
+                    ? 'text-[var(--color-text-muted)] line-through'
+                    : 'text-[var(--color-text-primary)]',
+            ]"
+            >{{ task.title }}</span
+          >
           <span v-if="task.meta" class="block truncate text-xs text-[var(--color-text-muted)]">{{
             task.meta
           }}</span>
@@ -59,7 +78,7 @@ defineEmits<{ selectTask: [id: string]; createTask: [] }>();
       v-else
       class="flex flex-1 items-center justify-center text-xs text-[var(--color-text-muted)]"
     >
-      暂无任务
+      {{ emptyText ?? "暂无任务" }}
     </div>
   </section>
 </template>

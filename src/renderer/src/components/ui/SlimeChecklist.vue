@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from "vue";
+
 export type SlimeChecklistItem = {
   id: string;
   title: string;
@@ -9,17 +11,40 @@ export type SlimeChecklistItem = {
   control?: "checkbox" | "switch";
 };
 
-defineProps<{
-  items: SlimeChecklistItem[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    items: SlimeChecklistItem[];
+    layout?: "stack" | "grid" | "inline";
+    columns?: number;
+    density?: "default" | "compact";
+  }>(),
+  {
+    layout: "stack",
+    columns: 2,
+    density: "default",
+  },
+);
 
 const emit = defineEmits<{
   toggle: [id: string, checked: boolean];
 }>();
+
+const containerClass = computed(() => {
+  if (props.layout === "inline") return "flex flex-wrap gap-2";
+  if (props.layout === "grid") return "grid gap-2";
+  return "flex flex-col gap-2";
+});
+
+const containerStyle = computed(() => {
+  if (props.layout !== "grid") return undefined;
+  return {
+    gridTemplateColumns: `repeat(${Math.max(1, props.columns)}, minmax(0, 1fr))`,
+  };
+});
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div :class="containerClass" :style="containerStyle">
     <button
       v-for="item in items"
       :key="item.id"
@@ -27,7 +52,11 @@ const emit = defineEmits<{
       :data-testid="`check-row-${item.id}`"
       :disabled="item.disabled"
       :class="[
-        'grid min-h-10 grid-cols-[22px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[var(--radius-md)] border px-2.5 py-2 text-left transition-colors',
+        'grid grid-cols-[22px_minmax(0,1fr)_auto] items-center text-left transition-colors',
+        density === 'compact'
+          ? 'min-h-8 gap-2 rounded-[var(--radius-sm)] px-2 py-1.5'
+          : 'min-h-10 gap-2.5 rounded-[var(--radius-md)] border px-2.5 py-2',
+        density === 'compact' && 'border',
         item.checked
           ? 'border-[color-mix(in_srgb,var(--color-accent-brand)_34%,transparent)] bg-[var(--color-accent-brand-soft)]'
           : 'border-[var(--color-border-subtle)] bg-[var(--color-control)] hover:bg-[var(--color-control-hover)]',
@@ -38,7 +67,8 @@ const emit = defineEmits<{
       <span
         v-if="item.control !== 'switch'"
         :class="[
-          'grid h-[18px] w-[18px] place-items-center rounded-[5px] border text-xs font-bold',
+          'grid place-items-center rounded-[5px] border font-bold',
+          density === 'compact' ? 'h-4 w-4 text-[10px]' : 'h-[18px] w-[18px] text-xs',
           item.checked
             ? 'border-[var(--color-accent-brand-hover)] bg-[var(--color-accent-brand)] text-white'
             : 'border-white/20 bg-[var(--color-control)] text-transparent',
@@ -49,7 +79,12 @@ const emit = defineEmits<{
       <span v-else class="h-[18px] w-[18px]" />
 
       <span class="min-w-0">
-        <span class="block truncate text-xs font-semibold text-[var(--color-text-secondary)]">
+        <span
+          :class="[
+            'block truncate font-semibold text-[var(--color-text-secondary)]',
+            density === 'compact' ? 'text-[13px]' : 'text-xs',
+          ]"
+        >
           {{ item.title }}
         </span>
         <span

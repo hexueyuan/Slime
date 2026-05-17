@@ -57,11 +57,8 @@ const primaryItems: Array<{
 <template>
   <aside
     data-testid="app-sidebar"
-    class="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-app-sidebar)] px-3 py-5 backdrop-blur-2xl"
+    class="relative flex h-full min-h-0 flex-col overflow-hidden px-3 py-5"
   >
-    <div
-      class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_55%_8%,rgba(255,255,255,0.055),transparent_28%),radial-gradient(circle_at_14%_52%,rgba(255,255,255,0.028),transparent_34%)]"
-    />
     <div class="relative flex min-h-0 flex-1 flex-col">
       <div class="mb-7 flex h-6 items-center gap-3 pl-1" style="-webkit-app-region: drag">
         <div class="mr-2 h-3 w-[82px] shrink-0" aria-hidden="true" />

@@ -1,26 +1,39 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import SlimeWeekCalendar from "@/components/slime/SlimeWeekCalendar.vue";
 
 describe("SlimeWeekCalendar", () => {
-  it("emits selected date when a day is clicked", async () => {
-    const today = new Date().toISOString().slice(0, 10);
+  it("emits selected date when a day card is clicked", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-17T10:00:00+08:00"));
+
     const wrapper = mount(SlimeWeekCalendar, {
-      props: { selectedDate: today },
+      props: {
+        selectedDate: "2026-05-17",
+      },
     });
 
-    await wrapper.findAll("button")[1].trigger("click");
+    await wrapper.get("button:nth-of-type(2)").trigger("click");
 
-    expect(wrapper.emitted("update:selectedDate")).toBeTruthy();
+    expect(wrapper.emitted("update:selectedDate")?.[0]).toEqual(["2026-05-11"]);
+
+    vi.useRealTimers();
   });
 
-  it("moves week and emits a date when selected date is outside the visible week", async () => {
+  it("moves to the previous week", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-17T10:00:00+08:00"));
+
     const wrapper = mount(SlimeWeekCalendar, {
-      props: { selectedDate: "1999-01-01" },
+      props: {
+        selectedDate: "2026-05-17",
+      },
     });
 
-    await wrapper.find('[title="下一周"]').trigger("click");
+    await wrapper.get('button[title="上一周"]').trigger("click");
 
-    expect(wrapper.emitted("update:selectedDate")?.[0]?.[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(wrapper.emitted("update:selectedDate")?.[0]).toEqual(["2026-05-04"]);
+
+    vi.useRealTimers();
   });
 });

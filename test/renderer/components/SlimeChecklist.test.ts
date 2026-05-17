@@ -40,4 +40,23 @@ describe("SlimeChecklist", () => {
 
     expect(wrapper.emitted("toggle")).toEqual([["router", true]]);
   });
+
+  it("does not emit toggle for disabled rows", async () => {
+    const wrapper = mount(SlimeChecklist, {
+      props: {
+        items: [
+          {
+            id: "tool",
+            title: "browser_click",
+            checked: false,
+            disabled: true,
+          },
+        ],
+      },
+    });
+
+    await wrapper.get('[data-testid="check-row-tool"]').trigger("click");
+
+    expect(wrapper.emitted("toggle")).toBeUndefined();
+  });
 });
