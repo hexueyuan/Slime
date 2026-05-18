@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Slime Components Preview</title>
@@ -33,8 +33,7 @@
         --shadow-floating: 0 22px 70px rgba(0, 0, 0, 0.42);
         --shadow-panel: 0 12px 38px rgba(0, 0, 0, 0.24);
         color-scheme: dark;
-        font-family:
-          Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
       }
 
       * {
@@ -752,7 +751,7 @@
 
       .agent-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
         gap: 8px;
       }
 
@@ -1097,10 +1096,32 @@
 
       .week-strip {
         display: grid;
-        grid-template-columns: 28px repeat(7, minmax(0, 1fr)) 28px;
+        min-width: 0;
+        grid-template-columns: 34px minmax(0, 1fr) 34px;
         align-items: center;
         gap: 6px;
         margin-bottom: 10px;
+      }
+
+      .week-days {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+        gap: 6px;
+      }
+
+      .week-strip .day-cell {
+        min-width: 0;
+      }
+
+      @media (max-width: 720px) {
+        .week-strip {
+          align-items: stretch;
+        }
+
+        .week-strip .day-cell {
+          min-height: 58px;
+        }
       }
 
       .week-nav {
@@ -1288,12 +1309,11 @@
 
       .metric-pill.active {
         border-color: color-mix(in srgb, var(--metric-color, #9b86ff) 48%, transparent);
-        background:
-          linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--metric-color, #9b86ff) 18%, transparent),
-            rgba(255, 255, 255, 0.035)
-          );
+        background: linear-gradient(
+          135deg,
+          color-mix(in srgb, var(--metric-color, #9b86ff) 18%, transparent),
+          rgba(255, 255, 255, 0.035)
+        );
       }
 
       .metric-pill-label {
@@ -1318,17 +1338,17 @@
         font-weight: 560;
       }
 
-
       .preview-switcher {
         position: sticky;
         top: 0;
         z-index: 20;
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: 18px;
+        gap: 12px 18px;
         min-height: 54px;
-        padding: 0 24px;
+        padding: 10px 24px;
         border-bottom: 1px solid var(--border-soft);
         background: rgba(18, 18, 19, 0.88);
         backdrop-filter: blur(22px);
@@ -1455,11 +1475,77 @@
         padding: 32px;
       }
 
+      .device-switcher {
+        display: flex;
+        min-width: 0;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .device-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border: 1px solid var(--border-soft);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.035);
+        padding: 3px;
+      }
+
+      .device-tab {
+        min-height: 26px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--text-muted);
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .device-tab:hover,
+      .device-tab.active {
+        background: var(--control-active);
+        color: var(--text);
+      }
+
+      .device-label {
+        color: var(--text-muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .preview-frame-shell {
+        max-width: 100%;
+        margin: 0 auto;
+      }
+
+      .preview-frame-label {
+        margin: 0 auto 8px;
+        width: min(100%, var(--preview-width, 1280px));
+        color: var(--text-muted);
+        font-size: 12px;
+        text-align: right;
+      }
+
+      .preview-frame {
+        width: min(100%, var(--preview-width, 1280px));
+        margin: 0 auto;
+        border: 1px solid var(--border-soft);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.026);
+        padding: 16px;
+        transition: width 180ms ease;
+      }
+
       .components-page .component-board {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
         gap: 16px;
         max-width: 1180px;
+        min-width: 0;
         margin: 0 auto;
       }
 
@@ -1549,462 +1635,518 @@
           <a class="" href="codex-style-layout-preview.html">整体布局</a>
           <a class="active" href="codex-style-components-preview.html">基础组件</a>
         </div>
+        <div class="device-switcher" aria-label="设备宽度预览">
+          <div class="device-tabs">
+            <button
+              class="device-tab active"
+              type="button"
+              data-device="desktop"
+              data-width="1280px"
+            >
+              桌面
+            </button>
+            <button class="device-tab" type="button" data-device="laptop" data-width="1024px">
+              笔记本
+            </button>
+            <button class="device-tab" type="button" data-device="tablet" data-width="768px">
+              平板
+            </button>
+            <button class="device-tab" type="button" data-device="mobile" data-width="390px">
+              手机
+            </button>
+          </div>
+          <span class="device-label" id="deviceLabel">桌面 · 1280px</span>
+        </div>
       </nav>
       <section class="components-shell">
-        <aside class="component-board">
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">通用按钮</div>
-                <span class="badge accent">SlimeButton</span>
-              </div>
-              <div class="panel-body">
-                <div class="button-row">
-                  <button class="primary-button">创建</button>
-                  <button class="secondary-button">保存草稿</button>
-                  <button class="ghost-button">取消</button>
-                  <button class="danger-button">删除</button>
-                  <button class="icon-button">↻</button>
+        <div class="preview-frame-shell">
+          <div class="preview-frame-label" id="previewFrameLabel">当前画布：1280px</div>
+          <div class="preview-frame" id="previewFrame">
+            <aside class="component-board">
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">通用按钮</div>
+                  <span class="badge accent">SlimeButton</span>
                 </div>
-                <div style="height: 12px"></div>
-                <div class="button-row">
-                  <button class="primary-button" disabled>创建</button>
-                  <button class="secondary-button" disabled>保存草稿</button>
-                  <button class="ghost-button" disabled>取消</button>
-                  <button class="danger-button" disabled>删除</button>
-                  <button class="icon-button" disabled>↻</button>
+                <div class="panel-body">
+                  <div class="button-row">
+                    <button class="primary-button">创建</button>
+                    <button class="secondary-button">保存草稿</button>
+                    <button class="ghost-button">取消</button>
+                    <button class="danger-button">删除</button>
+                    <button class="icon-button">↻</button>
+                  </div>
+                  <div style="height: 12px"></div>
+                  <div class="button-row">
+                    <button class="primary-button" disabled>创建</button>
+                    <button class="secondary-button" disabled>保存草稿</button>
+                    <button class="ghost-button" disabled>取消</button>
+                    <button class="danger-button" disabled>删除</button>
+                    <button class="icon-button" disabled>↻</button>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">输入与标签</div>
-                <span class="badge">SlimeInput</span>
-              </div>
-              <div class="panel-body">
-                <input class="input" value="例如 ~/workspace/project" />
-                <div style="height: 12px"></div>
-                <div class="badge-row">
-                  <span class="badge accent">reasoning</span>
-                  <span class="badge success">healthy</span>
-                  <span class="badge warning">retrying</span>
-                  <span class="badge">tool_call</span>
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">输入与标签</div>
+                  <span class="badge">SlimeInput</span>
                 </div>
-              </div>
-            </section>
+                <div class="panel-body">
+                  <input class="input" value="例如 ~/workspace/project" />
+                  <div style="height: 12px"></div>
+                  <div class="badge-row">
+                    <span class="badge accent">reasoning</span>
+                    <span class="badge success">healthy</span>
+                    <span class="badge warning">retrying</span>
+                    <span class="badge">tool_call</span>
+                  </div>
+                </div>
+              </section>
 
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">列表项</div>
-                <div class="tabs">
-                  <button class="tab active">会话</button>
-                  <button class="tab">Agent</button>
-                  <button class="tab">任务</button>
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">列表项</div>
+                  <div class="tabs">
+                    <button class="tab active">会话</button>
+                    <button class="tab">Agent</button>
+                    <button class="tab">任务</button>
+                  </div>
                 </div>
-              </div>
-              <div class="panel-body">
-                <div class="list">
-                  <div class="list-item active">
-                    <div class="avatar">H</div>
-                    <div>
-                      <div class="list-title">优化 Slime UI 风格</div>
-                      <div class="list-subtitle">Codex-like shell, composer, tokens</div>
+                <div class="panel-body">
+                  <div class="list">
+                    <div class="list-item active">
+                      <div class="avatar">H</div>
+                      <div>
+                        <div class="list-title">优化 Slime UI 风格</div>
+                        <div class="list-subtitle">Codex-like shell, composer, tokens</div>
+                      </div>
+                      <span class="badge accent">active</span>
                     </div>
-                    <span class="badge accent">active</span>
+                    <div class="list-item">
+                      <div class="avatar">M</div>
+                      <div>
+                        <div class="list-title">Gateway 状态面板</div>
+                        <div class="list-subtitle">低对比表格和指标卡</div>
+                      </div>
+                      <span class="badge">3h</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">业务页面模板</div>
+                  <button class="secondary-button">刷新</button>
+                </div>
+                <div class="panel-body mini-page">
+                  <div class="metric-grid">
+                    <div class="metric">
+                      <div class="metric-label">请求</div>
+                      <div class="metric-value">2.4k</div>
+                    </div>
+                    <div class="metric">
+                      <div class="metric-label">成功率</div>
+                      <div class="metric-value">99.2%</div>
+                    </div>
+                    <div class="metric">
+                      <div class="metric-label">延迟</div>
+                      <div class="metric-value">812ms</div>
+                    </div>
+                  </div>
+                  <div class="chart-card">
+                    <div class="chart-toolbar">
+                      <div>
+                        <div class="chart-title">实时指标</div>
+                        <div class="chart-value">128 req/min</div>
+                      </div>
+                      <span class="badge accent">SlimeRealtimeChart</span>
+                    </div>
+                    <div class="metric-strip">
+                      <div class="metric-pill active" style="--metric-color: #9b86ff">
+                        <div class="metric-pill-label">吞吐</div>
+                        <div class="metric-pill-value">
+                          128<span class="metric-pill-trend">+12%</span>
+                        </div>
+                      </div>
+                      <div class="metric-pill" style="--metric-color: #55c7ff">
+                        <div class="metric-pill-label">延迟 p95</div>
+                        <div class="metric-pill-value">
+                          812ms<span class="metric-pill-trend">-4%</span>
+                        </div>
+                      </div>
+                      <div class="metric-pill" style="--metric-color: #ff7b7b">
+                        <div class="metric-pill-label">错误率</div>
+                        <div class="metric-pill-value">
+                          0.8%<span class="metric-pill-trend">+0.2</span>
+                        </div>
+                      </div>
+                      <div class="metric-pill" style="--metric-color: #f2b35d">
+                        <div class="metric-pill-label">成本</div>
+                        <div class="metric-pill-value">
+                          $0.42<span class="metric-pill-trend">+6%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="chart-window">
+                      <svg viewBox="0 0 360 118" preserveAspectRatio="none" aria-hidden="true">
+                        <defs>
+                          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#9b86ff" stop-opacity="0.28" />
+                            <stop offset="100%" stop-color="#9b86ff" stop-opacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          class="chart-area"
+                          d="M0 88 C25 82 32 52 57 57 C82 62 91 91 119 82 C148 73 153 37 183 42 C213 47 217 75 245 70 C274 65 285 28 312 34 C333 39 344 55 360 48 L360 118 L0 118 Z"
+                        />
+                        <path
+                          class="chart-line"
+                          d="M0 88 C25 82 32 52 57 57 C82 62 91 91 119 82 C148 73 153 37 183 42 C213 47 217 75 245 70 C274 65 285 28 312 34 C333 39 344 55 360 48"
+                        />
+                      </svg>
+                      <div class="chart-bars" aria-hidden="true">
+                        <span style="height: 18%"></span>
+                        <span style="height: 34%"></span>
+                        <span style="height: 28%"></span>
+                        <span style="height: 48%"></span>
+                        <span style="height: 63%"></span>
+                        <span style="height: 42%"></span>
+                        <span style="height: 29%"></span>
+                        <span style="height: 36%"></span>
+                        <span style="height: 58%"></span>
+                        <span style="height: 72%"></span>
+                        <span style="height: 46%"></span>
+                        <span style="height: 39%"></span>
+                        <span style="height: 66%"></span>
+                        <span style="height: 81%"></span>
+                        <span style="height: 54%"></span>
+                        <span style="height: 43%"></span>
+                        <span style="height: 61%"></span>
+                        <span style="height: 77%"></span>
+                        <span style="height: 68%"></span>
+                        <span style="height: 52%"></span>
+                        <span style="height: 74%"></span>
+                        <span style="height: 57%"></span>
+                      </div>
+                    </div>
                   </div>
                   <div class="list-item">
-                    <div class="avatar">M</div>
+                    <div class="avatar">G</div>
                     <div>
-                      <div class="list-title">Gateway 状态面板</div>
-                      <div class="list-subtitle">低对比表格和指标卡</div>
+                      <div class="list-title">Anthropic 主渠道</div>
+                      <div class="list-subtitle">round_robin · 2 keys · circuit closed</div>
                     </div>
-                    <span class="badge">3h</span>
+                    <span class="badge success">online</span>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">业务页面模板</div>
-                <button class="secondary-button">刷新</button>
-              </div>
-              <div class="panel-body mini-page">
-                <div class="metric-grid">
-                  <div class="metric">
-                    <div class="metric-label">请求</div>
-                    <div class="metric-value">2.4k</div>
-                  </div>
-                  <div class="metric">
-                    <div class="metric-label">成功率</div>
-                    <div class="metric-value">99.2%</div>
-                  </div>
-                  <div class="metric">
-                    <div class="metric-label">延迟</div>
-                    <div class="metric-value">812ms</div>
-                  </div>
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">Agent 卡片</div>
+                  <span class="badge accent">SlimeAgentCard</span>
                 </div>
-                <div class="chart-card">
-                  <div class="chart-toolbar">
-                    <div>
-                      <div class="chart-title">实时指标</div>
-                      <div class="chart-value">128 req/min</div>
+                <div class="panel-body">
+                  <div class="agent-grid">
+                    <div class="agent-card active">
+                      <div class="agent-card-head">
+                        <div class="agent-avatar">H</div>
+                        <div>
+                          <div class="agent-name">哈尔</div>
+                          <div class="agent-role">reasoning · tool_call</div>
+                        </div>
+                      </div>
+                      <p>负责拆解任务、规划实现路径，并在执行时保持上下文。</p>
                     </div>
-                    <span class="badge accent">SlimeRealtimeChart</span>
-                  </div>
-                  <div class="metric-strip">
-                    <div class="metric-pill active" style="--metric-color: #9b86ff">
-                      <div class="metric-pill-label">吞吐</div>
-                      <div class="metric-pill-value">128<span class="metric-pill-trend">+12%</span></div>
-                    </div>
-                    <div class="metric-pill" style="--metric-color: #55c7ff">
-                      <div class="metric-pill-label">延迟 p95</div>
-                      <div class="metric-pill-value">812ms<span class="metric-pill-trend">-4%</span></div>
-                    </div>
-                    <div class="metric-pill" style="--metric-color: #ff7b7b">
-                      <div class="metric-pill-label">错误率</div>
-                      <div class="metric-pill-value">0.8%<span class="metric-pill-trend">+0.2</span></div>
-                    </div>
-                    <div class="metric-pill" style="--metric-color: #f2b35d">
-                      <div class="metric-pill-label">成本</div>
-                      <div class="metric-pill-value">$0.42<span class="metric-pill-trend">+6%</span></div>
-                    </div>
-                  </div>
-                  <div class="chart-window">
-                    <svg viewBox="0 0 360 118" preserveAspectRatio="none" aria-hidden="true">
-                      <defs>
-                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#9b86ff" stop-opacity="0.28" />
-                          <stop offset="100%" stop-color="#9b86ff" stop-opacity="0" />
-                        </linearGradient>
-                      </defs>
-                      <path
-                        class="chart-area"
-                        d="M0 88 C25 82 32 52 57 57 C82 62 91 91 119 82 C148 73 153 37 183 42 C213 47 217 75 245 70 C274 65 285 28 312 34 C333 39 344 55 360 48 L360 118 L0 118 Z"
-                      />
-                      <path
-                        class="chart-line"
-                        d="M0 88 C25 82 32 52 57 57 C82 62 91 91 119 82 C148 73 153 37 183 42 C213 47 217 75 245 70 C274 65 285 28 312 34 C333 39 344 55 360 48"
-                      />
-                    </svg>
-                    <div class="chart-bars" aria-hidden="true">
-                      <span style="height: 18%"></span>
-                      <span style="height: 34%"></span>
-                      <span style="height: 28%"></span>
-                      <span style="height: 48%"></span>
-                      <span style="height: 63%"></span>
-                      <span style="height: 42%"></span>
-                      <span style="height: 29%"></span>
-                      <span style="height: 36%"></span>
-                      <span style="height: 58%"></span>
-                      <span style="height: 72%"></span>
-                      <span style="height: 46%"></span>
-                      <span style="height: 39%"></span>
-                      <span style="height: 66%"></span>
-                      <span style="height: 81%"></span>
-                      <span style="height: 54%"></span>
-                      <span style="height: 43%"></span>
-                      <span style="height: 61%"></span>
-                      <span style="height: 77%"></span>
-                      <span style="height: 68%"></span>
-                      <span style="height: 52%"></span>
-                      <span style="height: 74%"></span>
-                      <span style="height: 57%"></span>
+                    <div class="agent-card">
+                      <div class="agent-card-head">
+                        <div class="agent-avatar">M</div>
+                        <div>
+                          <div class="agent-name">莫斯</div>
+                          <div class="agent-role">research · review</div>
+                        </div>
+                      </div>
+                      <p>适合检索资料、审查方案和补足实现前的风险判断。</p>
                     </div>
                   </div>
                 </div>
-                <div class="list-item">
-                  <div class="avatar">G</div>
-                  <div>
-                    <div class="list-title">Anthropic 主渠道</div>
-                    <div class="list-subtitle">round_robin · 2 keys · circuit closed</div>
-                  </div>
-                  <span class="badge success">online</span>
-                </div>
-              </div>
-            </section>
+              </section>
 
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">Agent 卡片</div>
-                <span class="badge accent">SlimeAgentCard</span>
-              </div>
-              <div class="panel-body">
-                <div class="agent-grid">
-                  <div class="agent-card active">
-                    <div class="agent-card-head">
-                      <div class="agent-avatar">H</div>
-                      <div>
-                        <div class="agent-name">哈尔</div>
-                        <div class="agent-role">reasoning · tool_call</div>
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">资料卡</div>
+                  <span class="badge">SlimeProfileCard</span>
+                </div>
+                <div class="panel-body">
+                  <div class="profile-pair">
+                    <div class="profile-card">
+                      <div class="profile-head">
+                        <div class="profile-avatar">你</div>
+                        <div>
+                          <div class="profile-name">用户资料</div>
+                          <div class="profile-meta">本地身份 · 偏好设置</div>
+                        </div>
                       </div>
+                      <p>用于展示头像、名称、常用工作区和交互偏好。</p>
                     </div>
-                    <p>负责拆解任务、规划实现路径，并在执行时保持上下文。</p>
-                  </div>
-                  <div class="agent-card">
-                    <div class="agent-card-head">
-                      <div class="agent-avatar">M</div>
-                      <div>
-                        <div class="agent-name">莫斯</div>
-                        <div class="agent-role">research · review</div>
+                    <div class="profile-card agent">
+                      <div class="profile-head">
+                        <div class="profile-avatar">A</div>
+                        <div>
+                          <div class="profile-name">Agent 资料</div>
+                          <div class="profile-meta">INTJ · brave · MCP enabled</div>
+                        </div>
                       </div>
+                      <p>用于 Agent 详情、能力标签、人格设定和工具权限。</p>
                     </div>
-                    <p>适合检索资料、审查方案和补足实现前的风险判断。</p>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">资料卡</div>
-                <span class="badge">SlimeProfileCard</span>
-              </div>
-              <div class="panel-body">
-                <div class="profile-pair">
-                  <div class="profile-card">
-                    <div class="profile-head">
-                      <div class="profile-avatar">你</div>
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">Gateway 日志</div>
+                  <span class="badge warning">SlimeLogCard</span>
+                </div>
+                <div class="panel-body">
+                  <div class="log-list">
+                    <div class="log-row">
+                      <div class="log-code ok">200</div>
                       <div>
-                        <div class="profile-name">用户资料</div>
-                        <div class="profile-meta">本地身份 · 偏好设置</div>
+                        <div class="log-title">anthropic/messages · claude-sonnet</div>
+                        <div class="log-meta">92 tokens · 812ms · key pool A</div>
                       </div>
+                      <span class="badge success">ok</span>
                     </div>
-                    <p>用于展示头像、名称、常用工作区和交互偏好。</p>
-                  </div>
-                  <div class="profile-card agent">
-                    <div class="profile-head">
-                      <div class="profile-avatar">A</div>
+                    <div class="log-row">
+                      <div class="log-code warn">429</div>
                       <div>
-                        <div class="profile-name">Agent 资料</div>
-                        <div class="profile-meta">INTJ · brave · MCP enabled</div>
+                        <div class="log-title">openai/responses · rate limited</div>
+                        <div class="log-meta">retry in 2.4s · circuit half-open</div>
                       </div>
+                      <span class="badge warning">retry</span>
                     </div>
-                    <p>用于 Agent 详情、能力标签、人格设定和工具权限。</p>
+                    <div class="log-row">
+                      <div class="log-code err">502</div>
+                      <div>
+                        <div class="log-title">custom gateway · upstream failed</div>
+                        <div class="log-meta">failover to backup · 1.2s</div>
+                      </div>
+                      <span class="badge">failover</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">Gateway 日志</div>
-                <span class="badge warning">SlimeLogCard</span>
-              </div>
-              <div class="panel-body">
-                <div class="log-list">
-                  <div class="log-row">
-                    <div class="log-code ok">200</div>
-                    <div>
-                      <div class="log-title">anthropic/messages · claude-sonnet</div>
-                      <div class="log-meta">92 tokens · 812ms · key pool A</div>
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">Gateway 排名</div>
+                  <span class="badge accent">SlimeRankBoard</span>
+                </div>
+                <div class="panel-body">
+                  <div class="rank-list">
+                    <div class="rank-row">
+                      <div class="rank-index">1</div>
+                      <div class="rank-main">
+                        <div class="rank-title">
+                          <span>anthropic / claude-sonnet</span>
+                          <span class="badge success">stable</span>
+                        </div>
+                        <div class="rank-bar"><span style="width: 92%"></span></div>
+                      </div>
+                      <div class="rank-value">
+                        <div class="rank-number">2.4k</div>
+                        <div class="rank-caption">requests</div>
+                      </div>
                     </div>
-                    <span class="badge success">ok</span>
-                  </div>
-                  <div class="log-row">
-                    <div class="log-code warn">429</div>
-                    <div>
-                      <div class="log-title">openai/responses · rate limited</div>
-                      <div class="log-meta">retry in 2.4s · circuit half-open</div>
+                    <div class="rank-row">
+                      <div class="rank-index">2</div>
+                      <div class="rank-main">
+                        <div class="rank-title">
+                          <span>openai / gpt-5.4</span>
+                          <span class="badge">fast</span>
+                        </div>
+                        <div class="rank-bar"><span style="width: 71%"></span></div>
+                      </div>
+                      <div class="rank-value">
+                        <div class="rank-number">1.8k</div>
+                        <div class="rank-caption">requests</div>
+                      </div>
                     </div>
-                    <span class="badge warning">retry</span>
-                  </div>
-                  <div class="log-row">
-                    <div class="log-code err">502</div>
-                    <div>
-                      <div class="log-title">custom gateway · upstream failed</div>
-                      <div class="log-meta">failover to backup · 1.2s</div>
+                    <div class="rank-row">
+                      <div class="rank-index">3</div>
+                      <div class="rank-main">
+                        <div class="rank-title">
+                          <span>deepseek / reasoner</span>
+                          <span class="badge warning">retry</span>
+                        </div>
+                        <div class="rank-bar"><span style="width: 48%"></span></div>
+                      </div>
+                      <div class="rank-value">
+                        <div class="rank-number">932</div>
+                        <div class="rank-caption">requests</div>
+                      </div>
                     </div>
-                    <span class="badge">failover</span>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">Gateway 排名</div>
-                <span class="badge accent">SlimeRankBoard</span>
-              </div>
-              <div class="panel-body">
-                <div class="rank-list">
-                  <div class="rank-row">
-                    <div class="rank-index">1</div>
-                    <div class="rank-main">
-                      <div class="rank-title">
-                        <span>anthropic / claude-sonnet</span>
-                        <span class="badge success">stable</span>
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">勾选组件</div>
+                  <span class="badge">SlimeChecklist</span>
+                </div>
+                <div class="panel-body">
+                  <div class="check-list">
+                    <div class="check-row active">
+                      <div class="checkbox">✓</div>
+                      <div>
+                        <div class="check-title">启用 MCP 工具</div>
+                        <div class="check-desc">允许当前 Agent 调用已授权的外部工具</div>
                       </div>
-                      <div class="rank-bar"><span style="width: 92%"></span></div>
+                      <span class="badge accent">selected</span>
                     </div>
-                    <div class="rank-value">
-                      <div class="rank-number">2.4k</div>
-                      <div class="rank-caption">requests</div>
-                    </div>
-                  </div>
-                  <div class="rank-row">
-                    <div class="rank-index">2</div>
-                    <div class="rank-main">
-                      <div class="rank-title">
-                        <span>openai / gpt-5.4</span>
-                        <span class="badge">fast</span>
+                    <div class="check-row">
+                      <div class="checkbox">✓</div>
+                      <div>
+                        <div class="check-title">Vision 能力</div>
+                        <div class="check-desc">模型可处理图片输入和截图分析</div>
                       </div>
-                      <div class="rank-bar"><span style="width: 71%"></span></div>
+                      <span class="badge">optional</span>
                     </div>
-                    <div class="rank-value">
-                      <div class="rank-number">1.8k</div>
-                      <div class="rank-caption">requests</div>
-                    </div>
-                  </div>
-                  <div class="rank-row">
-                    <div class="rank-index">3</div>
-                    <div class="rank-main">
-                      <div class="rank-title">
-                        <span>deepseek / reasoner</span>
-                        <span class="badge warning">retry</span>
+                    <div class="check-row active">
+                      <div class="checkbox">✓</div>
+                      <div>
+                        <div class="check-title">智能路由</div>
+                        <div class="check-desc">根据能力、健康度和成本自动选择渠道</div>
                       </div>
-                      <div class="rank-bar"><span style="width: 48%"></span></div>
+                      <span class="switch on" aria-hidden="true"></span>
                     </div>
-                    <div class="rank-value">
-                      <div class="rank-number">932</div>
-                      <div class="rank-caption">requests</div>
+                    <div class="check-row">
+                      <div class="checkbox">✓</div>
+                      <div>
+                        <div class="check-title">调试日志</div>
+                        <div class="check-desc">记录详细请求上下文，仅用于开发排查</div>
+                      </div>
+                      <span class="switch" aria-hidden="true"></span>
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">勾选组件</div>
-                <span class="badge">SlimeChecklist</span>
-              </div>
-              <div class="panel-body">
-                <div class="check-list">
-                  <div class="check-row active">
-                    <div class="checkbox">✓</div>
-                    <div>
-                      <div class="check-title">启用 MCP 工具</div>
-                      <div class="check-desc">允许当前 Agent 调用已授权的外部工具</div>
-                    </div>
-                    <span class="badge accent">selected</span>
-                  </div>
-                  <div class="check-row">
-                    <div class="checkbox">✓</div>
-                    <div>
-                      <div class="check-title">Vision 能力</div>
-                      <div class="check-desc">模型可处理图片输入和截图分析</div>
-                    </div>
-                    <span class="badge">optional</span>
-                  </div>
-                  <div class="check-row active">
-                    <div class="checkbox">✓</div>
-                    <div>
-                      <div class="check-title">智能路由</div>
-                      <div class="check-desc">根据能力、健康度和成本自动选择渠道</div>
-                    </div>
-                    <span class="switch on" aria-hidden="true"></span>
-                  </div>
-                  <div class="check-row">
-                    <div class="checkbox">✓</div>
-                    <div>
-                      <div class="check-title">调试日志</div>
-                      <div class="check-desc">记录详细请求上下文，仅用于开发排查</div>
-                    </div>
-                    <span class="switch" aria-hidden="true"></span>
-                  </div>
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">任务管理</div>
+                  <span class="badge accent">Schedule Kit</span>
                 </div>
-              </div>
-            </section>
-
-            <section class="panel">
-              <div class="panel-header">
-                <div class="panel-title">任务管理</div>
-                <span class="badge accent">Schedule Kit</span>
-              </div>
-              <div class="panel-body">
-                <div class="week-strip">
-                  <button class="week-nav">‹</button>
-                  <div class="day-cell">
-                    <div class="day-label">周一</div>
-                    <div class="day-number">11</div>
-                    <div class="day-dots"><span></span></div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周二</div>
-                    <div class="day-number">12</div>
-                    <div class="day-dots"><span></span><span></span></div>
-                  </div>
-                  <div class="day-cell active">
-                    <div class="day-label">今天</div>
-                    <div class="day-number">15</div>
-                    <div class="day-dots"><span></span><span></span><span></span></div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周四</div>
-                    <div class="day-number">16</div>
-                    <div class="day-dots"><span></span></div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周五</div>
-                    <div class="day-number">17</div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周六</div>
-                    <div class="day-number">18</div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周日</div>
-                    <div class="day-number">19</div>
-                  </div>
-                  <button class="week-nav">›</button>
-                </div>
-                <div class="schedule-shell">
-                  <div class="task-list">
-                    <div class="task-row">
-                      <div class="task-check"></div>
-                      <div>
-                        <div class="task-title">完成 UI primitives 首轮实现</div>
-                        <div class="task-meta">高优先级 · Chatroom / GroupChat</div>
+                <div class="panel-body">
+                  <div class="week-strip">
+                    <button class="week-nav">‹</button>
+                    <div class="week-days">
+                      <div class="day-cell">
+                        <div class="day-label">周一</div>
+                        <div class="day-number">11</div>
+                        <div class="day-dots"><span></span></div>
                       </div>
-                      <span class="badge warning">今天</span>
-                    </div>
-                    <div class="task-row done">
-                      <div class="task-check">✓</div>
-                      <div>
-                        <div class="task-title">确认 Codex-like 视觉样张</div>
-                        <div class="task-meta">设计基准 · 已完成</div>
+                      <div class="day-cell">
+                        <div class="day-label">周二</div>
+                        <div class="day-number">12</div>
+                        <div class="day-dots"><span></span><span></span></div>
                       </div>
-                      <span class="badge success">done</span>
-                    </div>
-                    <div class="task-row">
-                      <div class="task-check"></div>
-                      <div>
-                        <div class="task-title">补齐 Gateway 图表组件</div>
-                        <div class="task-meta">实时指标 · 排名 · 日志</div>
+                      <div class="day-cell active">
+                        <div class="day-label">今天</div>
+                        <div class="day-number">15</div>
+                        <div class="day-dots"><span></span><span></span><span></span></div>
                       </div>
-                      <span class="badge">排期</span>
+                      <div class="day-cell">
+                        <div class="day-label">周四</div>
+                        <div class="day-number">16</div>
+                        <div class="day-dots"><span></span></div>
+                      </div>
+                      <div class="day-cell">
+                        <div class="day-label">周五</div>
+                        <div class="day-number">17</div>
+                      </div>
+                      <div class="day-cell">
+                        <div class="day-label">周六</div>
+                        <div class="day-number">18</div>
+                      </div>
+                      <div class="day-cell">
+                        <div class="day-label">周日</div>
+                        <div class="day-number">19</div>
+                      </div>
                     </div>
+                    <button class="week-nav">›</button>
                   </div>
-                  <div class="timeline">
-                    <div class="timeline-entry" style="--timeline-color: #9b86ff">
-                      <div class="timeline-time">09:40</div>
-                      <div class="timeline-title">创建设计 spec</div>
+                  <div class="schedule-shell">
+                    <div class="task-list">
+                      <div class="task-row">
+                        <div class="task-check"></div>
+                        <div>
+                          <div class="task-title">完成 UI primitives 首轮实现</div>
+                          <div class="task-meta">高优先级 · Chatroom / GroupChat</div>
+                        </div>
+                        <span class="badge warning">今天</span>
+                      </div>
+                      <div class="task-row done">
+                        <div class="task-check">✓</div>
+                        <div>
+                          <div class="task-title">确认 Codex-like 视觉样张</div>
+                          <div class="task-meta">设计基准 · 已完成</div>
+                        </div>
+                        <span class="badge success">done</span>
+                      </div>
+                      <div class="task-row">
+                        <div class="task-check"></div>
+                        <div>
+                          <div class="task-title">补齐 Gateway 图表组件</div>
+                          <div class="task-meta">实时指标 · 排名 · 日志</div>
+                        </div>
+                        <span class="badge">排期</span>
+                      </div>
                     </div>
-                    <div class="timeline-entry" style="--timeline-color: #55c7ff">
-                      <div class="timeline-time">14:20</div>
-                      <div class="timeline-title">预览组件样张</div>
-                    </div>
-                    <div class="timeline-entry" style="--timeline-color: #f2b35d">
-                      <div class="timeline-time">16:00</div>
-                      <div class="timeline-title">计划实现任务</div>
+                    <div class="timeline">
+                      <div class="timeline-entry" style="--timeline-color: #9b86ff">
+                        <div class="timeline-time">09:40</div>
+                        <div class="timeline-title">创建设计 spec</div>
+                      </div>
+                      <div class="timeline-entry" style="--timeline-color: #55c7ff">
+                        <div class="timeline-time">14:20</div>
+                        <div class="timeline-title">预览组件样张</div>
+                      </div>
+                      <div class="timeline-entry" style="--timeline-color: #f2b35d">
+                        <div class="timeline-time">16:00</div>
+                        <div class="timeline-title">计划实现任务</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
-          </aside>
+              </section>
+            </aside>
+          </div>
+        </div>
       </section>
     </main>
+    <script>
+      const previewFrame = document.getElementById("previewFrame");
+      const deviceLabel = document.getElementById("deviceLabel");
+      const previewFrameLabel = document.getElementById("previewFrameLabel");
+      const deviceButtons = document.querySelectorAll(".device-tab");
+
+      function setPreviewDevice(button) {
+        const width = button.dataset.width ?? "1280px";
+        previewFrame.style.setProperty("--preview-width", width);
+        previewFrameLabel.style.setProperty("--preview-width", width);
+        deviceButtons.forEach((item) => item.classList.toggle("active", item === button));
+        deviceLabel.textContent = `${button.textContent?.trim()} · ${width}`;
+        previewFrameLabel.textContent = `当前画布：${width}`;
+      }
+
+      deviceButtons.forEach((button) => {
+        button.addEventListener("click", () => setPreviewDevice(button));
+      });
+    </script>
   </body>
 </html>
