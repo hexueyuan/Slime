@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
-import { nextTick } from "vue";
 
 (window as any).electron = {
   ipcRenderer: {
@@ -19,13 +18,27 @@ describe("GroupTab", () => {
     setActivePinia(createPinia());
     document.body.innerHTML = "";
   });
-  it("should list existing groups", () => {
+
+  it("shows group summary and opens manager dialog", async () => {
     const store = useGatewayStore();
     store.groups = [
-      { id: 1, name: "cc-auto", balanceMode: "failover", createdAt: "", updatedAt: "" },
+      {
+        id: 1,
+        name: "cc-auto",
+        balanceMode: "failover",
+        isBuiltin: false,
+        createdAt: "",
+        updatedAt: "",
+      },
     ];
-    mount(GroupTab, { attachTo: document.body });
-    expect(document.body.textContent).toContain("cc-auto");
-    expect(document.body.textContent).toContain("failover");
+
+    const wrapper = mount(GroupTab, { attachTo: document.body });
+
+    expect(document.body.textContent).toContain("分组");
+    expect(document.body.textContent).toContain("1");
+
+    await wrapper.get('[data-testid="open-group-manager"]').trigger("click");
+
+    expect(document.body.textContent).toContain("分组管理");
   });
 });
