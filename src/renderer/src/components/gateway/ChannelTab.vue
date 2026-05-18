@@ -163,7 +163,6 @@ async function selectChannel(ch: Channel) {
 function openModelManager(channel: Channel) {
   selectedChannelId.value = channel.id;
   modelManagerChannel.value = channel;
-  store.loadModelsByChannel(channel.id);
   minuteStabilityRefresh.request({ immediate: true });
 }
 
@@ -186,8 +185,11 @@ function channelStabilitySummary(channelId: number): string {
 
 function autoSelectFirst(channels: Channel[]) {
   if (!channels.length) return;
-  if (!selectedChannelId.value || !channels.some((ch) => ch.id === selectedChannelId.value))
-    selectChannel(channels[0]);
+  if (!selectedChannelId.value || !channels.some((ch) => ch.id === selectedChannelId.value)) {
+    void selectChannel(channels[0]).catch((error) => {
+      console.error("Failed to auto-select gateway channel", error);
+    });
+  }
 }
 
 // Auto-select first channel, preload all model counts

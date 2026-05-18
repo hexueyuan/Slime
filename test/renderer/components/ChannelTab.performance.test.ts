@@ -26,6 +26,12 @@ vi.mock("@/components/ModelIcon.vue", () => ({
 import ChannelTab from "@/components/gateway/ChannelTab.vue";
 import { useGatewayStore } from "@/stores/gateway";
 
+function listModelCalls() {
+  return invoke.mock.calls.filter(
+    (call) => call[0] === "presenter:call" && call[2] === "listModelsByChannel",
+  );
+}
+
 describe("ChannelTab first paint behavior", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -60,11 +66,9 @@ describe("ChannelTab first paint behavior", () => {
     await nextTick();
     await nextTick();
 
-    const listModelCalls = invoke.mock.calls.filter(
-      (call) => call[0] === "presenter:call" && call[2] === "listModelsByChannel",
-    );
-    expect(listModelCalls).toHaveLength(1);
-    expect(listModelCalls[0][3]).toBe(1);
+    const calls = listModelCalls();
+    expect(calls).toHaveLength(1);
+    expect(calls[0][3]).toBe(1);
   });
 
   it("只在打开模型管理时展示模型管理弹窗", async () => {
@@ -104,5 +108,6 @@ describe("ChannelTab first paint behavior", () => {
     await nextTick();
 
     expect(document.body.textContent).toContain("模型管理");
+    expect(listModelCalls()).toHaveLength(2);
   });
 });
