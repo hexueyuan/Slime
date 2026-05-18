@@ -147,4 +147,45 @@ describe("ApiKeyManagerDialog", () => {
     expect(writeText).toHaveBeenCalledWith("sk-new-secret");
     expect(writeText).not.toHaveBeenCalledWith("sk-internal-secret");
   });
+
+  it("clears revealed key state after close and reopen", async () => {
+    const store = useGatewayStore();
+    store.apiKeys = [
+      {
+        id: 1,
+        name: "internal",
+        key: "sk-internal-secret",
+        enabled: true,
+        isInternal: true,
+        createdAt: "",
+      },
+    ];
+
+    const wrapper = mount(ApiKeyManagerDialog, {
+      props: { open: true },
+      attachTo: document.body,
+    });
+
+    await wrapper.get('[data-testid="open-key-create"]').trigger("click");
+    await wrapper.get('[data-testid="key-name-input"]').setValue("web-client");
+    await wrapper.get('[data-testid="create-key-submit"]').trigger("click");
+    await flushPromises();
+
+    expect(document.body.textContent).toContain("sk-new-secret");
+
+    await wrapper.get('[data-testid="manager-close"]').trigger("click");
+    await wrapper.setProps({ open: false });
+    await wrapper.setProps({ open: true });
+    await flushPromises();
+
+    expect(document.body.textContent).not.toContain("sk-new-secret");
+
+    writeText.mockClear();
+    const copyButtons = wrapper.findAll('[data-testid="key-copy"]');
+    await copyButtons[1].trigger("click");
+    await flushPromises();
+
+    expect(writeText).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("只能复制刚创建后显示的一次性密钥");
+  });
 });

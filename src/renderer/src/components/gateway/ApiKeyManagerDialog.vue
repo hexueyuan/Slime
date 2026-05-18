@@ -34,6 +34,17 @@ function openCreate() {
   showCreate.value = true;
 }
 
+function handleClose() {
+  revealedKey.value = null;
+  revealedKeyId.value = null;
+  copiedKeyId.value = null;
+  copyMessage.value = "";
+  error.value = "";
+  showCreate.value = false;
+  form.value = { name: "" };
+  emit("close");
+}
+
 async function createKey() {
   const name = form.value.name.trim();
   if (!name) return;
@@ -105,7 +116,7 @@ function revealedFor(apiKey: GatewayApiKey) {
     :open="open"
     title="密钥管理"
     :subtitle="`${store.apiKeys.length} 个密钥 · ${enabledCount} 个启用`"
-    @close="emit('close')"
+    @close="handleClose"
   >
     <template #actions>
       <button
