@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Slime UI Preview</title>
+    <title>Slime Components Preview</title>
     <style>
       :root {
         --app: #101011;
@@ -1537,7 +1537,7 @@
       }
     </style>
   </head>
-  <body class="index-page">
+  <body class="components-page">
     <main class="window">
       <nav class="preview-switcher">
         <div class="preview-brand">
@@ -1545,28 +1545,465 @@
           <span>统一设计系统预览</span>
         </div>
         <div class="preview-links">
-          <a class="active" href="codex-style-ui-preview.html">总览</a>
+          <a class="" href="codex-style-ui-preview.html">总览</a>
           <a class="" href="codex-style-layout-preview.html">整体布局</a>
-          <a class="" href="codex-style-components-preview.html">基础组件</a>
+          <a class="active" href="codex-style-components-preview.html">基础组件</a>
         </div>
       </nav>
-      <section class="index-shell">
-        <div class="index-hero">
-          <div class="index-title">
-            <h1>Slime UI 组件库预览</h1>
-            <p>这里用于集中查看 Codex-style 设计系统。大的应用骨架和小的通用组件分开浏览，后续新增组件先放到这里确认效果，再进入真实 Vue 实现。</p>
-          </div>
-          <div class="preview-card-grid">
-            <a class="preview-card" href="codex-style-layout-preview.html">
-              <strong>整体布局预览</strong>
-              <span>查看 AppShell、左侧栏、工作区、顶部工具栏和输入器在完整桌面窗口中的组合效果。</span>
-            </a>
-            <a class="preview-card" href="codex-style-components-preview.html">
-              <strong>基础组件预览</strong>
-              <span>查看按钮、输入、标签、列表项、Agent 卡片、Gateway 图表、排名、日志、勾选和任务管理组件。</span>
-            </a>
-          </div>
-        </div>
+      <section class="components-shell">
+        <aside class="component-board">
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">通用按钮</div>
+                <span class="badge accent">SlimeButton</span>
+              </div>
+              <div class="panel-body">
+                <div class="button-row">
+                  <button class="primary-button">创建</button>
+                  <button class="secondary-button">保存草稿</button>
+                  <button class="ghost-button">取消</button>
+                  <button class="danger-button">删除</button>
+                  <button class="icon-button">↻</button>
+                </div>
+                <div style="height: 12px"></div>
+                <div class="button-row">
+                  <button class="primary-button" disabled>创建</button>
+                  <button class="secondary-button" disabled>保存草稿</button>
+                  <button class="ghost-button" disabled>取消</button>
+                  <button class="danger-button" disabled>删除</button>
+                  <button class="icon-button" disabled>↻</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">输入与标签</div>
+                <span class="badge">SlimeInput</span>
+              </div>
+              <div class="panel-body">
+                <input class="input" value="例如 ~/workspace/project" />
+                <div style="height: 12px"></div>
+                <div class="badge-row">
+                  <span class="badge accent">reasoning</span>
+                  <span class="badge success">healthy</span>
+                  <span class="badge warning">retrying</span>
+                  <span class="badge">tool_call</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">列表项</div>
+                <div class="tabs">
+                  <button class="tab active">会话</button>
+                  <button class="tab">Agent</button>
+                  <button class="tab">任务</button>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="list">
+                  <div class="list-item active">
+                    <div class="avatar">H</div>
+                    <div>
+                      <div class="list-title">优化 Slime UI 风格</div>
+                      <div class="list-subtitle">Codex-like shell, composer, tokens</div>
+                    </div>
+                    <span class="badge accent">active</span>
+                  </div>
+                  <div class="list-item">
+                    <div class="avatar">M</div>
+                    <div>
+                      <div class="list-title">Gateway 状态面板</div>
+                      <div class="list-subtitle">低对比表格和指标卡</div>
+                    </div>
+                    <span class="badge">3h</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">业务页面模板</div>
+                <button class="secondary-button">刷新</button>
+              </div>
+              <div class="panel-body mini-page">
+                <div class="metric-grid">
+                  <div class="metric">
+                    <div class="metric-label">请求</div>
+                    <div class="metric-value">2.4k</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-label">成功率</div>
+                    <div class="metric-value">99.2%</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-label">延迟</div>
+                    <div class="metric-value">812ms</div>
+                  </div>
+                </div>
+                <div class="chart-card">
+                  <div class="chart-toolbar">
+                    <div>
+                      <div class="chart-title">实时指标</div>
+                      <div class="chart-value">128 req/min</div>
+                    </div>
+                    <span class="badge accent">SlimeRealtimeChart</span>
+                  </div>
+                  <div class="metric-strip">
+                    <div class="metric-pill active" style="--metric-color: #9b86ff">
+                      <div class="metric-pill-label">吞吐</div>
+                      <div class="metric-pill-value">128<span class="metric-pill-trend">+12%</span></div>
+                    </div>
+                    <div class="metric-pill" style="--metric-color: #55c7ff">
+                      <div class="metric-pill-label">延迟 p95</div>
+                      <div class="metric-pill-value">812ms<span class="metric-pill-trend">-4%</span></div>
+                    </div>
+                    <div class="metric-pill" style="--metric-color: #ff7b7b">
+                      <div class="metric-pill-label">错误率</div>
+                      <div class="metric-pill-value">0.8%<span class="metric-pill-trend">+0.2</span></div>
+                    </div>
+                    <div class="metric-pill" style="--metric-color: #f2b35d">
+                      <div class="metric-pill-label">成本</div>
+                      <div class="metric-pill-value">$0.42<span class="metric-pill-trend">+6%</span></div>
+                    </div>
+                  </div>
+                  <div class="chart-window">
+                    <svg viewBox="0 0 360 118" preserveAspectRatio="none" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#9b86ff" stop-opacity="0.28" />
+                          <stop offset="100%" stop-color="#9b86ff" stop-opacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        class="chart-area"
+                        d="M0 88 C25 82 32 52 57 57 C82 62 91 91 119 82 C148 73 153 37 183 42 C213 47 217 75 245 70 C274 65 285 28 312 34 C333 39 344 55 360 48 L360 118 L0 118 Z"
+                      />
+                      <path
+                        class="chart-line"
+                        d="M0 88 C25 82 32 52 57 57 C82 62 91 91 119 82 C148 73 153 37 183 42 C213 47 217 75 245 70 C274 65 285 28 312 34 C333 39 344 55 360 48"
+                      />
+                    </svg>
+                    <div class="chart-bars" aria-hidden="true">
+                      <span style="height: 18%"></span>
+                      <span style="height: 34%"></span>
+                      <span style="height: 28%"></span>
+                      <span style="height: 48%"></span>
+                      <span style="height: 63%"></span>
+                      <span style="height: 42%"></span>
+                      <span style="height: 29%"></span>
+                      <span style="height: 36%"></span>
+                      <span style="height: 58%"></span>
+                      <span style="height: 72%"></span>
+                      <span style="height: 46%"></span>
+                      <span style="height: 39%"></span>
+                      <span style="height: 66%"></span>
+                      <span style="height: 81%"></span>
+                      <span style="height: 54%"></span>
+                      <span style="height: 43%"></span>
+                      <span style="height: 61%"></span>
+                      <span style="height: 77%"></span>
+                      <span style="height: 68%"></span>
+                      <span style="height: 52%"></span>
+                      <span style="height: 74%"></span>
+                      <span style="height: 57%"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="list-item">
+                  <div class="avatar">G</div>
+                  <div>
+                    <div class="list-title">Anthropic 主渠道</div>
+                    <div class="list-subtitle">round_robin · 2 keys · circuit closed</div>
+                  </div>
+                  <span class="badge success">online</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Agent 卡片</div>
+                <span class="badge accent">SlimeAgentCard</span>
+              </div>
+              <div class="panel-body">
+                <div class="agent-grid">
+                  <div class="agent-card active">
+                    <div class="agent-card-head">
+                      <div class="agent-avatar">H</div>
+                      <div>
+                        <div class="agent-name">哈尔</div>
+                        <div class="agent-role">reasoning · tool_call</div>
+                      </div>
+                    </div>
+                    <p>负责拆解任务、规划实现路径，并在执行时保持上下文。</p>
+                  </div>
+                  <div class="agent-card">
+                    <div class="agent-card-head">
+                      <div class="agent-avatar">M</div>
+                      <div>
+                        <div class="agent-name">莫斯</div>
+                        <div class="agent-role">research · review</div>
+                      </div>
+                    </div>
+                    <p>适合检索资料、审查方案和补足实现前的风险判断。</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">资料卡</div>
+                <span class="badge">SlimeProfileCard</span>
+              </div>
+              <div class="panel-body">
+                <div class="profile-pair">
+                  <div class="profile-card">
+                    <div class="profile-head">
+                      <div class="profile-avatar">你</div>
+                      <div>
+                        <div class="profile-name">用户资料</div>
+                        <div class="profile-meta">本地身份 · 偏好设置</div>
+                      </div>
+                    </div>
+                    <p>用于展示头像、名称、常用工作区和交互偏好。</p>
+                  </div>
+                  <div class="profile-card agent">
+                    <div class="profile-head">
+                      <div class="profile-avatar">A</div>
+                      <div>
+                        <div class="profile-name">Agent 资料</div>
+                        <div class="profile-meta">INTJ · brave · MCP enabled</div>
+                      </div>
+                    </div>
+                    <p>用于 Agent 详情、能力标签、人格设定和工具权限。</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Gateway 日志</div>
+                <span class="badge warning">SlimeLogCard</span>
+              </div>
+              <div class="panel-body">
+                <div class="log-list">
+                  <div class="log-row">
+                    <div class="log-code ok">200</div>
+                    <div>
+                      <div class="log-title">anthropic/messages · claude-sonnet</div>
+                      <div class="log-meta">92 tokens · 812ms · key pool A</div>
+                    </div>
+                    <span class="badge success">ok</span>
+                  </div>
+                  <div class="log-row">
+                    <div class="log-code warn">429</div>
+                    <div>
+                      <div class="log-title">openai/responses · rate limited</div>
+                      <div class="log-meta">retry in 2.4s · circuit half-open</div>
+                    </div>
+                    <span class="badge warning">retry</span>
+                  </div>
+                  <div class="log-row">
+                    <div class="log-code err">502</div>
+                    <div>
+                      <div class="log-title">custom gateway · upstream failed</div>
+                      <div class="log-meta">failover to backup · 1.2s</div>
+                    </div>
+                    <span class="badge">failover</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Gateway 排名</div>
+                <span class="badge accent">SlimeRankBoard</span>
+              </div>
+              <div class="panel-body">
+                <div class="rank-list">
+                  <div class="rank-row">
+                    <div class="rank-index">1</div>
+                    <div class="rank-main">
+                      <div class="rank-title">
+                        <span>anthropic / claude-sonnet</span>
+                        <span class="badge success">stable</span>
+                      </div>
+                      <div class="rank-bar"><span style="width: 92%"></span></div>
+                    </div>
+                    <div class="rank-value">
+                      <div class="rank-number">2.4k</div>
+                      <div class="rank-caption">requests</div>
+                    </div>
+                  </div>
+                  <div class="rank-row">
+                    <div class="rank-index">2</div>
+                    <div class="rank-main">
+                      <div class="rank-title">
+                        <span>openai / gpt-5.4</span>
+                        <span class="badge">fast</span>
+                      </div>
+                      <div class="rank-bar"><span style="width: 71%"></span></div>
+                    </div>
+                    <div class="rank-value">
+                      <div class="rank-number">1.8k</div>
+                      <div class="rank-caption">requests</div>
+                    </div>
+                  </div>
+                  <div class="rank-row">
+                    <div class="rank-index">3</div>
+                    <div class="rank-main">
+                      <div class="rank-title">
+                        <span>deepseek / reasoner</span>
+                        <span class="badge warning">retry</span>
+                      </div>
+                      <div class="rank-bar"><span style="width: 48%"></span></div>
+                    </div>
+                    <div class="rank-value">
+                      <div class="rank-number">932</div>
+                      <div class="rank-caption">requests</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">勾选组件</div>
+                <span class="badge">SlimeChecklist</span>
+              </div>
+              <div class="panel-body">
+                <div class="check-list">
+                  <div class="check-row active">
+                    <div class="checkbox">✓</div>
+                    <div>
+                      <div class="check-title">启用 MCP 工具</div>
+                      <div class="check-desc">允许当前 Agent 调用已授权的外部工具</div>
+                    </div>
+                    <span class="badge accent">selected</span>
+                  </div>
+                  <div class="check-row">
+                    <div class="checkbox">✓</div>
+                    <div>
+                      <div class="check-title">Vision 能力</div>
+                      <div class="check-desc">模型可处理图片输入和截图分析</div>
+                    </div>
+                    <span class="badge">optional</span>
+                  </div>
+                  <div class="check-row active">
+                    <div class="checkbox">✓</div>
+                    <div>
+                      <div class="check-title">智能路由</div>
+                      <div class="check-desc">根据能力、健康度和成本自动选择渠道</div>
+                    </div>
+                    <span class="switch on" aria-hidden="true"></span>
+                  </div>
+                  <div class="check-row">
+                    <div class="checkbox">✓</div>
+                    <div>
+                      <div class="check-title">调试日志</div>
+                      <div class="check-desc">记录详细请求上下文，仅用于开发排查</div>
+                    </div>
+                    <span class="switch" aria-hidden="true"></span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">任务管理</div>
+                <span class="badge accent">Schedule Kit</span>
+              </div>
+              <div class="panel-body">
+                <div class="week-strip">
+                  <button class="week-nav">‹</button>
+                  <div class="day-cell">
+                    <div class="day-label">周一</div>
+                    <div class="day-number">11</div>
+                    <div class="day-dots"><span></span></div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周二</div>
+                    <div class="day-number">12</div>
+                    <div class="day-dots"><span></span><span></span></div>
+                  </div>
+                  <div class="day-cell active">
+                    <div class="day-label">今天</div>
+                    <div class="day-number">15</div>
+                    <div class="day-dots"><span></span><span></span><span></span></div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周四</div>
+                    <div class="day-number">16</div>
+                    <div class="day-dots"><span></span></div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周五</div>
+                    <div class="day-number">17</div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周六</div>
+                    <div class="day-number">18</div>
+                  </div>
+                  <div class="day-cell">
+                    <div class="day-label">周日</div>
+                    <div class="day-number">19</div>
+                  </div>
+                  <button class="week-nav">›</button>
+                </div>
+                <div class="schedule-shell">
+                  <div class="task-list">
+                    <div class="task-row">
+                      <div class="task-check"></div>
+                      <div>
+                        <div class="task-title">完成 UI primitives 首轮实现</div>
+                        <div class="task-meta">高优先级 · Chatroom / GroupChat</div>
+                      </div>
+                      <span class="badge warning">今天</span>
+                    </div>
+                    <div class="task-row done">
+                      <div class="task-check">✓</div>
+                      <div>
+                        <div class="task-title">确认 Codex-like 视觉样张</div>
+                        <div class="task-meta">设计基准 · 已完成</div>
+                      </div>
+                      <span class="badge success">done</span>
+                    </div>
+                    <div class="task-row">
+                      <div class="task-check"></div>
+                      <div>
+                        <div class="task-title">补齐 Gateway 图表组件</div>
+                        <div class="task-meta">实时指标 · 排名 · 日志</div>
+                      </div>
+                      <span class="badge">排期</span>
+                    </div>
+                  </div>
+                  <div class="timeline">
+                    <div class="timeline-entry" style="--timeline-color: #9b86ff">
+                      <div class="timeline-time">09:40</div>
+                      <div class="timeline-title">创建设计 spec</div>
+                    </div>
+                    <div class="timeline-entry" style="--timeline-color: #55c7ff">
+                      <div class="timeline-time">14:20</div>
+                      <div class="timeline-title">预览组件样张</div>
+                    </div>
+                    <div class="timeline-entry" style="--timeline-color: #f2b35d">
+                      <div class="timeline-time">16:00</div>
+                      <div class="timeline-title">计划实现任务</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </aside>
       </section>
     </main>
   </body>

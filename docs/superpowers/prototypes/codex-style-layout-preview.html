@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Slime UI Preview</title>
+    <title>Slime Layout Preview</title>
     <style>
       :root {
         --app: #101011;
@@ -1537,35 +1537,155 @@
       }
     </style>
   </head>
-  <body class="index-page">
+  <body class="layout-page">
     <main class="window">
-      <nav class="preview-switcher">
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <div class="traffic" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <button class="chrome-button" title="收拢侧边栏">
+            <svg viewBox="0 0 24 24">
+              <rect x="4" y="5" width="16" height="14" rx="2" />
+              <path d="M9 5v14" />
+            </svg>
+          </button>
+          <button class="chrome-button" title="返回">
+            <svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6" /></svg>
+          </button>
+          <button class="chrome-button" title="前进">
+            <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-row active">
+            <span class="icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+              </svg>
+            </span>
+            新对话
+          </div>
+          <div class="search">
+            <span class="icon">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            </span>
+            <strong>搜索</strong>
+            <span class="kbd">⌘G</span>
+          </div>
+          <div class="nav-row">
+            <span class="icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="7" cy="7" r="2.5" />
+                <circle cx="17" cy="7" r="2.5" />
+                <circle cx="7" cy="17" r="2.5" />
+                <circle cx="17" cy="17" r="2.5" />
+              </svg>
+            </span>
+            插件
+          </div>
+          <div class="nav-row">
+            <span class="icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 8v5l3 2" /></svg>
+            </span>
+            自动化
+          </div>
+          <div class="nav-row">
+            <span class="icon">
+              <svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2" /><path d="M11 18h2" /></svg>
+            </span>
+            设置 Slime 移动版
+          </div>
+        </div>
+
+        <div class="section-label">项目</div>
+        <div class="project-row">
+          <span class="icon">
+            <svg viewBox="0 0 24 24"><path d="M4 9.5h16l-2.2 7H6.2L4 9.5Z" /></svg>
+          </span>
+          Slime
+        </div>
+        <div class="conversation-row active"><strong>对齐第二张图 UI</strong><time>⌘1</time></div>
+        <div class="conversation-row"><strong>实现 runtime profile 数据锁</strong><time>⌘2</time></div>
+        <div class="conversation-row"><strong>优化 gateway 卡顿</strong><time>⌘3</time></div>
+        <div class="conversation-row"><strong>Task 1</strong><time>⌘4</time></div>
+        <div class="conversation-row"><strong>展开显示</strong><time></time></div>
+
+        <div class="section-label">对话</div>
+        <div class="conversation-row"><strong>了解红灯测试</strong><time>⌘8</time></div>
+
+        <div class="sidebar-footer">
+          <button class="status-button" title="测试连接">
+            <span>测试</span>
+            <span class="status-dot"></span>
+          </button>
+          <div class="nav-row">
+            <span class="icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <path
+                  d="M19 12a7.8 7.8 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.2 3h-4.4l-.4 2.7a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.5A7.8 7.8 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.7h4.4l.4-2.7a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"
+                />
+              </svg>
+            </span>
+            设置
+          </div>
+        </div>
+      </aside>
+
+      <section class="main">
+        <nav class="preview-switcher">
         <div class="preview-brand">
           <strong>Slime Codex-style UI Preview</strong>
           <span>统一设计系统预览</span>
         </div>
         <div class="preview-links">
-          <a class="active" href="codex-style-ui-preview.html">总览</a>
-          <a class="" href="codex-style-layout-preview.html">整体布局</a>
+          <a class="" href="codex-style-ui-preview.html">总览</a>
+          <a class="active" href="codex-style-layout-preview.html">整体布局</a>
           <a class="" href="codex-style-components-preview.html">基础组件</a>
         </div>
       </nav>
-      <section class="index-shell">
-        <div class="index-hero">
-          <div class="index-title">
-            <h1>Slime UI 组件库预览</h1>
-            <p>这里用于集中查看 Codex-style 设计系统。大的应用骨架和小的通用组件分开浏览，后续新增组件先放到这里确认效果，再进入真实 Vue 实现。</p>
-          </div>
-          <div class="preview-card-grid">
-            <a class="preview-card" href="codex-style-layout-preview.html">
-              <strong>整体布局预览</strong>
-              <span>查看 AppShell、左侧栏、工作区、顶部工具栏和输入器在完整桌面窗口中的组合效果。</span>
-            </a>
-            <a class="preview-card" href="codex-style-components-preview.html">
-              <strong>基础组件预览</strong>
-              <span>查看按钮、输入、标签、列表项、Agent 卡片、Gateway 图表、排名、日志、勾选和任务管理组件。</span>
-            </a>
-          </div>
+        <div class="content">
+          <section class="hero">
+            <h1>要在 Slime 中构建什么？</h1>
+            <div class="composer">
+              <textarea readonly>建立一套统一的 Slime UI 设计系统，并先预览基础组件的效果。</textarea>
+              <div class="composer-toolbar">
+                <button class="icon-button">＋</button>
+                <div class="toolbar-meta">
+                  <span class="badge warning">完全访问权限</span>
+                  <span>Slime ▾</span>
+                  <span>本地模式 ▾</span>
+                  <span>brave ▾</span>
+                </div>
+                <button class="send">↑</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="layout-inspector">
+            <section class="layout-card">
+              <h2>整体布局原则</h2>
+              <p>左侧保持 Codex-like 半透明导航，右侧为圆角工作区。主内容优先服务任务流，顶部工具栏、输入器、右侧工具面板都应保持低噪声和稳定尺寸。</p>
+            </section>
+            <section class="layout-card">
+              <h2>推荐分区</h2>
+              <div class="layout-frame" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <p style="margin-top: 12px">Sidebar / Workspace / Inspector 三段式是复杂工作台的默认骨架；简单页面可以只保留 Sidebar + Workspace。</p>
+            </section>
+            <section class="layout-card">
+              <h2>适用页面</h2>
+              <p>Chatroom、GroupChat、Gateway、Agents、Schedule 和 Settings 都应沿用同一窗口外壳，再根据页面任务选择是否展示右侧工具面板。</p>
+            </section>
+          </aside>
         </div>
       </section>
     </main>

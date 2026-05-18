@@ -18,6 +18,7 @@
     "build:mac:arm64": "pnpm run build && pnpm run rebuild:electron && electron-builder --mac --arm64",
     "build:mac:x64": "pnpm run build && pnpm run rebuild:electron && electron-builder --mac --x64",
     "start": "electron-vite preview",
+    "ui:preview": "vite docs/superpowers/prototypes --host 127.0.0.1 --port 4177",
     "lint": "oxlint .",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
