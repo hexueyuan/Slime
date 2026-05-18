@@ -3,8 +3,16 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const previewPath = resolve("docs/superpowers/prototypes/codex-style-components-preview.html");
+const previewIndexPath = resolve("docs/superpowers/prototypes/index.html");
 
 describe("codex-style components preview", () => {
+  it("serves the component preview from the prototype root", () => {
+    const html = readFileSync(previewIndexPath, "utf8");
+
+    expect(html).toContain("codex-style-components-preview.html");
+    expect(html).toContain("window.location.replace");
+  });
+
   it("defines device buttons for responsive component preview", () => {
     const html = readFileSync(previewPath, "utf8");
 
