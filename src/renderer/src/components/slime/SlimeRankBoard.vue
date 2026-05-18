@@ -20,9 +20,13 @@ const props = withDefaults(
     title: string;
     items: RankItem[];
     metrics?: RankMetric[];
+    compact?: boolean;
+    limit?: number;
   }>(),
   {
     metrics: () => [],
+    compact: false,
+    limit: 5,
   },
 );
 
@@ -38,7 +42,7 @@ const rankedItems = computed(() => {
       if (!metric) return 0;
       return (b.sortValues?.[metric] ?? 0) - (a.sortValues?.[metric] ?? 0);
     })
-    .slice(0, 5)
+    .slice(0, props.limit)
     .map((item) => ({
       ...item,
       value: metric ? (item.values?.[metric] ?? item.value ?? "-") : (item.value ?? "-"),
@@ -52,7 +56,10 @@ function selectMetric(metric: string) {
 
 <template>
   <section
-    class="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+    :class="[
+      'min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]',
+      props.compact ? 'p-3' : 'p-4',
+    ]"
   >
     <div class="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-3">
       <h3 class="min-w-0 truncate text-sm font-semibold text-[var(--color-text-primary)]">

@@ -64,6 +64,24 @@ describe("SlimeRankBoard", () => {
     expect(wrapper.text()).toContain("暂无数据");
   });
 
+  it("limits the visible ranked items", () => {
+    const wrapper = mount(SlimeRankBoard, {
+      props: {
+        title: "供应商排名",
+        limit: 2,
+        items: [
+          { id: 1, label: "Claude", value: "24" },
+          { id: 2, label: "DeepSeek", value: "12" },
+          { id: 3, label: "Gemini", value: "8" },
+        ],
+      },
+    });
+
+    expect(wrapper.get('[data-testid="rank-item-0"]').text()).toContain("Claude");
+    expect(wrapper.get('[data-testid="rank-item-1"]').text()).toContain("DeepSeek");
+    expect(wrapper.find('[data-testid="rank-item-2"]').exists()).toBe(false);
+  });
+
   it("marks metric controls as wrap-capable", () => {
     const wrapper = mount(SlimeRankBoard, {
       props: {

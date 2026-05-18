@@ -16,6 +16,7 @@ import SlimeTabs from "@/components/ui/SlimeTabs.vue";
 import SlimeMetricCard from "@/components/slime/SlimeMetricCard.vue";
 import SlimeRealtimeChart from "@/components/slime/SlimeRealtimeChart.vue";
 import SlimeRankBoard from "@/components/slime/SlimeRankBoard.vue";
+import type { TrendPoint } from "@shared/types/gateway";
 
 const store = useGatewayStore();
 const ChannelTab = defineAsyncComponent(() => import("@/components/gateway/ChannelTab.vue"));
@@ -117,6 +118,21 @@ function trendValues(key: "requests" | "cost" | "inputTokens" | "outputTokens"):
   return store.statsTrend.map((point) => point[key] ?? 0);
 }
 
+function formatTrendLabel(point: TrendPoint): string {
+  if (trendGranularity.value === "hourly") {
+    return `${String(point.hour ?? 0).padStart(2, "0")}:00`;
+  }
+  return point.date.slice(5);
+}
+
+function formatTrendCost(value: number): string {
+  if (value === 0) return "$0.00";
+  if (value < 0.01) return `$${value.toFixed(4)}`;
+  return formatCost(value);
+}
+
+const trendLabels = computed(() => store.statsTrend.map((point) => formatTrendLabel(point)));
+
 const metricCards = computed(() => [
   {
     label: "请求",
@@ -163,6 +179,8 @@ const trendMetrics = computed(() => [
     value: formatNumber(store.stats.requests),
     color: "accent" as const,
     points: trendValues("requests"),
+    labels: trendLabels.value,
+    formatValue: formatNumber,
   },
   {
     id: "cost",
@@ -170,6 +188,8 @@ const trendMetrics = computed(() => [
     value: formatCost(store.stats.cost),
     color: "warning" as const,
     points: trendValues("cost"),
+    labels: trendLabels.value,
+    formatValue: formatTrendCost,
   },
   {
     id: "inputTokens",
@@ -177,6 +197,8 @@ const trendMetrics = computed(() => [
     value: formatNumber(store.stats.inputTokens),
     color: "blue" as const,
     points: trendValues("inputTokens"),
+    labels: trendLabels.value,
+    formatValue: formatNumber,
   },
   {
     id: "outputTokens",
@@ -184,6 +206,8 @@ const trendMetrics = computed(() => [
     value: formatNumber(store.stats.outputTokens),
     color: "success" as const,
     points: trendValues("outputTokens"),
+    labels: trendLabels.value,
+    formatValue: formatNumber,
   },
 ]);
 
@@ -223,7 +247,7 @@ const modelRankItems = computed(() =>
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-[var(--color-app-canvas)]">
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-app-canvas)]">
     <PageHeader title="Gateway" subtitle="路由、密钥、日志与运行指标">
       <template #actions>
         <SlimeTabs v-model="store.statsRange" :tabs="rangeOptions" />
@@ -231,8 +255,8 @@ const modelRankItems = computed(() =>
     </PageHeader>
 
     <!-- Stats cards -->
-    <div class="shrink-0 px-5 py-4">
-      <div class="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(128px,1fr))] gap-2">
+    <div class="shrink-0 px-5 py-3">
+      <div class="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(132px,1fr))] gap-2">
         <SlimeMetricCard
           v-for="card in metricCards"
           :key="card.label"
@@ -245,33 +269,51 @@ const modelRankItems = computed(() =>
 
       <!-- Trend chart + Rank board 同行 -->
       <div
-        class="mb-2 mt-3 grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]"
+        class="mt-2 grid min-w-0 grid-cols-1 gap-2 2xl:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]"
       >
         <SlimeRealtimeChart
           v-if="metricsLoaded"
           title="趋势"
           :subtitle="trendGranularity === 'hourly' ? '按小时统计' : '按天统计'"
           :metrics="trendMetrics"
+          compact
         />
-        <div v-else class="h-[193px] rounded-[var(--radius-lg)] bg-[var(--color-control-hover)]" />
-        <div class="grid min-w-0 gap-3">
-          <SlimeRankBoard title="供应商排名" :items="channelRankItems" :metrics="rankMetrics" />
-          <SlimeRankBoard title="模型排名" :items="modelRankItems" :metrics="rankMetrics" />
+        <div
+          v-else
+          class="h-[clamp(112px,16vh,148px)] rounded-[var(--radius-lg)] bg-[var(--color-control-hover)]"
+        />
+        <div class="grid min-w-0 gap-2 md:grid-cols-2 2xl:grid-cols-2">
+          <SlimeRankBoard
+            title="供应商排名"
+            :items="channelRankItems"
+            :metrics="rankMetrics"
+            compact
+            :limit="3"
+          />
+          <SlimeRankBoard
+            title="模型排名"
+            :items="modelRankItems"
+            :metrics="rankMetrics"
+            compact
+            :limit="3"
+          />
         </div>
       </div>
     </div>
 
-    <!-- Tab bar -->
-    <div class="flex shrink-0 border-b border-[var(--color-border-subtle)] px-5 pb-3">
-      <SlimeTabs v-model="store.activeTab" :tabs="tabs" />
-    </div>
+    <div class="flex min-h-0 flex-1 flex-col border-t border-[var(--color-border-subtle)]">
+      <!-- Tab bar -->
+      <div class="flex shrink-0 px-5 py-3">
+        <SlimeTabs v-model="store.activeTab" :tabs="tabs" />
+      </div>
 
-    <!-- Tab content -->
-    <div class="min-h-0 flex-1 overflow-y-auto">
-      <ChannelTab v-if="store.activeTab === 'channels'" />
-      <GroupTab v-else-if="store.activeTab === 'groups'" />
-      <ApiKeyTab v-else-if="store.activeTab === 'apikeys'" />
-      <LogTab v-else-if="store.activeTab === 'logs'" />
+      <!-- Tab content -->
+      <div class="min-h-0 flex-1 overflow-hidden">
+        <ChannelTab v-if="store.activeTab === 'channels'" />
+        <GroupTab v-else-if="store.activeTab === 'groups'" />
+        <ApiKeyTab v-else-if="store.activeTab === 'apikeys'" />
+        <LogTab v-else-if="store.activeTab === 'logs'" />
+      </div>
     </div>
   </div>
 </template>
