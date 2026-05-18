@@ -56,23 +56,25 @@ async function reloadCurrentModels() {
 
 async function refreshModels() {
   if (!props.channel) return;
+  const channelId = props.channel.id;
 
   refreshingModels.value = true;
   refreshModelsError.value = "";
   try {
-    const fetched = await gw.fetchModels(props.channel.id);
-    const existingNames = new Set(channelModels.value.map((model) => model.modelName));
+    const fetched = await gw.fetchModels(channelId);
+    const existingModels = store.models.get(channelId) ?? [];
+    const existingNames = new Set(existingModels.map((model) => model.modelName));
     for (const modelName of fetched) {
       if (existingNames.has(modelName)) continue;
       await gw.createModel({
-        channelId: props.channel.id,
+        channelId,
         modelName,
         type: "chat",
         capabilities: [],
         enabled: true,
       });
     }
-    await reloadCurrentModels();
+    await store.loadModelsByChannel(channelId);
   } catch (error: any) {
     refreshModelsError.value = error?.message ?? String(error);
   } finally {
