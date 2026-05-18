@@ -20,6 +20,8 @@ const store = useGatewayStore();
 
 const showEditor = ref(false);
 const editingGroup = ref<Group | null>(null);
+const deletingGroupId = ref<number | null>(null);
+const deleteError = ref("");
 
 const builtinCount = computed(() => store.groups.filter((group) => group.isBuiltin).length);
 
@@ -35,8 +37,19 @@ function openEdit(group: Group) {
 
 async function deleteGroup(group: Group) {
   if (group.isBuiltin) return;
-  await gw.deleteGroup(group.id);
-  await store.loadGroups();
+  if (deletingGroupId.value !== null) return;
+  if (!window.confirm(`确认删除分组「${group.name}」？`)) return;
+
+  deletingGroupId.value = group.id;
+  deleteError.value = "";
+  try {
+    await gw.deleteGroup(group.id);
+    await store.loadGroups();
+  } catch (error) {
+    deleteError.value = error instanceof Error ? error.message : String(error);
+  } finally {
+    deletingGroupId.value = null;
+  }
 }
 
 async function onSaved() {
@@ -60,6 +73,10 @@ async function onSaved() {
         + 新增分组
       </button>
     </template>
+
+    <p v-if="deleteError" class="mb-3 text-xs text-[var(--color-danger)]">
+      {{ deleteError }}
+    </p>
 
     <div v-if="store.groups.length" class="grid gap-3 md:grid-cols-2">
       <GatewayGroupCard

@@ -1,12 +1,15 @@
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import GroupManagerDialog from "@/components/gateway/GroupManagerDialog.vue";
 import { useGatewayStore } from "@/stores/gateway";
+import type { Group } from "@shared/types/gateway";
+
+const invokeMock = vi.fn(async () => null);
 
 (window as any).electron = {
   ipcRenderer: {
-    invoke: vi.fn(async () => null),
+    invoke: invokeMock,
     on: vi.fn(() => vi.fn()),
     removeAllListeners: vi.fn(),
   },
@@ -24,21 +27,24 @@ vi.mock("@/components/gateway/GroupEditDialog.vue", () => ({
 describe("GroupManagerDialog", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    invokeMock.mockReset();
+    invokeMock.mockResolvedValue(null);
+    vi.spyOn(window, "confirm").mockReset();
     document.body.innerHTML = "";
   });
 
+  const group: Group = {
+    id: 1,
+    name: "claude",
+    balanceMode: "failover",
+    isBuiltin: false,
+    createdAt: "",
+    updatedAt: "",
+  };
+
   it("renders group cards and opens edit dialog", async () => {
     const store = useGatewayStore();
-    store.groups = [
-      {
-        id: 1,
-        name: "claude",
-        balanceMode: "failover",
-        isBuiltin: false,
-        createdAt: "",
-        updatedAt: "",
-      },
-    ];
+    store.groups = [group];
 
     const wrapper = mount(GroupManagerDialog, {
       props: { open: true },
@@ -53,5 +59,49 @@ describe("GroupManagerDialog", () => {
 
     expect(wrapper.find('[data-testid="group-edit-dialog"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="group-edit-dialog"]').text()).toContain("claude");
+  });
+
+  it("does not delete a group when confirmation is canceled", async () => {
+    vi.mocked(window.confirm).mockReturnValue(false);
+    const store = useGatewayStore();
+    store.groups = [group];
+
+    const wrapper = mount(GroupManagerDialog, {
+      props: { open: true },
+      attachTo: document.body,
+    });
+
+    await wrapper.get('[data-testid="group-delete"]').trigger("click");
+    await flushPromises();
+
+    expect(window.confirm).toHaveBeenCalledWith("确认删除分组「claude」？");
+    expect(invokeMock).not.toHaveBeenCalledWith(
+      "presenter:call",
+      "gatewayPresenter",
+      "deleteGroup",
+      1,
+    );
+  });
+
+  it("deletes a group and reloads groups when confirmation is accepted", async () => {
+    vi.mocked(window.confirm).mockReturnValue(true);
+    invokeMock.mockImplementation(async (_channel, _presenter, method) => {
+      if (method === "listGroups") return [];
+      return null;
+    });
+    const store = useGatewayStore();
+    store.groups = [group];
+
+    const wrapper = mount(GroupManagerDialog, {
+      props: { open: true },
+      attachTo: document.body,
+    });
+
+    await wrapper.get('[data-testid="group-delete"]').trigger("click");
+    await flushPromises();
+
+    expect(window.confirm).toHaveBeenCalledWith("确认删除分组「claude」？");
+    expect(invokeMock).toHaveBeenCalledWith("presenter:call", "gatewayPresenter", "deleteGroup", 1);
+    expect(invokeMock).toHaveBeenCalledWith("presenter:call", "gatewayPresenter", "listGroups");
   });
 });
