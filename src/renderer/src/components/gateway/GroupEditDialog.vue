@@ -35,10 +35,10 @@ const searchQuery = ref("");
 const expandedChannels = ref<Set<number>>(new Set());
 
 const balanceModeOptions = [
-  { value: "round_robin", label: "Round Robin" },
-  { value: "random", label: "Random" },
-  { value: "failover", label: "Failover" },
-  { value: "weighted", label: "Weighted" },
+  { value: "round_robin", label: "轮询" },
+  { value: "random", label: "随机" },
+  { value: "failover", label: "故障转移" },
+  { value: "weighted", label: "加权" },
 ];
 
 const selectedKeys = computed(

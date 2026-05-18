@@ -46,6 +46,25 @@ describe("GroupEditDialog", () => {
     document.body.innerHTML = "";
   });
 
+  it("shows balance mode options in Chinese while preserving stored values", () => {
+    mount(GroupEditDialog, {
+      props: { open: true, group: null },
+      attachTo: document.body,
+    });
+
+    const options = Array.from(document.querySelectorAll("select option")).map((option) => ({
+      label: option.textContent?.trim(),
+      value: option.value,
+    }));
+
+    expect(options).toEqual([
+      { label: "轮询", value: "round_robin" },
+      { label: "随机", value: "random" },
+      { label: "故障转移", value: "failover" },
+      { label: "加权", value: "weighted" },
+    ]);
+  });
+
   describe("Left panel interactions", () => {
     beforeEach(() => {
       setActivePinia(createPinia());
