@@ -44,12 +44,13 @@ describe("SlimeRankBoard", () => {
       },
     });
 
-    expect(wrapper.findAll(".truncate").at(1)?.text()).toBe("GLM");
+    expect(wrapper.get('[data-testid="rank-item-0"]').text()).toContain("GLM");
 
-    await wrapper.get("button:nth-of-type(2)").trigger("click");
+    await wrapper.get('[data-testid="rank-metric-cost"]').trigger("click");
 
-    expect(wrapper.findAll(".truncate").at(1)?.text()).toBe("Claude");
-    expect(wrapper.text()).toContain("$0.300");
+    const firstRankedRow = wrapper.get('[data-testid="rank-item-0"]');
+    expect(firstRankedRow.text()).toContain("Claude");
+    expect(firstRankedRow.text()).toContain("$0.300");
   });
 
   it("renders empty state", () => {
@@ -61,5 +62,30 @@ describe("SlimeRankBoard", () => {
     });
 
     expect(wrapper.text()).toContain("暂无数据");
+  });
+
+  it("marks metric controls as wrap-capable", () => {
+    const wrapper = mount(SlimeRankBoard, {
+      props: {
+        title: "模型排名",
+        metrics: [
+          { value: "requests", label: "请求" },
+          { value: "cost", label: "费用" },
+          { value: "tokens", label: "Token" },
+        ],
+        items: [
+          {
+            id: "claude",
+            label: "Claude",
+            values: { requests: "8", cost: "$0.300", tokens: "1.2k" },
+            sortValues: { requests: 8, cost: 0.3, tokens: 1200 },
+          },
+        ],
+      },
+    });
+
+    const metricTabs = wrapper.get('[data-testid="rank-metric-tabs"]');
+
+    expect(metricTabs.attributes("data-layout")).toBe("wrap");
   });
 });

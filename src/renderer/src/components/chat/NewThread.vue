@@ -37,13 +37,13 @@ function agentColor(agent: Agent): string {
 
 <template>
   <div class="flex h-full flex-col bg-[var(--color-app-canvas)]">
-    <div class="flex flex-1 flex-col items-center justify-center px-8 pb-8">
+    <div class="flex min-w-0 flex-1 flex-col items-center justify-center px-4 pb-8 sm:px-8">
       <h2 class="mb-2 text-[28px] font-semibold tracking-normal text-[var(--color-text-primary)]">
         要在 Slime 中构建什么？
       </h2>
       <p class="mb-7 text-sm text-[var(--color-text-secondary)]">选择一个 Agent 开始</p>
 
-      <div class="flex max-w-[760px] flex-wrap justify-center gap-3">
+      <div class="grid w-full max-w-[760px] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
         <SlimeAgentCard
           v-for="agent in agentStore.enabledAgents"
           :key="agent.id"

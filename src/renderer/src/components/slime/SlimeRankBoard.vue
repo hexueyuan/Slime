@@ -52,22 +52,25 @@ function selectMetric(metric: string) {
 
 <template>
   <section
-    class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+    class="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
   >
-    <div class="mb-3 flex items-center justify-between gap-3">
+    <div class="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-3">
       <h3 class="min-w-0 truncate text-sm font-semibold text-[var(--color-text-primary)]">
         {{ title }}
       </h3>
       <div
         v-if="metrics.length"
-        class="flex shrink-0 gap-1 rounded-full bg-[var(--color-control)] p-0.5"
+        data-testid="rank-metric-tabs"
+        data-layout="wrap"
+        class="flex min-w-0 flex-wrap gap-1 rounded-full bg-[var(--color-control)] p-0.5"
       >
         <button
           v-for="metric in metrics"
           :key="metric.value"
           type="button"
+          :data-testid="`rank-metric-${metric.value}`"
           :class="[
-            'h-6 rounded-full px-2 text-[11px] font-medium transition-colors',
+            'min-h-6 rounded-full px-2 py-1 text-[11px] font-medium transition-colors',
             selectedMetric === metric.value
               ? 'bg-[var(--color-control-active)] text-[var(--color-text-primary)]'
               : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
@@ -82,7 +85,8 @@ function selectMetric(metric: string) {
       <div
         v-for="(item, index) in rankedItems"
         :key="item.id"
-        class="flex items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-sm"
+        :data-testid="`rank-item-${index}`"
+        class="flex min-w-0 items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-sm"
       >
         <span
           :class="[
@@ -97,7 +101,7 @@ function selectMetric(metric: string) {
         <span class="min-w-0 flex-1 truncate text-[var(--color-text-secondary)]">{{
           item.label
         }}</span>
-        <span class="shrink-0 text-xs font-medium text-[var(--color-text-primary)]">{{
+        <span class="max-w-[45%] truncate text-xs font-medium text-[var(--color-text-primary)]">{{
           item.value
         }}</span>
       </div>

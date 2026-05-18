@@ -57,12 +57,14 @@ async function onCreate() {
 
 <template>
   <div class="flex h-full flex-col bg-[var(--color-app-canvas)]">
-    <div class="flex flex-1 flex-col items-center justify-center px-8 py-8">
+    <div class="flex min-w-0 flex-1 flex-col items-center justify-center px-4 py-8 sm:px-8">
       <h2 class="mb-2 text-[28px] font-semibold text-[var(--color-text-primary)]">创建群聊</h2>
       <p class="mb-7 text-sm text-[var(--color-text-secondary)]">选择 1 个或更多 Agent</p>
 
       <!-- Agent cards -->
-      <div class="mb-6 flex max-w-[760px] flex-wrap justify-center gap-3">
+      <div
+        class="mb-6 grid w-full max-w-[760px] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3"
+      >
         <SlimeAgentCard
           v-for="agent in agentStore.enabledAgents"
           :key="agent.id"
@@ -98,7 +100,7 @@ async function onCreate() {
       <!-- Workspace paths -->
       <div class="mb-4 w-full max-w-[520px]">
         <p class="mb-2 text-xs text-[var(--color-text-muted)]">工作目录（可选，支持 ~）</p>
-        <div class="flex gap-2">
+        <div class="flex min-w-0 flex-col gap-2 sm:flex-row">
           <SlimeInput
             v-model="newPathInput"
             placeholder="例如 ~/workspace/project"
@@ -113,7 +115,7 @@ async function onCreate() {
             :key="p"
             class="flex items-center justify-between rounded-[var(--radius-sm)] bg-[var(--color-control)] px-2 py-1 text-xs"
           >
-            <span class="text-[var(--color-text-primary)]">{{ p }}</span>
+            <span class="min-w-0 truncate text-[var(--color-text-primary)]">{{ p }}</span>
             <button
               class="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
               @click="removePath(p)"

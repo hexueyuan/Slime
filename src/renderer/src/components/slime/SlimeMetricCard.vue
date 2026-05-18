@@ -28,7 +28,7 @@ const color = computed(() => colorMap[props.tone]);
 
 <template>
   <article
-    class="min-w-0 rounded-[var(--radius-lg)] border border-[color-mix(in_srgb,var(--metric-color)_24%,var(--color-border-subtle))] bg-[color-mix(in_srgb,var(--metric-color)_10%,var(--color-control))] p-3"
+    class="w-full min-w-0 rounded-[var(--radius-lg)] border border-[color-mix(in_srgb,var(--metric-color)_24%,var(--color-border-subtle))] bg-[color-mix(in_srgb,var(--metric-color)_10%,var(--color-control))] p-3"
     :style="{ '--metric-color': color }"
   >
     <div class="truncate text-xs font-medium text-[var(--color-text-muted)]">{{ label }}</div>

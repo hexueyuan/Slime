@@ -65,24 +65,26 @@ const activeArea = computed(() => (activeLine.value ? `0,92 ${activeLine.value} 
 
 <template>
   <section
-    class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+    class="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3 sm:p-4"
   >
-    <div class="mb-4 flex items-start justify-between gap-3">
-      <div>
-        <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">{{ title }}</h3>
-        <p v-if="subtitle" class="mt-1 text-xs text-[var(--color-text-muted)]">{{ subtitle }}</p>
+    <div class="mb-4 flex min-w-0 flex-wrap items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h3 class="truncate text-sm font-semibold text-[var(--color-text-primary)]">{{ title }}</h3>
+        <p v-if="subtitle" class="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+          {{ subtitle }}
+        </p>
       </div>
       <slot name="actions" />
     </div>
 
-    <div class="mb-3 flex flex-wrap gap-2">
+    <div class="mb-3 flex min-w-0 flex-wrap gap-2">
       <button
         v-for="metric in normalizedMetrics"
         :key="metric.id"
         type="button"
         :style="{ '--metric-color': metric.colorValue }"
         :class="[
-          'inline-flex h-7 items-center gap-2 rounded-full border px-2.5 text-xs font-medium transition-colors',
+          'inline-flex min-h-7 min-w-0 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
           activeMetric?.id === metric.id
             ? 'border-[color-mix(in_srgb,var(--metric-color)_42%,transparent)] bg-[color-mix(in_srgb,var(--metric-color)_14%,transparent)] text-[var(--color-text-primary)]'
             : 'border-[var(--color-border-subtle)] bg-[var(--color-control)] text-[var(--color-text-muted)] hover:bg-[var(--color-control-hover)]',
@@ -90,15 +92,15 @@ const activeArea = computed(() => (activeLine.value ? `0,92 ${activeLine.value} 
         @click="activeId = metric.id"
       >
         <span class="h-1.5 w-1.5 rounded-full" style="background: var(--metric-color)" />
-        <span>{{ metric.label }}</span>
-        <span class="text-[var(--color-text-secondary)]">
+        <span class="max-w-24 truncate">{{ metric.label }}</span>
+        <span class="max-w-24 truncate text-[var(--color-text-secondary)]">
           {{ metric.value }}
         </span>
       </button>
     </div>
 
     <div
-      class="h-[112px] rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 py-2"
+      class="h-[112px] min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 py-2"
     >
       <svg
         v-if="activeLine"

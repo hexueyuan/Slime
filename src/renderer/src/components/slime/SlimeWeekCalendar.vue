@@ -48,14 +48,14 @@ function moveWeek(delta: number): void {
 
 <template>
   <section
-    class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+    class="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3 sm:p-4"
   >
-    <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">任务管理</h2>
+    <div class="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
+      <h2 class="min-w-0 text-lg font-semibold text-[var(--color-text-primary)]">任务管理</h2>
       <SlimeBadge variant="accent">Schedule Kit</SlimeBadge>
     </div>
 
-    <div class="grid grid-cols-[34px_repeat(7,minmax(0,1fr))_34px] items-center gap-2">
+    <div class="grid min-w-0 grid-cols-[34px_minmax(0,1fr)_34px] items-center gap-2">
       <button
         type="button"
         title="上一周"
@@ -65,37 +65,45 @@ function moveWeek(delta: number): void {
         <Icon icon="lucide:chevron-left" class="h-4 w-4" />
       </button>
 
-      <button
-        v-for="day in weekDays"
-        :key="day.date"
-        type="button"
-        :class="[
-          'h-[72px] min-w-0 rounded-[10px] border px-2 py-1.5 text-left transition-colors',
-          day.date === selectedDate
-            ? 'border-[color-mix(in_srgb,var(--color-accent-brand)_38%,transparent)] bg-[var(--color-accent-brand-soft)]'
-            : 'border-[var(--color-border-subtle)] bg-white/[0.026] hover:bg-[var(--color-control-hover)]',
-        ]"
-        @click="$emit('update:selectedDate', day.date)"
+      <div
+        data-testid="week-day-grid"
+        data-layout="responsive-compact-grid"
+        data-overflow-x="none"
+        class="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(72px,1fr))] gap-2"
       >
-        <span class="block text-[10px] font-medium text-[var(--color-text-muted)]">{{
-          day.label
-        }}</span>
-        <span class="mt-1.5 block text-[17px] font-semibold text-[var(--color-text-primary)]">{{
-          day.dayNum
-        }}</span>
-        <span v-if="day.dots > 0" class="mt-1.5 flex gap-[3px]">
-          <span
-            v-for="dot in day.dots"
-            :key="dot"
-            :class="[
-              'h-[5px] w-[5px] rounded-full',
-              day.date === selectedDate && dot === 1
-                ? 'bg-[var(--color-accent-brand)]'
-                : 'bg-white/[0.22]',
-            ]"
-          />
-        </span>
-      </button>
+        <button
+          v-for="day in weekDays"
+          :key="day.date"
+          type="button"
+          :data-testid="`week-day-${day.date}`"
+          :class="[
+            'min-h-[58px] min-w-0 rounded-[10px] border px-2 py-1.5 text-left transition-colors sm:min-h-[72px]',
+            day.date === selectedDate
+              ? 'border-[color-mix(in_srgb,var(--color-accent-brand)_38%,transparent)] bg-[var(--color-accent-brand-soft)]'
+              : 'border-[var(--color-border-subtle)] bg-white/[0.026] hover:bg-[var(--color-control-hover)]',
+          ]"
+          @click="$emit('update:selectedDate', day.date)"
+        >
+          <span class="block text-[10px] font-medium text-[var(--color-text-muted)]">{{
+            day.label
+          }}</span>
+          <span class="mt-1.5 block text-[17px] font-semibold text-[var(--color-text-primary)]">{{
+            day.dayNum
+          }}</span>
+          <span v-if="day.dots > 0" class="mt-1.5 flex gap-[3px]">
+            <span
+              v-for="dot in day.dots"
+              :key="dot"
+              :class="[
+                'h-[5px] w-[5px] rounded-full',
+                day.date === selectedDate && dot === 1
+                  ? 'bg-[var(--color-accent-brand)]'
+                  : 'bg-white/[0.22]',
+              ]"
+            />
+          </span>
+        </button>
+      </div>
 
       <button
         type="button"

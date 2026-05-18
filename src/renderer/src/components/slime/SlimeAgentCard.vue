@@ -28,7 +28,7 @@ defineEmits<{
     :disabled="disabled"
     :style="{ '--agent-tone': toneColor }"
     :class="[
-      'group relative min-h-[88px] w-[260px] overflow-hidden rounded-[11px] border px-[11px] py-[11px] text-left transition-colors',
+      'group relative min-h-[88px] w-full min-w-0 overflow-hidden rounded-[11px] border px-[11px] py-[11px] text-left transition-colors',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-brand-soft)]',
       'disabled:cursor-not-allowed disabled:opacity-45',
       selected
@@ -51,7 +51,7 @@ defineEmits<{
         </slot>
       </div>
 
-      <div class="min-w-0">
+      <div class="min-w-0 flex-1">
         <div class="truncate text-[13px] font-semibold text-[var(--color-text-primary)]">
           {{ name }}
         </div>
