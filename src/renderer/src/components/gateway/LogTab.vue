@@ -117,12 +117,12 @@ function copyCurrentTab() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col overflow-y-auto p-4">
+  <div class="flex h-full min-h-0 flex-col overflow-hidden p-4">
     <!-- Header -->
     <div class="mb-4 flex shrink-0 items-center justify-between">
       <h3 class="text-sm font-medium">日志</h3>
       <button
-        class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        class="rounded-[var(--radius-md)] p-1.5 text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]"
         title="刷新"
         @click="refresh"
       >
@@ -132,70 +132,87 @@ function copyCurrentTab() {
 
     <!-- Table header -->
     <div class="mb-1 shrink-0">
-      <div class="flex items-center gap-3 px-3 py-1 text-xs text-muted-foreground/60">
-        <span class="w-28 shrink-0">时间</span>
-        <span class="w-40 shrink-0">模型</span>
-        <span class="w-24 shrink-0">供应商</span>
-        <span class="w-20 shrink-0">密钥</span>
-        <span class="w-24 shrink-0">输入/输出 Token</span>
-        <span class="w-16 shrink-0">首 Token</span>
-        <span class="w-16 shrink-0">费用</span>
-        <span class="w-16 shrink-0">耗时</span>
-        <span class="shrink-0">状态</span>
+      <div
+        class="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.75fr)_minmax(0,0.95fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.65fr)] items-center gap-3 px-3 py-1 text-xs text-[color-mix(in_srgb,var(--color-text-tertiary)_72%,transparent)]"
+      >
+        <span class="min-w-0 truncate">时间</span>
+        <span class="min-w-0 truncate">模型</span>
+        <span class="min-w-0 truncate">供应商</span>
+        <span class="min-w-0 truncate">密钥</span>
+        <span class="min-w-0 truncate">输入/输出 Token</span>
+        <span class="min-w-0 truncate">首 Token</span>
+        <span class="min-w-0 truncate">费用</span>
+        <span class="min-w-0 truncate">耗时</span>
+        <span class="min-w-0 truncate">状态</span>
       </div>
     </div>
 
     <!-- Log table -->
-    <div v-if="logs.length" class="space-y-1">
-      <div
-        v-for="log in logs"
-        :key="log.id"
-        class="cursor-pointer rounded-lg bg-muted/30 transition-colors hover:bg-muted/50"
-        @click="openDetail(log)"
-      >
-        <div class="flex items-center gap-3 p-3 text-xs">
-          <span class="w-28 shrink-0 text-muted-foreground">{{ formatTime(log.createdAt) }}</span>
-          <span class="flex w-40 shrink-0 items-center gap-1.5 overflow-hidden font-medium">
-            <ModelIcon :model-name="log.modelName" :size="16" class="shrink-0" />
-            <span class="truncate" :title="log.modelName">{{ log.modelName }}</span>
-          </span>
-          <span class="w-24 shrink-0 truncate text-muted-foreground">{{
-            log.channelName ?? "-"
-          }}</span>
-          <span class="w-20 shrink-0 truncate text-muted-foreground">{{
-            log.apiKeyName ?? "-"
-          }}</span>
-          <span class="w-24 shrink-0 text-muted-foreground">
-            {{ log.inputTokens }} / {{ log.outputTokens }}
-          </span>
-          <span class="w-16 shrink-0 text-muted-foreground">{{
-            log.ttftMs != null ? formatDuration(log.ttftMs) : "-"
-          }}</span>
-          <span class="w-16 shrink-0 text-muted-foreground">{{ formatCost(log.cost) }}</span>
-          <span class="w-16 shrink-0 text-muted-foreground">{{
-            formatDuration(log.durationMs)
-          }}</span>
-          <span
-            :class="[
-              'shrink-0 rounded px-1.5 py-0.5 text-xs',
-              log.status === 'success'
-                ? 'bg-green-500/20 text-green-400'
-                : 'bg-red-500/20 text-red-400',
-            ]"
+    <div v-if="logs.length" class="min-h-0 flex-1 overflow-y-auto">
+      <div class="space-y-1">
+        <div
+          v-for="log in logs"
+          :key="log.id"
+          data-testid="log-row"
+          data-layout="responsive-grid"
+          class="cursor-pointer rounded-[var(--radius-md)] bg-[var(--color-control)] transition-colors hover:bg-[var(--color-control-hover)]"
+          @click="openDetail(log)"
+        >
+          <div
+            class="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.75fr)_minmax(0,0.95fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.65fr)] items-center gap-3 p-3 text-xs"
           >
-            {{ log.status }}
-          </span>
+            <span class="min-w-0 truncate text-[var(--color-text-tertiary)]">
+              {{ formatTime(log.createdAt) }}
+            </span>
+            <span class="flex min-w-0 items-center gap-1.5 font-medium">
+              <ModelIcon :model-name="log.modelName" :size="16" class="shrink-0" />
+              <span class="min-w-0 truncate" :title="log.modelName">{{ log.modelName }}</span>
+            </span>
+            <span class="min-w-0 truncate text-[var(--color-text-tertiary)]">
+              {{ log.channelName ?? "-" }}
+            </span>
+            <span class="min-w-0 truncate text-[var(--color-text-tertiary)]">
+              {{ log.apiKeyName ?? "-" }}
+            </span>
+            <span class="min-w-0 truncate text-[var(--color-text-tertiary)]">
+              {{ log.inputTokens }} / {{ log.outputTokens }}
+            </span>
+            <span class="min-w-0 truncate text-[var(--color-text-tertiary)]">
+              {{ log.ttftMs != null ? formatDuration(log.ttftMs) : "-" }}
+            </span>
+            <span class="min-w-0 truncate text-[var(--color-text-tertiary)]">
+              {{ formatCost(log.cost) }}
+            </span>
+            <span class="min-w-0 truncate text-[var(--color-text-tertiary)]">
+              {{ formatDuration(log.durationMs) }}
+            </span>
+            <span
+              :class="[
+                'min-w-0 truncate rounded-[var(--radius-sm)] px-1.5 py-0.5 text-center text-xs',
+                log.status === 'success'
+                  ? 'bg-[color-mix(in_srgb,var(--color-success)_20%,transparent)] text-[var(--color-success)]'
+                  : 'bg-[color-mix(in_srgb,var(--color-danger)_20%,transparent)] text-[var(--color-danger)]',
+              ]"
+            >
+              {{ log.status }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Empty -->
-    <div v-else-if="!loading" class="py-12 text-center text-sm text-muted-foreground">暂无日志</div>
+    <div
+      v-else-if="!loading"
+      class="flex min-h-0 flex-1 items-center justify-center text-sm text-[var(--color-text-tertiary)]"
+    >
+      暂无日志
+    </div>
 
     <!-- Load more -->
-    <div v-if="hasMore && logs.length" class="mt-3 flex justify-center">
+    <div v-if="hasMore && logs.length" class="mt-3 flex shrink-0 justify-center">
       <button
-        class="rounded px-4 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        class="rounded-[var(--radius-md)] px-4 py-1.5 text-xs text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="loading"
         @click="loadMore"
       >
