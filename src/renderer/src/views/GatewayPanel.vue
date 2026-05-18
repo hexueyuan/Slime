@@ -232,7 +232,7 @@ const modelRankItems = computed(() =>
 
     <!-- Stats cards -->
     <div class="shrink-0 px-5 py-4">
-      <div class="grid grid-cols-6 gap-2">
+      <div class="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(128px,1fr))] gap-2">
         <SlimeMetricCard
           v-for="card in metricCards"
           :key="card.label"
@@ -244,7 +244,9 @@ const modelRankItems = computed(() =>
       </div>
 
       <!-- Trend chart + Rank board 同行 -->
-      <div class="mb-2 mt-3 grid grid-cols-[minmax(0,1fr)_360px] gap-3">
+      <div
+        class="mb-2 mt-3 grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]"
+      >
         <SlimeRealtimeChart
           v-if="metricsLoaded"
           title="趋势"
@@ -252,7 +254,7 @@ const modelRankItems = computed(() =>
           :metrics="trendMetrics"
         />
         <div v-else class="h-[193px] rounded-[var(--radius-lg)] bg-[var(--color-control-hover)]" />
-        <div class="grid gap-3">
+        <div class="grid min-w-0 gap-3">
           <SlimeRankBoard title="供应商排名" :items="channelRankItems" :metrics="rankMetrics" />
           <SlimeRankBoard title="模型排名" :items="modelRankItems" :metrics="rankMetrics" />
         </div>

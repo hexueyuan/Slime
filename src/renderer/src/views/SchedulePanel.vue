@@ -1,7 +1,9 @@
 <template>
-  <div class="flex h-full bg-[var(--color-app-canvas)]">
+  <div
+    class="grid h-full min-w-0 grid-cols-1 overflow-y-auto bg-[var(--color-app-canvas)] xl:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] xl:overflow-hidden"
+  >
     <!-- 左列 -->
-    <div class="flex min-w-[400px] flex-1 flex-col">
+    <div class="flex min-h-[640px] min-w-0 flex-col xl:min-h-0">
       <div class="shrink-0 border-b border-[var(--color-border-subtle)] px-5 py-4">
         <WeekCalendar v-model:selected-date="store.selectedDate" />
       </div>
@@ -18,9 +20,13 @@
       </div>
     </div>
     <!-- 分割线 -->
-    <div class="w-px bg-[var(--color-border-subtle)]" />
+    <div
+      class="hidden w-px bg-[var(--color-border-subtle)] xl:col-start-2 xl:row-start-1 xl:block xl:justify-self-start xl:self-stretch"
+    />
     <!-- 右列 -->
-    <div class="w-[300px] shrink-0 overflow-y-auto px-4 py-4">
+    <div
+      class="min-w-0 border-t border-[var(--color-border-subtle)] px-4 py-4 xl:col-start-2 xl:row-start-1 xl:min-h-0 xl:overflow-y-auto xl:border-t-0"
+    >
       <TimelinePanel
         :entries="store.timeline"
         :dates="store.timelineDates"
