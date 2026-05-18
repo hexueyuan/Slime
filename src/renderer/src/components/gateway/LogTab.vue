@@ -130,10 +130,11 @@ function copyCurrentTab() {
       </button>
     </div>
 
-    <!-- Table header -->
-    <div class="mb-1 shrink-0">
+    <!-- Log table -->
+    <div v-if="logs.length" data-testid="log-scrollport" class="min-h-0 flex-1 overflow-y-auto">
       <div
-        class="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.75fr)_minmax(0,0.95fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.65fr)] items-center gap-3 px-3 py-1 text-xs text-[color-mix(in_srgb,var(--color-text-tertiary)_72%,transparent)]"
+        data-testid="log-header"
+        class="sticky top-0 z-10 mb-1 grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.75fr)_minmax(0,0.95fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.65fr)] items-center gap-3 bg-[var(--color-surface)] px-3 py-1 text-xs text-[color-mix(in_srgb,var(--color-text-tertiary)_72%,transparent)]"
       >
         <span class="min-w-0 truncate">时间</span>
         <span class="min-w-0 truncate">模型</span>
@@ -145,10 +146,7 @@ function copyCurrentTab() {
         <span class="min-w-0 truncate">耗时</span>
         <span class="min-w-0 truncate">状态</span>
       </div>
-    </div>
 
-    <!-- Log table -->
-    <div v-if="logs.length" class="min-h-0 flex-1 overflow-y-auto">
       <div class="space-y-1">
         <div
           v-for="log in logs"
@@ -199,6 +197,17 @@ function copyCurrentTab() {
           </div>
         </div>
       </div>
+
+      <!-- Load more -->
+      <div v-if="hasMore" class="mt-3 flex justify-center">
+        <button
+          class="rounded-[var(--radius-md)] px-4 py-1.5 text-xs text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="loading"
+          @click="loadMore"
+        >
+          {{ loading ? "加载中..." : "加载更多" }}
+        </button>
+      </div>
     </div>
 
     <!-- Empty -->
@@ -207,17 +216,6 @@ function copyCurrentTab() {
       class="flex min-h-0 flex-1 items-center justify-center text-sm text-[var(--color-text-tertiary)]"
     >
       暂无日志
-    </div>
-
-    <!-- Load more -->
-    <div v-if="hasMore && logs.length" class="mt-3 flex shrink-0 justify-center">
-      <button
-        class="rounded-[var(--radius-md)] px-4 py-1.5 text-xs text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
-        :disabled="loading"
-        @click="loadMore"
-      >
-        {{ loading ? "加载中..." : "加载更多" }}
-      </button>
     </div>
 
     <!-- Detail Drawer -->

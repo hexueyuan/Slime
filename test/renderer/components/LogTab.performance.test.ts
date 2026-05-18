@@ -1,6 +1,7 @@
 import { nextTick } from "vue";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
+import type { VueWrapper } from "@vue/test-utils";
 
 const mockLogs = [
   {
@@ -26,10 +27,13 @@ const invoke = vi.fn(async (_channel: string, _presenter: string, method: string
   return [];
 });
 
+const cleanupListener = vi.fn();
+const wrappers: VueWrapper[] = [];
+
 (window as any).electron = {
   ipcRenderer: {
     invoke,
-    on: vi.fn(() => vi.fn()),
+    on: vi.fn(() => cleanupListener),
     removeAllListeners: vi.fn(),
   },
 };
@@ -44,19 +48,29 @@ vi.mock("@/components/gateway/JsonViewer.vue", () => ({
 
 import LogTab from "@/components/gateway/LogTab.vue";
 
+function mountLogTab() {
+  const wrapper = mount(LogTab, { attachTo: document.body });
+  wrappers.push(wrapper);
+  return wrapper;
+}
+
 describe("LogTab first paint behavior", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
     invoke.mockClear();
+    cleanupListener.mockClear();
   });
 
   afterEach(() => {
+    while (wrappers.length) {
+      wrappers.pop()?.unmount();
+    }
     vi.useRealTimers();
   });
 
   it("首次加载使用较小分页，减少日志页首屏渲染量", async () => {
     vi.useFakeTimers();
-    mount(LogTab, { attachTo: document.body });
+    mountLogTab();
 
     await vi.advanceTimersByTimeAsync(0);
 
@@ -71,14 +85,18 @@ describe("LogTab first paint behavior", () => {
 
   it("renders logs in responsive grid rows without fixed width table columns", async () => {
     vi.useFakeTimers();
-    const wrapper = mount(LogTab, { attachTo: document.body });
+    const wrapper = mountLogTab();
 
     await vi.advanceTimersByTimeAsync(0);
     await nextTick();
     await nextTick();
 
-    const rows = wrapper.findAll('[data-testid="log-row"]');
+    const scrollport = wrapper.find('[data-testid="log-scrollport"]');
+    const header = wrapper.find('[data-testid="log-scrollport"] [data-testid="log-header"]');
+    const rows = wrapper.findAll('[data-testid="log-scrollport"] [data-testid="log-row"]');
 
+    expect(scrollport.exists()).toBe(true);
+    expect(header.exists()).toBe(true);
     expect(rows.length).toBeGreaterThan(0);
     expect(rows[0].attributes("data-layout")).toBe("responsive-grid");
   });
