@@ -39,4 +39,14 @@ describe("GatewayApiKeyCard", () => {
     expect(wrapper.text()).toContain("sk-new-secret");
     expect(wrapper.find('[data-testid="key-delete"]').exists()).toBe(false);
   });
+
+  it("does not render the full raw key for short keys unless revealed", () => {
+    const shortKey = "sk-12345";
+    const wrapper = mount(GatewayApiKeyCard, {
+      props: { apiKey: { ...apiKey, key: shortKey } },
+    });
+
+    expect(wrapper.text()).not.toContain(shortKey);
+    expect(wrapper.text()).toContain("sk-1...");
+  });
 });

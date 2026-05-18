@@ -24,7 +24,7 @@ const emit = defineEmits<{
 const displayKey = computed(() => props.revealedKey || maskKey(props.apiKey.key));
 
 function maskKey(key: string) {
-  if (key.length <= 8) return key;
+  if (key.length <= 8) return `${key.slice(0, 4)}...`;
   return `${key.slice(0, 4)}...${key.slice(-4)}`;
 }
 
