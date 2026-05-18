@@ -134,7 +134,7 @@ function copyCurrentTab() {
     <div v-if="logs.length" data-testid="log-scrollport" class="min-h-0 flex-1 overflow-y-auto">
       <div
         data-testid="log-header"
-        class="sticky top-0 z-10 mb-1 grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.75fr)_minmax(0,0.95fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.65fr)] items-center gap-3 bg-[var(--color-surface)] px-3 py-1 text-xs text-[color-mix(in_srgb,var(--color-text-tertiary)_72%,transparent)]"
+        class="sticky top-0 z-10 mb-1 grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.75fr)_minmax(0,0.95fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.65fr)] items-center gap-3 bg-[var(--color-app-canvas)] px-3 py-1 text-xs text-[color-mix(in_srgb,var(--color-text-tertiary)_72%,transparent)]"
       >
         <span class="min-w-0 truncate">时间</span>
         <span class="min-w-0 truncate">模型</span>
