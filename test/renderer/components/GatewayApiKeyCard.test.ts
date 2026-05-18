@@ -47,6 +47,16 @@ describe("GatewayApiKeyCard", () => {
     });
 
     expect(wrapper.text()).not.toContain(shortKey);
-    expect(wrapper.text()).toContain("sk-1...");
+    expect(wrapper.text()).toContain("sk...");
+  });
+
+  it("does not render the full raw key for four-character keys", () => {
+    const shortKey = "abcd";
+    const wrapper = mount(GatewayApiKeyCard, {
+      props: { apiKey: { ...apiKey, key: shortKey } },
+    });
+
+    expect(wrapper.text()).not.toContain(shortKey);
+    expect(wrapper.text()).toContain("a...");
   });
 });
