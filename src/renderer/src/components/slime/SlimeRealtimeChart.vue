@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 type Metric = {
+  id?: string;
   label: string;
   value: string | number;
   color?: "accent" | "success" | "warning" | "danger" | "blue";
@@ -24,10 +25,10 @@ const colorMap = {
   success: "var(--color-success)",
   warning: "var(--color-warning)",
   danger: "var(--color-danger)",
-  blue: "#72a7ff",
+  blue: "color-mix(in srgb, var(--color-success) 42%, var(--color-accent-brand-hover))",
 };
 
-function polyline(points: number[] | undefined): string {
+function polyline(points: number[] | undefined, height = 92): string {
   if (!points?.length) return "";
   const max = Math.max(...points, 1);
   const min = Math.min(...points, 0);
@@ -35,19 +36,31 @@ function polyline(points: number[] | undefined): string {
   return points
     .map((value, index) => {
       const x = points.length === 1 ? 50 : (index / (points.length - 1)) * 100;
-      const y = 34 - ((value - min) / range) * 28;
+      const y = height - 8 - ((value - min) / range) * (height - 18);
       return `${x},${y}`;
     })
     .join(" ");
 }
 
 const normalizedMetrics = computed(() =>
-  props.metrics.map((metric) => ({
+  props.metrics.map((metric, index) => ({
     ...metric,
+    id: metric.id ?? metric.label,
+    index,
     colorValue: colorMap[metric.color ?? "accent"],
-    line: polyline(metric.points),
   })),
 );
+
+const activeId = ref<string | null>(null);
+
+const activeMetric = computed(
+  () =>
+    normalizedMetrics.value.find((metric) => metric.id === activeId.value) ??
+    normalizedMetrics.value[0],
+);
+
+const activeLine = computed(() => polyline(activeMetric.value?.points, 92));
+const activeArea = computed(() => (activeLine.value ? `0,92 ${activeLine.value} 100,92` : ""));
 </script>
 
 <template>
@@ -62,28 +75,59 @@ const normalizedMetrics = computed(() =>
       <slot name="actions" />
     </div>
 
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <article
+    <div class="mb-3 flex flex-wrap gap-2">
+      <button
         v-for="metric in normalizedMetrics"
-        :key="metric.label"
+        :key="metric.id"
+        type="button"
         :style="{ '--metric-color': metric.colorValue }"
-        class="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[color-mix(in_srgb,var(--metric-color)_8%,transparent)] p-3"
+        :class="[
+          'inline-flex h-7 items-center gap-2 rounded-full border px-2.5 text-xs font-medium transition-colors',
+          activeMetric?.id === metric.id
+            ? 'border-[color-mix(in_srgb,var(--metric-color)_42%,transparent)] bg-[color-mix(in_srgb,var(--metric-color)_14%,transparent)] text-[var(--color-text-primary)]'
+            : 'border-[var(--color-border-subtle)] bg-[var(--color-control)] text-[var(--color-text-muted)] hover:bg-[var(--color-control-hover)]',
+        ]"
+        @click="activeId = metric.id"
       >
-        <div class="text-xs text-[var(--color-text-muted)]">{{ metric.label }}</div>
-        <div class="mt-1 text-xl font-semibold text-[var(--color-text-primary)]">
+        <span class="h-1.5 w-1.5 rounded-full" style="background: var(--metric-color)" />
+        <span>{{ metric.label }}</span>
+        <span class="text-[var(--color-text-secondary)]">
           {{ metric.value }}
-        </div>
-        <svg v-if="metric.line" class="mt-3 h-9 w-full overflow-visible" viewBox="0 0 100 36">
-          <polyline
-            :points="metric.line"
-            fill="none"
-            stroke="var(--metric-color)"
-            stroke-width="2.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </article>
+        </span>
+      </button>
+    </div>
+
+    <div
+      class="h-[112px] rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 py-2"
+    >
+      <svg
+        v-if="activeLine"
+        class="h-full w-full overflow-visible"
+        viewBox="0 0 100 92"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient :id="`chartFill-${activeMetric?.id}`" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" :stop-color="activeMetric?.colorValue" stop-opacity="0.2" />
+            <stop offset="100%" :stop-color="activeMetric?.colorValue" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <polygon :points="activeArea" :fill="`url(#chartFill-${activeMetric?.id})`" stroke="none" />
+        <polyline
+          :points="activeLine"
+          fill="none"
+          :stroke="activeMetric?.colorValue"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <div
+        v-else
+        class="flex h-full items-center justify-center text-xs text-[var(--color-text-muted)]"
+      >
+        暂无趋势数据
+      </div>
     </div>
   </section>
 </template>

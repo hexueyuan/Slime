@@ -5,25 +5,19 @@
 两个独立目标：
 
 1. **本地更新**：在 Settings 对话框新增"更新"tab，支持选择本地 `.zip` 安装包替换当前 `.app`（参考 deepchat `applyLocalZip` 实现）
-2. **端口隔离**：dev 模式默认端口 8920，packaged 模式默认端口 8930，两个 Slime 实例互不影响
+2. **Gateway 默认端口**：统一使用 8930，不再区分 dev 模式和 packaged 模式
 
 ---
 
-## 1. 端口隔离
+## 1. Gateway 默认端口
 
 **改动文件**：`src/main/presenter/gatewayPresenter.ts:61`
 
 ```ts
-// 改前
 private port = 8930
-
-// 改后
-private port = app.isPackaged ? 8930 : 8920
 ```
 
-dev 模式（`pnpm run dev`，`app.isPackaged === false`）默认 8920；packaged 后默认 8930。
-
-userData 路径天然隔离（dev: `~/Library/Application Support/Electron`，packaged: `~/Library/Application Support/Slime`），配置文件不会互相覆盖。用户仍可在 Settings 里手动覆盖端口，行为不变。
+dev 模式（`pnpm run dev`）和 packaged 模式默认都使用 8930。用户仍可在 Settings 里手动覆盖端口，行为不变。
 
 ---
 

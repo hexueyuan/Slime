@@ -13,14 +13,15 @@ import { GATEWAY_EVENTS } from "@shared/events";
 import { createGatewayRefreshScheduler } from "@/composables/useGatewayRefreshScheduler";
 import PageHeader from "@/components/layout/PageHeader.vue";
 import SlimeTabs from "@/components/ui/SlimeTabs.vue";
+import SlimeMetricCard from "@/components/slime/SlimeMetricCard.vue";
+import SlimeRealtimeChart from "@/components/slime/SlimeRealtimeChart.vue";
+import SlimeRankBoard from "@/components/slime/SlimeRankBoard.vue";
 
 const store = useGatewayStore();
 const ChannelTab = defineAsyncComponent(() => import("@/components/gateway/ChannelTab.vue"));
 const GroupTab = defineAsyncComponent(() => import("@/components/gateway/GroupTab.vue"));
 const ApiKeyTab = defineAsyncComponent(() => import("@/components/gateway/ApiKeyTab.vue"));
 const LogTab = defineAsyncComponent(() => import("@/components/gateway/LogTab.vue"));
-const StatsChart = defineAsyncComponent(() => import("@/components/gateway/StatsChart.vue"));
-const RankBoard = defineAsyncComponent(() => import("@/components/gateway/RankBoard.vue"));
 const metricsLoaded = ref(false);
 const statsRefresh = createGatewayRefreshScheduler(() => store.loadStats(), {
   debounceMs: 800,
@@ -102,8 +103,122 @@ const rangeOptions = [
   { value: "30d" as const, label: "30天" },
 ];
 
+const rankMetrics = [
+  { value: "requests", label: "请求" },
+  { value: "cost", label: "费用" },
+  { value: "tokens", label: "Token" },
+];
+
 const trendGranularity = computed(() =>
   store.statsRange === "today" ? ("hourly" as const) : ("daily" as const),
+);
+
+function trendValues(key: "requests" | "cost" | "inputTokens" | "outputTokens"): number[] {
+  return store.statsTrend.map((point) => point[key] ?? 0);
+}
+
+const metricCards = computed(() => [
+  {
+    label: "请求",
+    value: formatNumber(store.stats.requests),
+    tone: "accent" as const,
+  },
+  {
+    label: "费用",
+    value: formatCost(store.stats.cost),
+    tone: "warning" as const,
+  },
+  {
+    label: "Input Token",
+    value: formatNumber(store.stats.inputTokens),
+    meta: `缓存读 ${formatNumber(store.stats.cacheReadTokens)}`,
+    tone: "blue" as const,
+  },
+  {
+    label: "Output Token",
+    value: formatNumber(store.stats.outputTokens),
+    meta: `缓存写 ${formatNumber(store.stats.cacheWriteTokens)}`,
+    tone: "success" as const,
+  },
+  {
+    label: "缓存率",
+    value: formatPercent(store.cacheRate),
+    tone: "blue" as const,
+  },
+  {
+    label: "平均延迟",
+    value: formatLatency(store.stats.avgLatencyMs),
+    meta:
+      store.latencyPercentiles.ttftP50 !== null
+        ? `TTFT P50 ${formatLatency(store.latencyPercentiles.ttftP50 ?? 0)}`
+        : "",
+    tone: "danger" as const,
+  },
+]);
+
+const trendMetrics = computed(() => [
+  {
+    id: "requests",
+    label: "请求",
+    value: formatNumber(store.stats.requests),
+    color: "accent" as const,
+    points: trendValues("requests"),
+  },
+  {
+    id: "cost",
+    label: "费用",
+    value: formatCost(store.stats.cost),
+    color: "warning" as const,
+    points: trendValues("cost"),
+  },
+  {
+    id: "inputTokens",
+    label: "Input",
+    value: formatNumber(store.stats.inputTokens),
+    color: "blue" as const,
+    points: trendValues("inputTokens"),
+  },
+  {
+    id: "outputTokens",
+    label: "Output",
+    value: formatNumber(store.stats.outputTokens),
+    color: "success" as const,
+    points: trendValues("outputTokens"),
+  },
+]);
+
+const channelRankItems = computed(() =>
+  store.channelRanking.map((item) => ({
+    id: item.channelId,
+    label: item.channelName,
+    values: {
+      requests: formatNumber(item.requests),
+      cost: `$${item.cost.toFixed(3)}`,
+      tokens: formatNumber(item.cacheReadTokens + item.cacheWriteTokens),
+    },
+    sortValues: {
+      requests: item.requests,
+      cost: item.cost,
+      tokens: item.cacheReadTokens + item.cacheWriteTokens,
+    },
+  })),
+);
+
+const modelRankItems = computed(() =>
+  store.modelRanking.map((item) => ({
+    id: item.modelName,
+    label: item.modelName,
+    values: {
+      requests: formatNumber(item.requests),
+      cost: `$${item.cost.toFixed(3)}`,
+      tokens: formatNumber(item.inputTokens + item.outputTokens),
+    },
+    sortValues: {
+      requests: item.requests,
+      cost: item.cost,
+      tokens: item.inputTokens + item.outputTokens,
+    },
+  })),
 );
 </script>
 
@@ -118,85 +233,28 @@ const trendGranularity = computed(() =>
     <!-- Stats cards -->
     <div class="shrink-0 px-5 py-4">
       <div class="grid grid-cols-6 gap-2">
-        <div
-          class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
-        >
-          <div class="text-xs text-[var(--color-text-muted)]">请求</div>
-          <div class="text-lg font-semibold text-[var(--color-accent-brand-hover)]">
-            {{ formatNumber(store.stats.requests) }}
-          </div>
-        </div>
-        <div class="rounded-[var(--radius-lg)] border border-amber-400/15 bg-amber-500/10 p-3">
-          <div class="text-xs text-[var(--color-text-muted)]">费用</div>
-          <div class="text-lg font-semibold text-[var(--color-warning)]">
-            {{ formatCost(store.stats.cost) }}
-          </div>
-        </div>
-        <div class="rounded-[var(--radius-lg)] border border-sky-400/15 bg-sky-500/10 p-3">
-          <div class="text-xs text-[var(--color-text-muted)]">Input Token</div>
-          <div class="text-lg font-semibold text-sky-300">
-            {{ formatNumber(store.stats.inputTokens) }}
-          </div>
-          <div class="text-xs text-[var(--color-text-muted)]">
-            缓存读 {{ formatNumber(store.stats.cacheReadTokens) }}
-          </div>
-        </div>
-        <div class="rounded-[var(--radius-lg)] border border-emerald-400/15 bg-emerald-500/10 p-3">
-          <div class="text-xs text-[var(--color-text-muted)]">Output Token</div>
-          <div class="text-lg font-semibold text-[var(--color-success)]">
-            {{ formatNumber(store.stats.outputTokens) }}
-          </div>
-          <div class="text-xs text-[var(--color-text-muted)]">
-            缓存写 {{ formatNumber(store.stats.cacheWriteTokens) }}
-          </div>
-        </div>
-        <div class="rounded-[var(--radius-lg)] border border-cyan-400/15 bg-cyan-500/10 p-3">
-          <div class="text-xs text-[var(--color-text-muted)]">缓存率</div>
-          <div class="text-lg font-semibold text-cyan-300">
-            {{ formatPercent(store.cacheRate) }}
-          </div>
-        </div>
-        <div class="rounded-[var(--radius-lg)] border border-red-400/15 bg-red-500/10 p-3">
-          <div class="text-xs text-[var(--color-text-muted)]">平均延迟</div>
-          <div class="text-lg font-semibold text-[var(--color-danger)]">
-            {{ formatLatency(store.stats.avgLatencyMs) }}
-          </div>
-          <div
-            v-if="store.latencyPercentiles.ttftP50 !== null"
-            class="text-xs text-[var(--color-text-muted)]"
-          >
-            TTFT P50 {{ formatLatency(store.latencyPercentiles.ttftP50 ?? 0) }}
-          </div>
-        </div>
+        <SlimeMetricCard
+          v-for="card in metricCards"
+          :key="card.label"
+          :label="card.label"
+          :value="card.value"
+          :meta="card.meta"
+          :tone="card.tone"
+        />
       </div>
 
       <!-- Trend chart + Rank board 同行 -->
-      <div class="mb-2 mt-3 flex h-[175px] flex-row gap-3">
-        <div
-          class="flex min-w-0 flex-1 flex-col rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
-        >
-          <span class="mb-2 shrink-0 text-xs font-medium text-[var(--color-text-secondary)]"
-            >趋势</span
-          >
-          <div class="min-h-0 flex-1">
-            <StatsChart
-              v-if="metricsLoaded"
-              :points="store.statsTrend"
-              :granularity="trendGranularity"
-              :range="store.statsRange"
-            />
-            <div v-else class="h-full rounded-[var(--radius-md)] bg-[var(--color-control-hover)]" />
-          </div>
-        </div>
-        <div
-          class="w-[40%] shrink-0 overflow-y-auto rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
-        >
-          <RankBoard
-            v-if="metricsLoaded"
-            :channel-ranking="store.channelRanking"
-            :model-ranking="store.modelRanking"
-          />
-          <div v-else class="h-full rounded-[var(--radius-md)] bg-[var(--color-control-hover)]" />
+      <div class="mb-2 mt-3 grid grid-cols-[minmax(0,1fr)_360px] gap-3">
+        <SlimeRealtimeChart
+          v-if="metricsLoaded"
+          title="趋势"
+          :subtitle="trendGranularity === 'hourly' ? '按小时统计' : '按天统计'"
+          :metrics="trendMetrics"
+        />
+        <div v-else class="h-[193px] rounded-[var(--radius-lg)] bg-[var(--color-control-hover)]" />
+        <div class="grid gap-3">
+          <SlimeRankBoard title="供应商排名" :items="channelRankItems" :metrics="rankMetrics" />
+          <SlimeRankBoard title="模型排名" :items="modelRankItems" :metrics="rankMetrics" />
         </div>
       </div>
     </div>

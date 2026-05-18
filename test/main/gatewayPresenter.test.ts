@@ -17,7 +17,7 @@ afterEach(async () => {
 describe("GatewayPresenter", () => {
   it("构造成功", () => {
     expect(gw).toBeDefined();
-    expect(gw.getPort()).toBe(8920); // dev mode (app.isPackaged=false)
+    expect(gw.getPort()).toBe(8930);
   });
 
   it("内部 Key 自动生成", () => {

@@ -55,40 +55,37 @@ const primaryItems: Array<{
 </script>
 
 <template>
-  <aside
-    data-testid="app-sidebar"
-    class="relative flex h-full min-h-0 flex-col overflow-hidden px-3 py-5"
-  >
+  <aside data-testid="app-sidebar" class="relative flex h-full min-h-0 flex-col overflow-hidden">
     <div class="relative flex min-h-0 flex-1 flex-col">
-      <div class="mb-7 flex h-6 items-center gap-3 pl-1" style="-webkit-app-region: drag">
-        <div class="mr-2 h-3 w-[82px] shrink-0" aria-hidden="true" />
+      <div class="mb-5 flex h-[52px] items-start px-4 pt-[4px]" style="-webkit-app-region: drag">
+        <div class="h-6 w-[86px] shrink-0" aria-hidden="true" />
         <button
           type="button"
-          class="grid h-6 w-6 place-items-center rounded-md text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-secondary)]"
+          class="grid h-[26px] w-[26px] place-items-center rounded-md text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-secondary)]"
           title="收拢侧边栏"
           style="-webkit-app-region: no-drag"
         >
-          <Icon icon="lucide:panel-left" class="h-4 w-4" />
+          <Icon icon="lucide:panel-left" class="h-[17px] w-[17px]" />
         </button>
         <button
           type="button"
-          class="grid h-6 w-6 place-items-center rounded-md text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-secondary)]"
+          class="ml-[2px] grid h-[26px] w-[26px] place-items-center rounded-md text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-secondary)]"
           title="返回"
           style="-webkit-app-region: no-drag"
         >
-          <Icon icon="lucide:chevron-left" class="h-4 w-4" />
+          <Icon icon="lucide:chevron-left" class="h-[17px] w-[17px]" />
         </button>
         <button
           type="button"
-          class="grid h-6 w-6 place-items-center rounded-md text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-secondary)]"
+          class="ml-[2px] grid h-[26px] w-[26px] place-items-center rounded-md text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-secondary)]"
           title="前进"
           style="-webkit-app-region: no-drag"
         >
-          <Icon icon="lucide:chevron-right" class="h-4 w-4" />
+          <Icon icon="lucide:chevron-right" class="h-[17px] w-[17px]" />
         </button>
       </div>
 
-      <nav class="space-y-1">
+      <nav class="space-y-1 px-3">
         <button
           v-for="item in primaryItems"
           :key="item.view"
@@ -107,12 +104,12 @@ const primaryItems: Array<{
         </button>
       </nav>
 
-      <div class="mt-7 px-2 text-xs font-semibold text-[var(--color-text-muted)]">项目</div>
-      <div class="mt-3 flex items-center gap-2 px-2 text-sm text-[var(--color-text-secondary)]">
+      <div class="mt-7 px-5 text-xs font-semibold text-[var(--color-text-muted)]">项目</div>
+      <div class="mt-3 flex items-center gap-2 px-5 text-sm text-[var(--color-text-secondary)]">
         <Icon icon="lucide:folder" class="h-4 w-4 text-[var(--color-text-muted)]" />
         <span>Slime</span>
       </div>
-      <div class="mt-2 space-y-1">
+      <div class="mt-2 space-y-1 px-3">
         <button
           type="button"
           class="flex min-h-[31px] w-full items-center gap-2 rounded-md py-1 pl-8 pr-2 text-left text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-control-hover)]"
@@ -141,7 +138,7 @@ const primaryItems: Array<{
 
       <button
         type="button"
-        class="mb-2 flex min-h-[34px] w-full items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]"
+        class="mx-3 mb-2 flex min-h-[34px] items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]"
         title="测试连接"
       >
         <span>测试</span>
@@ -152,7 +149,7 @@ const primaryItems: Array<{
       <button
         data-testid="sidebar-settings"
         type="button"
-        class="flex min-h-[29px] w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]"
+        class="mx-3 flex min-h-[29px] items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]"
         title="设置"
         @click="showSettings = true"
       >

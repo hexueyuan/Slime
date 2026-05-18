@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from "vue";
-import GroupSessionList from "../components/groupchat/GroupSessionList.vue";
 import NewGroupThread from "../components/groupchat/NewGroupThread.vue";
 import GroupChatView from "../components/groupchat/GroupChatView.vue";
-import SplitWorkspace from "@/components/layout/SplitWorkspace.vue";
 import { useGroupChatSessionStore } from "@/stores/groupChatSession";
 import { useGroupChatStore } from "@/stores/groupChat";
 import { useAgentStore } from "@/stores/agent";
@@ -38,6 +36,12 @@ onMounted(async () => {
   if (urlParams.get("detached") === "1" && detachedSessionId) {
     sessionStore.setActiveSession(detachedSessionId);
     await chatStore.fetchMessages(detachedSessionId);
+  } else if (!sessionStore.activeSessionId) {
+    const session = sessionStore.sessions.find((item) => !sessionStore.isDetached(item.id));
+    if (session) {
+      sessionStore.setActiveSession(session.id);
+      await chatStore.fetchMessages(session.id);
+    }
   }
 });
 
@@ -48,14 +52,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <SplitWorkspace>
-    <template #sidebar>
-      <GroupSessionList />
-    </template>
-
-    <div class="h-full min-w-0 flex-1 overflow-hidden">
-      <NewGroupThread v-if="!sessionStore.activeSessionId" />
-      <GroupChatView v-else />
-    </div>
-  </SplitWorkspace>
+  <div class="h-full min-w-0 overflow-hidden bg-[var(--color-app-canvas)]">
+    <NewGroupThread v-if="!sessionStore.activeSessionId" />
+    <GroupChatView v-else />
+  </div>
 </template>

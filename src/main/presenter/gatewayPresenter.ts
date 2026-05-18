@@ -53,14 +53,13 @@ import type { CapabilitySelector } from "@/gateway/selector";
 import { eventBus } from "@/eventbus";
 import { GATEWAY_EVENTS } from "@shared/events";
 import { logger } from "@/utils";
-import { app } from "electron";
 
 function randomHex(n: number): string {
   return randomBytes(n).toString("hex");
 }
 
 export class GatewayPresenter implements IGatewayPresenter {
-  private port = app.isPackaged ? 8930 : 8920;
+  private port = 8930;
   private internalKeyValue = "";
   private router: Router;
   private relay: Relay;

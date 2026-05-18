@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 为 Slime 添加本地 zip 安装包更新功能（Settings > 更新 tab），并通过 `app.isPackaged` 自动区分 dev/packaged 默认网关端口（8920/8930）。
+**Goal:** 为 Slime 添加本地 zip 安装包更新功能（Settings > 更新 tab），并统一 Gateway 默认端口为 8930。
 
-**Architecture:** `AppPresenter` 新增 `selectLocalZip` / `applyLocalZip` 两个方法（仅 packaged 模式生效，通过现有 `presenter:call` IPC 暴露）；`GatewayPresenter` 端口默认值根据 `app.isPackaged` 区分；Settings 对话框新增"更新"tab，承载 `UpdateSettings.vue` 组件。
+**Architecture:** `AppPresenter` 新增 `selectLocalZip` / `applyLocalZip` 两个方法（仅 packaged 模式生效，通过现有 `presenter:call` IPC 暴露）；`GatewayPresenter` 默认使用 8930；Settings 对话框新增"更新"tab，承载 `UpdateSettings.vue` 组件。
 
 **Tech Stack:** TypeScript, Electron (app/dialog/child_process/fs), Vue 3 Composition API, Vitest + Vue Test Utils
 
@@ -24,21 +24,13 @@
 
 ---
 
-### Task 1: 端口隔离
+### Task 1: Gateway 默认端口
 
 **Files:**
 
 - Modify: `src/main/presenter/gatewayPresenter.ts`
 
-- [ ] **Step 1: 确认 `app` import**
-
-读 `src/main/presenter/gatewayPresenter.ts` 前 55 行。`app` 不在 import 列表中，在文件顶部 import 块末尾添加：
-
-```typescript
-import { app } from "electron";
-```
-
-- [ ] **Step 2: 修改默认端口**
+- [ ] **Step 1: 修改默认端口**
 
 找到第 61 行：
 
@@ -46,13 +38,9 @@ import { app } from "electron";
   private port = 8930;
 ```
 
-改为：
+确保 dev 模式和 packaged 模式默认都使用 8930。
 
-```typescript
-  private port = app.isPackaged ? 8930 : 8920;
-```
-
-- [ ] **Step 3: typecheck 验证**
+- [ ] **Step 2: typecheck 验证**
 
 ```bash
 pnpm run typecheck
@@ -60,11 +48,11 @@ pnpm run typecheck
 
 Expected: 无报错
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 git add src/main/presenter/gatewayPresenter.ts
-git commit -m "fix(gateway): default port 8920 dev / 8930 packaged"
+git commit -m "fix(gateway): default port 8930"
 ```
 
 ---
