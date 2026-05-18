@@ -21,13 +21,24 @@ const emit = defineEmits<{
   delete: [apiKey: GatewayApiKey];
 }>();
 
-const displayKey = computed(() => props.revealedKey || maskKey(props.apiKey.key));
+const displayKey = computed(() =>
+  props.revealedKey != null ? props.revealedKey : maskKey(props.apiKey.key),
+);
 
 function maskKey(key: string) {
-  if (key.length === 0) return "...";
-  if (key.length <= 4) return "...";
-  if (key.length <= 8) return `${key.slice(0, 2)}...`;
-  return `${key.slice(0, 4)}...${key.slice(-4)}`;
+  let candidate: string;
+
+  if (key.length === 0) {
+    candidate = "...";
+  } else if (key.length <= 4) {
+    candidate = "...";
+  } else if (key.length <= 8) {
+    candidate = `${key.slice(0, 2)}...`;
+  } else {
+    candidate = `${key.slice(0, 4)}...${key.slice(-4)}`;
+  }
+
+  return candidate === key ? "********" : candidate;
 }
 
 function emitCopy() {

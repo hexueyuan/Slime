@@ -40,6 +40,14 @@ describe("GatewayApiKeyCard", () => {
     expect(wrapper.find('[data-testid="key-delete"]').exists()).toBe(false);
   });
 
+  it("uses explicit revealedKey values without falling back to the masked key", () => {
+    const wrapper = mount(GatewayApiKeyCard, {
+      props: { apiKey, revealedKey: "" },
+    });
+
+    expect(wrapper.text()).not.toContain("sk-1...cdef");
+  });
+
   it("does not render the full raw key for short keys unless revealed", () => {
     const shortKey = "sk-12345";
     const wrapper = mount(GatewayApiKeyCard, {
@@ -69,4 +77,16 @@ describe("GatewayApiKeyCard", () => {
     expect(wrapper.text()).not.toContain(shortKey);
     expect(wrapper.text()).toContain("...");
   });
+
+  it.each(["...", "ab...", "abcd...wxyz"])(
+    "falls back when raw key already matches the mask shape: %s",
+    (rawKey) => {
+      const wrapper = mount(GatewayApiKeyCard, {
+        props: { apiKey: { ...apiKey, key: rawKey } },
+      });
+
+      expect(wrapper.text()).not.toContain(rawKey);
+      expect(wrapper.text()).toContain("********");
+    },
+  );
 });
