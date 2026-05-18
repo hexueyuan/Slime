@@ -1,190 +1,65 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { usePresenter } from "@/composables/usePresenter";
+import { computed, ref } from "vue";
 import { useGatewayStore } from "@/stores/gateway";
-import type { GatewayApiKey } from "@shared/types/gateway";
-import { Icon } from "@iconify/vue";
+import ApiKeyManagerDialog from "./ApiKeyManagerDialog.vue";
 
-const gw = usePresenter("gatewayPresenter");
 const store = useGatewayStore();
 
-const showEditor = ref(false);
-const justCreatedKey = ref<string | null>(null);
-const copied = ref(false);
-
-const form = ref({ name: "" });
-
-function openCreate() {
-  justCreatedKey.value = null;
-  form.value = { name: "" };
-  showEditor.value = true;
-}
-
-async function save() {
-  const ak = await gw.createApiKey({ name: form.value.name });
-
-  justCreatedKey.value = ak.key;
-  await store.loadApiKeys();
-}
-
-async function toggleEnabled(ak: GatewayApiKey) {
-  await gw.updateApiKey(ak.id, { enabled: !ak.enabled });
-  await store.loadApiKeys();
-}
-
-async function deleteKey(id: number) {
-  await gw.deleteApiKey(id);
-  await store.loadApiKeys();
-}
-
-async function copyKey(key: string) {
-  await navigator.clipboard.writeText(key);
-  copied.value = true;
-  setTimeout(() => (copied.value = false), 1500);
-}
-
-function maskKey(key: string): string {
-  return key.length > 8 ? `${key.slice(0, 4)}...${key.slice(-4)}` : key;
-}
+const managerOpen = ref(false);
+const enabledCount = computed(() => store.apiKeys.filter((apiKey) => apiKey.enabled).length);
+const internalCount = computed(() => store.apiKeys.filter((apiKey) => apiKey.isInternal).length);
 </script>
 
 <template>
-  <div class="p-4">
-    <!-- Header -->
-    <div class="mb-4 flex items-center justify-between">
-      <h3 class="text-sm font-medium text-foreground">密钥</h3>
-      <button
-        class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
-        @click="openCreate"
+  <div class="flex h-full min-h-0 flex-col overflow-hidden p-4">
+    <div class="grid shrink-0 gap-3 md:grid-cols-3">
+      <section
+        class="rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] p-3"
       >
-        + 新增密钥
-      </button>
+        <p class="text-xs text-[var(--color-text-muted)]">密钥</p>
+        <p class="mt-2 text-2xl font-medium text-[var(--color-text-primary)]">
+          {{ store.apiKeys.length }}
+        </p>
+      </section>
+
+      <section
+        class="rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] p-3"
+      >
+        <p class="text-xs text-[var(--color-text-muted)]">启用</p>
+        <p class="mt-2 text-2xl font-medium text-[var(--color-text-primary)]">
+          {{ enabledCount }}
+        </p>
+      </section>
+
+      <section
+        class="rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] p-3"
+      >
+        <p class="text-xs text-[var(--color-text-muted)]">内置</p>
+        <p class="mt-2 text-2xl font-medium text-[var(--color-text-primary)]">
+          {{ internalCount }}
+        </p>
+      </section>
     </div>
 
-    <!-- Key list -->
-    <div v-if="store.apiKeys.length" class="space-y-2">
+    <div class="flex min-h-0 flex-1 items-center justify-center">
       <div
-        v-for="ak in store.apiKeys"
-        :key="ak.id"
-        class="flex items-center justify-between rounded-lg bg-muted/30 p-3"
+        class="flex w-full max-w-sm flex-col items-center rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] px-5 py-6 text-center"
       >
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-medium">{{ ak.name }}</span>
-            <span
-              :class="[
-                'inline-block h-1.5 w-1.5 rounded-full',
-                ak.enabled ? 'bg-green-500' : 'bg-neutral-500',
-              ]"
-            />
-            <span
-              v-if="ak.isInternal"
-              class="rounded bg-violet-500/20 px-1.5 py-0.5 text-xs text-violet-400"
-            >
-              内置
-            </span>
-          </div>
-          <div class="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span class="font-mono">{{ maskKey(ak.key) }}</span>
-          </div>
-        </div>
-        <div class="flex shrink-0 items-center gap-1">
-          <button
-            class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title="复制 Key"
-            @click="copyKey(ak.key)"
-          >
-            <Icon icon="lucide:copy" class="h-3.5 w-3.5" />
-          </button>
-          <button
-            class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            :title="ak.enabled ? '禁用' : '启用'"
-            @click="toggleEnabled(ak)"
-          >
-            <Icon
-              :icon="ak.enabled ? 'lucide:toggle-right' : 'lucide:toggle-left'"
-              class="h-3.5 w-3.5"
-            />
-          </button>
-          <button
-            v-if="!ak.isInternal"
-            class="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-400"
-            title="删除"
-            @click="deleteKey(ak.id)"
-          >
-            <Icon icon="lucide:trash-2" class="h-3.5 w-3.5" />
-          </button>
-        </div>
+        <h3 class="text-sm font-medium text-[var(--color-text-primary)]">API Key 管理</h3>
+        <p class="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
+          创建对外访问密钥，并管理启用状态与删除操作。
+        </p>
+        <button
+          type="button"
+          data-testid="open-key-manager"
+          class="mt-4 inline-flex h-8 items-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-control-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-brand-soft)]"
+          @click="managerOpen = true"
+        >
+          管理密钥
+        </button>
       </div>
     </div>
 
-    <!-- Empty -->
-    <div v-else class="py-12 text-center text-sm text-muted-foreground">暂无密钥</div>
-
-    <!-- Editor overlay -->
-    <Teleport to="body">
-      <div v-if="showEditor" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showEditor = false" />
-        <div
-          class="relative max-h-[80vh] w-[480px] overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-xl"
-        >
-          <!-- Created key display -->
-          <template v-if="justCreatedKey">
-            <h3 class="mb-3 text-sm font-medium text-foreground">密钥已创建</h3>
-            <p class="mb-2 text-xs text-muted-foreground">
-              请复制并妥善保管，关闭后将无法再次查看。
-            </p>
-            <div class="mb-4 flex items-center gap-2 rounded border border-border bg-muted/50 p-2">
-              <code class="min-w-0 flex-1 break-all text-xs text-foreground">{{
-                justCreatedKey
-              }}</code>
-              <button
-                class="shrink-0 rounded p-1.5 text-muted-foreground hover:text-foreground"
-                @click="copyKey(justCreatedKey!)"
-              >
-                <Icon :icon="copied ? 'lucide:check' : 'lucide:copy'" class="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <div class="flex justify-end">
-              <button
-                class="rounded bg-violet-600 px-4 py-1.5 text-xs text-white transition-colors hover:bg-violet-500"
-                @click="showEditor = false"
-              >
-                关闭
-              </button>
-            </div>
-          </template>
-
-          <!-- Create form -->
-          <template v-else>
-            <h3 class="mb-4 text-sm font-medium text-foreground">新增密钥</h3>
-
-            <label class="mb-4 block">
-              <span class="mb-1 block text-xs text-muted-foreground">名称</span>
-              <input
-                v-model="form.name"
-                class="w-full rounded border border-input-border bg-input px-3 py-1.5 text-sm text-foreground outline-none focus:border-violet-500"
-                placeholder="My Key"
-              />
-            </label>
-
-            <div class="flex justify-end gap-2">
-              <button
-                class="rounded px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                @click="showEditor = false"
-              >
-                取消
-              </button>
-              <button
-                class="rounded bg-violet-600 px-4 py-1.5 text-xs text-white transition-colors hover:bg-violet-500"
-                @click="save"
-              >
-                创建
-              </button>
-            </div>
-          </template>
-        </div>
-      </div>
-    </Teleport>
+    <ApiKeyManagerDialog :open="managerOpen" @close="managerOpen = false" />
   </div>
 </template>
