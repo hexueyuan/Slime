@@ -59,4 +59,20 @@ describe("GatewayChannelCard", () => {
     expect(wrapper.get('[data-testid="channel-status"]').text()).toContain("停用");
     expect(wrapper.get('[data-testid="channel-card"]').classes()).toContain("opacity-70");
   });
+
+  it("keeps indeterminate test results neutral", () => {
+    const wrapper = mount(GatewayChannelCard, {
+      props: {
+        channel,
+        modelCount: 0,
+        testResult: { loading: false },
+      },
+    });
+
+    const testStatus = wrapper.get('[data-testid="channel-test-result"]');
+
+    expect(testStatus.text()).toBe("-");
+    expect(testStatus.classes()).toContain("text-[var(--color-text-muted)]");
+    expect(testStatus.classes()).not.toContain("text-[var(--color-danger)]");
+  });
 });

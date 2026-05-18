@@ -33,7 +33,9 @@ const testResultText = computed(() => {
 
 const testResultTone = computed(() => {
   if (!props.testResult || props.testResult.loading) return "text-[var(--color-text-muted)]";
-  return props.testResult.success ? "text-[var(--color-success)]" : "text-[var(--color-danger)]";
+  if (props.testResult.success === true) return "text-[var(--color-success)]";
+  if (props.testResult.success === false) return "text-[var(--color-danger)]";
+  return "text-[var(--color-text-muted)]";
 });
 
 const statItems = computed(() => [
@@ -127,7 +129,10 @@ function emitChannel(event: "test" | "edit" | "delete" | "manage-models") {
         class="min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-2 py-1.5"
       >
         <dt class="truncate text-[11px] text-[var(--color-text-muted)]">测试</dt>
-        <dd :class="['truncate text-xs font-medium', testResultTone]">
+        <dd
+          data-testid="channel-test-result"
+          :class="['truncate text-xs font-medium', testResultTone]"
+        >
           {{ testResultText }}
         </dd>
       </div>
