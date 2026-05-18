@@ -20,13 +20,16 @@ const store = useGatewayStore();
 const showCreate = ref(false);
 const form = ref({ name: "" });
 const revealedKey = ref<string | null>(null);
+const revealedKeyId = ref<number | null>(null);
 const copiedKeyId = ref<number | "revealed" | null>(null);
 const error = ref("");
+const copyMessage = ref("");
 
 const enabledCount = computed(() => store.apiKeys.filter((apiKey) => apiKey.enabled).length);
 
 function openCreate() {
   error.value = "";
+  copyMessage.value = "";
   form.value = { name: "" };
   showCreate.value = true;
 }
@@ -38,14 +41,21 @@ async function createKey() {
   error.value = "";
   const created = await gw.createApiKey({ name });
   revealedKey.value = created.key;
+  revealedKeyId.value = created.id;
   form.value = { name: "" };
   showCreate.value = false;
   await store.loadApiKeys();
 }
 
 async function copyKey(apiKey: GatewayApiKey) {
-  const key = apiKey.key === revealedKey.value ? revealedKey.value : apiKey.key;
-  await navigator.clipboard.writeText(key);
+  if (apiKey.id !== revealedKeyId.value || !revealedKey.value) {
+    copiedKeyId.value = null;
+    copyMessage.value = "只能复制刚创建后显示的一次性密钥";
+    return;
+  }
+
+  copyMessage.value = "";
+  await navigator.clipboard.writeText(revealedKey.value);
   copiedKeyId.value = apiKey.id;
   setTimeout(() => {
     if (copiedKeyId.value === apiKey.id) {
@@ -57,6 +67,7 @@ async function copyKey(apiKey: GatewayApiKey) {
 async function copyRevealedKey() {
   if (!revealedKey.value) return;
 
+  copyMessage.value = "";
   await navigator.clipboard.writeText(revealedKey.value);
   copiedKeyId.value = "revealed";
   setTimeout(() => {
@@ -85,7 +96,7 @@ async function deleteKey(apiKey: GatewayApiKey) {
 }
 
 function revealedFor(apiKey: GatewayApiKey) {
-  return apiKey.key === revealedKey.value ? revealedKey.value : null;
+  return apiKey.id === revealedKeyId.value ? revealedKey.value : null;
 }
 </script>
 
@@ -170,6 +181,7 @@ function revealedFor(apiKey: GatewayApiKey) {
       </section>
 
       <p v-if="error" class="text-xs text-[var(--color-danger)]">{{ error }}</p>
+      <p v-if="copyMessage" class="text-xs text-[var(--color-text-muted)]">{{ copyMessage }}</p>
 
       <div v-if="store.apiKeys.length" class="grid gap-3 md:grid-cols-2">
         <GatewayApiKeyCard

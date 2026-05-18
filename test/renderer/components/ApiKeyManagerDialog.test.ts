@@ -48,14 +48,17 @@ const invoke = vi.fn(async (_channel: string, _presenter: string, method: string
   },
 };
 
+const writeText = vi.fn(async () => undefined);
+
 Object.assign(navigator, {
-  clipboard: { writeText: vi.fn(async () => undefined) },
+  clipboard: { writeText },
 });
 
 describe("ApiKeyManagerDialog", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     invoke.mockClear();
+    writeText.mockClear();
     document.body.innerHTML = "";
   });
 
@@ -87,5 +90,61 @@ describe("ApiKeyManagerDialog", () => {
 
     expect(invoke.mock.calls.some((call) => call[2] === "createApiKey")).toBe(true);
     expect(document.body.textContent).toContain("sk-new-secret");
+  });
+
+  it("does not copy stored raw keys for non-revealed cards", async () => {
+    const store = useGatewayStore();
+    store.apiKeys = [
+      {
+        id: 1,
+        name: "internal",
+        key: "sk-internal-secret",
+        enabled: true,
+        isInternal: true,
+        createdAt: "",
+      },
+    ];
+
+    const wrapper = mount(ApiKeyManagerDialog, {
+      props: { open: true },
+      attachTo: document.body,
+    });
+
+    await wrapper.get('[data-testid="key-copy"]').trigger("click");
+    await flushPromises();
+
+    expect(writeText).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("只能复制刚创建后显示的一次性密钥");
+  });
+
+  it("copies the newly created revealed key from its card", async () => {
+    const store = useGatewayStore();
+    store.apiKeys = [
+      {
+        id: 1,
+        name: "internal",
+        key: "sk-internal-secret",
+        enabled: true,
+        isInternal: true,
+        createdAt: "",
+      },
+    ];
+
+    const wrapper = mount(ApiKeyManagerDialog, {
+      props: { open: true },
+      attachTo: document.body,
+    });
+
+    await wrapper.get('[data-testid="open-key-create"]').trigger("click");
+    await wrapper.get('[data-testid="key-name-input"]').setValue("web-client");
+    await wrapper.get('[data-testid="create-key-submit"]').trigger("click");
+    await flushPromises();
+
+    const copyButtons = wrapper.findAll('[data-testid="key-copy"]');
+    await copyButtons[1].trigger("click");
+    await flushPromises();
+
+    expect(writeText).toHaveBeenCalledWith("sk-new-secret");
+    expect(writeText).not.toHaveBeenCalledWith("sk-internal-secret");
   });
 });
