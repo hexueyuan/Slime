@@ -65,13 +65,7 @@ function emitChannel(event: "test" | "edit" | "delete" | "manage-models") {
   >
     <div class="flex min-w-0 items-start justify-between gap-3">
       <div class="min-w-0 space-y-1">
-        <div class="flex min-w-0 items-center gap-2">
-          <span
-            :class="[
-              'h-2 w-2 shrink-0 rounded-full',
-              channel.enabled ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-disabled)]',
-            ]"
-          />
+        <div class="flex min-w-0 items-center">
           <h3 class="truncate text-[13px] font-medium text-[var(--color-text-primary)]">
             {{ channel.name }}
           </h3>
@@ -80,6 +74,13 @@ function emitChannel(event: "test" | "edit" | "delete" | "manage-models") {
           data-testid="channel-status"
           class="flex min-w-0 items-center gap-2 text-xs text-[var(--color-text-muted)]"
         >
+          <span
+            data-testid="channel-status-dot"
+            :class="[
+              'h-2 w-2 shrink-0 rounded-full',
+              channel.enabled ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-disabled)]',
+            ]"
+          />
           <span class="truncate">{{ channel.type }}</span>
           <span class="h-1 w-1 rounded-full bg-[var(--color-border-strong)]" />
           <span>{{ statusText }}</span>

@@ -29,6 +29,12 @@ describe("GatewayChannelCard", () => {
     expect(wrapper.text()).toContain("13");
     expect(wrapper.text()).toContain("100.0%");
     expect(wrapper.text()).toContain("连接成功");
+    expect(
+      wrapper
+        .get('[data-testid="channel-status"]')
+        .get('[data-testid="channel-status-dot"]')
+        .exists(),
+    ).toBe(true);
 
     await wrapper.get('[data-testid="channel-test"]').trigger("click");
     await wrapper.get('[data-testid="channel-edit"]').trigger("click");
