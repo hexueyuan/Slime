@@ -14,7 +14,11 @@ import { useGatewayStore } from "@/stores/gateway";
 
 vi.mock("@/components/gateway/GroupEditDialog.vue", () => ({
   __esModule: true,
-  default: { template: "<div data-testid='group-edit-dialog' />", props: ["open", "group"] },
+  default: {
+    template:
+      "<div v-if='open' data-testid='group-edit-dialog'>{{ group?.name || 'new group' }}</div>",
+    props: ["open", "group"],
+  },
 }));
 
 describe("GroupManagerDialog", () => {
@@ -43,9 +47,11 @@ describe("GroupManagerDialog", () => {
 
     expect(document.body.textContent).toContain("分组管理");
     expect(document.body.textContent).toContain("claude");
+    expect(wrapper.find('[data-testid="group-edit-dialog"]').exists()).toBe(false);
 
     await wrapper.get('[data-testid="group-edit"]').trigger("click");
 
     expect(wrapper.find('[data-testid="group-edit-dialog"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="group-edit-dialog"]').text()).toContain("claude");
   });
 });
