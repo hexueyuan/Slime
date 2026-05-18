@@ -66,4 +66,43 @@ describe("ChannelTab first paint behavior", () => {
     expect(listModelCalls).toHaveLength(1);
     expect(listModelCalls[0][3]).toBe(1);
   });
+
+  it("只在打开模型管理时展示模型管理弹窗", async () => {
+    const store = useGatewayStore();
+    store.channels = [
+      {
+        id: 1,
+        name: "Ch1",
+        type: "openai",
+        baseUrl: "",
+        enabled: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ];
+    store.models.set(1, [
+      {
+        id: 10,
+        channelId: 1,
+        modelName: "gpt-4o",
+        type: "chat",
+        capabilities: [],
+        enabled: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ]);
+
+    const wrapper = mount(ChannelTab, { attachTo: document.body });
+    await nextTick();
+    await nextTick();
+
+    expect(document.body.textContent).toContain("Ch1");
+    expect(document.body.textContent).not.toContain("gpt-4o");
+
+    await wrapper.get('[data-testid="channel-manage-models"]').trigger("click");
+    await nextTick();
+
+    expect(document.body.textContent).toContain("模型管理");
+  });
 });
