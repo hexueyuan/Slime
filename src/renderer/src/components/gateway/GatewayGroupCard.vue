@@ -4,7 +4,7 @@ import type { Group } from "@shared/types/gateway";
 
 const props = defineProps<{
   group: Group;
-  itemCount: number;
+  itemCount?: number | null;
   channelSummary: string;
 }>();
 
@@ -42,7 +42,7 @@ function emitDelete() {
         <div class="flex min-w-0 items-center gap-2 text-xs text-[var(--color-text-muted)]">
           <span class="truncate">{{ group.balanceMode }}</span>
           <span class="h-1 w-1 rounded-full bg-[var(--color-border-strong)]" />
-          <span>{{ itemCount }} 渠道</span>
+          <span>{{ itemCount == null ? "成员加载中" : `${itemCount} 渠道` }}</span>
         </div>
       </div>
 

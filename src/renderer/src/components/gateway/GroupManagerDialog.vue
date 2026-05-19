@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
 import GatewayManagerDialog from "./GatewayManagerDialog.vue";
 import GatewayGroupCard from "./GatewayGroupCard.vue";
 import GroupEditDialog from "./GroupEditDialog.vue";
-import type { Group } from "@shared/types/gateway";
+import type { Group, GroupItem } from "@shared/types/gateway";
 
-defineProps<{
+const props = defineProps<{
   open: boolean;
 }>();
 
@@ -22,6 +22,7 @@ const showEditor = ref(false);
 const editingGroup = ref<Group | null>(null);
 const deletingGroupId = ref<number | null>(null);
 const deleteError = ref("");
+const groupSummaries = ref<Map<number, { itemCount: number; channelSummary: string }>>(new Map());
 
 const builtinCount = computed(() => store.groups.filter((group) => group.isBuiltin).length);
 
@@ -54,7 +55,53 @@ async function deleteGroup(group: Group) {
 
 async function onSaved() {
   await store.loadGroups();
+  await loadGroupSummaries();
 }
+
+function buildGroupSummary(items: GroupItem[]) {
+  const sorted = [...items].sort((a, b) => b.priority - a.priority);
+  const labels = sorted.slice(0, 3).map((item) => {
+    const channel = store.channels.find((candidate) => candidate.id === item.channelId);
+    return `${channel?.name ?? `#${item.channelId}`} / ${item.modelName}`;
+  });
+  if (!labels.length) return "暂无渠道";
+  return labels.length < sorted.length
+    ? `${labels.join("、")} 等 ${sorted.length} 项`
+    : labels.join("、");
+}
+
+async function loadGroupSummaries() {
+  if (!props.open || !store.groups.length) {
+    groupSummaries.value = new Map();
+    return;
+  }
+
+  const entries = await Promise.all(
+    store.groups.map(async (group) => {
+      const items: GroupItem[] = (await gw.listGroupItems(group.id)) ?? [];
+      return [
+        group.id,
+        {
+          itemCount: items.length,
+          channelSummary: buildGroupSummary(items),
+        },
+      ] as const;
+    }),
+  );
+  groupSummaries.value = new Map(entries);
+}
+
+function groupSummary(groupId: number) {
+  return groupSummaries.value.get(groupId) ?? { itemCount: null, channelSummary: "加载中..." };
+}
+
+watch(
+  () => [props.open, store.groups.map((group) => `${group.id}:${group.updatedAt}`).join("|")],
+  () => {
+    void loadGroupSummaries();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -83,8 +130,8 @@ async function onSaved() {
         v-for="group in store.groups"
         :key="group.id"
         :group="group"
-        :item-count="0"
-        channel-summary="打开编辑查看成员"
+        :item-count="groupSummary(group.id).itemCount"
+        :channel-summary="groupSummary(group.id).channelSummary"
         @edit="openEdit"
         @delete="deleteGroup"
       />

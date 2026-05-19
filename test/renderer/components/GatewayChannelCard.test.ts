@@ -36,15 +36,34 @@ describe("GatewayChannelCard", () => {
         .exists(),
     ).toBe(true);
 
+    await wrapper.get('[data-testid="channel-card"]').trigger("click");
     await wrapper.get('[data-testid="channel-test"]').trigger("click");
     await wrapper.get('[data-testid="channel-edit"]').trigger("click");
     await wrapper.get('[data-testid="channel-delete"]').trigger("click");
     await wrapper.get('[data-testid="channel-manage-models"]').trigger("click");
 
+    expect(wrapper.emitted("select")).toEqual([[channel]]);
     expect(wrapper.emitted("test")).toEqual([[channel]]);
     expect(wrapper.emitted("edit")).toEqual([[channel]]);
     expect(wrapper.emitted("delete")).toEqual([[channel]]);
     expect(wrapper.emitted("manage-models")).toEqual([[channel]]);
+  });
+
+  it("marks selected channels and keeps action clicks from selecting the card", async () => {
+    const wrapper = mount(GatewayChannelCard, {
+      props: {
+        channel,
+        modelCount: 13,
+        selected: true,
+      },
+    });
+
+    expect(wrapper.get('[data-testid="channel-card"]').attributes("data-selected")).toBe("true");
+
+    await wrapper.get('[data-testid="channel-edit"]').trigger("click");
+
+    expect(wrapper.emitted("edit")).toEqual([[channel]]);
+    expect(wrapper.emitted("select")).toBeUndefined();
   });
 
   it("keeps disabled channels low emphasis but actions still explicit", () => {

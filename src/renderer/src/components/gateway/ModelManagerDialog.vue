@@ -118,6 +118,8 @@ async function toggleModelEnabled(model: Model) {
 }
 
 async function deleteModel(model: Model) {
+  if (!window.confirm(`确认删除模型「${model.modelName}」？`)) return;
+
   await gw.deleteModel(model.id);
   await reloadCurrentModels();
 }

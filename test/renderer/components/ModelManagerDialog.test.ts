@@ -71,6 +71,7 @@ describe("ModelManagerDialog", () => {
       },
     );
     channelModels.clear();
+    vi.spyOn(window, "confirm").mockReset();
     document.body.innerHTML = "";
   });
 
@@ -169,5 +170,52 @@ describe("ModelManagerDialog", () => {
         enabled: true,
       },
     ]);
+  });
+
+  it("does not delete a model when confirmation is canceled", async () => {
+    vi.mocked(window.confirm).mockReturnValue(false);
+    const store = useGatewayStore();
+    store.models.set(channel.id, [model]);
+    channelModels.set(channel.id, [model]);
+
+    const wrapper = mount(ModelManagerDialog, {
+      props: { open: true, channel },
+      attachTo: document.body,
+    });
+
+    await wrapper.get('[data-testid="model-delete"]').trigger("click");
+    await flushPromises();
+
+    expect(window.confirm).toHaveBeenCalledWith("确认删除模型「Claude Sonnet 4.6」？");
+    expect(invoke).not.toHaveBeenCalledWith(
+      "presenter:call",
+      "gatewayPresenter",
+      "deleteModel",
+      model.id,
+    );
+  });
+
+  it("deletes a model and reloads when confirmation is accepted", async () => {
+    vi.mocked(window.confirm).mockReturnValue(true);
+    const store = useGatewayStore();
+    store.models.set(channel.id, [model]);
+    channelModels.set(channel.id, [model]);
+
+    const wrapper = mount(ModelManagerDialog, {
+      props: { open: true, channel },
+      attachTo: document.body,
+    });
+
+    await wrapper.get('[data-testid="model-delete"]').trigger("click");
+    await flushPromises();
+
+    expect(window.confirm).toHaveBeenCalledWith("确认删除模型「Claude Sonnet 4.6」？");
+    expect(invoke).toHaveBeenCalledWith("presenter:call", "gatewayPresenter", "deleteModel", 10);
+    expect(invoke).toHaveBeenCalledWith(
+      "presenter:call",
+      "gatewayPresenter",
+      "listModelsByChannel",
+      channel.id,
+    );
   });
 });

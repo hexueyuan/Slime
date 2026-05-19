@@ -117,10 +117,12 @@ async function save() {
   }
 }
 
-async function deleteChannel(id: number) {
-  await gw.deleteChannel(id);
+async function deleteChannel(channel: Channel) {
+  if (!window.confirm(`确认删除供应商「${channel.name}」？`)) return;
+
+  await gw.deleteChannel(channel.id);
   await store.loadChannels();
-  if (selectedChannelId.value === id) {
+  if (selectedChannelId.value === channel.id) {
     selectedChannelId.value = null;
   }
 }
@@ -235,9 +237,11 @@ onUnmounted(() => {
           :model-count="channelModelCount(channel.id)"
           :stability-summary="channelStabilitySummary(channel.id)"
           :test-result="testResults.get(channel.id)"
+          :selected="selectedChannelId === channel.id"
+          @select="selectChannel"
           @test="testChannel(channel.id)"
           @edit="openEdit"
-          @delete="deleteChannel(channel.id)"
+          @delete="deleteChannel"
           @manage-models="openModelManager"
         />
       </div>

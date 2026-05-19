@@ -45,14 +45,43 @@ describe("GroupManagerDialog", () => {
   it("renders group cards and opens edit dialog", async () => {
     const store = useGatewayStore();
     store.groups = [group];
+    store.channels = [
+      {
+        id: 7,
+        name: "百度OneApi",
+        type: "anthropic",
+        baseUrl: "",
+        enabled: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ];
+    invokeMock.mockImplementation(async (_channel, _presenter, method) => {
+      if (method === "listGroupItems") {
+        return [
+          {
+            id: 10,
+            groupId: group.id,
+            channelId: 7,
+            modelName: "claude-sonnet",
+            priority: 1,
+            weight: 1,
+          },
+        ];
+      }
+      return null;
+    });
 
     const wrapper = mount(GroupManagerDialog, {
       props: { open: true },
       attachTo: document.body,
     });
+    await flushPromises();
 
     expect(document.body.textContent).toContain("分组管理");
     expect(document.body.textContent).toContain("claude");
+    expect(document.body.textContent).toContain("1 渠道");
+    expect(document.body.textContent).toContain("百度OneApi / claude-sonnet");
     expect(wrapper.find('[data-testid="group-edit-dialog"]').exists()).toBe(false);
 
     await wrapper.get('[data-testid="group-edit"]').trigger("click");

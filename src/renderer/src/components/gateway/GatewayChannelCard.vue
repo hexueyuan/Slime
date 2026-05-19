@@ -7,14 +7,22 @@ import type { Channel } from "@shared/types/gateway";
 
 type TestResult = { loading: boolean; success?: boolean; error?: string };
 
-const props = defineProps<{
-  channel: Channel;
-  modelCount: number;
-  stabilitySummary?: string;
-  testResult?: TestResult;
-}>();
+const props = withDefaults(
+  defineProps<{
+    channel: Channel;
+    modelCount: number;
+    stabilitySummary?: string;
+    testResult?: TestResult;
+    selected?: boolean;
+  }>(),
+  {
+    stabilitySummary: "-",
+    selected: false,
+  },
+);
 
 const emit = defineEmits<{
+  select: [channel: Channel];
   test: [channel: Channel];
   edit: [channel: Channel];
   delete: [channel: Channel];
@@ -40,8 +48,12 @@ const testResultTone = computed(() => {
 
 const statItems = computed(() => [
   { label: "模型", value: String(props.modelCount) },
-  { label: "稳定性", value: props.stabilitySummary ?? "-" },
+  { label: "稳定性", value: props.stabilitySummary },
 ]);
+
+function emitSelect() {
+  emit("select", props.channel);
+}
 
 function emitChannel(event: "test" | "edit" | "delete" | "manage-models") {
   if (event === "test") {
@@ -59,11 +71,20 @@ function emitChannel(event: "test" | "edit" | "delete" | "manage-models") {
 <template>
   <article
     data-testid="channel-card"
+    role="button"
+    tabindex="0"
+    :data-selected="selected ? 'true' : 'false'"
     :class="[
-      'min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-app-elevated)] p-3 transition-colors',
+      'min-w-0 cursor-pointer rounded-[var(--radius-md)] border bg-[var(--color-app-elevated)] p-3 transition-colors',
       'hover:border-[var(--color-border-strong)]',
+      selected
+        ? 'border-[var(--color-accent-brand)] shadow-[inset_0_0_0_1px_var(--color-accent-brand-soft)]'
+        : 'border-[var(--color-border-subtle)]',
       !channel.enabled && 'opacity-70',
     ]"
+    @click="emitSelect"
+    @keydown.enter.prevent="emitSelect"
+    @keydown.space.prevent="emitSelect"
   >
     <div class="flex min-w-0 items-start justify-between gap-3">
       <div class="min-w-0 space-y-1">
@@ -95,21 +116,21 @@ function emitChannel(event: "test" | "edit" | "delete" | "manage-models") {
           icon="lucide:activity"
           title="测试连接"
           size="sm"
-          @click="emitChannel('test')"
+          @click.stop="emitChannel('test')"
         />
         <SlimeIconButton
           data-testid="channel-edit"
           icon="lucide:pencil"
           title="编辑渠道"
           size="sm"
-          @click="emitChannel('edit')"
+          @click.stop="emitChannel('edit')"
         />
         <SlimeIconButton
           data-testid="channel-delete"
           icon="lucide:trash-2"
           title="删除渠道"
           size="sm"
-          @click="emitChannel('delete')"
+          @click.stop="emitChannel('delete')"
         />
       </div>
     </div>
@@ -151,7 +172,7 @@ function emitChannel(event: "test" | "edit" | "delete" | "manage-models") {
         data-testid="channel-manage-models"
         variant="primary"
         size="sm"
-        @click="emitChannel('manage-models')"
+        @click.stop="emitChannel('manage-models')"
       >
         <Icon icon="lucide:boxes" class="h-4 w-4" />
         管理模型
