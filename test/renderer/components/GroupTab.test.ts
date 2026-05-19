@@ -68,9 +68,14 @@ describe("GroupTab", () => {
     await flushPromises();
 
     expect(wrapper.findAll('[data-testid="group-route-card"]')).toHaveLength(2);
+    expect(wrapper.findAll('[data-testid="gateway-resource-card"]')).toHaveLength(2);
+    expect(
+      wrapper
+        .findAll('[data-testid="gateway-resource-card"]')
+        .every((card) => card.attributes("data-resource-kind") === "group"),
+    ).toBe(true);
     expect(document.body.textContent).toContain("cc-auto");
     expect(document.body.textContent).toContain("default");
-    expect(document.body.textContent).not.toContain("自定义");
 
     await wrapper.get('[data-testid="open-group-manager"]').trigger("click");
 

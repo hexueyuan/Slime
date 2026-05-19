@@ -3,7 +3,8 @@ import { ref, watch } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
 import GroupManagerDialog from "./GroupManagerDialog.vue";
-import GatewayGroupCard from "./GatewayGroupCard.vue";
+import GatewayResourceCard from "./GatewayResourceCard.vue";
+import SlimeButton from "@/components/ui/SlimeButton.vue";
 import type { GroupItem } from "@shared/types/gateway";
 
 const gw = usePresenter("gatewayPresenter");
@@ -53,6 +54,26 @@ function groupSummary(groupId: number) {
   return groupSummaries.value.get(groupId) ?? { itemCount: null, channelSummary: "加载中..." };
 }
 
+function groupMemberCountLabel(groupId: number) {
+  const itemCount = groupSummary(groupId).itemCount;
+  return itemCount == null ? "-" : String(itemCount);
+}
+
+function groupMemberBadgeLabel(groupId: number) {
+  const itemCount = groupSummary(groupId).itemCount;
+  return itemCount == null ? "成员加载中" : `${itemCount} 渠道`;
+}
+
+function balanceModeLabel(mode: string) {
+  const labels: Record<string, string> = {
+    round_robin: "轮询",
+    random: "随机",
+    failover: "故障转移",
+    weighted: "加权",
+  };
+  return labels[mode] ?? mode;
+}
+
 watch(
   () => store.groups.map((group) => `${group.id}:${group.updatedAt}`).join("|"),
   () => {
@@ -71,24 +92,38 @@ watch(
           {{ store.groups.length }} 个分组路由
         </p>
       </div>
-      <button
-        type="button"
-        data-testid="open-group-manager"
-        class="inline-flex h-8 items-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-control-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-brand-soft)]"
-        @click="openManager"
-      >
+      <SlimeButton data-testid="open-group-manager" size="md" @click="openManager">
         管理分组
-      </button>
+      </SlimeButton>
     </div>
 
     <div class="min-h-0 flex-1 overflow-y-auto">
       <div v-if="store.groups.length" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <div v-for="group in store.groups" :key="group.id" data-testid="group-route-card">
-          <GatewayGroupCard
-            :group="group"
-            :item-count="groupSummary(group.id).itemCount"
-            :channel-summary="groupSummary(group.id).channelSummary"
-            :actions="false"
+          <GatewayResourceCard
+            kind="group"
+            eyebrow="分组路由"
+            :title="group.name"
+            :subtitle="`${balanceModeLabel(group.balanceMode)}策略`"
+            :badges="[
+              {
+                label: group.isBuiltin ? '内置' : '自定义',
+                variant: group.isBuiltin ? 'neutral' : 'accent',
+              },
+              {
+                label: groupMemberBadgeLabel(group.id),
+                variant: 'neutral',
+              },
+            ]"
+            :stats="[
+              { label: '均衡策略', value: balanceModeLabel(group.balanceMode) },
+              {
+                label: '成员数量',
+                value: groupMemberCountLabel(group.id),
+              },
+            ]"
+            detail-label="渠道成员"
+            :detail-value="groupSummary(group.id).channelSummary"
           />
         </div>
       </div>
@@ -97,13 +132,7 @@ watch(
         class="flex min-h-48 items-center justify-center rounded-[var(--radius-md)] border border-dashed border-[var(--color-border-subtle)] bg-[var(--color-control)] text-sm text-[var(--color-text-muted)]"
       >
         暂无分组
-        <button
-          type="button"
-          class="ml-3 inline-flex h-8 items-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-control-hover)]"
-          @click="openManager"
-        >
-          新建分组
-        </button>
+        <SlimeButton class="ml-3" size="md" @click="openManager"> 新建分组 </SlimeButton>
       </div>
     </div>
 

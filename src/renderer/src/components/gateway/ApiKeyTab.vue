@@ -2,11 +2,25 @@
 import { ref } from "vue";
 import { useGatewayStore } from "@/stores/gateway";
 import ApiKeyManagerDialog from "./ApiKeyManagerDialog.vue";
-import GatewayApiKeyCard from "./GatewayApiKeyCard.vue";
+import GatewayResourceCard from "./GatewayResourceCard.vue";
+import SlimeButton from "@/components/ui/SlimeButton.vue";
 
 const store = useGatewayStore();
 
 const managerOpen = ref(false);
+
+function maskKey(key: string) {
+  if (key.length === 0) return "...";
+  if (key.length <= 4) return "...";
+  if (key.length <= 8) return `${key.slice(0, 2)}...`;
+  const candidate = `${key.slice(0, 4)}...${key.slice(-4)}`;
+  return candidate === key ? "********" : candidate;
+}
+
+function expiresLabel(expiresAt?: string) {
+  if (!expiresAt) return "永不过期";
+  return expiresAt.slice(0, 10);
+}
 </script>
 
 <template>
@@ -18,20 +32,33 @@ const managerOpen = ref(false);
           {{ store.apiKeys.length }} 个访问密钥
         </p>
       </div>
-      <button
-        type="button"
-        data-testid="open-key-manager"
-        class="inline-flex h-8 items-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-control-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-brand-soft)]"
-        @click="managerOpen = true"
-      >
+      <SlimeButton data-testid="open-key-manager" size="md" @click="managerOpen = true">
         管理密钥
-      </button>
+      </SlimeButton>
     </div>
 
     <div class="min-h-0 flex-1 overflow-y-auto">
       <div v-if="store.apiKeys.length" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <div v-for="apiKey in store.apiKeys" :key="apiKey.id" data-testid="api-key-resource-card">
-          <GatewayApiKeyCard :api-key="apiKey" :actions="false" />
+          <GatewayResourceCard
+            kind="key"
+            eyebrow="API Key"
+            :title="apiKey.name"
+            :subtitle="maskKey(apiKey.key)"
+            :badges="[
+              {
+                label: apiKey.enabled ? '启用' : '停用',
+                variant: apiKey.enabled ? 'success' : 'neutral',
+              },
+              ...(apiKey.isInternal ? [{ label: 'internal', variant: 'neutral' as const }] : []),
+            ]"
+            :stats="[
+              { label: '状态', value: apiKey.enabled ? '启用' : '停用' },
+              { label: '过期', value: expiresLabel(apiKey.expiresAt) },
+            ]"
+            detail-label="Key"
+            :detail-value="maskKey(apiKey.key)"
+          />
         </div>
       </div>
       <div
@@ -39,13 +66,7 @@ const managerOpen = ref(false);
         class="flex min-h-48 items-center justify-center rounded-[var(--radius-md)] border border-dashed border-[var(--color-border-subtle)] bg-[var(--color-control)] text-sm text-[var(--color-text-muted)]"
       >
         暂无密钥
-        <button
-          type="button"
-          class="ml-3 inline-flex h-8 items-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-control-hover)]"
-          @click="managerOpen = true"
-        >
-          新建密钥
-        </button>
+        <SlimeButton class="ml-3" size="md" @click="managerOpen = true"> 新建密钥 </SlimeButton>
       </div>
     </div>
 

@@ -51,6 +51,12 @@ describe("ApiKeyTab", () => {
     const wrapper = mount(ApiKeyTab, { attachTo: document.body });
 
     expect(wrapper.findAll('[data-testid="api-key-resource-card"]')).toHaveLength(2);
+    expect(wrapper.findAll('[data-testid="gateway-resource-card"]')).toHaveLength(2);
+    expect(
+      wrapper
+        .findAll('[data-testid="gateway-resource-card"]')
+        .every((card) => card.attributes("data-resource-kind") === "key"),
+    ).toBe(true);
     expect(document.body.textContent).toContain("web-client");
     expect(document.body.textContent).toContain("internal");
     expect(document.body.textContent).not.toContain("启用 1");
