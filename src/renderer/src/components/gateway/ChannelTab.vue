@@ -370,7 +370,11 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="selectedChannel" class="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
+    <div
+      v-if="selectedChannel"
+      data-testid="channel-detail-content"
+      class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4"
+    >
       <div class="grid shrink-0 grid-cols-1 gap-2 md:grid-cols-3">
         <div
           class="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 py-2"
@@ -419,7 +423,10 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="grid min-h-0 flex-1 grid-cols-1 items-stretch gap-3 lg:grid-cols-2">
+      <div
+        data-testid="channel-chart-grid"
+        class="grid min-h-0 shrink-0 grid-cols-1 items-start gap-3 lg:grid-cols-2"
+      >
         <ChannelRealtimeChart
           :points="selectedChannelPoints"
           metric="availability"

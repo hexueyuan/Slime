@@ -93,6 +93,13 @@ const normalizedMetrics = computed(() =>
   })),
 );
 
+const isMicro = computed(() => props.compact && normalizedMetrics.value.length === 1);
+
+const density = computed(() => {
+  if (isMicro.value) return "micro";
+  return props.compact ? "compact" : "regular";
+});
+
 const activeId = ref<string | null>(null);
 
 const activeMetric = computed(
@@ -107,8 +114,14 @@ const activeArea = computed(() => (activeLine.value ? `0,92 ${activeLine.value} 
 const activePoints = computed(() => {
   const metric = activeMetric.value;
   const points = chartPoints(metric?.points, 92);
-  const visibleAxisIndexes = visibleLabelIndexes(points.length, props.compact ? 5 : 8);
-  const visibleValueIndexes = visibleLabelIndexes(points.length, props.compact ? 5 : 10);
+  const visibleAxisIndexes = visibleLabelIndexes(
+    points.length,
+    isMicro.value ? 4 : props.compact ? 5 : 8,
+  );
+  const visibleValueIndexes = visibleLabelIndexes(
+    points.length,
+    isMicro.value ? 4 : props.compact ? 5 : 10,
+  );
   return points.map((point) => ({
     ...point,
     label: metric?.labels?.[point.index] ?? String(point.index + 1),
@@ -125,7 +138,7 @@ const barItems = computed(() => {
   const max = Math.max(...points, 1);
   return points.map((value, index) => ({
     index,
-    height: `${Math.max(10, (value / max) * (props.compact ? 62 : 78))}%`,
+    height: `${Math.max(10, (value / max) * (isMicro.value ? 48 : props.compact ? 62 : 78))}%`,
   }));
 });
 </script>
@@ -133,16 +146,25 @@ const barItems = computed(() => {
 <template>
   <section
     data-testid="slime-realtime-chart"
-    :data-density="props.compact ? 'compact' : 'regular'"
+    :data-density="density"
     class="min-w-0 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]"
   >
     <div
       :class="[
         'flex min-w-0 flex-wrap items-start justify-between',
-        props.compact ? 'gap-2 px-3 pb-1 pt-2' : 'gap-3 px-3 pb-2 pt-3',
+        isMicro
+          ? 'gap-2 px-3 py-2'
+          : props.compact
+            ? 'gap-2 px-3 pb-1 pt-2'
+            : 'gap-3 px-3 pb-2 pt-3',
       ]"
     >
-      <div class="min-w-0">
+      <div
+        :class="[
+          'min-w-0',
+          isMicro ? 'flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5' : '',
+        ]"
+      >
         <h3 class="truncate text-xs font-semibold text-[var(--color-text-secondary)]">
           {{ title }}
         </h3>
@@ -151,7 +173,11 @@ const barItems = computed(() => {
           data-testid="chart-summary-value"
           :class="[
             'truncate font-semibold text-[var(--color-text-primary)]',
-            props.compact ? 'mt-0.5 text-lg leading-tight' : 'mt-1 text-xl',
+            isMicro
+              ? 'text-sm leading-tight'
+              : props.compact
+                ? 'mt-0.5 text-lg leading-tight'
+                : 'mt-1 text-xl',
           ]"
         >
           {{ activeMetric.value }}
@@ -160,7 +186,7 @@ const barItems = computed(() => {
           v-if="subtitle"
           :class="[
             'truncate text-[11px] text-[var(--color-text-muted)]',
-            props.compact ? 'mt-0.5' : 'mt-1',
+            isMicro ? '' : props.compact ? 'mt-0.5' : 'mt-1',
           ]"
         >
           {{ subtitle }}
@@ -170,6 +196,7 @@ const barItems = computed(() => {
     </div>
 
     <div
+      v-if="!isMicro"
       :class="[
         'grid min-w-0 grid-cols-2 sm:grid-cols-4',
         props.compact ? 'gap-1.5 px-3 pb-2' : 'gap-2 px-3 pb-3',
@@ -219,7 +246,7 @@ const barItems = computed(() => {
       data-testid="chart-window"
       :class="[
         'relative mx-3 mb-3 min-w-0 overflow-hidden rounded-[var(--radius-md)]',
-        props.compact ? 'h-[96px]' : 'h-[148px]',
+        isMicro ? 'h-[72px]' : props.compact ? 'h-[96px]' : 'h-[148px]',
       ]"
       :style="chartWindowStyle"
     >

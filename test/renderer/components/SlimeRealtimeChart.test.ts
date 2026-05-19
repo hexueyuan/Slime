@@ -73,7 +73,10 @@ describe("SlimeRealtimeChart", () => {
       props: {
         title: "趋势",
         compact: true,
-        metrics: [{ id: "requests", label: "请求", value: "10", points: [1, 3, 2] }],
+        metrics: [
+          { id: "requests", label: "请求", value: "10", points: [1, 3, 2] },
+          { id: "cost", label: "费用", value: "$0.10", points: [0, 1, 1] },
+        ],
       },
     });
 
@@ -81,5 +84,31 @@ describe("SlimeRealtimeChart", () => {
 
     expect(chart.attributes("data-density")).toBe("compact");
     expect(wrapper.get('[data-testid="chart-window"]').classes()).toContain("h-[96px]");
+  });
+
+  it("uses a micro layout for compact single-metric charts", () => {
+    const wrapper = mount(SlimeRealtimeChart, {
+      props: {
+        title: "可用率",
+        subtitle: "近30分钟",
+        compact: true,
+        metrics: [
+          {
+            id: "availability",
+            label: "可用率",
+            value: "98.0%",
+            points: [98, 99, 97],
+            labels: ["10:01", "10:02", "10:03"],
+          },
+        ],
+      },
+    });
+
+    expect(wrapper.get('[data-testid="slime-realtime-chart"]').attributes("data-density")).toBe(
+      "micro",
+    );
+    expect(wrapper.findAll('[data-testid="chart-metric-pill"]')).toHaveLength(0);
+    expect(wrapper.get('[data-testid="chart-window"]').classes()).toContain("h-[72px]");
+    expect(wrapper.get('[data-testid="chart-summary-value"]').text()).toBe("98.0%");
   });
 });

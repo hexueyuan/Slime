@@ -112,6 +112,31 @@ describe("ChannelTab first paint behavior", () => {
     ).toMatchObject([{ "data-metric": "availability" }, { "data-metric": "latency" }]);
   });
 
+  it("供应商详情区在短窗口下使用内部滚动兜底，避免压扁图表", async () => {
+    const store = useGatewayStore();
+    store.channels = [
+      {
+        id: 1,
+        name: "Ch1",
+        type: "openai",
+        baseUrl: "",
+        enabled: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ];
+
+    const wrapper = mount(ChannelTab, { attachTo: document.body });
+    await nextTick();
+    await nextTick();
+
+    const detail = wrapper.get('[data-testid="channel-detail-content"]');
+    const chartGrid = wrapper.get('[data-testid="channel-chart-grid"]');
+
+    expect(detail.classes()).toContain("overflow-y-auto");
+    expect(chartGrid.classes()).not.toContain("flex-1");
+  });
+
   it("切换下拉供应商会加载对应模型和实时指标", async () => {
     const store = useGatewayStore();
     store.channels = [
