@@ -255,8 +255,8 @@ const modelRankItems = computed(() =>
     </PageHeader>
 
     <!-- Stats cards -->
-    <div class="shrink-0 px-5 py-3">
-      <div class="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(132px,1fr))] gap-2">
+    <div class="shrink-0 px-5 py-2">
+      <div class="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2">
         <SlimeMetricCard
           v-for="card in metricCards"
           :key="card.label"
@@ -269,7 +269,7 @@ const modelRankItems = computed(() =>
 
       <!-- Trend chart + Rank board 同行 -->
       <div
-        class="mt-2 grid min-w-0 grid-cols-1 gap-2 2xl:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]"
+        class="mt-2 grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-[minmax(560px,1fr)_clamp(180px,14vw,240px)_clamp(180px,14vw,240px)]"
       >
         <SlimeRealtimeChart
           v-if="metricsLoaded"
@@ -278,32 +278,27 @@ const modelRankItems = computed(() =>
           :metrics="trendMetrics"
           compact
         />
-        <div
-          v-else
-          class="h-[clamp(112px,16vh,148px)] rounded-[var(--radius-lg)] bg-[var(--color-control-hover)]"
+        <div v-else class="h-[200px] rounded-[var(--radius-lg)] bg-[var(--color-control-hover)]" />
+        <SlimeRankBoard
+          title="供应商排名"
+          :items="channelRankItems"
+          :metrics="rankMetrics"
+          compact
+          :limit="3"
         />
-        <div class="grid min-w-0 gap-2 md:grid-cols-2 2xl:grid-cols-2">
-          <SlimeRankBoard
-            title="供应商排名"
-            :items="channelRankItems"
-            :metrics="rankMetrics"
-            compact
-            :limit="3"
-          />
-          <SlimeRankBoard
-            title="模型排名"
-            :items="modelRankItems"
-            :metrics="rankMetrics"
-            compact
-            :limit="3"
-          />
-        </div>
+        <SlimeRankBoard
+          title="模型排名"
+          :items="modelRankItems"
+          :metrics="rankMetrics"
+          compact
+          :limit="3"
+        />
       </div>
     </div>
 
     <div class="flex min-h-0 flex-1 flex-col border-t border-[var(--color-border-subtle)]">
       <!-- Tab bar -->
-      <div class="flex shrink-0 px-5 py-3">
+      <div class="flex shrink-0 px-5 py-2">
         <SlimeTabs v-model="store.activeTab" :tabs="tabs" />
       </div>
 

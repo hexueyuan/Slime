@@ -80,5 +80,6 @@ describe("SlimeRealtimeChart", () => {
     const chart = wrapper.get('[data-testid="slime-realtime-chart"]');
 
     expect(chart.attributes("data-density")).toBe("compact");
+    expect(wrapper.get('[data-testid="chart-window"]').classes()).toContain("h-[96px]");
   });
 });

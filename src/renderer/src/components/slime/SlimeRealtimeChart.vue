@@ -107,8 +107,8 @@ const activeArea = computed(() => (activeLine.value ? `0,92 ${activeLine.value} 
 const activePoints = computed(() => {
   const metric = activeMetric.value;
   const points = chartPoints(metric?.points, 92);
-  const visibleAxisIndexes = visibleLabelIndexes(points.length, 8);
-  const visibleValueIndexes = visibleLabelIndexes(points.length, 10);
+  const visibleAxisIndexes = visibleLabelIndexes(points.length, props.compact ? 5 : 8);
+  const visibleValueIndexes = visibleLabelIndexes(points.length, props.compact ? 5 : 10);
   return points.map((point) => ({
     ...point,
     label: metric?.labels?.[point.index] ?? String(point.index + 1),
@@ -125,7 +125,7 @@ const barItems = computed(() => {
   const max = Math.max(...points, 1);
   return points.map((value, index) => ({
     index,
-    height: `${Math.max(10, (value / max) * 78)}%`,
+    height: `${Math.max(10, (value / max) * (props.compact ? 62 : 78))}%`,
   }));
 });
 </script>
@@ -136,7 +136,12 @@ const barItems = computed(() => {
     :data-density="props.compact ? 'compact' : 'regular'"
     class="min-w-0 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]"
   >
-    <div class="flex min-w-0 flex-wrap items-start justify-between gap-3 px-3 pb-2 pt-3">
+    <div
+      :class="[
+        'flex min-w-0 flex-wrap items-start justify-between',
+        props.compact ? 'gap-2 px-3 pb-1 pt-2' : 'gap-3 px-3 pb-2 pt-3',
+      ]"
+    >
       <div class="min-w-0">
         <h3 class="truncate text-xs font-semibold text-[var(--color-text-secondary)]">
           {{ title }}
@@ -144,18 +149,32 @@ const barItems = computed(() => {
         <div
           v-if="activeMetric"
           data-testid="chart-summary-value"
-          class="mt-1 truncate text-xl font-semibold text-[var(--color-text-primary)]"
+          :class="[
+            'truncate font-semibold text-[var(--color-text-primary)]',
+            props.compact ? 'mt-0.5 text-lg leading-tight' : 'mt-1 text-xl',
+          ]"
         >
           {{ activeMetric.value }}
         </div>
-        <p v-if="subtitle" class="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">
+        <p
+          v-if="subtitle"
+          :class="[
+            'truncate text-[11px] text-[var(--color-text-muted)]',
+            props.compact ? 'mt-0.5' : 'mt-1',
+          ]"
+        >
           {{ subtitle }}
         </p>
       </div>
       <slot name="actions" />
     </div>
 
-    <div class="grid min-w-0 grid-cols-2 gap-2 px-3 pb-3 sm:grid-cols-4">
+    <div
+      :class="[
+        'grid min-w-0 grid-cols-2 sm:grid-cols-4',
+        props.compact ? 'gap-1.5 px-3 pb-2' : 'gap-2 px-3 pb-3',
+      ]"
+    >
       <button
         v-for="metric in normalizedMetrics"
         :key="metric.id"
@@ -163,7 +182,8 @@ const barItems = computed(() => {
         type="button"
         :style="{ '--metric-color': metric.colorValue }"
         :class="[
-          'relative min-h-14 min-w-0 overflow-hidden rounded-[var(--radius-md)] border px-3 py-2 text-left transition-colors',
+          'relative min-w-0 overflow-hidden rounded-[var(--radius-md)] border text-left transition-colors',
+          props.compact ? 'min-h-10 px-2 py-1' : 'min-h-14 px-3 py-2',
           activeMetric?.id === metric.id
             ? 'border-[color-mix(in_srgb,var(--metric-color)_48%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--metric-color)_18%,transparent),var(--color-control))] text-[var(--color-text-primary)]'
             : 'border-[var(--color-border-subtle)] bg-[var(--color-control)] text-[var(--color-text-muted)] hover:bg-[var(--color-control-hover)]',
@@ -177,7 +197,12 @@ const barItems = computed(() => {
         <span class="block truncate text-[10px] font-medium text-[var(--color-text-muted)]">
           {{ metric.label }}
         </span>
-        <span class="mt-1 block truncate text-sm font-semibold text-[var(--color-text-primary)]">
+        <span
+          :class="[
+            'block truncate font-semibold text-[var(--color-text-primary)]',
+            props.compact ? 'mt-0.5 text-xs' : 'mt-1 text-sm',
+          ]"
+        >
           {{ metric.value }}
           <span
             v-if="metric.trend"
@@ -194,7 +219,7 @@ const barItems = computed(() => {
       data-testid="chart-window"
       :class="[
         'relative mx-3 mb-3 min-w-0 overflow-hidden rounded-[var(--radius-md)]',
-        props.compact ? 'h-[clamp(112px,16vh,148px)]' : 'h-[148px]',
+        props.compact ? 'h-[96px]' : 'h-[148px]',
       ]"
       :style="chartWindowStyle"
     >

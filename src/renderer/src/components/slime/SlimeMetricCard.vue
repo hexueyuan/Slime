@@ -28,14 +28,14 @@ const color = computed(() => colorMap[props.tone]);
 
 <template>
   <article
-    class="w-full min-w-0 rounded-[var(--radius-lg)] border border-[color-mix(in_srgb,var(--metric-color)_24%,var(--color-border-subtle))] bg-[color-mix(in_srgb,var(--metric-color)_10%,var(--color-control))] px-3 py-2"
+    class="w-full min-w-0 rounded-[var(--radius-lg)] border border-[color-mix(in_srgb,var(--metric-color)_24%,var(--color-border-subtle))] bg-[color-mix(in_srgb,var(--metric-color)_10%,var(--color-control))] px-3 py-1.5"
     :style="{ '--metric-color': color }"
   >
     <div class="truncate text-[11px] font-medium text-[var(--color-text-muted)]">{{ label }}</div>
-    <div class="mt-1 truncate text-lg font-semibold leading-tight" :style="{ color }">
+    <div class="mt-0.5 truncate text-base font-semibold leading-tight" :style="{ color }">
       {{ value }}
     </div>
-    <div v-if="meta" class="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">
+    <div v-if="meta" class="mt-0.5 truncate text-[11px] text-[var(--color-text-muted)]">
       {{ meta }}
     </div>
   </article>

@@ -58,18 +58,31 @@ function selectMetric(metric: string) {
   <section
     :class="[
       'min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]',
-      props.compact ? 'p-3' : 'p-4',
+      props.compact ? 'p-2.5' : 'p-4',
     ]"
   >
-    <div class="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-3">
-      <h3 class="min-w-0 truncate text-sm font-semibold text-[var(--color-text-primary)]">
+    <div
+      :class="[
+        'flex min-w-0 flex-wrap items-center justify-between',
+        props.compact ? 'mb-2 gap-1.5' : 'mb-3 gap-3',
+      ]"
+    >
+      <h3
+        :class="[
+          'min-w-0 truncate font-semibold text-[var(--color-text-primary)]',
+          props.compact ? 'text-[13px]' : 'text-sm',
+        ]"
+      >
         {{ title }}
       </h3>
       <div
         v-if="metrics.length"
         data-testid="rank-metric-tabs"
         data-layout="wrap"
-        class="flex min-w-0 flex-wrap gap-1 rounded-full bg-[var(--color-control)] p-0.5"
+        :class="[
+          'flex min-w-0 flex-wrap gap-1 rounded-full bg-[var(--color-control)] p-0.5',
+          props.compact && 'shrink-0',
+        ]"
       >
         <button
           v-for="metric in metrics"
@@ -77,7 +90,8 @@ function selectMetric(metric: string) {
           type="button"
           :data-testid="`rank-metric-${metric.value}`"
           :class="[
-            'min-h-6 rounded-full px-2 py-1 text-[11px] font-medium transition-colors',
+            'min-h-6 rounded-full py-1 text-[11px] font-medium transition-colors',
+            props.compact ? 'px-1.5' : 'px-2',
             selectedMetric === metric.value
               ? 'bg-[var(--color-control-active)] text-[var(--color-text-primary)]'
               : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
@@ -88,12 +102,15 @@ function selectMetric(metric: string) {
         </button>
       </div>
     </div>
-    <div v-if="rankedItems.length" class="space-y-2">
+    <div v-if="rankedItems.length" :class="props.compact ? 'space-y-1' : 'space-y-2'">
       <div
         v-for="(item, index) in rankedItems"
         :key="item.id"
         :data-testid="`rank-item-${index}`"
-        class="flex min-w-0 items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-sm"
+        :class="[
+          'flex min-w-0 items-center rounded-[var(--radius-sm)] px-1.5',
+          props.compact ? 'gap-1.5 py-1 text-xs' : 'gap-2 py-1.5 text-sm',
+        ]"
       >
         <span
           :class="[
