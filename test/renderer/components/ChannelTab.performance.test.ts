@@ -16,7 +16,10 @@ const invoke = vi.fn(async () => null);
 
 vi.mock("@/components/gateway/ChannelRealtimeChart.vue", () => ({
   __esModule: true,
-  default: { template: "<div />", props: ["points"] },
+  default: {
+    template: "<div data-testid='channel-realtime-chart' :data-metric='metric' />",
+    props: ["points", "metric"],
+  },
 }));
 
 vi.mock("@/components/ModelIcon.vue", () => ({
@@ -74,6 +77,77 @@ describe("ChannelTab first paint behavior", () => {
     expect(calls[0][3]).toBe(1);
   });
 
+  it("用下拉选择供应商并展示两个实时指标图，不按供应商数量铺卡片", async () => {
+    const store = useGatewayStore();
+    store.channels = [
+      {
+        id: 1,
+        name: "Ch1",
+        type: "openai",
+        baseUrl: "",
+        enabled: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+      {
+        id: 2,
+        name: "Ch2",
+        type: "anthropic",
+        baseUrl: "",
+        enabled: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ];
+
+    const wrapper = mount(ChannelTab, { attachTo: document.body });
+    await nextTick();
+    await nextTick();
+
+    expect(wrapper.get('[data-testid="channel-select"]').element).toHaveProperty("value", "1");
+    expect(wrapper.findAll('[data-testid="channel-card"]')).toHaveLength(0);
+    expect(wrapper.findAll('[data-testid="channel-realtime-chart"]')).toHaveLength(2);
+    expect(
+      wrapper.findAll('[data-testid="channel-realtime-chart"]').map((chart) => chart.attributes()),
+    ).toMatchObject([{ "data-metric": "availability" }, { "data-metric": "latency" }]);
+  });
+
+  it("切换下拉供应商会加载对应模型和实时指标", async () => {
+    const store = useGatewayStore();
+    store.channels = [
+      {
+        id: 1,
+        name: "Ch1",
+        type: "openai",
+        baseUrl: "",
+        enabled: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+      {
+        id: 2,
+        name: "Ch2",
+        type: "anthropic",
+        baseUrl: "",
+        enabled: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ];
+
+    const wrapper = mount(ChannelTab, { attachTo: document.body });
+    await nextTick();
+    await nextTick();
+    invoke.mockClear();
+
+    await wrapper.get('[data-testid="channel-select"]').setValue("2");
+    await flushPromises();
+
+    expect(listModelCalls()).toHaveLength(1);
+    expect(listModelCalls()[0][3]).toBe(2);
+    expect(wrapper.get('[data-testid="channel-select"]').element).toHaveProperty("value", "2");
+  });
+
   it("只在打开模型管理时展示模型管理弹窗", async () => {
     const store = useGatewayStore();
     store.channels = [
@@ -112,44 +186,6 @@ describe("ChannelTab first paint behavior", () => {
 
     expect(document.body.textContent).toContain("模型管理");
     expect(listModelCalls()).toHaveLength(2);
-  });
-
-  it("点击供应商卡片会切换选中供应商并加载对应模型", async () => {
-    const store = useGatewayStore();
-    store.channels = [
-      {
-        id: 1,
-        name: "Ch1",
-        type: "openai",
-        baseUrl: "",
-        enabled: true,
-        createdAt: "",
-        updatedAt: "",
-      },
-      {
-        id: 2,
-        name: "Ch2",
-        type: "anthropic",
-        baseUrl: "",
-        enabled: true,
-        createdAt: "",
-        updatedAt: "",
-      },
-    ];
-
-    const wrapper = mount(ChannelTab, { attachTo: document.body });
-    await nextTick();
-    await nextTick();
-    invoke.mockClear();
-
-    await wrapper.findAll('[data-testid="channel-card"]')[1].trigger("click");
-    await flushPromises();
-
-    expect(listModelCalls()).toHaveLength(1);
-    expect(listModelCalls()[0][3]).toBe(2);
-    expect(wrapper.findAll('[data-testid="channel-card"]')[1].attributes("data-selected")).toBe(
-      "true",
-    );
   });
 
   it("取消确认时不会删除供应商", async () => {

@@ -4,7 +4,7 @@ import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
 import type { Channel, ChannelType } from "@shared/types/gateway";
 import { Icon } from "@iconify/vue";
-import GatewayChannelCard from "@/components/gateway/GatewayChannelCard.vue";
+import ChannelRealtimeChart from "@/components/gateway/ChannelRealtimeChart.vue";
 import ModelManagerDialog from "@/components/gateway/ModelManagerDialog.vue";
 import { GATEWAY_EVENTS } from "@shared/events";
 import { createGatewayRefreshScheduler } from "@/composables/useGatewayRefreshScheduler";
@@ -162,10 +162,43 @@ async function selectChannel(ch: Channel) {
   minuteStabilityRefresh.request({ immediate: true });
 }
 
+async function selectChannelById(value: string | number) {
+  const channelId = Number(value);
+  const channel = store.channels.find((ch) => ch.id === channelId);
+  if (!channel) return;
+  await selectChannel(channel);
+}
+
+function handleChannelSelect(event: Event) {
+  const target = event.target as HTMLSelectElement | null;
+  if (!target) return;
+  void selectChannelById(target.value);
+}
+
 function openModelManager(channel: Channel) {
   selectedChannelId.value = channel.id;
   modelManagerChannel.value = channel;
   minuteStabilityRefresh.request({ immediate: true });
+}
+
+function openSelectedModelManager() {
+  if (!selectedChannel.value) return;
+  openModelManager(selectedChannel.value);
+}
+
+function editSelectedChannel() {
+  if (!selectedChannel.value) return;
+  void openEdit(selectedChannel.value);
+}
+
+function deleteSelectedChannel() {
+  if (!selectedChannel.value) return;
+  void deleteChannel(selectedChannel.value);
+}
+
+function testSelectedChannel() {
+  if (!selectedChannel.value) return;
+  void testChannel(selectedChannel.value.id);
 }
 
 function closeModelManager() {
@@ -185,8 +218,49 @@ function channelStabilitySummary(channelId: number): string {
   return `${((success / total) * 100).toFixed(1)}%`;
 }
 
+const selectedChannel = computed(
+  () => store.channels.find((channel) => channel.id === selectedChannelId.value) ?? null,
+);
+
+const selectedChannelPoints = computed(() => {
+  if (!selectedChannel.value) return [];
+  return store.channelMinuteStability.get(selectedChannel.value.id) ?? [];
+});
+
+const selectedChannelModelCount = computed(() => {
+  if (!selectedChannel.value) return 0;
+  return channelModelCount(selectedChannel.value.id);
+});
+
+const selectedChannelStability = computed(() => {
+  if (!selectedChannel.value) return "-";
+  return channelStabilitySummary(selectedChannel.value.id);
+});
+
+const selectedChannelTypeLabel = computed(() => {
+  if (!selectedChannel.value) return "";
+  return (
+    typeOptions.find((option) => option.value === selectedChannel.value?.type)?.label ?? "Custom"
+  );
+});
+
+const selectedTestResult = computed(() => {
+  if (!selectedChannel.value) return undefined;
+  return testResults.value.get(selectedChannel.value.id);
+});
+
+const selectedTestLabel = computed(() => {
+  if (selectedTestResult.value?.loading) return "测试中";
+  if (selectedTestResult.value?.success) return "连接成功";
+  if (selectedTestResult.value?.error) return "连接失败";
+  return "未测试";
+});
+
 function autoSelectFirst(channels: Channel[]) {
-  if (!channels.length) return;
+  if (!channels.length) {
+    selectedChannelId.value = null;
+    return;
+  }
   if (!selectedChannelId.value || !channels.some((ch) => ch.id === selectedChannelId.value)) {
     void selectChannel(channels[0]).catch((error) => {
       console.error("Failed to auto-select gateway channel", error);
@@ -213,44 +287,167 @@ onUnmounted(() => {
 <template>
   <div class="flex h-full min-h-0 flex-col overflow-hidden">
     <!-- Header -->
-    <div class="shrink-0 border-b border-border px-4 py-3">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium">供应商</h3>
-        <button
-          class="rounded bg-violet-600 px-3 py-1 text-xs text-white transition-colors hover:bg-violet-500"
-          @click="openCreate"
-        >
-          + 新增渠道
-        </button>
+    <div class="shrink-0 border-b border-[var(--color-border-subtle)] px-4 py-3">
+      <div class="flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <div class="min-w-0">
+          <h3 class="text-sm font-medium text-[var(--color-text-primary)]">供应商</h3>
+          <p class="mt-1 text-xs text-[var(--color-text-muted)]">
+            {{ store.channels.length }} 个供应商渠道
+          </p>
+        </div>
+
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
+          <select
+            data-testid="channel-select"
+            :value="selectedChannelId ?? ''"
+            :disabled="!store.channels.length"
+            class="h-8 min-w-36 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-secondary)] outline-none transition-colors hover:bg-[var(--color-control-hover)] focus:border-[var(--color-accent-brand)] disabled:cursor-not-allowed disabled:opacity-50"
+            @change="handleChannelSelect"
+          >
+            <option v-if="!store.channels.length" value="">暂无供应商</option>
+            <option v-for="channel in store.channels" :key="channel.id" :value="channel.id">
+              {{ channel.name }}
+            </option>
+          </select>
+
+          <button
+            data-testid="channel-test"
+            type="button"
+            :disabled="!selectedChannel || selectedTestResult?.loading"
+            class="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-control-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            title="测试供应商"
+            @click="testSelectedChannel"
+          >
+            <Icon icon="lucide:activity" class="h-3.5 w-3.5" />
+            测试
+          </button>
+
+          <button
+            data-testid="channel-edit"
+            type="button"
+            :disabled="!selectedChannel"
+            class="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-control-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            title="编辑供应商"
+            @click="editSelectedChannel"
+          >
+            <Icon icon="lucide:pencil" class="h-3.5 w-3.5" />
+            编辑
+          </button>
+
+          <button
+            data-testid="channel-delete"
+            type="button"
+            :disabled="!selectedChannel"
+            class="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] border border-[color-mix(in_srgb,var(--color-danger)_42%,transparent)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_12%,var(--color-control))] disabled:cursor-not-allowed disabled:border-[var(--color-border-subtle)] disabled:text-[var(--color-text-muted)] disabled:opacity-50"
+            title="删除供应商"
+            @click="deleteSelectedChannel"
+          >
+            <Icon icon="lucide:trash-2" class="h-3.5 w-3.5" />
+            删除
+          </button>
+
+          <button
+            data-testid="channel-manage-models"
+            type="button"
+            :disabled="!selectedChannel"
+            class="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] border border-[color-mix(in_srgb,var(--color-accent-brand)_42%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-accent-brand)_22%,transparent),var(--color-control))] px-3 text-xs font-semibold text-[var(--color-text-primary)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-accent-brand)_18%,var(--color-control-hover))] disabled:cursor-not-allowed disabled:opacity-50"
+            title="管理模型"
+            @click="openSelectedModelManager"
+          >
+            <Icon icon="lucide:boxes" class="h-3.5 w-3.5" />
+            管理模型
+          </button>
+
+          <button
+            type="button"
+            class="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--color-accent-brand)] px-3 text-xs font-semibold text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-accent-brand-hover)]"
+            @click="openCreate"
+          >
+            <Icon icon="lucide:plus" class="h-3.5 w-3.5" />
+            新增渠道
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto p-4">
-      <div
-        v-if="store.channels.length"
-        class="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3"
-      >
-        <GatewayChannelCard
-          v-for="channel in store.channels"
-          :key="channel.id"
-          :channel="channel"
-          :model-count="channelModelCount(channel.id)"
-          :stability-summary="channelStabilitySummary(channel.id)"
-          :test-result="testResults.get(channel.id)"
-          :selected="selectedChannelId === channel.id"
-          @select="selectChannel"
-          @test="testChannel(channel.id)"
-          @edit="openEdit"
-          @delete="deleteChannel"
-          @manage-models="openModelManager"
+    <div v-if="selectedChannel" class="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
+      <div class="grid shrink-0 grid-cols-1 gap-2 md:grid-cols-3">
+        <div
+          class="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 py-2"
+        >
+          <span class="text-[11px] font-medium text-[var(--color-text-muted)]">当前供应商</span>
+          <div class="mt-1 truncate text-sm font-semibold text-[var(--color-text-primary)]">
+            {{ selectedChannel.name }}
+          </div>
+          <p class="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+            {{ selectedChannelTypeLabel }} · {{ selectedChannel.enabled ? "启用" : "停用" }}
+          </p>
+        </div>
+
+        <div
+          class="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 py-2"
+        >
+          <span class="text-[11px] font-medium text-[var(--color-text-muted)]">模型 / 稳定性</span>
+          <div class="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">
+            {{ selectedChannelModelCount }} 个模型
+          </div>
+          <p class="mt-1 text-xs text-[var(--color-text-muted)]">
+            近30分钟 {{ selectedChannelStability }}
+          </p>
+        </div>
+
+        <div
+          class="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 py-2"
+          :title="selectedTestResult?.error"
+        >
+          <span class="text-[11px] font-medium text-[var(--color-text-muted)]">连接测试</span>
+          <div
+            :class="[
+              'mt-1 text-sm font-semibold',
+              selectedTestResult?.success
+                ? 'text-[var(--color-success)]'
+                : selectedTestResult?.error
+                  ? 'text-[var(--color-danger)]'
+                  : 'text-[var(--color-text-primary)]',
+            ]"
+          >
+            {{ selectedTestLabel }}
+          </div>
+          <p class="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+            {{ selectedTestResult?.error ?? "按需测试当前供应商" }}
+          </p>
+        </div>
+      </div>
+
+      <div class="grid min-h-0 flex-1 grid-cols-1 items-stretch gap-3 lg:grid-cols-2">
+        <ChannelRealtimeChart
+          :points="selectedChannelPoints"
+          metric="availability"
+          compact
+          class="min-h-0"
+        />
+        <ChannelRealtimeChart
+          :points="selectedChannelPoints"
+          metric="latency"
+          compact
+          class="min-h-0"
         />
       </div>
-      <div
-        v-else
-        class="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]"
+    </div>
+
+    <div
+      v-else
+      class="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4 text-sm text-[var(--color-text-muted)]"
+    >
+      <span>暂无渠道</span>
+      <button
+        type="button"
+        class="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--color-accent-brand)] px-3 text-xs font-semibold text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-accent-brand-hover)]"
+        @click="openCreate"
       >
-        暂无渠道
-      </div>
+        <Icon icon="lucide:plus" class="h-3.5 w-3.5" />
+        新增渠道
+      </button>
     </div>
 
     <ModelManagerDialog
