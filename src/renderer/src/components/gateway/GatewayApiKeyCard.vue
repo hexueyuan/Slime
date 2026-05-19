@@ -8,10 +8,12 @@ const props = withDefaults(
     apiKey: GatewayApiKey;
     revealedKey?: string | null;
     copied?: boolean;
+    actions?: boolean;
   }>(),
   {
     revealedKey: null,
     copied: false,
+    actions: true,
   },
 );
 
@@ -86,7 +88,7 @@ function emitDelete() {
         </div>
       </div>
 
-      <div class="flex shrink-0 items-center gap-1">
+      <div v-if="actions" class="flex shrink-0 items-center gap-1">
         <button
           type="button"
           data-testid="key-copy"

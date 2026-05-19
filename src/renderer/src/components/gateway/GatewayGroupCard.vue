@@ -2,11 +2,17 @@
 import { Icon } from "@iconify/vue";
 import type { Group } from "@shared/types/gateway";
 
-const props = defineProps<{
-  group: Group;
-  itemCount?: number | null;
-  channelSummary: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    group: Group;
+    itemCount?: number | null;
+    channelSummary: string;
+    actions?: boolean;
+  }>(),
+  {
+    actions: true,
+  },
+);
 
 const emit = defineEmits<{
   edit: [group: Group];
@@ -46,7 +52,7 @@ function emitDelete() {
         </div>
       </div>
 
-      <div class="flex shrink-0 items-center gap-1">
+      <div v-if="actions" class="flex shrink-0 items-center gap-1">
         <button
           type="button"
           data-testid="group-edit"
