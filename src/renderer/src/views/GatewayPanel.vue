@@ -269,7 +269,7 @@ const modelRankItems = computed(() =>
 
       <!-- Trend chart + Rank board 同行 -->
       <div
-        class="mt-2 grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-[minmax(560px,1fr)_clamp(180px,14vw,240px)_clamp(180px,14vw,240px)]"
+        class="mt-2 grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,200px)_minmax(0,200px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,220px)_minmax(0,220px)]"
       >
         <SlimeRealtimeChart
           v-if="metricsLoaded"
