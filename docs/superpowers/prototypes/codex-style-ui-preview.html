@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Slime UI Preview</title>
@@ -33,8 +33,7 @@
         --shadow-floating: 0 22px 70px rgba(0, 0, 0, 0.42);
         --shadow-panel: 0 12px 38px rgba(0, 0, 0, 0.24);
         color-scheme: dark;
-        font-family:
-          Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
       }
 
       * {
@@ -1288,12 +1287,11 @@
 
       .metric-pill.active {
         border-color: color-mix(in srgb, var(--metric-color, #9b86ff) 48%, transparent);
-        background:
-          linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--metric-color, #9b86ff) 18%, transparent),
-            rgba(255, 255, 255, 0.035)
-          );
+        background: linear-gradient(
+          135deg,
+          color-mix(in srgb, var(--metric-color, #9b86ff) 18%, transparent),
+          rgba(255, 255, 255, 0.035)
+        );
       }
 
       .metric-pill-label {
@@ -1317,7 +1315,6 @@
         font-size: 10px;
         font-weight: 560;
       }
-
 
       .preview-switcher {
         position: sticky;
@@ -1554,16 +1551,25 @@
         <div class="index-hero">
           <div class="index-title">
             <h1>Slime UI 组件库预览</h1>
-            <p>这里用于集中查看 Codex-style 设计系统。大的应用骨架和小的通用组件分开浏览，后续新增组件先放到这里确认效果，再进入真实 Vue 实现。</p>
+            <p>
+              这里用于集中查看 Codex-style
+              设计系统。大的应用骨架和小的通用组件分开浏览，后续新增组件先放到这里确认效果，再进入真实
+              Vue 实现。
+            </p>
           </div>
           <div class="preview-card-grid">
             <a class="preview-card" href="codex-style-layout-preview.html">
               <strong>整体布局预览</strong>
-              <span>查看 AppShell、左侧栏、工作区、顶部工具栏和输入器在完整桌面窗口中的组合效果。</span>
+              <span
+                >查看 AppShell、左侧栏、工作区、顶部工具栏和输入器在完整桌面窗口中的组合效果。</span
+              >
             </a>
             <a class="preview-card" href="codex-style-components-preview.html">
               <strong>基础组件预览</strong>
-              <span>查看按钮、输入、标签、列表项、Agent 卡片、Gateway 图表、排名、日志、勾选和任务管理组件。</span>
+              <span
+                >查看按钮、输入、标签、列表项、Agent 卡片、Gateway
+                图表、排名、日志、勾选和任务管理组件。</span
+              >
             </a>
           </div>
         </div>

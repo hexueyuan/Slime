@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useGatewayStore } from "@/stores/gateway";
 import ApiKeyManagerDialog from "./ApiKeyManagerDialog.vue";
-import GatewayResourceCard from "./GatewayResourceCard.vue";
+import SlimeResourceCard from "@/components/slime/SlimeResourceCard.vue";
 import SlimeButton from "@/components/ui/SlimeButton.vue";
 
 const store = useGatewayStore();
@@ -40,7 +40,7 @@ function expiresLabel(expiresAt?: string) {
     <div class="min-h-0 flex-1 overflow-y-auto">
       <div v-if="store.apiKeys.length" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <div v-for="apiKey in store.apiKeys" :key="apiKey.id" data-testid="api-key-resource-card">
-          <GatewayResourceCard
+          <SlimeResourceCard
             kind="key"
             eyebrow="API Key"
             :title="apiKey.name"

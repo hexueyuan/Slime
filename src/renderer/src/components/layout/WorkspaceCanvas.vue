@@ -33,7 +33,10 @@ const viewMeta = computed(() => {
 </script>
 
 <template>
-  <section class="flex h-full min-w-0 flex-col overflow-hidden bg-[var(--color-app-canvas)]">
+  <section
+    data-testid="workspace-canvas"
+    class="flex h-full min-w-0 flex-col overflow-hidden bg-[var(--color-app-canvas)]"
+  >
     <header
       class="flex h-[44px] shrink-0 items-center justify-between border-b border-[var(--color-border-subtle)] px-5"
       style="-webkit-app-region: drag"
@@ -44,7 +47,10 @@ const viewMeta = computed(() => {
         >
           <Icon :icon="viewMeta.icon" class="h-[17px] w-[17px]" />
         </div>
-        <h1 class="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+        <h1
+          data-testid="workspace-title"
+          class="truncate text-sm font-semibold text-[var(--color-text-primary)]"
+        >
           {{ viewMeta.title }}
         </h1>
       </div>
@@ -66,6 +72,7 @@ const viewMeta = computed(() => {
         />
         <div class="h-[18px] w-px bg-[var(--color-border-subtle)]" />
         <SlimeIconButton
+          data-testid="inspector-toggle"
           icon="lucide:panel-right"
           :title="inspectorOpen ? '隐藏工具面板' : '显示工具面板'"
           size="sm"

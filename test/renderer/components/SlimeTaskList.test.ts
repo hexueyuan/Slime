@@ -10,6 +10,10 @@ describe("SlimeTaskList", () => {
       },
     });
 
+    expect(wrapper.get('[data-component-id="SlimeTaskList"]').attributes("data-layout")).toBe(
+      "adaptive",
+    );
+
     await wrapper.get("button").trigger("click");
 
     expect(wrapper.emitted("selectTask")).toEqual([["task-1"]]);

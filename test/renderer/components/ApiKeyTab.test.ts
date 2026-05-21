@@ -51,10 +51,10 @@ describe("ApiKeyTab", () => {
     const wrapper = mount(ApiKeyTab, { attachTo: document.body });
 
     expect(wrapper.findAll('[data-testid="api-key-resource-card"]')).toHaveLength(2);
-    expect(wrapper.findAll('[data-testid="gateway-resource-card"]')).toHaveLength(2);
+    expect(wrapper.findAll('[data-testid="slime-resource-card"]')).toHaveLength(2);
     expect(
       wrapper
-        .findAll('[data-testid="gateway-resource-card"]')
+        .findAll('[data-testid="slime-resource-card"]')
         .every((card) => card.attributes("data-resource-kind") === "key"),
     ).toBe(true);
     expect(document.body.textContent).toContain("web-client");

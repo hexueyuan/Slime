@@ -104,7 +104,7 @@ describe("ChannelTab first paint behavior", () => {
     await nextTick();
     await nextTick();
 
-    expect(wrapper.get('[data-testid="channel-select"]').element).toHaveProperty("value", "1");
+    expect(wrapper.get('[data-testid="channel-select"]').text()).toContain("Ch1");
     expect(wrapper.findAll('[data-testid="channel-card"]')).toHaveLength(0);
     expect(wrapper.findAll('[data-testid="channel-realtime-chart"]')).toHaveLength(2);
     expect(
@@ -165,12 +165,17 @@ describe("ChannelTab first paint behavior", () => {
     await nextTick();
     invoke.mockClear();
 
-    await wrapper.get('[data-testid="channel-select"]').setValue("2");
+    await wrapper
+      .get('[data-testid="channel-select"] [data-testid="slime-select-trigger"]')
+      .trigger("click");
+    await wrapper
+      .get('[data-testid="channel-select"] [data-testid="slime-select-option-2"]')
+      .trigger("click");
     await flushPromises();
 
     expect(listModelCalls()).toHaveLength(1);
     expect(listModelCalls()[0][3]).toBe(2);
-    expect(wrapper.get('[data-testid="channel-select"]').element).toHaveProperty("value", "2");
+    expect(wrapper.get('[data-testid="channel-select"]').text()).toContain("Ch2");
   });
 
   it("只在打开模型管理时展示模型管理弹窗", async () => {

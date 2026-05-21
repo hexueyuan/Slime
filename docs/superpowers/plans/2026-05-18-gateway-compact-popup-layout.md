@@ -69,6 +69,7 @@
 ## Task 1: GatewayChannelCard
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/GatewayChannelCard.vue`
 - Test: `test/renderer/components/GatewayChannelCard.test.ts`
 
@@ -191,7 +192,9 @@ const emit = defineEmits<{
           </span>
           <span
             class="h-1.5 w-1.5 shrink-0 rounded-full"
-            :class="channel.enabled ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-disabled)]'"
+            :class="
+              channel.enabled ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-disabled)]'
+            "
           />
         </div>
         <div class="mt-1 flex min-w-0 items-center gap-2 text-xs text-[var(--color-text-muted)]">
@@ -294,6 +297,7 @@ git commit -m "feat(gateway): add channel summary card"
 ## Task 2: GatewayModelCard
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/GatewayModelCard.vue`
 - Test: `test/renderer/components/GatewayModelCard.test.ts`
 
@@ -492,6 +496,7 @@ git commit -m "feat(gateway): add model management card"
 ## Task 3: GatewayGroupCard and GatewayApiKeyCard
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/GatewayGroupCard.vue`
 - Create: `src/renderer/src/components/gateway/GatewayApiKeyCard.vue`
 - Test: `test/renderer/components/GatewayGroupCard.test.ts`
@@ -721,7 +726,9 @@ function maskKey(key: string): string {
           </span>
           <span
             class="h-1.5 w-1.5 shrink-0 rounded-full"
-            :class="apiKey.enabled ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-disabled)]'"
+            :class="
+              apiKey.enabled ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-disabled)]'
+            "
           />
           <span
             v-if="apiKey.isInternal"
@@ -796,6 +803,7 @@ git commit -m "feat(gateway): add group and api key cards"
 ## Task 4: GatewayManagerDialog Shell
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/GatewayManagerDialog.vue`
 - Test: `test/renderer/components/GatewayManagerDialog.test.ts`
 
@@ -943,6 +951,7 @@ git commit -m "feat(gateway): add management dialog shell"
 ## Task 5: ModelManagerDialog
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/ModelManagerDialog.vue`
 - Modify: `test/renderer/components/ModelManagerDialog.test.ts`
 
@@ -1186,7 +1195,10 @@ async function deleteModel(model: Model) {
       </button>
     </template>
 
-    <div v-if="showAddModel" class="mb-3 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3">
+    <div
+      v-if="showAddModel"
+      class="mb-3 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
+    >
       <div class="flex min-w-0 items-center gap-2">
         <input
           v-model="newModelName"
@@ -1209,7 +1221,9 @@ async function deleteModel(model: Model) {
           取消
         </button>
       </div>
-      <p v-if="addModelError" class="mt-2 text-xs text-[var(--color-danger)]">{{ addModelError }}</p>
+      <p v-if="addModelError" class="mt-2 text-xs text-[var(--color-danger)]">
+        {{ addModelError }}
+      </p>
     </div>
 
     <p v-if="refreshModelsError" class="mb-3 text-xs text-[var(--color-danger)]">
@@ -1251,6 +1265,7 @@ git commit -m "feat(gateway): add model manager dialog"
 ## Task 6: ChannelTab Card Grid
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/ChannelTab.vue`
 - Modify: `test/renderer/components/ChannelTab.performance.test.ts`
 
@@ -1419,6 +1434,7 @@ git commit -m "refactor(gateway): move channel model management to dialog"
 ## Task 7: GroupManagerDialog and GroupTab Summary
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/GroupManagerDialog.vue`
 - Modify: `src/renderer/src/components/gateway/GroupTab.vue`
 - Modify: `test/renderer/components/GroupTab.test.ts`
@@ -1457,7 +1473,14 @@ describe("GroupManagerDialog", () => {
   it("renders group cards and opens edit dialog", async () => {
     const store = useGatewayStore();
     store.groups = [
-      { id: 1, name: "claude", balanceMode: "failover", isBuiltin: false, createdAt: "", updatedAt: "" },
+      {
+        id: 1,
+        name: "claude",
+        balanceMode: "failover",
+        isBuiltin: false,
+        createdAt: "",
+        updatedAt: "",
+      },
     ];
 
     const wrapper = mount(GroupManagerDialog, {
@@ -1481,7 +1504,14 @@ Modify `test/renderer/components/GroupTab.test.ts`:
 it("shows group summary and opens manager dialog", async () => {
   const store = useGatewayStore();
   store.groups = [
-    { id: 1, name: "cc-auto", balanceMode: "failover", isBuiltin: false, createdAt: "", updatedAt: "" },
+    {
+      id: 1,
+      name: "cc-auto",
+      balanceMode: "failover",
+      isBuiltin: false,
+      createdAt: "",
+      updatedAt: "",
+    },
   ];
 
   const wrapper = mount(GroupTab, { attachTo: document.body });
@@ -1608,21 +1638,35 @@ const customCount = computed(() => store.groups.length - builtinCount.value);
 <template>
   <div class="flex h-full min-h-0 flex-col overflow-hidden p-4">
     <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-      <section class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4">
+      <section
+        class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+      >
         <div class="text-xs text-[var(--color-text-muted)]">分组总数</div>
-        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">{{ store.groups.length }}</div>
+        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
+          {{ store.groups.length }}
+        </div>
       </section>
-      <section class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4">
+      <section
+        class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+      >
         <div class="text-xs text-[var(--color-text-muted)]">内置</div>
-        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">{{ builtinCount }}</div>
+        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
+          {{ builtinCount }}
+        </div>
       </section>
-      <section class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4">
+      <section
+        class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+      >
         <div class="text-xs text-[var(--color-text-muted)]">自定义</div>
-        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">{{ customCount }}</div>
+        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
+          {{ customCount }}
+        </div>
       </section>
     </div>
 
-    <div class="mt-4 flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]">
+    <div
+      class="mt-4 flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]"
+    >
       <button
         data-testid="open-group-manager"
         type="button"
@@ -1658,6 +1702,7 @@ git commit -m "refactor(gateway): move group management to dialog"
 ## Task 8: ApiKeyManagerDialog and ApiKeyTab Summary
 
 **Files:**
+
 - Create: `src/renderer/src/components/gateway/ApiKeyManagerDialog.vue`
 - Modify: `src/renderer/src/components/gateway/ApiKeyTab.vue`
 - Test: `test/renderer/components/ApiKeyManagerDialog.test.ts`
@@ -1697,7 +1742,14 @@ describe("ApiKeyManagerDialog", () => {
   it("renders key cards and creates a revealed key", async () => {
     const store = useGatewayStore();
     store.apiKeys = [
-      { id: 1, name: "internal", key: "sk-internal-secret", enabled: true, isInternal: true, createdAt: "" },
+      {
+        id: 1,
+        name: "internal",
+        key: "sk-internal-secret",
+        enabled: true,
+        isInternal: true,
+        createdAt: "",
+      },
     ];
 
     const wrapper = mount(ApiKeyManagerDialog, {
@@ -1766,7 +1818,8 @@ async function createKey() {
 }
 
 async function copyKey(apiKey: GatewayApiKey) {
-  const text = revealedKey.value && apiKey.key === revealedKey.value ? revealedKey.value : apiKey.key;
+  const text =
+    revealedKey.value && apiKey.key === revealedKey.value ? revealedKey.value : apiKey.key;
   await navigator.clipboard.writeText(text);
   copiedKeyId.value = apiKey.id;
   setTimeout(() => {
@@ -1804,7 +1857,10 @@ async function deleteKey(apiKey: GatewayApiKey) {
       </button>
     </template>
 
-    <div v-if="showCreate" class="mb-3 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3">
+    <div
+      v-if="showCreate"
+      class="mb-3 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3"
+    >
       <div class="flex gap-2">
         <input
           data-testid="key-name-input"
@@ -1824,9 +1880,16 @@ async function deleteKey(apiKey: GatewayApiKey) {
       </div>
     </div>
 
-    <div v-if="revealedKey" class="mb-3 rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[color-mix(in_srgb,var(--color-warning)_10%,transparent)] p-3">
-      <div class="text-xs text-[var(--color-text-muted)]">请复制并妥善保管，关闭后将无法再次查看。</div>
-      <code class="mt-2 block break-all text-xs text-[var(--color-text-primary)]">{{ revealedKey }}</code>
+    <div
+      v-if="revealedKey"
+      class="mb-3 rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[color-mix(in_srgb,var(--color-warning)_10%,transparent)] p-3"
+    >
+      <div class="text-xs text-[var(--color-text-muted)]">
+        请复制并妥善保管，关闭后将无法再次查看。
+      </div>
+      <code class="mt-2 block break-all text-xs text-[var(--color-text-primary)]">{{
+        revealedKey
+      }}</code>
     </div>
 
     <div v-if="store.apiKeys.length" class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
@@ -1865,21 +1928,35 @@ const internalCount = computed(() => store.apiKeys.filter((key) => key.isInterna
 <template>
   <div class="flex h-full min-h-0 flex-col overflow-hidden p-4">
     <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-      <section class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4">
+      <section
+        class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+      >
         <div class="text-xs text-[var(--color-text-muted)]">密钥总数</div>
-        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">{{ store.apiKeys.length }}</div>
+        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
+          {{ store.apiKeys.length }}
+        </div>
       </section>
-      <section class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4">
+      <section
+        class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+      >
         <div class="text-xs text-[var(--color-text-muted)]">启用</div>
-        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">{{ enabledCount }}</div>
+        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
+          {{ enabledCount }}
+        </div>
       </section>
-      <section class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4">
+      <section
+        class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+      >
         <div class="text-xs text-[var(--color-text-muted)]">内置</div>
-        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">{{ internalCount }}</div>
+        <div class="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
+          {{ internalCount }}
+        </div>
       </section>
     </div>
 
-    <div class="mt-4 flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]">
+    <div
+      class="mt-4 flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]"
+    >
       <button
         data-testid="open-key-manager"
         type="button"
@@ -1915,6 +1992,7 @@ git commit -m "refactor(gateway): move api key management to dialog"
 ## Task 9: Compact GatewayPanel Top Overview
 
 **Files:**
+
 - Modify: `src/renderer/src/views/GatewayPanel.vue`
 - Modify: `src/renderer/src/components/slime/SlimeMetricCard.vue`
 - Modify: `src/renderer/src/components/slime/SlimeRealtimeChart.vue`
@@ -2033,10 +2111,8 @@ compact?: boolean;
 - Change chart window height class to:
 
 ```vue
-:class="[
-  'relative mx-3 mb-3 min-w-0 overflow-hidden rounded-[var(--radius-md)]',
-  compact ? 'h-[clamp(112px,16vh,148px)]' : 'h-[148px]',
-]"
+:class="[ 'relative mx-3 mb-3 min-w-0 overflow-hidden rounded-[var(--radius-md)]', compact ?
+'h-[clamp(112px,16vh,148px)]' : 'h-[148px]', ]"
 ```
 
 - Keep metric switching and label behavior unchanged.
@@ -2081,7 +2157,9 @@ In `src/renderer/src/views/GatewayPanel.vue`, make the structure:
         />
       </div>
 
-      <div class="mt-2 grid min-w-0 grid-cols-1 gap-2 2xl:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]">
+      <div
+        class="mt-2 grid min-w-0 grid-cols-1 gap-2 2xl:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]"
+      >
         <SlimeRealtimeChart
           v-if="metricsLoaded"
           compact
@@ -2094,8 +2172,20 @@ In `src/renderer/src/views/GatewayPanel.vue`, make the structure:
           class="h-[clamp(112px,16vh,148px)] rounded-[var(--radius-lg)] bg-[var(--color-control-hover)]"
         />
         <div class="grid min-w-0 gap-2 md:grid-cols-2 2xl:grid-cols-2">
-          <SlimeRankBoard compact title="供应商排名" :items="channelRankItems" :metrics="rankMetrics" :limit="3" />
-          <SlimeRankBoard compact title="模型排名" :items="modelRankItems" :metrics="rankMetrics" :limit="3" />
+          <SlimeRankBoard
+            compact
+            title="供应商排名"
+            :items="channelRankItems"
+            :metrics="rankMetrics"
+            :limit="3"
+          />
+          <SlimeRankBoard
+            compact
+            title="模型排名"
+            :items="modelRankItems"
+            :metrics="rankMetrics"
+            :limit="3"
+          />
         </div>
       </div>
     </div>
@@ -2135,6 +2225,7 @@ git commit -m "refactor(gateway): compact adaptive dashboard overview"
 ## Task 10: LogTab Responsive Grid
 
 **Files:**
+
 - Modify: `src/renderer/src/components/gateway/LogTab.vue`
 - Modify: `test/renderer/components/LogTab.performance.test.ts`
 
@@ -2261,6 +2352,7 @@ git commit -m "refactor(gateway): make log tab responsive"
 ## Task 11: Final Verification
 
 **Files:**
+
 - Verify all modified files.
 
 - [ ] **Step 1: Run formatter**

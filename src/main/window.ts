@@ -22,9 +22,9 @@ export function createMainWindow(): BrowserWindow {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 900,
+    minWidth: 1040,
     icon: iconPath,
-    minHeight: 600,
+    minHeight: 640,
     show: false,
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),

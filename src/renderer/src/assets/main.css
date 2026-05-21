@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 @source '../../../node_modules/markstream-vue/dist/tailwind.ts';
+@source '../**/*.{vue,ts}';
 @import "markstream-vue/index.tailwind.css";
 
 @custom-variant dark (&:is(.dark *));

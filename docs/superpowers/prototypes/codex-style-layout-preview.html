@@ -32,9 +32,14 @@
         --success: #4cd987;
         --shadow-floating: 0 22px 70px rgba(0, 0, 0, 0.42);
         --shadow-panel: 0 12px 38px rgba(0, 0, 0, 0.24);
+        --app-min-width: 1040px;
+        --app-min-height: 640px;
+        --sidebar-surface:
+          radial-gradient(circle at 55% 8%, rgba(255, 255, 255, 0.055), transparent 28%),
+          radial-gradient(circle at 14% 52%, rgba(255, 255, 255, 0.028), transparent 34%),
+          var(--sidebar);
         color-scheme: dark;
-        font-family:
-          Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
       }
 
       * {
@@ -51,10 +56,52 @@
         color: var(--text);
       }
 
+      body.layout-page {
+        overflow: auto;
+      }
+
       button,
       input,
       textarea {
         font: inherit;
+      }
+
+      .layout-preview-shell {
+        display: grid;
+        min-height: 100vh;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .layout-preview-stage {
+        min-height: calc(100vh - 54px);
+        overflow: auto;
+        padding: 24px;
+      }
+
+      .layout-preview-label {
+        width: var(--layout-preview-width, 1280px);
+        min-width: var(--app-min-width);
+        margin: 0 auto 8px;
+        color: var(--text-muted);
+        font-size: 12px;
+        text-align: right;
+      }
+
+      .layout-preview-frame {
+        width: var(--layout-preview-width, 1280px);
+        min-width: var(--app-min-width);
+        height: var(--layout-preview-height, 720px);
+        min-height: var(--app-min-height);
+        margin: 0 auto;
+        overflow: hidden;
+        resize: both;
+        border: 1px solid var(--border-soft);
+        border-radius: 22px;
+        background: var(--sidebar-surface);
+        padding: 12px;
+        transition:
+          width 180ms ease,
+          height 180ms ease;
       }
 
       .window {
@@ -65,16 +112,39 @@
         border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 18px;
         overflow: hidden;
-        background: var(--app);
+        background: var(--sidebar-surface);
+      }
+
+      .layout-preview-frame .window {
+        width: 100%;
+        height: 100%;
+      }
+
+      .layout-preview-frame[data-preset="wide"] {
+        padding: 0;
+        border-color: transparent;
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .layout-preview-frame[data-preset="wide"] .window {
+        border: 0;
+        border-radius: 0;
+      }
+
+      .layout-preview-frame[data-preset="wide"] .traffic {
+        display: none;
       }
 
       .sidebar {
         position: relative;
-        padding: 22px 12px 22px;
-        background:
-          radial-gradient(circle at 55% 8%, rgba(255, 255, 255, 0.055), transparent 28%),
-          radial-gradient(circle at 14% 52%, rgba(255, 255, 255, 0.028), transparent 34%),
-          var(--sidebar);
+        display: flex;
+        height: 100%;
+        min-height: 0;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 18px 12px;
+        background: transparent;
         backdrop-filter: blur(24px);
       }
 
@@ -125,14 +195,29 @@
         align-items: center;
         gap: 14px;
         height: 24px;
-        margin-bottom: 28px;
+        margin-bottom: 18px;
         padding-left: 3px;
       }
 
       .nav-group {
         display: flex;
+        flex-shrink: 0;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
+      }
+
+      .sidebar-scroll {
+        min-height: 0;
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .sidebar-scroll::-webkit-scrollbar {
+        display: none;
       }
 
       .nav-row {
@@ -202,7 +287,7 @@
       }
 
       .section-label {
-        margin: 30px 0 12px;
+        margin: 14px 0 6px;
         padding: 0 8px;
         color: var(--sidebar-dim);
         font-size: 13px;
@@ -214,8 +299,8 @@
         display: flex;
         align-items: center;
         gap: 9px;
-        min-height: 31px;
-        padding: 4px 8px;
+        min-height: 29px;
+        padding: 3px 8px;
         border-radius: 7px;
         color: var(--sidebar-text);
         font-size: 14px;
@@ -249,13 +334,12 @@
       }
 
       .sidebar-footer {
-        position: absolute;
-        right: 18px;
-        bottom: 22px;
-        left: 18px;
         display: flex;
+        flex-shrink: 0;
         flex-direction: column;
         gap: 6px;
+        margin-top: 8px;
+        padding: 6px 6px 0;
       }
 
       .status-button {
@@ -292,7 +376,9 @@
         min-width: 0;
         overflow: hidden;
         border-left: 1px solid var(--border-soft);
+        border-bottom: 1px solid var(--border-soft);
         border-top: 1px solid var(--border-soft);
+        border-bottom-left-radius: 15px;
         border-top-left-radius: 15px;
         background:
           radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.026), transparent 26%),
@@ -325,7 +411,7 @@
 
       .content {
         display: grid;
-        grid-template-columns: minmax(420px, 1fr) 420px;
+        grid-template-columns: minmax(0, 1fr);
         gap: 32px;
         min-height: 0;
         padding: 48px 56px 46px;
@@ -1288,12 +1374,11 @@
 
       .metric-pill.active {
         border-color: color-mix(in srgb, var(--metric-color, #9b86ff) 48%, transparent);
-        background:
-          linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--metric-color, #9b86ff) 18%, transparent),
-            rgba(255, 255, 255, 0.035)
-          );
+        background: linear-gradient(
+          135deg,
+          color-mix(in srgb, var(--metric-color, #9b86ff) 18%, transparent),
+          rgba(255, 255, 255, 0.035)
+        );
       }
 
       .metric-pill-label {
@@ -1317,7 +1402,6 @@
         font-size: 10px;
         font-weight: 560;
       }
-
 
       .preview-switcher {
         position: sticky;
@@ -1379,60 +1463,90 @@
         color: var(--text);
       }
 
+      .device-switcher {
+        display: flex;
+        min-width: 0;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .device-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border: 1px solid var(--border-soft);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.035);
+        padding: 3px;
+      }
+
+      .device-tab {
+        min-height: 26px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--text-muted);
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .device-tab:hover,
+      .device-tab.active {
+        background: var(--control-active);
+        color: var(--text);
+      }
+
+      .device-label {
+        color: var(--text-muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .viewport-size-inputs {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .viewport-size-input {
+        width: 72px;
+        height: 28px;
+        border: 1px solid var(--border-soft);
+        border-radius: 9px;
+        outline: 0;
+        padding: 0 8px;
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .viewport-size-input:focus {
+        border-color: rgba(155, 108, 255, 0.65);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+
+      .viewport-size-separator {
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+
       .layout-page .main,
       .components-page .window,
       .index-page .window {
         overflow: hidden;
       }
 
+      .layout-page .main {
+        grid-template-rows: minmax(0, 1fr);
+      }
+
       .layout-page .content {
-        grid-template-columns: minmax(0, 1fr) 420px;
-        padding-top: 54px;
-      }
-
-      .layout-inspector {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      .layout-card {
-        border: 1px solid var(--border-soft);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.035);
-        padding: 16px;
-        box-shadow: var(--shadow-panel);
-      }
-
-      .layout-card h2 {
-        margin: 0 0 8px;
-        color: var(--text);
-        font-size: 15px;
-      }
-
-      .layout-card p {
-        margin: 0;
-        color: var(--text-muted);
-        font-size: 13px;
-        line-height: 1.65;
-      }
-
-      .layout-frame {
-        display: grid;
-        grid-template-columns: 96px minmax(0, 1fr) 150px;
-        gap: 8px;
-        height: 184px;
-        margin-top: 12px;
-      }
-
-      .layout-frame span {
-        border: 1px solid var(--border-soft);
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.045);
-      }
-
-      .layout-frame span:nth-child(2) {
-        background: var(--accent-soft);
+        grid-template-columns: minmax(0, 1fr);
+        padding-top: 48px;
       }
 
       .components-page body,
@@ -1538,107 +1652,8 @@
     </style>
   </head>
   <body class="layout-page">
-    <main class="window">
-      <aside class="sidebar">
-        <div class="sidebar-top">
-          <div class="traffic" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <button class="chrome-button" title="收拢侧边栏">
-            <svg viewBox="0 0 24 24">
-              <rect x="4" y="5" width="16" height="14" rx="2" />
-              <path d="M9 5v14" />
-            </svg>
-          </button>
-          <button class="chrome-button" title="返回">
-            <svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6" /></svg>
-          </button>
-          <button class="chrome-button" title="前进">
-            <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
-          </button>
-        </div>
-
-        <div class="nav-group">
-          <div class="nav-row active">
-            <span class="icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
-              </svg>
-            </span>
-            新对话
-          </div>
-          <div class="search">
-            <span class="icon">
-              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            </span>
-            <strong>搜索</strong>
-            <span class="kbd">⌘G</span>
-          </div>
-          <div class="nav-row">
-            <span class="icon">
-              <svg viewBox="0 0 24 24">
-                <circle cx="7" cy="7" r="2.5" />
-                <circle cx="17" cy="7" r="2.5" />
-                <circle cx="7" cy="17" r="2.5" />
-                <circle cx="17" cy="17" r="2.5" />
-              </svg>
-            </span>
-            插件
-          </div>
-          <div class="nav-row">
-            <span class="icon">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 8v5l3 2" /></svg>
-            </span>
-            自动化
-          </div>
-          <div class="nav-row">
-            <span class="icon">
-              <svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2" /><path d="M11 18h2" /></svg>
-            </span>
-            设置 Slime 移动版
-          </div>
-        </div>
-
-        <div class="section-label">项目</div>
-        <div class="project-row">
-          <span class="icon">
-            <svg viewBox="0 0 24 24"><path d="M4 9.5h16l-2.2 7H6.2L4 9.5Z" /></svg>
-          </span>
-          Slime
-        </div>
-        <div class="conversation-row active"><strong>对齐第二张图 UI</strong><time>⌘1</time></div>
-        <div class="conversation-row"><strong>实现 runtime profile 数据锁</strong><time>⌘2</time></div>
-        <div class="conversation-row"><strong>优化 gateway 卡顿</strong><time>⌘3</time></div>
-        <div class="conversation-row"><strong>Task 1</strong><time>⌘4</time></div>
-        <div class="conversation-row"><strong>展开显示</strong><time></time></div>
-
-        <div class="section-label">对话</div>
-        <div class="conversation-row"><strong>了解红灯测试</strong><time>⌘8</time></div>
-
-        <div class="sidebar-footer">
-          <button class="status-button" title="测试连接">
-            <span>测试</span>
-            <span class="status-dot"></span>
-          </button>
-          <div class="nav-row">
-            <span class="icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-                <path
-                  d="M19 12a7.8 7.8 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.2 3h-4.4l-.4 2.7a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.5A7.8 7.8 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.7h4.4l.4-2.7a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"
-                />
-              </svg>
-            </span>
-            设置
-          </div>
-        </div>
-      </aside>
-
-      <section class="main">
-        <nav class="preview-switcher">
+    <main class="layout-preview-shell">
+      <nav class="preview-switcher">
         <div class="preview-brand">
           <strong>Slime Codex-style UI Preview</strong>
           <span>统一设计系统预览</span>
@@ -1648,46 +1663,351 @@
           <a class="active" href="codex-style-layout-preview.html">整体布局</a>
           <a class="" href="codex-style-components-preview.html">基础组件</a>
         </div>
+        <div class="device-switcher" aria-label="PC 窗口尺寸预览">
+          <div class="device-tabs">
+            <button
+              class="device-tab active"
+              type="button"
+              data-layout-preset="standard"
+              data-width="1280px"
+              data-height="720px"
+            >
+              标准窗口
+            </button>
+            <button
+              class="device-tab"
+              type="button"
+              data-layout-preset="minimum"
+              data-width="1040px"
+              data-height="640px"
+            >
+              最小窗口
+            </button>
+            <button
+              class="device-tab"
+              type="button"
+              data-layout-preset="wide"
+              data-width="1440px"
+              data-height="900px"
+            >
+              全屏参考
+            </button>
+            <button
+              class="device-tab"
+              type="button"
+              data-layout-preset="compact"
+              data-width="1024px"
+              data-height="640px"
+            >
+              低于最小
+            </button>
+          </div>
+          <div class="viewport-size-inputs" aria-label="手动设置预览尺寸">
+            <input
+              id="layoutWidthInput"
+              class="viewport-size-input"
+              type="number"
+              min="1040"
+              value="1280"
+              aria-label="预览宽度"
+            />
+            <span class="viewport-size-separator">×</span>
+            <input
+              id="layoutHeightInput"
+              class="viewport-size-input"
+              type="number"
+              min="640"
+              value="720"
+              aria-label="预览高度"
+            />
+          </div>
+          <span class="device-label" id="layoutDeviceLabel">标准窗口 · 1280px × 720px</span>
+        </div>
       </nav>
-        <div class="content">
-          <section class="hero">
-            <h1>要在 Slime 中构建什么？</h1>
-            <div class="composer">
-              <textarea readonly>建立一套统一的 Slime UI 设计系统，并先预览基础组件的效果。</textarea>
-              <div class="composer-toolbar">
-                <button class="icon-button">＋</button>
-                <div class="toolbar-meta">
-                  <span class="badge warning">完全访问权限</span>
-                  <span>Slime ▾</span>
-                  <span>本地模式 ▾</span>
-                  <span>brave ▾</span>
-                </div>
-                <button class="send">↑</button>
-              </div>
-            </div>
-          </section>
 
-          <aside class="layout-inspector">
-            <section class="layout-card">
-              <h2>整体布局原则</h2>
-              <p>左侧保持 Codex-like 半透明导航，右侧为圆角工作区。主内容优先服务任务流，顶部工具栏、输入器、右侧工具面板都应保持低噪声和稳定尺寸。</p>
-            </section>
-            <section class="layout-card">
-              <h2>推荐分区</h2>
-              <div class="layout-frame" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
+      <section class="layout-preview-stage">
+        <div class="layout-preview-label" id="layoutPreviewLabel">
+          当前画布：标准窗口 · 1280px × 720px，最小 1040px × 640px
+        </div>
+        <div class="layout-preview-frame" id="layoutPreviewFrame" data-preset="standard">
+          <div class="window">
+            <aside class="sidebar">
+              <div class="sidebar-top">
+                <div class="traffic" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <button class="chrome-button" title="收拢侧边栏">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="4" y="5" width="16" height="14" rx="2" />
+                    <path d="M9 5v14" />
+                  </svg>
+                </button>
+                <button class="chrome-button" title="返回">
+                  <svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6" /></svg>
+                </button>
+                <button class="chrome-button" title="前进">
+                  <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
+                </button>
               </div>
-              <p style="margin-top: 12px">Sidebar / Workspace / Inspector 三段式是复杂工作台的默认骨架；简单页面可以只保留 Sidebar + Workspace。</p>
+
+              <div class="nav-group">
+                <div class="nav-row active">
+                  <span class="icon">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+                    </svg>
+                  </span>
+                  新对话
+                </div>
+                <div class="search">
+                  <span class="icon">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                  </span>
+                  <strong>搜索</strong>
+                  <span class="kbd">⌘G</span>
+                </div>
+                <div class="nav-row">
+                  <span class="icon">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="7" cy="7" r="2.5" />
+                      <circle cx="17" cy="7" r="2.5" />
+                      <circle cx="7" cy="17" r="2.5" />
+                      <circle cx="17" cy="17" r="2.5" />
+                    </svg>
+                  </span>
+                  插件
+                </div>
+                <div class="nav-row">
+                  <span class="icon">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="8" />
+                      <path d="M12 8v5l3 2" />
+                    </svg>
+                  </span>
+                  自动化
+                </div>
+                <div class="nav-row">
+                  <span class="icon">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="8" y="3" width="8" height="18" rx="2" />
+                      <path d="M11 18h2" />
+                    </svg>
+                  </span>
+                  设置 Slime 工作台
+                </div>
+              </div>
+
+              <div class="sidebar-scroll">
+                <div class="section-label">项目</div>
+                <div class="project-row">
+                  <span class="icon">
+                    <svg viewBox="0 0 24 24"><path d="M4 9.5h16l-2.2 7H6.2L4 9.5Z" /></svg>
+                  </span>
+                  Slime
+                </div>
+                <div class="conversation-row active">
+                  <strong>对齐第二张图 UI</strong><time>⌘1</time>
+                </div>
+                <div class="conversation-row">
+                  <strong>实现 runtime profile 数据锁</strong><time>⌘2</time>
+                </div>
+                <div class="conversation-row">
+                  <strong>优化 gateway 卡顿</strong><time>⌘3</time>
+                </div>
+                <div class="conversation-row"><strong>修复窗口尺寸预设</strong><time>⌘4</time></div>
+                <div class="conversation-row"><strong>调整侧边栏滚动</strong><time>⌘5</time></div>
+                <div class="conversation-row">
+                  <strong>迁移 Gateway 资源卡</strong><time>⌘6</time>
+                </div>
+                <div class="conversation-row">
+                  <strong>补齐 Schedule Kit</strong><time>⌘7</time>
+                </div>
+                <div class="conversation-row"><strong>验证最小窗口布局</strong><time>⌘8</time></div>
+                <div class="conversation-row"><strong>整理 UI 组件规范</strong><time>⌘9</time></div>
+
+                <div class="section-label">对话</div>
+                <div class="conversation-row"><strong>了解红灯测试</strong><time>⌘0</time></div>
+                <div class="conversation-row"><strong>排查隐藏滚动条表现</strong><time></time></div>
+                <div class="conversation-row"><strong>设计 Agent 管理页</strong><time></time></div>
+                <div class="conversation-row">
+                  <strong>检查 Chatroom 空状态</strong><time></time>
+                </div>
+                <div class="conversation-row">
+                  <strong>复盘 Gateway 日志密度</strong><time></time>
+                </div>
+                <div class="conversation-row"><strong>确认设置页信息层级</strong><time></time></div>
+              </div>
+
+              <div class="sidebar-footer">
+                <button class="status-button" title="测试连接">
+                  <span>测试</span>
+                  <span class="status-dot"></span>
+                </button>
+                <div class="nav-row">
+                  <span class="icon">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                      <path
+                        d="M19 12a7.8 7.8 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.2 3h-4.4l-.4 2.7a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.5A7.8 7.8 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.7h4.4l.4-2.7a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"
+                      />
+                    </svg>
+                  </span>
+                  设置
+                </div>
+              </div>
+            </aside>
+
+            <section class="main">
+              <div class="content">
+                <section class="hero">
+                  <h1>要在 Slime 中构建什么？</h1>
+                  <div class="composer">
+                    <textarea readonly>
+建立一套统一的 Slime UI 设计系统，并先预览基础组件的效果。</textarea
+                    >
+                    <div class="composer-toolbar">
+                      <button class="icon-button">＋</button>
+                      <div class="toolbar-meta">
+                        <span class="badge warning">完全访问权限</span>
+                        <span>Slime ▾</span>
+                        <span>本地模式 ▾</span>
+                        <span>brave ▾</span>
+                      </div>
+                      <button class="send">↑</button>
+                    </div>
+                  </div>
+                </section>
+              </div>
             </section>
-            <section class="layout-card">
-              <h2>适用页面</h2>
-              <p>Chatroom、GroupChat、Gateway、Agents、Schedule 和 Settings 都应沿用同一窗口外壳，再根据页面任务选择是否展示右侧工具面板。</p>
-            </section>
-          </aside>
+          </div>
         </div>
       </section>
     </main>
+    <script>
+      const APP_MIN_WIDTH = 1040;
+      const APP_MIN_HEIGHT = 640;
+      const layoutPreviewFrame = document.getElementById("layoutPreviewFrame");
+      const layoutDeviceLabel = document.getElementById("layoutDeviceLabel");
+      const layoutPreviewLabel = document.getElementById("layoutPreviewLabel");
+      const layoutWidthInput = document.getElementById("layoutWidthInput");
+      const layoutHeightInput = document.getElementById("layoutHeightInput");
+      const layoutPresetButtons = document.querySelectorAll("[data-layout-preset]");
+      let suppressResizeObserver = false;
+      let suppressResizeObserverTimer = 0;
+      let currentPreviewSize = { width: 1280, height: 720 };
+      let manualInputTimer = 0;
+
+      function normalizePreviewSize(width, height) {
+        return {
+          width: Math.max(APP_MIN_WIDTH, Number.parseInt(width, 10) || APP_MIN_WIDTH),
+          height: Math.max(APP_MIN_HEIGHT, Number.parseInt(height, 10) || APP_MIN_HEIGHT),
+        };
+      }
+
+      function updateLayoutPreviewLabels(label, width, height) {
+        const widthPx = `${width}px`;
+        const heightPx = `${height}px`;
+        layoutWidthInput.value = String(width);
+        layoutHeightInput.value = String(height);
+        layoutDeviceLabel.textContent = `${label} · ${widthPx} × ${heightPx}`;
+        layoutPreviewLabel.textContent = `当前画布：${label} · ${widthPx} × ${heightPx}，最小 1040px × 640px`;
+      }
+
+      function applyLayoutPreviewFrameSize(widthPx, heightPx) {
+        layoutPreviewFrame.style.resize = "none";
+        layoutPreviewFrame.getBoundingClientRect();
+        layoutPreviewFrame.style.width = widthPx;
+        layoutPreviewFrame.style.height = heightPx;
+        layoutPreviewFrame.style.setProperty("--layout-preview-width", widthPx);
+        layoutPreviewFrame.style.setProperty("--layout-preview-height", heightPx);
+        window.requestAnimationFrame(() => {
+          layoutPreviewFrame.style.resize = "both";
+        });
+      }
+
+      function setLayoutPreviewSize(
+        widthValue,
+        heightValue,
+        label = "自定义窗口",
+        activeButton = null,
+      ) {
+        const { width, height } = normalizePreviewSize(widthValue, heightValue);
+        const widthPx = `${width}px`;
+        const heightPx = `${height}px`;
+        currentPreviewSize = { width, height };
+        suppressResizeObserver = true;
+        window.clearTimeout(suppressResizeObserverTimer);
+        suppressResizeObserverTimer = window.setTimeout(() => {
+          suppressResizeObserver = false;
+        }, 260);
+        applyLayoutPreviewFrameSize(widthPx, heightPx);
+        layoutPreviewLabel.style.setProperty("--layout-preview-width", widthPx);
+        updateLayoutPreviewLabels(label, width, height);
+        layoutPreviewFrame.dataset.preset = activeButton?.dataset.layoutPreset ?? "custom";
+        layoutPresetButtons.forEach((item) =>
+          item.classList.toggle("active", item === activeButton),
+        );
+      }
+
+      function setLayoutPreviewPreset(button) {
+        const label = button.textContent?.trim() ?? "标准窗口";
+        setLayoutPreviewSize(button.dataset.width, button.dataset.height, label, button);
+      }
+
+      layoutPresetButtons.forEach((button) => {
+        button.addEventListener("click", () => setLayoutPreviewPreset(button));
+      });
+
+      function commitManualPreviewSize() {
+        window.clearTimeout(manualInputTimer);
+        setLayoutPreviewSize(layoutWidthInput.value, layoutHeightInput.value);
+      }
+
+      [layoutWidthInput, layoutHeightInput].forEach((input) => {
+        input.addEventListener("input", () => {
+          window.clearTimeout(manualInputTimer);
+          manualInputTimer = window.setTimeout(commitManualPreviewSize, 80);
+        });
+        input.addEventListener("change", () => {
+          commitManualPreviewSize();
+        });
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            commitManualPreviewSize();
+            input.blur();
+          }
+        });
+      });
+
+      new ResizeObserver(() => {
+        if (suppressResizeObserver) {
+          return;
+        }
+        const rect = layoutPreviewFrame.getBoundingClientRect();
+        const { width, height } = normalizePreviewSize(
+          Math.round(rect.width),
+          Math.round(rect.height),
+        );
+        if (
+          Math.abs(width - currentPreviewSize.width) <= 1 &&
+          Math.abs(height - currentPreviewSize.height) <= 1
+        ) {
+          return;
+        }
+        currentPreviewSize = { width, height };
+        updateLayoutPreviewLabels("手动调整", width, height);
+        layoutPresetButtons.forEach((item) => item.classList.remove("active"));
+      }).observe(layoutPreviewFrame);
+
+      layoutPresetButtons.forEach((button) => {
+        if (button.classList.contains("active")) setLayoutPreviewPreset(button);
+      });
+    </script>
   </body>
 </html>

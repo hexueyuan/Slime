@@ -46,6 +46,9 @@ describe("SlimeWeekCalendar", () => {
 
     const dayGrid = wrapper.get('[data-testid="week-day-grid"]');
 
+    expect(wrapper.get('[data-component-id="SlimeWeekCalendar"]').attributes("data-layout")).toBe(
+      "adaptive",
+    );
     expect(dayGrid.attributes("data-layout")).toBe("responsive-compact-grid");
     expect(dayGrid.attributes("data-overflow-x")).toBe("none");
   });

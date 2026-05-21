@@ -57,6 +57,7 @@ const { rightWidth, onMouseDown, resetToDefault } = useSplitPane({
   defaultRightPx: 520,
   minLeftPx: 280,
   minRightPx: 420,
+  storageKey: "slime.layout.chatInspectorWidth",
 });
 
 // Function panel state

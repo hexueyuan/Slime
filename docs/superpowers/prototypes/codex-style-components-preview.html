@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -564,6 +564,19 @@
         color: #ffc27d;
       }
 
+      .component-id-label {
+        display: inline-flex;
+        align-items: center;
+        height: 22px;
+        padding: 0 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border-soft);
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 560;
+      }
+
       .list {
         display: flex;
         flex-direction: column;
@@ -747,6 +760,27 @@
         min-height: 3px;
         border-radius: 999px 999px 0 0;
         background: rgba(255, 255, 255, 0.16);
+      }
+
+      .chart-point-label,
+      .chart-axis-label {
+        position: absolute;
+        color: var(--text-muted);
+        font-size: 10px;
+        line-height: 1;
+        pointer-events: none;
+      }
+
+      .chart-point-label {
+        top: 22px;
+        right: 33px;
+        color: var(--text-secondary);
+        font-weight: 600;
+      }
+
+      .chart-axis-label {
+        bottom: 6px;
+        left: 14px;
       }
 
       .agent-grid {
@@ -1635,27 +1669,34 @@
           <a class="" href="codex-style-layout-preview.html">整体布局</a>
           <a class="active" href="codex-style-components-preview.html">基础组件</a>
         </div>
-        <div class="device-switcher" aria-label="设备宽度预览">
+        <div class="device-switcher" aria-label="PC 窗口宽度预览">
           <div class="device-tabs">
             <button
               class="device-tab active"
               type="button"
-              data-device="desktop"
+              data-component-preview-preset="standard"
               data-width="1280px"
             >
-              桌面
+              标准窗口
             </button>
-            <button class="device-tab" type="button" data-device="laptop" data-width="1024px">
-              笔记本
+            <button
+              class="device-tab"
+              type="button"
+              data-component-preview-preset="minimum"
+              data-width="1040px"
+            >
+              最小窗口
             </button>
-            <button class="device-tab" type="button" data-device="tablet" data-width="768px">
-              平板
-            </button>
-            <button class="device-tab" type="button" data-device="mobile" data-width="390px">
-              手机
+            <button
+              class="device-tab"
+              type="button"
+              data-component-preview-preset="wide"
+              data-width="1440px"
+            >
+              全屏参考
             </button>
           </div>
-          <span class="device-label" id="deviceLabel">桌面 · 1280px</span>
+          <span class="device-label" id="deviceLabel">标准窗口 · 1280px</span>
         </div>
       </nav>
       <section class="components-shell">
@@ -1666,7 +1707,7 @@
               <section class="panel">
                 <div class="panel-header">
                   <div class="panel-title">通用按钮</div>
-                  <span class="badge accent">SlimeButton</span>
+                  <span class="component-id-label">SlimeButton</span>
                 </div>
                 <div class="panel-body">
                   <div class="button-row">
@@ -1701,6 +1742,20 @@
                     <span class="badge warning">retrying</span>
                     <span class="badge">tool_call</span>
                   </div>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">选择器</div>
+                  <span class="component-id-label">SlimeSelect</span>
+                </div>
+                <div class="panel-body">
+                  <div
+                    id="slime-select-preview"
+                    data-preview-source="vue-component"
+                    data-component-id="SlimeSelect"
+                  ></div>
                 </div>
               </section>
 
@@ -1761,7 +1816,7 @@
                         <div class="chart-title">实时指标</div>
                         <div class="chart-value">128 req/min</div>
                       </div>
-                      <span class="badge accent">SlimeRealtimeChart</span>
+                      <span class="component-id-label">SlimeRealtimeChart</span>
                     </div>
                     <div class="metric-strip">
                       <div class="metric-pill active" style="--metric-color: #9b86ff">
@@ -1830,6 +1885,8 @@
                         <span style="height: 74%"></span>
                         <span style="height: 57%"></span>
                       </div>
+                      <span class="chart-point-label">34.0K</span>
+                      <span class="chart-axis-label">09:00</span>
                     </div>
                   </div>
                   <div class="list-item">
@@ -1846,7 +1903,7 @@
               <section class="panel">
                 <div class="panel-header">
                   <div class="panel-title">Agent 卡片</div>
-                  <span class="badge accent">SlimeAgentCard</span>
+                  <span class="component-id-label">SlimeAgentCard</span>
                 </div>
                 <div class="panel-body">
                   <div class="agent-grid">
@@ -1908,7 +1965,7 @@
               <section class="panel">
                 <div class="panel-header">
                   <div class="panel-title">Gateway 日志</div>
-                  <span class="badge warning">SlimeLogCard</span>
+                  <span class="component-id-label">SlimeLogCard</span>
                 </div>
                 <div class="panel-body">
                   <div class="log-list">
@@ -1943,7 +2000,7 @@
               <section class="panel">
                 <div class="panel-header">
                   <div class="panel-title">Gateway 排名</div>
-                  <span class="badge accent">SlimeRankBoard</span>
+                  <span class="component-id-label">SlimeRankBoard</span>
                 </div>
                 <div class="panel-body">
                   <div class="rank-list">
@@ -1995,6 +2052,20 @@
 
               <section class="panel">
                 <div class="panel-header">
+                  <div class="panel-title">Gateway 资源卡片</div>
+                  <span class="component-id-label">SlimeResourceCard</span>
+                </div>
+                <div class="panel-body">
+                  <div
+                    id="slime-resource-card-preview"
+                    data-preview-source="vue-component"
+                    data-component-id="SlimeResourceCard"
+                  ></div>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
                   <div class="panel-title">勾选组件</div>
                   <span class="badge">SlimeChecklist</span>
                 </div>
@@ -2039,88 +2110,26 @@
               <section class="panel">
                 <div class="panel-header">
                   <div class="panel-title">任务管理</div>
-                  <span class="badge accent">Schedule Kit</span>
+                  <span class="component-id-label">SlimeWeekCalendar</span>
                 </div>
                 <div class="panel-body">
-                  <div class="week-strip">
-                    <button class="week-nav">‹</button>
-                    <div class="week-days">
-                      <div class="day-cell">
-                        <div class="day-label">周一</div>
-                        <div class="day-number">11</div>
-                        <div class="day-dots"><span></span></div>
-                      </div>
-                      <div class="day-cell">
-                        <div class="day-label">周二</div>
-                        <div class="day-number">12</div>
-                        <div class="day-dots"><span></span><span></span></div>
-                      </div>
-                      <div class="day-cell active">
-                        <div class="day-label">今天</div>
-                        <div class="day-number">15</div>
-                        <div class="day-dots"><span></span><span></span><span></span></div>
-                      </div>
-                      <div class="day-cell">
-                        <div class="day-label">周四</div>
-                        <div class="day-number">16</div>
-                        <div class="day-dots"><span></span></div>
-                      </div>
-                      <div class="day-cell">
-                        <div class="day-label">周五</div>
-                        <div class="day-number">17</div>
-                      </div>
-                      <div class="day-cell">
-                        <div class="day-label">周六</div>
-                        <div class="day-number">18</div>
-                      </div>
-                      <div class="day-cell">
-                        <div class="day-label">周日</div>
-                        <div class="day-number">19</div>
-                      </div>
-                    </div>
-                    <button class="week-nav">›</button>
-                  </div>
+                  <div
+                    id="slime-week-calendar-preview"
+                    data-preview-source="vue-component"
+                    data-component-id="SlimeWeekCalendar"
+                  ></div>
+                  <div style="height: 12px"></div>
                   <div class="schedule-shell">
-                    <div class="task-list">
-                      <div class="task-row">
-                        <div class="task-check"></div>
-                        <div>
-                          <div class="task-title">完成 UI primitives 首轮实现</div>
-                          <div class="task-meta">高优先级 · Chatroom / GroupChat</div>
-                        </div>
-                        <span class="badge warning">今天</span>
-                      </div>
-                      <div class="task-row done">
-                        <div class="task-check">✓</div>
-                        <div>
-                          <div class="task-title">确认 Codex-like 视觉样张</div>
-                          <div class="task-meta">设计基准 · 已完成</div>
-                        </div>
-                        <span class="badge success">done</span>
-                      </div>
-                      <div class="task-row">
-                        <div class="task-check"></div>
-                        <div>
-                          <div class="task-title">补齐 Gateway 图表组件</div>
-                          <div class="task-meta">实时指标 · 排名 · 日志</div>
-                        </div>
-                        <span class="badge">排期</span>
-                      </div>
-                    </div>
-                    <div class="timeline">
-                      <div class="timeline-entry" style="--timeline-color: #9b86ff">
-                        <div class="timeline-time">09:40</div>
-                        <div class="timeline-title">创建设计 spec</div>
-                      </div>
-                      <div class="timeline-entry" style="--timeline-color: #55c7ff">
-                        <div class="timeline-time">14:20</div>
-                        <div class="timeline-title">预览组件样张</div>
-                      </div>
-                      <div class="timeline-entry" style="--timeline-color: #f2b35d">
-                        <div class="timeline-time">16:00</div>
-                        <div class="timeline-title">计划实现任务</div>
-                      </div>
-                    </div>
+                    <div
+                      id="slime-task-list-preview"
+                      data-preview-source="vue-component"
+                      data-component-id="SlimeTaskList"
+                    ></div>
+                    <div
+                      id="slime-timeline-preview"
+                      data-preview-source="vue-component"
+                      data-component-id="SlimeTimeline"
+                    ></div>
                   </div>
                 </div>
               </section>
@@ -2133,9 +2142,9 @@
       const previewFrame = document.getElementById("previewFrame");
       const deviceLabel = document.getElementById("deviceLabel");
       const previewFrameLabel = document.getElementById("previewFrameLabel");
-      const deviceButtons = document.querySelectorAll(".device-tab");
+      const deviceButtons = document.querySelectorAll("[data-component-preview-preset]");
 
-      function setPreviewDevice(button) {
+      function setComponentPreviewWidth(button) {
         const width = button.dataset.width ?? "1280px";
         previewFrame.style.setProperty("--preview-width", width);
         previewFrameLabel.style.setProperty("--preview-width", width);
@@ -2145,8 +2154,9 @@
       }
 
       deviceButtons.forEach((button) => {
-        button.addEventListener("click", () => setPreviewDevice(button));
+        button.addEventListener("click", () => setComponentPreviewWidth(button));
       });
     </script>
+    <script type="module" src="./codex-style-components-preview.ts"></script>
   </body>
 </html>

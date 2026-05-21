@@ -110,6 +110,7 @@ The implementation should match the prototype direction, not copy every HTML cla
 ## Task 1: Add Design Tokens
 
 **Files:**
+
 - Modify: `src/renderer/src/assets/main.css`
 
 - [ ] **Step 1: Add semantic token variables**
@@ -200,8 +201,7 @@ Add this base rule:
 
 ```css
 body {
-  font-family:
-    Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   letter-spacing: 0;
 }
 ```
@@ -226,6 +226,7 @@ git commit -m "style(ui): add codex style tokens"
 ## Task 2: Build Button, Badge, Input, Panel Primitives
 
 **Files:**
+
 - Create: `src/renderer/src/components/ui/SlimeButton.vue`
 - Create: `src/renderer/src/components/ui/SlimeIconButton.vue`
 - Create: `src/renderer/src/components/ui/SlimeBadge.vue`
@@ -239,39 +240,39 @@ Use this prop API:
 
 ```vue
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
-    size?: 'sm' | 'md' | 'lg'
-    disabled?: boolean
-    type?: 'button' | 'submit' | 'reset'
+    variant?: "primary" | "secondary" | "ghost" | "danger";
+    size?: "sm" | "md" | "lg";
+    disabled?: boolean;
+    type?: "button" | "submit" | "reset";
   }>(),
   {
-    variant: 'secondary',
-    size: 'md',
+    variant: "secondary",
+    size: "md",
     disabled: false,
-    type: 'button',
+    type: "button",
   },
-)
+);
 
 const classes = computed(() => [
-  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-sm)] font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-soft)]',
-  'disabled:cursor-not-allowed disabled:border-[var(--color-border-subtle)] disabled:bg-[var(--color-control)] disabled:text-[var(--color-text-disabled)]',
-  props.size === 'sm' && 'h-7 px-2.5 text-xs',
-  props.size === 'md' && 'h-8 px-3 text-[13px]',
-  props.size === 'lg' && 'h-9 px-4 text-sm',
-  props.variant === 'primary' &&
-    'border border-white/10 bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)]',
-  props.variant === 'secondary' &&
-    'border border-[var(--color-border-strong)] bg-[var(--color-control)] text-[var(--color-text-primary)] hover:bg-[var(--color-control-hover)]',
-  props.variant === 'ghost' &&
-    'border border-transparent bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]',
-  props.variant === 'danger' &&
-    'border border-red-400/30 bg-red-500/10 text-[var(--color-danger)] hover:bg-red-500/15',
-])
+  "inline-flex items-center justify-center gap-2 rounded-[var(--radius-sm)] font-medium transition-colors",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-soft)]",
+  "disabled:cursor-not-allowed disabled:border-[var(--color-border-subtle)] disabled:bg-[var(--color-control)] disabled:text-[var(--color-text-disabled)]",
+  props.size === "sm" && "h-7 px-2.5 text-xs",
+  props.size === "md" && "h-8 px-3 text-[13px]",
+  props.size === "lg" && "h-9 px-4 text-sm",
+  props.variant === "primary" &&
+    "border border-white/10 bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)]",
+  props.variant === "secondary" &&
+    "border border-[var(--color-border-strong)] bg-[var(--color-control)] text-[var(--color-text-primary)] hover:bg-[var(--color-control-hover)]",
+  props.variant === "ghost" &&
+    "border border-transparent bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-control-hover)] hover:text-[var(--color-text-primary)]",
+  props.variant === "danger" &&
+    "border border-red-400/30 bg-red-500/10 text-[var(--color-danger)] hover:bg-red-500/15",
+]);
 </script>
 
 <template>
@@ -287,17 +288,17 @@ Use this prop API:
 
 ```vue
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import { Icon } from "@iconify/vue";
 
 withDefaults(
   defineProps<{
-    icon: string
-    title: string
-    size?: 'sm' | 'md'
-    disabled?: boolean
+    icon: string;
+    title: string;
+    size?: "sm" | "md";
+    disabled?: boolean;
   }>(),
-  { size: 'md', disabled: false },
-)
+  { size: "md", disabled: false },
+);
 </script>
 
 <template>
@@ -339,6 +340,7 @@ git commit -m "feat(ui): add core slime primitives"
 ## Task 3: Test and Build `SlimeComposer`
 
 **Files:**
+
 - Create: `test/renderer/components/SlimeComposer.test.ts`
 - Create: `src/renderer/src/components/ui/SlimeComposer.vue`
 
@@ -347,50 +349,50 @@ git commit -m "feat(ui): add core slime primitives"
 Create `test/renderer/components/SlimeComposer.test.ts`:
 
 ```ts
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
-import SlimeComposer from '@/components/ui/SlimeComposer.vue'
+import { mount } from "@vue/test-utils";
+import { describe, expect, it } from "vitest";
+import SlimeComposer from "@/components/ui/SlimeComposer.vue";
 
-describe('SlimeComposer', () => {
-  it('submits trimmed text on Enter and clears the field', async () => {
-    const wrapper = mount(SlimeComposer)
-    const textarea = wrapper.get('textarea')
+describe("SlimeComposer", () => {
+  it("submits trimmed text on Enter and clears the field", async () => {
+    const wrapper = mount(SlimeComposer);
+    const textarea = wrapper.get("textarea");
 
-    await textarea.setValue('  hello slime  ')
-    await textarea.trigger('keydown', { key: 'Enter' })
+    await textarea.setValue("  hello slime  ");
+    await textarea.trigger("keydown", { key: "Enter" });
 
-    expect(wrapper.emitted('submit')).toEqual([['hello slime']])
-    expect((textarea.element as HTMLTextAreaElement).value).toBe('')
-  })
+    expect(wrapper.emitted("submit")).toEqual([["hello slime"]]);
+    expect((textarea.element as HTMLTextAreaElement).value).toBe("");
+  });
 
-  it('does not submit on Shift+Enter', async () => {
-    const wrapper = mount(SlimeComposer)
-    const textarea = wrapper.get('textarea')
+  it("does not submit on Shift+Enter", async () => {
+    const wrapper = mount(SlimeComposer);
+    const textarea = wrapper.get("textarea");
 
-    await textarea.setValue('hello')
-    await textarea.trigger('keydown', { key: 'Enter', shiftKey: true })
+    await textarea.setValue("hello");
+    await textarea.trigger("keydown", { key: "Enter", shiftKey: true });
 
-    expect(wrapper.emitted('submit')).toBeUndefined()
-  })
+    expect(wrapper.emitted("submit")).toBeUndefined();
+  });
 
-  it('emits stop while streaming', async () => {
-    const wrapper = mount(SlimeComposer, { props: { isStreaming: true } })
+  it("emits stop while streaming", async () => {
+    const wrapper = mount(SlimeComposer, { props: { isStreaming: true } });
 
-    await wrapper.get('[data-testid="composer-stop"]').trigger('click')
+    await wrapper.get('[data-testid="composer-stop"]').trigger("click");
 
-    expect(wrapper.emitted('stop')).toEqual([[]])
-  })
+    expect(wrapper.emitted("stop")).toEqual([[]]);
+  });
 
-  it('does not submit when disabled', async () => {
-    const wrapper = mount(SlimeComposer, { props: { disabled: true } })
-    const textarea = wrapper.get('textarea')
+  it("does not submit when disabled", async () => {
+    const wrapper = mount(SlimeComposer, { props: { disabled: true } });
+    const textarea = wrapper.get("textarea");
 
-    await textarea.setValue('blocked')
-    await textarea.trigger('keydown', { key: 'Enter' })
+    await textarea.setValue("blocked");
+    await textarea.trigger("keydown", { key: "Enter" });
 
-    expect(wrapper.emitted('submit')).toBeUndefined()
-  })
-})
+    expect(wrapper.emitted("submit")).toBeUndefined();
+  });
+});
 ```
 
 - [ ] **Step 2: Run tests to verify RED**
@@ -408,28 +410,28 @@ Implement props:
 ```ts
 withDefaults(
   defineProps<{
-    placeholder?: string
-    disabled?: boolean
-    isStreaming?: boolean
-    meta?: string
+    placeholder?: string;
+    disabled?: boolean;
+    isStreaming?: boolean;
+    meta?: string;
   }>(),
   {
-    placeholder: '输入消息...',
+    placeholder: "输入消息...",
     disabled: false,
     isStreaming: false,
-    meta: '',
+    meta: "",
   },
-)
+);
 ```
 
 Implement events:
 
 ```ts
 const emit = defineEmits<{
-  submit: [text: string]
-  stop: []
-  'add-files': []
-}>()
+  submit: [text: string];
+  stop: [];
+  "add-files": [];
+}>();
 ```
 
 The template must include:
@@ -444,7 +446,12 @@ The template must include:
   @input="autoResize"
 />
 <button v-if="isStreaming" data-testid="composer-stop" @click="emit('stop')">...</button>
-<button v-else data-testid="composer-send" :disabled="!inputText.trim() || disabled" @click="submit">...</button>
+<button
+  v-else
+  data-testid="composer-send"
+  :disabled="!inputText.trim() || disabled"
+  @click="submit"
+>...</button>
 ```
 
 - [ ] **Step 4: Run tests to verify GREEN**
@@ -465,6 +472,7 @@ git commit -m "feat(ui): add shared composer"
 ## Task 4: Test and Build `SlimeChecklist`
 
 **Files:**
+
 - Create: `test/renderer/components/SlimeChecklist.test.ts`
 - Create: `src/renderer/src/components/ui/SlimeChecklist.vue`
 
@@ -473,49 +481,49 @@ git commit -m "feat(ui): add shared composer"
 Create `test/renderer/components/SlimeChecklist.test.ts`:
 
 ```ts
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
-import SlimeChecklist from '@/components/ui/SlimeChecklist.vue'
+import { mount } from "@vue/test-utils";
+import { describe, expect, it } from "vitest";
+import SlimeChecklist from "@/components/ui/SlimeChecklist.vue";
 
-describe('SlimeChecklist', () => {
-  it('emits toggle when a checkbox row is clicked', async () => {
+describe("SlimeChecklist", () => {
+  it("emits toggle when a checkbox row is clicked", async () => {
     const wrapper = mount(SlimeChecklist, {
       props: {
         items: [
           {
-            id: 'mcp',
-            title: '启用 MCP 工具',
-            description: '允许当前 Agent 调用已授权的外部工具',
+            id: "mcp",
+            title: "启用 MCP 工具",
+            description: "允许当前 Agent 调用已授权的外部工具",
             checked: true,
           },
         ],
       },
-    })
+    });
 
-    await wrapper.get('[data-testid="check-row-mcp"]').trigger('click')
+    await wrapper.get('[data-testid="check-row-mcp"]').trigger("click");
 
-    expect(wrapper.emitted('toggle')).toEqual([['mcp', false]])
-  })
+    expect(wrapper.emitted("toggle")).toEqual([["mcp", false]]);
+  });
 
-  it('emits toggle for switch rows', async () => {
+  it("emits toggle for switch rows", async () => {
     const wrapper = mount(SlimeChecklist, {
       props: {
         items: [
           {
-            id: 'router',
-            title: '智能路由',
+            id: "router",
+            title: "智能路由",
             checked: false,
-            control: 'switch',
+            control: "switch",
           },
         ],
       },
-    })
+    });
 
-    await wrapper.get('[data-testid="check-row-router"]').trigger('click')
+    await wrapper.get('[data-testid="check-row-router"]').trigger("click");
 
-    expect(wrapper.emitted('toggle')).toEqual([['router', true]])
-  })
-})
+    expect(wrapper.emitted("toggle")).toEqual([["router", true]]);
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify RED**
@@ -532,22 +540,22 @@ Use this public item type:
 
 ```ts
 export type SlimeChecklistItem = {
-  id: string
-  title: string
-  description?: string
-  checked: boolean
-  disabled?: boolean
-  badge?: string
-  control?: 'checkbox' | 'switch'
-}
+  id: string;
+  title: string;
+  description?: string;
+  checked: boolean;
+  disabled?: boolean;
+  badge?: string;
+  control?: "checkbox" | "switch";
+};
 ```
 
 Use this event signature:
 
 ```ts
 const emit = defineEmits<{
-  toggle: [id: string, checked: boolean]
-}>()
+  toggle: [id: string, checked: boolean];
+}>();
 ```
 
 Rows must include:
@@ -583,6 +591,7 @@ git commit -m "feat(ui): add shared checklist"
 ## Task 5: Build App Shell and Sidebar
 
 **Files:**
+
 - Create: `src/renderer/src/components/layout/AppShell.vue`
 - Create: `src/renderer/src/components/layout/AppSidebarNav.vue`
 - Create: `src/renderer/src/components/layout/WorkspaceCanvas.vue`
@@ -594,26 +603,26 @@ git commit -m "feat(ui): add shared checklist"
 Create `test/renderer/components/AppSidebarNav.test.ts`:
 
 ```ts
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
-import AppSidebarNav from '@/components/layout/AppSidebarNav.vue'
+import { mount } from "@vue/test-utils";
+import { describe, expect, it } from "vitest";
+import AppSidebarNav from "@/components/layout/AppSidebarNav.vue";
 
-describe('AppSidebarNav', () => {
-  it('emits active view updates from primary navigation', async () => {
+describe("AppSidebarNav", () => {
+  it("emits active view updates from primary navigation", async () => {
     const wrapper = mount(AppSidebarNav, {
-      props: { activeView: 'chatroom' },
+      props: { activeView: "chatroom" },
       global: {
         stubs: {
           SettingsDialog: true,
         },
       },
-    })
+    });
 
-    await wrapper.get('[data-testid="sidebar-groupchat"]').trigger('click')
+    await wrapper.get('[data-testid="sidebar-groupchat"]').trigger("click");
 
-    expect(wrapper.emitted('update:activeView')).toEqual([['groupchat']])
-  })
-})
+    expect(wrapper.emitted("update:activeView")).toEqual([["groupchat"]]);
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify RED**
@@ -630,9 +639,13 @@ Use the approved structure:
 
 ```vue
 <template>
-  <div class="grid h-screen w-screen grid-cols-[330px_minmax(0,1fr)] overflow-hidden rounded-[18px] border border-[var(--color-border-strong)] bg-[var(--color-app)] text-[var(--color-text-primary)]">
+  <div
+    class="grid h-screen w-screen grid-cols-[330px_minmax(0,1fr)] overflow-hidden rounded-[18px] border border-[var(--color-border-strong)] bg-[var(--color-app)] text-[var(--color-text-primary)]"
+  >
     <slot name="sidebar" />
-    <main class="min-w-0 overflow-hidden rounded-tl-[15px] border-l border-t border-[var(--color-border-subtle)] bg-[var(--color-app-canvas)]">
+    <main
+      class="min-w-0 overflow-hidden rounded-tl-[15px] border-l border-t border-[var(--color-border-subtle)] bg-[var(--color-app-canvas)]"
+    >
       <slot />
     </main>
   </div>
@@ -697,6 +710,7 @@ git commit -m "feat(ui): add codex style app shell"
 ## Task 6: Migrate Chatroom
 
 **Files:**
+
 - Modify: `src/renderer/src/views/ChatroomPanel.vue`
 - Modify: `src/renderer/src/components/chat/SessionList.vue`
 - Modify: `src/renderer/src/components/chat/NewThread.vue`
@@ -718,9 +732,9 @@ Replace bottom `NewThreadInput` with `SlimeComposer`. Preserve:
 
 ```ts
 async function onSend(content: string) {
-  if (!selectedAgentId.value) return
-  const session = await sessionStore.createSession(selectedAgentId.value)
-  await chatStore.sendMessage(session.id, content)
+  if (!selectedAgentId.value) return;
+  const session = await sessionStore.createSession(selectedAgentId.value);
+  await chatStore.sendMessage(session.id, content);
 }
 ```
 
@@ -771,6 +785,7 @@ git commit -m "feat(ui): migrate chatroom to shared components"
 ## Task 7: Migrate GroupChat
 
 **Files:**
+
 - Modify: `src/renderer/src/views/GroupChatPanel.vue`
 - Modify: `src/renderer/src/components/groupchat/GroupSessionList.vue`
 - Modify: `src/renderer/src/components/groupchat/NewGroupThread.vue`
@@ -795,7 +810,7 @@ await sessionStore.createSession(
   selectedAgentIds.value,
   moderatorEnabled.value,
   workspacePaths.value,
-)
+);
 ```
 
 - [ ] **Step 3: Update `GroupChatInput.vue`**
@@ -807,8 +822,8 @@ Use `SlimeComposer` while preserving mention dropdown and `send(content, mention
 Use shared list rows. Preserve detached-window logic:
 
 ```ts
-window.electron.ipcRenderer.invoke('group_chat:open_detached', sessionId)
-window.electron.ipcRenderer.invoke('group_chat:focus_detached', sessionId)
+window.electron.ipcRenderer.invoke("group_chat:open_detached", sessionId);
+window.electron.ipcRenderer.invoke("group_chat:focus_detached", sessionId);
 ```
 
 - [ ] **Step 5: Verify GroupChat**
@@ -831,6 +846,7 @@ git commit -m "feat(ui): migrate group chat to shared components"
 ## Task 8: Build Gateway Components and Migrate Gateway
 
 **Files:**
+
 - Create: `src/renderer/src/components/slime/SlimeRealtimeChart.vue`
 - Create: `src/renderer/src/components/slime/SlimeRankBoard.vue`
 - Create: `src/renderer/src/components/slime/SlimeLogCard.vue`
@@ -856,24 +872,24 @@ Props:
 
 ```ts
 type Metric = {
-  id: string
-  label: string
-  value: string
-  trend?: string
-  color?: string
-}
+  id: string;
+  label: string;
+  value: string;
+  trend?: string;
+  color?: string;
+};
 
 defineProps<{
-  title: string
-  metrics: Metric[]
-  activeMetricId: string
-}>()
+  title: string;
+  metrics: Metric[];
+  activeMetricId: string;
+}>();
 ```
 
 Events:
 
 ```ts
-const emit = defineEmits<{ 'update:activeMetricId': [id: string] }>()
+const emit = defineEmits<{ "update:activeMetricId": [id: string] }>();
 ```
 
 - [ ] **Step 3: Implement `SlimeRankBoard.vue`**
@@ -882,13 +898,13 @@ Props:
 
 ```ts
 type RankItem = {
-  id: string
-  title: string
-  value: string
-  caption: string
-  percent: number
-  status?: string
-}
+  id: string;
+  title: string;
+  value: string;
+  caption: string;
+  percent: number;
+  status?: string;
+};
 ```
 
 - [ ] **Step 4: Implement `SlimeLogCard.vue`**
@@ -896,14 +912,14 @@ type RankItem = {
 Props:
 
 ```ts
-type LogTone = 'ok' | 'warn' | 'error' | 'neutral'
+type LogTone = "ok" | "warn" | "error" | "neutral";
 defineProps<{
-  statusCode: string | number
-  tone: LogTone
-  title: string
-  meta: string
-  badge?: string
-}>()
+  statusCode: string | number;
+  tone: LogTone;
+  title: string;
+  meta: string;
+  badge?: string;
+}>();
 ```
 
 - [ ] **Step 5: Migrate Gateway panels**
@@ -931,6 +947,7 @@ git commit -m "feat(ui): migrate gateway dashboard components"
 ## Task 9: Build Schedule Components and Migrate Schedule
 
 **Files:**
+
 - Create: `test/renderer/components/SlimeWeekCalendar.test.ts`
 - Create: `src/renderer/src/components/slime/SlimeWeekCalendar.vue`
 - Create: `src/renderer/src/components/slime/SlimeTaskList.vue`
@@ -945,27 +962,27 @@ git commit -m "feat(ui): migrate gateway dashboard components"
 Create:
 
 ```ts
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
-import SlimeWeekCalendar from '@/components/slime/SlimeWeekCalendar.vue'
+import { mount } from "@vue/test-utils";
+import { describe, expect, it } from "vitest";
+import SlimeWeekCalendar from "@/components/slime/SlimeWeekCalendar.vue";
 
-describe('SlimeWeekCalendar', () => {
-  it('emits navigation and date selection events', async () => {
+describe("SlimeWeekCalendar", () => {
+  it("emits navigation and date selection events", async () => {
     const days = [
-      { id: '2026-05-11', label: '周一', number: '11', dots: 1 },
-      { id: '2026-05-12', label: '周二', number: '12', dots: 0 },
-    ]
+      { id: "2026-05-11", label: "周一", number: "11", dots: 1 },
+      { id: "2026-05-12", label: "周二", number: "12", dots: 0 },
+    ];
     const wrapper = mount(SlimeWeekCalendar, {
-      props: { days, selectedDayId: '2026-05-11' },
-    })
+      props: { days, selectedDayId: "2026-05-11" },
+    });
 
-    await wrapper.get('[data-testid="week-next"]').trigger('click')
-    await wrapper.get('[data-testid="day-2026-05-12"]').trigger('click')
+    await wrapper.get('[data-testid="week-next"]').trigger("click");
+    await wrapper.get('[data-testid="day-2026-05-12"]').trigger("click");
 
-    expect(wrapper.emitted('next')).toEqual([[]])
-    expect(wrapper.emitted('select')).toEqual([['2026-05-12']])
-  })
-})
+    expect(wrapper.emitted("next")).toEqual([[]]);
+    expect(wrapper.emitted("select")).toEqual([["2026-05-12"]]);
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify RED**
@@ -1003,6 +1020,7 @@ git commit -m "feat(ui): add schedule components"
 ## Task 10: Migrate Agents, Settings, and Function Panels
 
 **Files:**
+
 - Create: `src/renderer/src/components/slime/SlimeAgentCard.vue`
 - Create: `src/renderer/src/components/slime/SlimeProfileCard.vue`
 - Modify: `src/renderer/src/views/AgentPanel.vue`
@@ -1018,23 +1036,23 @@ git commit -m "feat(ui): add schedule components"
 
 ```ts
 defineProps<{
-  name: string
-  role?: string
-  description?: string
-  selected?: boolean
-  disabled?: boolean
-}>()
+  name: string;
+  role?: string;
+  description?: string;
+  selected?: boolean;
+  disabled?: boolean;
+}>();
 ```
 
 `SlimeProfileCard.vue` props:
 
 ```ts
 defineProps<{
-  title: string
-  subtitle?: string
-  description?: string
-  kind?: 'user' | 'agent'
-}>()
+  title: string;
+  subtitle?: string;
+  description?: string;
+  kind?: "user" | "agent";
+}>();
 ```
 
 - [ ] **Step 2: Migrate Agent management**
@@ -1068,6 +1086,7 @@ git commit -m "feat(ui): migrate agent and settings surfaces"
 ## Task 11: Final Verification and Visual QA
 
 **Files:**
+
 - Modify only files needed to fix issues found during verification.
 
 - [ ] **Step 1: Run format**

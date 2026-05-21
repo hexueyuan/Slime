@@ -50,6 +50,7 @@ onBeforeUnmount(() => {
 
       <template v-if="$slots.right">
         <div
+          data-testid="split-resize-handle"
           :class="[
             'group relative flex shrink-0 cursor-col-resize items-center justify-center bg-[var(--color-border-subtle)] transition-[width,opacity,background-color] duration-300 ease-out hover:bg-[var(--color-border-strong)]',
             rightOpen ? 'w-px opacity-100' : 'w-0 opacity-0 pointer-events-none',

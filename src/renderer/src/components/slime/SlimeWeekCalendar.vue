@@ -3,7 +3,19 @@ import { Icon } from "@iconify/vue";
 import { computed, ref } from "vue";
 import SlimeBadge from "@/components/ui/SlimeBadge.vue";
 
-const props = defineProps<{ selectedDate: string }>();
+const props = withDefaults(
+  defineProps<{
+    selectedDate: string;
+    title?: string;
+    badge?: string;
+    showHeader?: boolean;
+  }>(),
+  {
+    title: "任务管理",
+    badge: "Schedule Kit",
+    showHeader: true,
+  },
+);
 const emit = defineEmits<{ "update:selectedDate": [date: string] }>();
 
 const LABELS = ["周一", "周二", "今天", "周四", "周五", "周六", "周日"];
@@ -48,11 +60,13 @@ function moveWeek(delta: number): void {
 
 <template>
   <section
+    data-component-id="SlimeWeekCalendar"
+    data-layout="adaptive"
     class="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3 sm:p-4"
   >
-    <div class="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
-      <h2 class="min-w-0 text-lg font-semibold text-[var(--color-text-primary)]">任务管理</h2>
-      <SlimeBadge variant="accent">Schedule Kit</SlimeBadge>
+    <div v-if="showHeader" class="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
+      <h2 class="min-w-0 text-lg font-semibold text-[var(--color-text-primary)]">{{ title }}</h2>
+      <SlimeBadge variant="accent">{{ badge }}</SlimeBadge>
     </div>
 
     <div class="grid min-w-0 grid-cols-[34px_minmax(0,1fr)_34px] items-center gap-2">

@@ -44,6 +44,7 @@
 ## Task 1: Add Behavior Tests for Responsive Component Contracts
 
 **Files:**
+
 - Create: `test/renderer/components/SlimeAgentCard.test.ts`
 - Modify: `test/renderer/components/SlimeWeekCalendar.test.ts`
 - Modify: `test/renderer/components/SlimeRankBoard.test.ts`
@@ -173,30 +174,30 @@ Expected: FAIL because `data-testid="week-day-grid"` and `data-testid="week-day-
 In `test/renderer/components/SlimeRankBoard.test.ts`, append this test inside the existing `describe` block:
 
 ```ts
-  it("marks metric controls as wrap-capable", () => {
-    const wrapper = mount(SlimeRankBoard, {
-      props: {
-        title: "模型排名",
-        metrics: [
-          { value: "requests", label: "请求" },
-          { value: "cost", label: "费用" },
-          { value: "tokens", label: "Token" },
-        ],
-        items: [
-          {
-            id: "claude",
-            label: "Claude",
-            values: { requests: "8", cost: "$0.300", tokens: "1.2k" },
-            sortValues: { requests: 8, cost: 0.3, tokens: 1200 },
-          },
-        ],
-      },
-    });
-
-    const metricTabs = wrapper.get('[data-testid="rank-metric-tabs"]');
-
-    expect(metricTabs.attributes("data-layout")).toBe("wrap");
+it("marks metric controls as wrap-capable", () => {
+  const wrapper = mount(SlimeRankBoard, {
+    props: {
+      title: "模型排名",
+      metrics: [
+        { value: "requests", label: "请求" },
+        { value: "cost", label: "费用" },
+        { value: "tokens", label: "Token" },
+      ],
+      items: [
+        {
+          id: "claude",
+          label: "Claude",
+          values: { requests: "8", cost: "$0.300", tokens: "1.2k" },
+          sortValues: { requests: 8, cost: 0.3, tokens: 1200 },
+        },
+      ],
+    },
   });
+
+  const metricTabs = wrapper.get('[data-testid="rank-metric-tabs"]');
+
+  expect(metricTabs.attributes("data-layout")).toBe("wrap");
+});
 ```
 
 - [ ] **Step 6: Run the RankBoard test and verify the new contract fails**
@@ -222,6 +223,7 @@ Expected: the test files are visible as unstaged or staged local changes. They a
 ## Task 2: Make Shared Slime Components Width-Adaptive
 
 **Files:**
+
 - Modify: `src/renderer/src/components/slime/SlimeAgentCard.vue`
 - Modify: `src/renderer/src/components/slime/SlimeWeekCalendar.vue`
 - Modify: `src/renderer/src/components/slime/SlimeRankBoard.vue`
@@ -238,13 +240,15 @@ Expected: the test files are visible as unstaged or staged local changes. They a
 In `src/renderer/src/components/slime/SlimeAgentCard.vue`, replace the root button class string:
 
 ```vue
-'group relative min-h-[88px] w-[260px] overflow-hidden rounded-[11px] border px-[11px] py-[11px] text-left transition-colors',
+'group relative min-h-[88px] w-[260px] overflow-hidden rounded-[11px] border px-[11px] py-[11px]
+text-left transition-colors',
 ```
 
 with:
 
 ```vue
-'group relative min-h-[88px] w-full min-w-0 overflow-hidden rounded-[11px] border px-[11px] py-[11px] text-left transition-colors',
+'group relative min-h-[88px] w-full min-w-0 overflow-hidden rounded-[11px] border px-[11px]
+py-[11px] text-left transition-colors',
 ```
 
 Then replace:
@@ -269,7 +273,9 @@ In `src/renderer/src/components/slime/SlimeWeekCalendar.vue`, replace the entire
     class="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3 sm:p-4"
   >
     <div class="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
-      <h2 class="min-w-0 truncate text-base font-semibold text-[var(--color-text-primary)] sm:text-lg">
+      <h2
+        class="min-w-0 truncate text-base font-semibold text-[var(--color-text-primary)] sm:text-lg"
+      >
         任务管理
       </h2>
       <SlimeBadge variant="accent">Schedule Kit</SlimeBadge>
@@ -306,7 +312,9 @@ In `src/renderer/src/components/slime/SlimeWeekCalendar.vue`, replace the entire
           <span class="block truncate text-[10px] font-medium text-[var(--color-text-muted)]">
             {{ day.label }}
           </span>
-          <span class="mt-1 block text-[15px] font-semibold text-[var(--color-text-primary)] sm:mt-1.5 sm:text-[17px]">
+          <span
+            class="mt-1 block text-[15px] font-semibold text-[var(--color-text-primary)] sm:mt-1.5 sm:text-[17px]"
+          >
             {{ day.dayNum }}
           </span>
           <span v-if="day.dots > 0" class="mt-1 flex gap-[3px] sm:mt-1.5">
@@ -382,7 +390,9 @@ Then replace:
 with:
 
 ```vue
-<span class="max-w-[96px] shrink-0 truncate text-right text-xs font-medium text-[var(--color-text-primary)]">
+<span
+  class="max-w-[96px] shrink-0 truncate text-right text-xs font-medium text-[var(--color-text-primary)]"
+>
   {{ item.value }}
 </span>
 ```
@@ -392,13 +402,15 @@ with:
 In `src/renderer/src/components/slime/SlimeRealtimeChart.vue`, replace the root section class:
 
 ```vue
-class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-4"
+class="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)]
+bg-[var(--color-control)] p-4"
 ```
 
 with:
 
 ```vue
-class="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] p-3 sm:p-4"
+class="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)]
+bg-[var(--color-control)] p-3 sm:p-4"
 ```
 
 Replace:
@@ -418,13 +430,15 @@ with:
 Replace the metric chip button class string:
 
 ```vue
-'inline-flex h-7 items-center gap-2 rounded-full border px-2.5 text-xs font-medium transition-colors',
+'inline-flex h-7 items-center gap-2 rounded-full border px-2.5 text-xs font-medium
+transition-colors',
 ```
 
 with:
 
 ```vue
-'inline-flex min-w-0 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+'inline-flex min-w-0 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium
+transition-colors',
 ```
 
 Replace:
@@ -460,13 +474,17 @@ with:
 In `src/renderer/src/components/slime/SlimeMetricCard.vue`, replace:
 
 ```vue
-class="min-w-0 rounded-[var(--radius-lg)] border border-[color-mix(in_srgb,var(--metric-color)_24%,var(--color-border-subtle))] bg-[color-mix(in_srgb,var(--metric-color)_10%,var(--color-control))] p-3"
+class="min-w-0 rounded-[var(--radius-lg)] border
+border-[color-mix(in_srgb,var(--metric-color)_24%,var(--color-border-subtle))]
+bg-[color-mix(in_srgb,var(--metric-color)_10%,var(--color-control))] p-3"
 ```
 
 with:
 
 ```vue
-class="w-full min-w-0 rounded-[var(--radius-lg)] border border-[color-mix(in_srgb,var(--metric-color)_24%,var(--color-border-subtle))] bg-[color-mix(in_srgb,var(--metric-color)_10%,var(--color-control))] p-3"
+class="w-full min-w-0 rounded-[var(--radius-lg)] border
+border-[color-mix(in_srgb,var(--metric-color)_24%,var(--color-border-subtle))]
+bg-[color-mix(in_srgb,var(--metric-color)_10%,var(--color-control))] p-3"
 ```
 
 - [ ] **Step 6: Run targeted component tests**
@@ -503,6 +521,7 @@ Expected: commit succeeds.
 ## Task 3: Update High-Risk Page Layouts
 
 **Files:**
+
 - Modify: `src/renderer/src/views/GatewayPanel.vue`
 - Modify: `src/renderer/src/views/SchedulePanel.vue`
 - Modify: `src/renderer/src/components/chat/NewThread.vue`
@@ -709,6 +728,7 @@ Expected: commit succeeds.
 ## Task 4: Add Device Width Switcher to the Static Components Preview
 
 **Files:**
+
 - Modify: `docs/superpowers/prototypes/codex-style-components-preview.html`
 - Create: `test/renderer/prototypes/codex-style-components-preview.test.ts`
 
@@ -741,7 +761,7 @@ describe("codex-style components preview", () => {
     const html = readFileSync(previewPath, "utf8");
 
     expect(html).toContain("function setPreviewDevice(button)");
-    expect(html).toContain("previewFrame.style.setProperty(\"--preview-width\", width)");
+    expect(html).toContain('previewFrame.style.setProperty("--preview-width", width)');
     expect(html).toContain("deviceLabel.textContent = `${button.textContent?.trim()} · ${width}`");
   });
 });
@@ -762,109 +782,109 @@ Expected: FAIL because the preview page does not have device buttons or switcher
 In `docs/superpowers/prototypes/codex-style-components-preview.html`, inside the existing `<style>` block after `.components-shell, .index-shell { ... }`, add:
 
 ```css
-      .device-switcher {
-        display: flex;
-        min-width: 0;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-      }
+.device-switcher {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
 
-      .device-tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        border: 1px solid var(--border-soft);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.035);
-        padding: 3px;
-      }
+.device-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 3px;
+}
 
-      .device-tab {
-        min-height: 26px;
-        border: 0;
-        border-radius: 999px;
-        background: transparent;
-        color: var(--text-muted);
-        padding: 0 10px;
-        font-size: 12px;
-        font-weight: 600;
-      }
+.device-tab {
+  min-height: 26px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
 
-      .device-tab:hover,
-      .device-tab.active {
-        background: var(--control-active);
-        color: var(--text);
-      }
+.device-tab:hover,
+.device-tab.active {
+  background: var(--control-active);
+  color: var(--text);
+}
 
-      .device-label {
-        color: var(--text-muted);
-        font-size: 12px;
-        white-space: nowrap;
-      }
+.device-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
 
-      .preview-frame-shell {
-        max-width: 100%;
-        margin: 0 auto;
-      }
+.preview-frame-shell {
+  max-width: 100%;
+  margin: 0 auto;
+}
 
-      .preview-frame-label {
-        margin: 0 auto 8px;
-        width: min(100%, var(--preview-width, 1280px));
-        color: var(--text-muted);
-        font-size: 12px;
-        text-align: right;
-      }
+.preview-frame-label {
+  margin: 0 auto 8px;
+  width: min(100%, var(--preview-width, 1280px));
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: right;
+}
 
-      .preview-frame {
-        width: min(100%, var(--preview-width, 1280px));
-        margin: 0 auto;
-        border: 1px solid var(--border-soft);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.026);
-        padding: 16px;
-        transition: width 180ms ease;
-      }
+.preview-frame {
+  width: min(100%, var(--preview-width, 1280px));
+  margin: 0 auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.026);
+  padding: 16px;
+  transition: width 180ms ease;
+}
 ```
 
 Then replace the existing `.preview-switcher` rule:
 
 ```css
-      .preview-switcher {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 18px;
-        min-height: 54px;
-        padding: 0 24px;
-        border-bottom: 1px solid var(--border-soft);
-        background: rgba(18, 18, 19, 0.88);
-        backdrop-filter: blur(22px);
-      }
+.preview-switcher {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 54px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(18, 18, 19, 0.88);
+  backdrop-filter: blur(22px);
+}
 ```
 
 with:
 
 ```css
-      .preview-switcher {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px 18px;
-        min-height: 54px;
-        padding: 10px 24px;
-        border-bottom: 1px solid var(--border-soft);
-        background: rgba(18, 18, 19, 0.88);
-        backdrop-filter: blur(22px);
-      }
+.preview-switcher {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 18px;
+  min-height: 54px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(18, 18, 19, 0.88);
+  backdrop-filter: blur(22px);
+}
 ```
 
 - [ ] **Step 4: Wrap the component board in a preview frame**
@@ -960,180 +980,180 @@ with:
 In `docs/superpowers/prototypes/codex-style-components-preview.html`, replace:
 
 ```css
-      .components-page .component-board {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-        max-width: 1180px;
-        margin: 0 auto;
-      }
+.components-page .component-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
 ```
 
 with:
 
 ```css
-      .components-page .component-board {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-        gap: 16px;
-        max-width: 1180px;
-        min-width: 0;
-        margin: 0 auto;
-      }
+.components-page .component-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+  max-width: 1180px;
+  min-width: 0;
+  margin: 0 auto;
+}
 ```
 
 Replace:
 
 ```css
-      .agent-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-      }
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
 ```
 
 with:
 
 ```css
-      .agent-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-        gap: 8px;
-      }
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 8px;
+}
 ```
 
 Replace the current `.week-strip` rule:
 
 ```css
-      .week-strip {
-        display: grid;
-        grid-template-columns: 28px repeat(7, minmax(0, 1fr)) 28px;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 10px;
-      }
+.week-strip {
+  display: grid;
+  grid-template-columns: 28px repeat(7, minmax(0, 1fr)) 28px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
 ```
 
 with:
 
 ```css
-      .week-strip {
-        display: grid;
-        min-width: 0;
-        grid-template-columns: 34px minmax(0, 1fr) 34px;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 10px;
-      }
+.week-strip {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
 ```
 
 Add this CSS after the `.week-strip` rule:
 
 ```css
-      .week-days {
-        display: grid;
-        min-width: 0;
-        grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-        gap: 6px;
-      }
+.week-days {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 6px;
+}
 
-      .week-strip .day-cell {
-        min-width: 0;
-      }
+.week-strip .day-cell {
+  min-width: 0;
+}
 
-      @media (max-width: 720px) {
-        .week-strip {
-          align-items: stretch;
-        }
+@media (max-width: 720px) {
+  .week-strip {
+    align-items: stretch;
+  }
 
-        .week-strip .day-cell {
-          min-height: 58px;
-        }
-      }
+  .week-strip .day-cell {
+    min-height: 58px;
+  }
+}
 ```
 
 Then replace the Schedule Kit `.week-strip` HTML block:
 
 ```html
-                <div class="week-strip">
-                  <button class="week-nav">‹</button>
-                  <div class="day-cell">
-                    <div class="day-label">周一</div>
-                    <div class="day-number">11</div>
-                    <div class="day-dots"><span></span></div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周二</div>
-                    <div class="day-number">12</div>
-                    <div class="day-dots"><span></span><span></span></div>
-                  </div>
-                  <div class="day-cell active">
-                    <div class="day-label">今天</div>
-                    <div class="day-number">15</div>
-                    <div class="day-dots"><span></span><span></span><span></span></div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周四</div>
-                    <div class="day-number">16</div>
-                    <div class="day-dots"><span></span></div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周五</div>
-                    <div class="day-number">17</div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周六</div>
-                    <div class="day-number">18</div>
-                  </div>
-                  <div class="day-cell">
-                    <div class="day-label">周日</div>
-                    <div class="day-number">19</div>
-                  </div>
-                  <button class="week-nav">›</button>
-                </div>
+<div class="week-strip">
+  <button class="week-nav">‹</button>
+  <div class="day-cell">
+    <div class="day-label">周一</div>
+    <div class="day-number">11</div>
+    <div class="day-dots"><span></span></div>
+  </div>
+  <div class="day-cell">
+    <div class="day-label">周二</div>
+    <div class="day-number">12</div>
+    <div class="day-dots"><span></span><span></span></div>
+  </div>
+  <div class="day-cell active">
+    <div class="day-label">今天</div>
+    <div class="day-number">15</div>
+    <div class="day-dots"><span></span><span></span><span></span></div>
+  </div>
+  <div class="day-cell">
+    <div class="day-label">周四</div>
+    <div class="day-number">16</div>
+    <div class="day-dots"><span></span></div>
+  </div>
+  <div class="day-cell">
+    <div class="day-label">周五</div>
+    <div class="day-number">17</div>
+  </div>
+  <div class="day-cell">
+    <div class="day-label">周六</div>
+    <div class="day-number">18</div>
+  </div>
+  <div class="day-cell">
+    <div class="day-label">周日</div>
+    <div class="day-number">19</div>
+  </div>
+  <button class="week-nav">›</button>
+</div>
 ```
 
 with:
 
 ```html
-                <div class="week-strip">
-                  <button class="week-nav">‹</button>
-                  <div class="week-days">
-                    <div class="day-cell">
-                      <div class="day-label">周一</div>
-                      <div class="day-number">11</div>
-                      <div class="day-dots"><span></span></div>
-                    </div>
-                    <div class="day-cell">
-                      <div class="day-label">周二</div>
-                      <div class="day-number">12</div>
-                      <div class="day-dots"><span></span><span></span></div>
-                    </div>
-                    <div class="day-cell active">
-                      <div class="day-label">今天</div>
-                      <div class="day-number">15</div>
-                      <div class="day-dots"><span></span><span></span><span></span></div>
-                    </div>
-                    <div class="day-cell">
-                      <div class="day-label">周四</div>
-                      <div class="day-number">16</div>
-                      <div class="day-dots"><span></span></div>
-                    </div>
-                    <div class="day-cell">
-                      <div class="day-label">周五</div>
-                      <div class="day-number">17</div>
-                    </div>
-                    <div class="day-cell">
-                      <div class="day-label">周六</div>
-                      <div class="day-number">18</div>
-                    </div>
-                    <div class="day-cell">
-                      <div class="day-label">周日</div>
-                      <div class="day-number">19</div>
-                    </div>
-                  </div>
-                  <button class="week-nav">›</button>
-                </div>
+<div class="week-strip">
+  <button class="week-nav">‹</button>
+  <div class="week-days">
+    <div class="day-cell">
+      <div class="day-label">周一</div>
+      <div class="day-number">11</div>
+      <div class="day-dots"><span></span></div>
+    </div>
+    <div class="day-cell">
+      <div class="day-label">周二</div>
+      <div class="day-number">12</div>
+      <div class="day-dots"><span></span><span></span></div>
+    </div>
+    <div class="day-cell active">
+      <div class="day-label">今天</div>
+      <div class="day-number">15</div>
+      <div class="day-dots"><span></span><span></span><span></span></div>
+    </div>
+    <div class="day-cell">
+      <div class="day-label">周四</div>
+      <div class="day-number">16</div>
+      <div class="day-dots"><span></span></div>
+    </div>
+    <div class="day-cell">
+      <div class="day-label">周五</div>
+      <div class="day-number">17</div>
+    </div>
+    <div class="day-cell">
+      <div class="day-label">周六</div>
+      <div class="day-number">18</div>
+    </div>
+    <div class="day-cell">
+      <div class="day-label">周日</div>
+      <div class="day-number">19</div>
+    </div>
+  </div>
+  <button class="week-nav">›</button>
+</div>
 ```
 
 - [ ] **Step 6: Run the prototype test**
@@ -1170,6 +1190,7 @@ Expected: commit succeeds.
 ## Task 5: Final Verification and Visual QA
 
 **Files:**
+
 - Verify: `src/renderer/src/components/slime/SlimeAgentCard.vue`
 - Verify: `src/renderer/src/components/slime/SlimeWeekCalendar.vue`
 - Verify: `src/renderer/src/views/GatewayPanel.vue`

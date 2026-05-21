@@ -90,6 +90,7 @@ Slime 渲染层必须使用统一的 Codex-like 设计语言：深色、低噪�
   - `SlimeBadge`: 状态、能力标签、元信息胶囊；用于 `healthy`, `retry`, `reasoning`, `tool_call` 等。
   - `SlimeInput`: 搜索、路径、表单输入；支持普通/紧凑密度。
   - `SlimeTextarea`: 多行文本和配置输入；需要稳定尺寸和自动扩展时使用。
+  - `SlimeSelect`: 单选/多选下拉框；trigger 宽度跟随父容器，多选 chip 可换行，菜单用 `max-height` 内部滚动。
   - `SlimePanel`: 业务页的低对比面板容器；用于非重复的大块内容区。
   - `SlimeListItem`: 会话、任务、Agent、日志、导航等可选列表行。
   - `SlimeTabs`: 低对比紧凑 tab；用于工具/预览、Gateway tab、Settings tab。
@@ -106,6 +107,7 @@ Slime 渲染层必须使用统一的 Codex-like 设计语言：深色、低噪�
   - `SlimeProfileCard`: 用户资料、Agent 资料、身份摘要。
   - `SlimeRealtimeChart`: Gateway 实时指标，多指标通过 chips 切换，主图只展示当前指标。
   - `SlimeRankBoard`: Gateway 排名组件，请求量/成功率/延迟/成本排行。
+  - `SlimeResourceCard`: Gateway 分组、密钥、渠道等资源卡片；一项资源一张卡，宽度跟随网格，事实指标自适应换行。
   - `SlimeLogCard`: Gateway 日志行，展示状态码、请求摘要、耗时、重试/熔断状态。
   - `SlimeWeekCalendar`: Schedule 顶部周日历，支持左右滑动、日期选择和任务点。
   - `SlimeTaskList`: Schedule 任务列表，支持完成态、优先级、时间和状态 badge。
@@ -116,6 +118,14 @@ Slime 渲染层必须使用统一的 Codex-like 设计语言：深色、低噪�
 - 业务组件负责取 store / 调 Presenter；共享 UI 组件只接收 props、slots，向上 emit 事件。
 - 表单组件统一使用 `modelValue` / `update:modelValue`；列表和卡片使用 `selected` / `active` 表示选中态。
 - 命令按钮使用 `variant` 和 `size` 控制视觉，不在业务组件里重新拼按钮样式。
+- 组件库预览必须直接渲染真实 Vue 组件，不能用静态 HTML/CSS 仿制组件效果。预览页只允许提供组件挂载点、fixture 数据和外层演示布局；组件的视觉结构、样式、状态必须来自 `components/ui`、`components/layout`、`components/slime` 中的真实组件。
+- 整体布局和组件预览必须在多个 PC 窗口尺寸下检查：标准窗口、最小窗口、全屏参考，以及至少一个不低于 app 最小尺寸的手动调整尺寸。每个尺寸下都必须完整显示应展示的信息，不允许出现非预期换行、重叠、截断/省略/line-clamp、横向滚动条或组件内部滚动条；若做不到，应调整组件密度、信息层级、网格布局或最小尺寸，不得用隐藏信息糊过去。
+- 业务页面使用共享组件时只能通过组件 props、slots、`variant`、`size`、`selected`、`modelValue` 等公开模板参数表达内容和状态，不得在页面里复制组件内部 DOM 结构或重写同类视觉样式。组件需要新视觉状态时先扩展共享组件，再更新预览。
+- 共享组件默认必须自适应父容器，不允许随意写死宽高。只有图标按钮、头像、switch、checkbox、日历日期格、棋盘格、图表视窗等天然固定形态的元素可以声明固定尺寸；其他组件优先使用 `width: 100%`、`min-width: 0`、`minmax(0, 1fr)`、`auto-fit`、`clamp()`、`min()`、`max()`、`max-width`、`aspect-ratio` 等响应式约束。
+- 组件高度应优先由内容自然决定，只用 `min-height` 保证操作目标和视觉密度。资源卡片、列表行、下拉触发器、多选 chip 容器、表单说明等内容增多时可以自然长高，不应通过固定高度造成遮挡、重叠或截断关键操作。
+- 组件内部的长文本、路径、模型名、密钥、标签和中英混排内容必须能安全收缩：使用 `min-width: 0` 和布局感知的响应式网格。支持尺寸内的必要标签、数值、badge、操作、路径、模型名和密钥必须完整可读，不得依赖省略、截断、line-clamp 或非预期换行通过评审。
+- 滚动边界必须清晰：重复卡片本身不内嵌滚动条，由父页面区域滚动；下拉菜单、日志列表、表格和固定图表视窗等天然有边界的内容可以设置 `max-height` 并在内部滚动。
+- 新增组件的预览必须覆盖受限 PC 窗口或响应式网格场景；会出现在侧栏、弹窗、卡片网格中的组件，预览里必须证明信息完整显示，且没有非预期换行、重叠、截断和滚动条。
 - 禁用态必须保留布局尺寸，但撤掉行动感：低对比文本、低对比边框、无 hover 强反馈、`disabled` 属性真实生效。
 - 危险操作使用 `danger` 语义，不在禁用态保留红色危险暗示；删除、清空、撤销等高风险动作需要明确上下文或确认。
 - 多指标图表不要把多条强色线堆在同一张图上；使用指标 chip 切换主图，其他指标显示当前值和趋势。

@@ -54,7 +54,7 @@ async function onOnboardingDone() {
 </script>
 
 <template>
-  <div class="h-screen w-screen bg-background text-foreground">
+  <div class="h-screen w-screen bg-[var(--color-app-sidebar)] text-foreground">
     <!-- Loading -->
     <div
       v-if="needsOnboarding === null"
@@ -64,14 +64,19 @@ async function onOnboardingDone() {
     </div>
 
     <!-- Onboarding -->
-    <div v-else-if="needsOnboarding" class="h-full overflow-y-auto">
+    <div v-else-if="needsOnboarding" class="h-full overflow-y-auto bg-background">
       <OnboardingWizard @done="onOnboardingDone" />
     </div>
 
     <!-- Main layout -->
     <AppShell v-else>
-      <template #sidebar>
-        <AppSidebarNav v-model:active-view="activeView" />
+      <template #sidebar="{ collapsed, fullscreenLike, toggle }">
+        <AppSidebarNav
+          v-model:active-view="activeView"
+          :collapsed="collapsed"
+          :fullscreen-like="fullscreenLike"
+          @toggle-sidebar="toggle"
+        />
       </template>
       <WorkspaceCanvas
         :active-view="activeView"

@@ -8,6 +8,7 @@ import ChannelRealtimeChart from "@/components/gateway/ChannelRealtimeChart.vue"
 import ModelManagerDialog from "@/components/gateway/ModelManagerDialog.vue";
 import { GATEWAY_EVENTS } from "@shared/events";
 import { createGatewayRefreshScheduler } from "@/composables/useGatewayRefreshScheduler";
+import SlimeSelect from "@/components/ui/SlimeSelect.vue";
 
 const gw = usePresenter("gatewayPresenter");
 const store = useGatewayStore();
@@ -169,10 +170,9 @@ async function selectChannelById(value: string | number) {
   await selectChannel(channel);
 }
 
-function handleChannelSelect(event: Event) {
-  const target = event.target as HTMLSelectElement | null;
-  if (!target) return;
-  void selectChannelById(target.value);
+function handleChannelSelect(value: string | number | Array<string | number> | null) {
+  if (value == null || Array.isArray(value)) return;
+  void selectChannelById(value);
 }
 
 function openModelManager(channel: Channel) {
@@ -222,6 +222,19 @@ const selectedChannel = computed(
   () => store.channels.find((channel) => channel.id === selectedChannelId.value) ?? null,
 );
 
+function channelTypeLabel(type: ChannelType) {
+  return typeOptions.find((option) => option.value === type)?.label ?? "Custom";
+}
+
+const channelSelectOptions = computed(() =>
+  store.channels.map((channel) => ({
+    value: channel.id,
+    label: channel.name,
+    description: `${channelTypeLabel(channel.type)} · ${channel.enabled ? "启用" : "停用"} · ${channelModelCount(channel.id)} 模型`,
+    badge: channel.enabled ? "启用" : "停用",
+  })),
+);
+
 const selectedChannelPoints = computed(() => {
   if (!selectedChannel.value) return [];
   return store.channelMinuteStability.get(selectedChannel.value.id) ?? [];
@@ -239,9 +252,7 @@ const selectedChannelStability = computed(() => {
 
 const selectedChannelTypeLabel = computed(() => {
   if (!selectedChannel.value) return "";
-  return (
-    typeOptions.find((option) => option.value === selectedChannel.value?.type)?.label ?? "Custom"
-  );
+  return channelTypeLabel(selectedChannel.value.type);
 });
 
 const selectedTestResult = computed(() => {
@@ -297,18 +308,17 @@ onUnmounted(() => {
         </div>
 
         <div class="flex min-w-0 flex-wrap items-center gap-2">
-          <select
-            data-testid="channel-select"
-            :value="selectedChannelId ?? ''"
-            :disabled="!store.channels.length"
-            class="h-8 min-w-36 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-control)] px-3 text-xs font-medium text-[var(--color-text-secondary)] outline-none transition-colors hover:bg-[var(--color-control-hover)] focus:border-[var(--color-accent-brand)] disabled:cursor-not-allowed disabled:opacity-50"
-            @change="handleChannelSelect"
-          >
-            <option v-if="!store.channels.length" value="">暂无供应商</option>
-            <option v-for="channel in store.channels" :key="channel.id" :value="channel.id">
-              {{ channel.name }}
-            </option>
-          </select>
+          <div class="w-full min-w-0 sm:w-52">
+            <SlimeSelect
+              data-testid="channel-select"
+              :model-value="selectedChannelId"
+              :options="channelSelectOptions"
+              density="compact"
+              placeholder="暂无供应商"
+              :disabled="!store.channels.length"
+              @update:model-value="handleChannelSelect"
+            />
+          </div>
 
           <button
             data-testid="channel-test"

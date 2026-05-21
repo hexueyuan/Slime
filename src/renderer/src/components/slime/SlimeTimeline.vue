@@ -17,6 +17,8 @@ defineEmits<{ addEntry: []; locate: [] }>();
 
 <template>
   <section
+    data-component-id="SlimeTimeline"
+    data-layout="adaptive"
     class="flex h-full flex-col rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-control)]"
   >
     <div

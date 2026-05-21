@@ -16,6 +16,9 @@ describe("GatewayApiKeyCard", () => {
   it("renders masked key and emits actions", async () => {
     const wrapper = mount(GatewayApiKeyCard, { props: { apiKey } });
 
+    expect(
+      wrapper.get('[data-testid="slime-resource-card"]').attributes("data-resource-kind"),
+    ).toBe("key");
     expect(wrapper.text()).toContain("web-client");
     expect(wrapper.text()).toContain("sk-1...cdef");
 

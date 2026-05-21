@@ -22,6 +22,9 @@ describe("GatewayGroupCard", () => {
       },
     });
 
+    expect(
+      wrapper.get('[data-testid="slime-resource-card"]').attributes("data-resource-kind"),
+    ).toBe("group");
     expect(wrapper.text()).toContain("claude");
     expect(wrapper.text()).toContain("failover");
     expect(wrapper.text()).toContain("3");

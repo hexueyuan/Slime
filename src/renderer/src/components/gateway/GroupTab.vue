@@ -3,7 +3,7 @@ import { ref, watch } from "vue";
 import { usePresenter } from "@/composables/usePresenter";
 import { useGatewayStore } from "@/stores/gateway";
 import GroupManagerDialog from "./GroupManagerDialog.vue";
-import GatewayResourceCard from "./GatewayResourceCard.vue";
+import SlimeResourceCard from "@/components/slime/SlimeResourceCard.vue";
 import SlimeButton from "@/components/ui/SlimeButton.vue";
 import type { GroupItem } from "@shared/types/gateway";
 
@@ -100,7 +100,7 @@ watch(
     <div class="min-h-0 flex-1 overflow-y-auto">
       <div v-if="store.groups.length" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <div v-for="group in store.groups" :key="group.id" data-testid="group-route-card">
-          <GatewayResourceCard
+          <SlimeResourceCard
             kind="group"
             eyebrow="分组路由"
             :title="group.name"
